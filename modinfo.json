@@ -1,0 +1,11 @@
+{
+  "Name": "Shitty Infecteds",
+  "Version": "1.0",
+  "ApiVersion": "1.90",
+  "Description": "",
+  "ScVersion": "2.4.0.0",
+  "Link": "https://github.com/Samuelsan03/Shitty-Infecteds-From-Survivalcraft-2",
+  "Author": "Samuelsan03",
+  "PackageName": "shitty.infecteds.mod",
+  "Dependencies": []
+}
