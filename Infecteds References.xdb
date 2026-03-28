@@ -1,0 +1,55 @@
+<Infecteds>
+<Parameter Name="Class" Guid="a83a741c-c426-4c47-957e-edd2a1a88ab7" new-Value="Game.NewHerdBehavior" Type="string"/>
+<Parameter Name="Class" Guid="353c4b03-8188-46f0-a5f0-ff1ccdc3b4a1" new-Value="Game.NewChaseBehavior" Type="string"/>
+
+    <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
+        <ComponentTemplate Name="NewHerdBehavior" Description="Improved behavior that makes a creature stay close to similar creatures with better herding mechanics" Guid="07bef841-0415-4c20-9f5a-b2917770e42e" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="3d165b30-90e1-48bf-87ea-5e9c37bf23bb" Value="Game.NewHerdBehavior" Type="string"/>
+  <Parameter Name="AutoNearbyCreaturesHelp" Description="If true, when a nearby creature from the same herd is attacked will automatically attack its attacker" Guid="870594aa-4fc9-4c80-bfc5-58bbe86f69a3" Value="False" Type="bool"/>
+  <Parameter Name="HerdName" Description="Identifier used to find members of the same species for herding purposes" Guid="7c116c81-4ae0-4fcd-8164-4402fc289745" Value="KaalusGlitch" Type="string"/>
+  <Parameter Name="HerdingRange" Description="Maximum distance to search for herd members when determining herd center" Guid="f8b6040e-9433-46e1-a984-487a416ef8e9" Value="32" Type="float"/>
+</ComponentTemplate>
+
+<ComponentTemplate Name="NewChaseBehavior" Description="Improved behavior that makes a creature chase intruders and protect player if part of player herd" Guid="7778cd2c-1eeb-4d71-a888-32715e259107" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="3d39b1c5-0717-4678-9cd8-f68d37c810bb" Value="Game.NewChaseBehavior" Type="string"/>
+  <Parameter Name="ChaseWhenAttackedProbability" Description="Probability that creature will chase when attacked" Guid="6c4f3fec-7821-4ab5-81c4-91490c679f98" Value="1" Type="float"/>
+  <Parameter Name="NightChaseTime" Description="Chase time when creature starts to chase during the night, in seconds" Guid="f22ccc46-3b32-4bb4-90ea-0cdd37562268" Value="10" Type="float"/>
+  <Parameter Name="DayChaseRange" Description="Range when creature starts to chase during the day" Guid="5dc86eca-3ca9-42c9-8bae-4f566178d168" Value="1.5" Type="float"/>
+  <Parameter Name="ChaseOnTouchProbability" Description="Whether creature should chase if touched by AutoChaseMask creature" Guid="dfb55644-c9d1-4e66-a719-a9605518b785" Value="1" Type="float"/>
+  <Parameter Name="DayChaseTime" Description="Chase time when creature starts to chase during the day, in seconds" Guid="d67812f2-445e-4cab-8439-600f804c9d3c" Value="10" Type="float"/>
+  <Parameter Name="NightChaseRange" Description="Range when creature starts to chase during the night" Guid="572303ac-5a9f-4037-a0d1-d9394f66d33f" Value="1.5" Type="float"/>
+  <Parameter Name="AutoChaseMask" Description="Creature categories to chase" Guid="0efec540-4fc0-4c5a-ba53-79746f659c8e" Value="LandOther, Bird" Type="Game.CreatureCategory"/>
+  <Parameter Name="ChaseNonPlayerProbability" Description="Probability of creature chasing a non-player target when in range, 0 to 1" Guid="c23a5760-f1dd-4534-be24-0d7be43a566f" Value="0" Type="float"/>
+</ComponentTemplate>
+
+    <ComponentTemplate Name="ZombieHerdBehavior" Description="Comportamiento de manada para zombis. Agrupa a los zombis por nombre de manada y les permite llamar ayuda entre compañeros" Guid="5a8d1636-1ad9-4344-8c36-a39d9bb2524d" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="1317caed-e16e-4a82-8c2d-fbf482c81596" Value="Game.ComponentZombieHerdBehavior" Type="string"/>
+  <Parameter Name="HerdName" Description="Nombre de la manada. Los zombis con el mismo nombre se consideran compañeros y no se atacan entre sí" Guid="eae47118-785d-4ce3-aea4-788abb74b106" Value="Zombie" Type="string"/>
+  <Parameter Name="HerdingRange" Description="Rango en metros dentro del cual se considera que un compañero forma parte de la manada para calcular el centro del grupo" Guid="085f8a84-9fb8-470b-92dd-ca64c24433df" Value="16" Type="float"/>
+  <Parameter Name="ImportanceLevelForHerd" Description="Nivel de importancia asignado cuando el zombi está lejos de la manada. Valores más altos priorizan el comportamiento de rebaño" Guid="ee952c13-c070-4a73-b4ca-816e86342a14" Value="250" Type="float"/>
+  <Parameter Name="MinDistanceToHerd" Description="Distancia mínima en metros al centro de la manada. Si la distancia es mayor, el zombi intentará acercarse al grupo" Guid="22423564-12df-4c26-88eb-bc44c2ca0254" Value="10" Type="float"/>
+  <Parameter Name="AutoCallNearbyHelp" Description="Si es verdadero, el zombi llamará a otros compañeros de manada cuando sea atacado" Guid="82144d41-edae-46d6-831d-773d6e1f4a3a" Value="true" Type="bool"/>
+  <Parameter Name="HelpCallRange" Description="Rango en metros en el que se buscarán compañeros de manada para pedir ayuda cuando el zombi es atacado" Guid="c7777080-5d39-4777-83bb-3efd41761b06" Value="20" Type="float"/>
+  <Parameter Name="HelpChaseTime" Description="Duración en segundos que los compañeros de manada perseguirán al agresor cuando son llamados para ayudar" Guid="52648a41-91d5-4c78-935e-4431ae0cb337" Value="30" Type="float"/>
+</ComponentTemplate>
+
+<ComponentTemplate Name="ZombieChaseBehavior" Description="Comportamiento de persecución para zombis. Persigue a cualquier criatura excepto a los miembros de su misma manada" Guid="67f04819-c0f2-47f4-bde2-436dcdb8132b" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="37f4502b-de54-4825-b823-6b52d16a33cf" Value="Game.ComponentZombieChaseBehavior" Type="string"/>
+  <Parameter Name="ChaseRangeDay" Description="Rango en metros durante el día en el que el zombi detecta y comienza a perseguir a su objetivo" Guid="e1105781-fa5d-48fc-92c4-0e8e96419e2c" Value="15" Type="float"/>
+  <Parameter Name="ChaseRangeNight" Description="Rango en metros durante la noche en el que el zombi detecta y comienza a perseguir a su objetivo" Guid="26f4665c-fb55-4bf1-a1fd-6edbf520a4a4" Value="20" Type="float"/>
+  <Parameter Name="ChaseTimeDay" Description="Duración en segundos que el zombi perseguirá a su objetivo durante el día" Guid="ceb8d649-6e5c-4bdd-90bb-08c593af6da9" Value="15" Type="float"/>
+  <Parameter Name="ChaseTimeNight" Description="Duración en segundos que el zombi perseguirá a su objetivo durante la noche" Guid="33b8c95e-e38a-4192-a2bf-c38ee6fb766e" Value="20" Type="float"/>
+  <Parameter Name="ChaseNonPlayerProbability" Description="Probabilidad de 0 a 1 de que el zombi persiga a una criatura no jugador cuando está dentro del rango de persecución" Guid="526baa21-2b07-4e77-9265-2ee22c185b14" Value="1" Type="float"/>
+  <Parameter Name="ChaseWhenAttackedProbability" Description="Probabilidad de 0 a 1 de que el zombi persiga al agresor cuando es atacado. Los zombis siempre persiguen a quien los ataca" Guid="a02cdac7-1a4c-4470-a7f8-ae593fab7250" Value="1" Type="float"/>
+  <Parameter Name="ChaseOnTouchProbability" Description="Probabilidad de 0 a 1 de que el zombi persiga a una criatura que lo toca físicamente" Guid="2c1554a1-c319-48d2-840c-61c921af9176" Value="0.5" Type="float"/>
+  <Parameter Name="ImportanceLevelNonPersistent" Description="Nivel de importancia asignado cuando el zombi persigue temporalmente (no persistente). Afecta la prioridad sobre otros comportamientos" Guid="fe42ecf4-061c-47b0-84da-2eee3dc46e80" Value="200" Type="float"/>
+  <Parameter Name="ImportanceLevelPersistent" Description="Nivel de importancia asignado cuando el zombi persigue persistentemente. Afecta la prioridad sobre otros comportamientos" Guid="4b12c1ef-05cd-4489-9c04-e86202d8f661" Value="200" Type="float"/>
+  <Parameter Name="MaxAttackRange" Description="Distancia máxima en metros a la que el zombi puede golpear a su objetivo durante el ataque" Guid="be91b5a5-8a5c-4f58-a96f-a0919994b01c" Value="1.75" Type="float"/>
+  <Parameter Name="AttacksPlayer" Description="Si es verdadero, el zombi atacará a los jugadores. Los zombis atacan a los jugadores por defecto" Guid="24165013-d2bf-4087-afbe-7208dab36b0e" Value="true" Type="bool"/>
+  <Parameter Name="AttacksNonPlayerCreature" Description="Si es verdadero, el zombi atacará a otras criaturas no jugadores. Los zombis atacan a todas las criaturas excepto a los de su manada" Guid="508622b2-7a21-4951-91a7-6081177fa522" Value="true" Type="bool"/>
+  <Parameter Name="MinHealthToAttackActively" Description="Porcentaje mínimo de salud (0 a 1) requerido para que el zombi persiga activamente. Los zombis persiguen incluso con poca vida" Guid="ee64fc8b-e898-41aa-aae3-4c01b675368c" Value="0" Type="float"/>
+  <Parameter Name="TargetInRangeTimeToChase" Description="Tiempo en segundos que el objetivo debe permanecer dentro del rango antes de que el zombi comience a perseguirlo" Guid="ff626491-49cf-46ab-998d-a811bb80c474" Value="2" Type="float"/>
+  <Parameter Name="Suppressed" Description="Si es verdadero, desactiva temporalmente el comportamiento de persecución del zombi" Guid="92ea0975-ce0e-4ae5-b4e6-2fc32e1b031d" Value="false" Type="bool"/>
+</ComponentTemplate>
+    </Folder>
+</Infecteds>
