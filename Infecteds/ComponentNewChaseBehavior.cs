@@ -89,6 +89,48 @@ namespace Game
 				m_chaseTime -= dt;
 				m_componentCreature.ComponentCreatureModel.LookAtOrder = m_target.ComponentCreatureModel.EyePosition;
 
+				// ----- INICIO: Lógica de cambio inmediato de arma según distancia -----
+				// Solo se aplica en AttackType.Default
+				if (m_attackType == AttackType.Default)
+				{
+					float dist = Vector3.Distance(
+						m_componentCreature.ComponentBody.Position,
+						m_target.ComponentBody.Position);
+
+					bool isInMeleeRange = dist < m_rangedAttackRange.X;
+					bool isInRangedRange = dist >= m_rangedAttackRange.X && dist <= m_rangedAttackRange.Y;
+
+					if (isInMeleeRange)
+					{
+						// Cancelar inmediatamente cualquier apunte o enfriamiento activo
+						if (m_isAiming)
+						{
+							m_isAiming = false;
+							m_aimingTimer = 0f;
+						}
+						if (m_cooldownTimer > 0f)
+						{
+							m_cooldownTimer = 0f;
+						}
+						// Cambiar a arma cuerpo a cuerpo si tenemos un arma a distancia equipada
+						if (IsActiveRangedWeapon())
+						{
+							TryEquipMeleeWeapon();
+							// Nota: Si no hay arma cuerpo a cuerpo, se mantiene el arma actual
+						}
+					}
+					else if (isInRangedRange)
+					{
+						// Si estamos en rango de distancia y no estamos apuntando ni en enfriamiento,
+						// volvemos a equipar el mosquete si no lo tenemos ya.
+						if (!m_isAiming && m_cooldownTimer <= 0f && !IsActiveRangedWeapon())
+						{
+							TryEquipMusket();
+						}
+					}
+				}
+				// ----- FIN: Lógica de cambio inmediato de arma -----
+
 				// Control de apunte con animación y detención del movimiento
 				if (m_isAiming)
 				{
@@ -106,7 +148,6 @@ namespace Game
 						PerformRangedAttack(); // Aquí se llama a AimState.Completed
 						m_isAiming = false;
 						m_cooldownTimer = MusketCooldownTime;
-						// Reanudar el movimiento se hará solo al recuperar el destino en el siguiente ciclo de estado
 					}
 				}
 				else if (m_cooldownTimer > 0f)
@@ -123,9 +164,7 @@ namespace Game
 						// Iniciar apunte: detener todo movimiento
 						m_isAiming = true;
 						m_aimingTimer = MusketAimingTime;
-						// Parar el pathfinding (y por tanto el movimiento)
 						m_componentPathfinding.Stop();
-						// Asegurarse de que no haya orden de caminar residual
 						m_componentCreature.ComponentLocomotion.WalkOrder = null;
 					}
 				}
@@ -134,7 +173,6 @@ namespace Game
 					if (m_isAiming)
 					{
 						m_isAiming = false;
-						// Se reanuda el movimiento automáticamente en la máquina de estados
 					}
 					if (IsTargetInAttackRange(m_target.ComponentBody))
 						m_componentCreatureModel.AttackOrder = true;
@@ -160,6 +198,44 @@ namespace Game
 				m_nextUpdateTime = m_subsystemTime.GameTime + (double)m_dt;
 				m_stateMachine.Update();
 			}
+		}
+
+		// NUEVO CAMBIO: Método para detectar si el arma activa actual es de distancia (mosquete)
+		private bool IsActiveRangedWeapon()
+		{
+			if (m_componentMiner == null || m_componentMiner.Inventory == null)
+				return false;
+
+			int activeValue = m_componentMiner.ActiveBlockValue;
+			return Terrain.ExtractContents(activeValue) == MusketBlock.Index;
+		}
+
+		// NUEVO CAMBIO: Método para equipar un arma cuerpo a cuerpo desde el inventario
+		private bool TryEquipMeleeWeapon()
+		{
+			if (m_componentMiner == null || m_componentMiner.Inventory == null)
+				return false;
+
+			IInventory inventory = m_componentMiner.Inventory;
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int slotValue = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) <= 0)
+					continue;
+
+				int contents = Terrain.ExtractContents(slotValue);
+				// Excluimos el mosquete y cualquier objeto sin poder de ataque cuerpo a cuerpo
+				if (contents != MusketBlock.Index)
+				{
+					Block block = BlocksManager.Blocks[contents];
+					if (block.GetMeleePower(slotValue) > 0f)
+					{
+						inventory.ActiveSlotIndex = i;
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 
 		private bool ShouldUseRangedAttack()
