@@ -5,7 +5,9 @@ using Engine;
 
 public class ShittyInfectedsModLoader : ModLoader
 {
-	// Lista de rutas de música (sin extensión) dentro del mod
+	public static bool HerdAttackOnPlayerHitEnabled = true;
+	public static bool HerdAttackOnPlayerInjuryCreativeEnabled = true;
+
 	private static readonly List<string> ListaMusica = new List<string>
 	{
 		"Music/Menu Music",
@@ -22,83 +24,59 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("CalculateCreatureInjuryAmount", this);
 	}
 
+	// Resto de métodos: CalculateCreatureInjuryAmount, OnMinerHit, MenuPlayMusic (sin cambios)
+	// ...
+	// (los incluyo completos para que todo quede claro)
+
 	public override void CalculateCreatureInjuryAmount(Injury injury)
 	{
-		if (injury == null || injury.ComponentHealth == null)
-			return;
+		if (!HerdAttackOnPlayerInjuryCreativeEnabled) return;
+		if (injury == null || injury.ComponentHealth == null) return;
+		if (!(injury.ComponentHealth.m_componentCreature is ComponentPlayer)) return;
 
-		// Solo si la víctima es un jugador
-		if (!(injury.ComponentHealth.m_componentCreature is ComponentPlayer))
-			return;
-
-		// Verificar que estamos en modo Creativo
 		SubsystemGameInfo gameInfo = injury.ComponentHealth.m_subsystemGameInfo;
-		if (gameInfo.WorldSettings.GameMode != GameMode.Creative)
-			return;
+		if (gameInfo.WorldSettings.GameMode != GameMode.Creative) return;
 
-		// Obtener atacante
 		ComponentCreature attacker = injury.Attacker;
-		if (attacker == null)
-			return;
+		if (attacker == null) return;
 
-		// Ordenar a todos los aliados de la manada "player" atacar al agresor
 		SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
 		foreach (ComponentCreature creature in creatureSpawn.Creatures)
 		{
-			if (creature.ComponentHealth.Health <= 0f)
-				continue;
-
+			if (creature.ComponentHealth.Health <= 0f) continue;
 			ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
-			if (herd == null || herd.HerdName != "player")
-				continue;
-
+			if (herd == null || herd.HerdName != "player") continue;
 			ComponentNewChaseBehavior chase = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
 			if (chase != null && chase.Target == null)
-			{
 				chase.Attack(attacker, 20f, 30f, false);
-			}
 		}
 	}
 
-	public override void OnMinerHit(ComponentMiner miner, ComponentBody targetBody, Vector3 hitPoint, Vector3 hitDirection, ref float damage, ref float hitProbability, ref float systemHitProbability, out bool skip)
+	public override void OnMinerHit(ComponentMiner miner, ComponentBody targetBody, Vector3 hitPoint, Vector3 hitDirection,
+		ref float damage, ref float hitProbability, ref float systemHitProbability, out bool skip)
 	{
 		skip = false;
+		if (!HerdAttackOnPlayerHitEnabled) return;
 
-		// Verificar que el que golpea es un jugador
 		ComponentPlayer player = miner.ComponentPlayer;
-		if (player == null)
-			return;
+		if (player == null) return;
+		if (systemHitProbability < 1f) return;
 
-		// Solo reaccionar si el golpe es exitoso (probabilidad >= 1.0 o fallo garantizado)
-		if (systemHitProbability < 1f)
-			return;
-
-		// Verificar que el objetivo es una criatura válida
 		ComponentCreature targetCreature = targetBody.Entity.FindComponent<ComponentCreature>();
-		if (targetCreature == null)
-			return;
+		if (targetCreature == null) return;
 
-		// Buscar criaturas aliadas del jugador (manada "player")
 		SubsystemCreatureSpawn creatureSpawn = miner.Project.FindSubsystem<SubsystemCreatureSpawn>();
-
 		foreach (ComponentCreature creature in creatureSpawn.Creatures)
 		{
-			if (creature.ComponentHealth.Health <= 0f)
-				continue;
-
+			if (creature.ComponentHealth.Health <= 0f) continue;
 			ComponentNewHerdBehavior herdBehavior = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
-			if (herdBehavior == null || herdBehavior.HerdName != "player")
-				continue;
-
+			if (herdBehavior == null || herdBehavior.HerdName != "player") continue;
 			ComponentNewChaseBehavior chaseBehavior = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
 			if (chaseBehavior != null && chaseBehavior.Target == null)
-			{
 				chaseBehavior.Attack(targetCreature, 20f, 30f, false);
-			}
 		}
 	}
 
-	// Música aleatoria (se mantiene)
 	public override void MenuPlayMusic(out string contentMusicPath)
 	{
 		int index = random.Int(ListaMusica.Count);
@@ -115,11 +93,11 @@ public class ShittyInfectedsModLoader : ModLoader
 			logo.Size = new Vector2(320f, 136f);
 		}
 
-		// 2. Agregar título debajo de la etiqueta de la API en TopArea
+		// 2. Título
 		StackPanelWidget topArea = mainMenuScreen.Children.Find<StackPanelWidget>("TopArea", true);
 		if (topArea != null)
 		{
-			LabelWidget titleLabel = new LabelWidget
+			topArea.Children.Add(new LabelWidget
 			{
 				Text = "Shitty Infecteds v1.0",
 				Color = new Color(0, 255, 94),
@@ -127,22 +105,19 @@ public class ShittyInfectedsModLoader : ModLoader
 				FontScale = 0.5f,
 				DropShadow = true,
 				Margin = new Vector2(0f, 0f)
-			};
-			topArea.Children.Add(titleLabel);
+			});
 		}
 
-		// 3. Agregar botón cuadrado en la barra lateral derecha
+		// 3. Botón de configuración (ahora usa ZombiConfigButton)
 		if (rightBottomBar != null)
 		{
-			// Crear el botón cuadrado
-			BevelledButtonWidget configButton = new BevelledButtonWidget
+			var configButton = new ZombiConfigButton
 			{
 				Size = new Vector2(60f, 60f),
 				Name = "ZombiConfigButton"
 			};
 
-			// Crear el rectángulo con la textura del icono
-			RectangleWidget icon = new RectangleWidget
+			configButton.Children.Add(new RectangleWidget
 			{
 				Size = new Vector2(28f, 28f),
 				HorizontalAlignment = WidgetAlignment.Center,
@@ -150,34 +125,29 @@ public class ShittyInfectedsModLoader : ModLoader
 				Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/zombi configurador"),
 				FillColor = Color.White,
 				OutlineColor = new Color(0, 0, 0, 0)
-			};
+			});
 
-			configButton.Children.Add(icon);
-			// Insertar al inicio para que aparezca antes que otros botones (pantalla completa, reporte)
 			rightBottomBar.Children.Insert(0, configButton);
 		}
 
-		// 4. Agregar enlace de TikTok encima del copyright
+		// 4. Enlace TikTok
 		StackPanelWidget bottomInfos = mainMenuScreen.Children.Find<StackPanelWidget>("BottomInfos", true);
 		if (bottomInfos != null)
 		{
-			StackPanelWidget tiktokRow = new StackPanelWidget
+			var tiktokRow = new StackPanelWidget
 			{
 				Direction = LayoutDirection.Horizontal,
 				HorizontalAlignment = WidgetAlignment.Center,
 				Margin = new Vector2(0f, 4f)
 			};
-
-			LinkWidget tiktokLink = new LinkWidget
+			tiktokRow.Children.Add(new LinkWidget
 			{
 				Text = "Tiktok: @athormi",
 				Url = "https://www.tiktok.com/@athormi",
 				Color = Color.White,
 				FontScale = 0.7f,
 				DropShadow = true
-			};
-
-			tiktokRow.Children.Add(tiktokLink);
+			});
 			bottomInfos.Children.Insert(0, tiktokRow);
 		}
 	}
