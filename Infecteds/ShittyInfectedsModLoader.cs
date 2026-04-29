@@ -112,27 +112,52 @@ public class ShittyInfectedsModLoader : ModLoader
 		if (logo != null)
 		{
 			logo.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/Logo");
-			logo.Size = new Vector2(320f, 136f); // o el tamaño deseado, el usuario puso 320x136 en su último código
+			logo.Size = new Vector2(320f, 136f);
 		}
 
 		// 2. Agregar título debajo de la etiqueta de la API en TopArea
 		StackPanelWidget topArea = mainMenuScreen.Children.Find<StackPanelWidget>("TopArea", true);
 		if (topArea != null)
 		{
-
 			LabelWidget titleLabel = new LabelWidget
 			{
 				Text = "Shitty Infecteds v1.0",
 				Color = new Color(0, 255, 94),
 				HorizontalAlignment = WidgetAlignment.Center,
-				FontScale = 0.5f, // Mismo tamaño que la etiqueta "Version"
+				FontScale = 0.5f,
 				DropShadow = true,
 				Margin = new Vector2(0f, 0f)
 			};
 			topArea.Children.Add(titleLabel);
 		}
 
-		// 3. Agregar enlace de TikTok encima del copyright
+		// 3. Agregar botón cuadrado en la barra lateral derecha
+		if (rightBottomBar != null)
+		{
+			// Crear el botón cuadrado
+			BevelledButtonWidget configButton = new BevelledButtonWidget
+			{
+				Size = new Vector2(60f, 60f),
+				Name = "ZombiConfigButton"
+			};
+
+			// Crear el rectángulo con la textura del icono
+			RectangleWidget icon = new RectangleWidget
+			{
+				Size = new Vector2(28f, 28f),
+				HorizontalAlignment = WidgetAlignment.Center,
+				VerticalAlignment = WidgetAlignment.Center,
+				Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/zombi configurador"),
+				FillColor = Color.White,
+				OutlineColor = new Color(0, 0, 0, 0)
+			};
+
+			configButton.Children.Add(icon);
+			// Insertar al inicio para que aparezca antes que otros botones (pantalla completa, reporte)
+			rightBottomBar.Children.Insert(0, configButton);
+		}
+
+		// 4. Agregar enlace de TikTok encima del copyright
 		StackPanelWidget bottomInfos = mainMenuScreen.Children.Find<StackPanelWidget>("BottomInfos", true);
 		if (bottomInfos != null)
 		{
