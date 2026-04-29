@@ -166,9 +166,14 @@ namespace Game
 
 		private void SubscribeToPlayerInjuries()
 		{
-			foreach (var player in m_subsystemPlayers.ComponentPlayers)
-				SubscribePlayer(player);
+			// Suscribirse a jugadores que ya existen (usa PlayersData en lugar de Players)
+			foreach (PlayerData playerData in m_subsystemPlayers.PlayersData)
+			{
+				if (playerData.ComponentPlayer != null)
+					SubscribePlayer(playerData.ComponentPlayer);
+			}
 
+			// Suscribirse a futuros jugadores que se conecten después
 			m_subsystemPlayers.PlayerAdded += OnPlayerAdded;
 			m_subsystemPlayers.PlayerRemoved += OnPlayerRemoved;
 		}
