@@ -29,6 +29,14 @@ namespace Game
 			if (componentCreature != null && IsPlayerHerd() && componentCreature.Entity.FindComponent<ComponentPlayer>() != null)
 				return;
 
+			// NUEVA COMPROBACIÓN: No atacar a criaturas de la misma manada
+			if (componentCreature != null && m_componentNewHerdBehavior != null)
+			{
+				ComponentNewHerdBehavior targetHerd = componentCreature.Entity.FindComponent<ComponentNewHerdBehavior>();
+				if (targetHerd != null && targetHerd.HerdName == m_componentNewHerdBehavior.HerdName)
+					return;
+			}
+
 			if (Suppressed)
 				return;
 
@@ -333,6 +341,14 @@ namespace Game
 
 		public virtual float ScoreTarget(ComponentCreature componentCreature)
 		{
+			// NUEVA COMPROBACIÓN: Ignorar objetivos de la misma manada
+			if (m_componentNewHerdBehavior != null)
+			{
+				ComponentNewHerdBehavior targetHerd = componentCreature.Entity.FindComponent<ComponentNewHerdBehavior>();
+				if (targetHerd != null && targetHerd.HerdName == m_componentNewHerdBehavior.HerdName)
+					return 0f;
+			}
+
 			float score = 0f;
 			bool isPlayer = componentCreature.Entity.FindComponent<ComponentPlayer>() != null;
 			bool notWater = m_componentCreature.Category != CreatureCategory.WaterPredator && m_componentCreature.Category != CreatureCategory.WaterOther;
