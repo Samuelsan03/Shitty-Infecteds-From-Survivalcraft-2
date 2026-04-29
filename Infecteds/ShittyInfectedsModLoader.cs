@@ -19,6 +19,45 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("MenuPlayMusic", this);
 		ModsManager.RegisterHook("OnMainMenuScreenCreated", this);
 		ModsManager.RegisterHook("OnMinerHit", this);
+		ModsManager.RegisterHook("CalculateCreatureInjuryAmount", this);
+	}
+
+	public override void CalculateCreatureInjuryAmount(Injury injury)
+	{
+		if (injury == null || injury.ComponentHealth == null)
+			return;
+
+		// Solo si la víctima es un jugador
+		if (!(injury.ComponentHealth.m_componentCreature is ComponentPlayer))
+			return;
+
+		// Verificar que estamos en modo Creativo
+		SubsystemGameInfo gameInfo = injury.ComponentHealth.m_subsystemGameInfo;
+		if (gameInfo.WorldSettings.GameMode != GameMode.Creative)
+			return;
+
+		// Obtener atacante
+		ComponentCreature attacker = injury.Attacker;
+		if (attacker == null)
+			return;
+
+		// Ordenar a todos los aliados de la manada "player" atacar al agresor
+		SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
+		foreach (ComponentCreature creature in creatureSpawn.Creatures)
+		{
+			if (creature.ComponentHealth.Health <= 0f)
+				continue;
+
+			ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
+			if (herd == null || herd.HerdName != "player")
+				continue;
+
+			ComponentNewChaseBehavior chase = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
+			if (chase != null && chase.Target == null)
+			{
+				chase.Attack(attacker, 20f, 30f, false);
+			}
+		}
 	}
 
 	public override void OnMinerHit(ComponentMiner miner, ComponentBody targetBody, Vector3 hitPoint, Vector3 hitDirection, ref float damage, ref float hitProbability, ref float systemHitProbability, out bool skip)
@@ -28,6 +67,10 @@ public class ShittyInfectedsModLoader : ModLoader
 		// Verificar que el que golpea es un jugador
 		ComponentPlayer player = miner.ComponentPlayer;
 		if (player == null)
+			return;
+
+		// Solo reaccionar si el golpe es exitoso (probabilidad >= 1.0 o fallo garantizado)
+		if (systemHitProbability < 1f)
 			return;
 
 		// Verificar que el objetivo es una criatura válida
@@ -43,12 +86,10 @@ public class ShittyInfectedsModLoader : ModLoader
 			if (creature.ComponentHealth.Health <= 0f)
 				continue;
 
-			// Verificar que pertenece a la manada "player"
 			ComponentNewHerdBehavior herdBehavior = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
 			if (herdBehavior == null || herdBehavior.HerdName != "player")
 				continue;
 
-			// Ordenar atacar a la criatura golpeada por el jugador
 			ComponentNewChaseBehavior chaseBehavior = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
 			if (chaseBehavior != null && chaseBehavior.Target == null)
 			{
@@ -78,12 +119,6 @@ public class ShittyInfectedsModLoader : ModLoader
 		StackPanelWidget topArea = mainMenuScreen.Children.Find<StackPanelWidget>("TopArea", true);
 		if (topArea != null)
 		{
-			// Espacio pequeño (como el que hay entre logo y versión)
-			CanvasWidget spacer = new CanvasWidget
-			{
-				Size = new Vector2(0f, 5f)
-			};
-			topArea.Children.Add(spacer);
 
 			LabelWidget titleLabel = new LabelWidget
 			{
