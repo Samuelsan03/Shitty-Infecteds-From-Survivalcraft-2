@@ -18,6 +18,43 @@ public class ShittyInfectedsModLoader : ModLoader
 	{
 		ModsManager.RegisterHook("MenuPlayMusic", this);
 		ModsManager.RegisterHook("OnMainMenuScreenCreated", this);
+		ModsManager.RegisterHook("OnMinerHit", this);
+	}
+
+	public override void OnMinerHit(ComponentMiner miner, ComponentBody targetBody, Vector3 hitPoint, Vector3 hitDirection, ref float damage, ref float hitProbability, ref float systemHitProbability, out bool skip)
+	{
+		skip = false;
+
+		// Verificar que el que golpea es un jugador
+		ComponentPlayer player = miner.ComponentPlayer;
+		if (player == null)
+			return;
+
+		// Verificar que el objetivo es una criatura válida
+		ComponentCreature targetCreature = targetBody.Entity.FindComponent<ComponentCreature>();
+		if (targetCreature == null)
+			return;
+
+		// Buscar criaturas aliadas del jugador (manada "player")
+		SubsystemCreatureSpawn creatureSpawn = miner.Project.FindSubsystem<SubsystemCreatureSpawn>();
+
+		foreach (ComponentCreature creature in creatureSpawn.Creatures)
+		{
+			if (creature.ComponentHealth.Health <= 0f)
+				continue;
+
+			// Verificar que pertenece a la manada "player"
+			ComponentNewHerdBehavior herdBehavior = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
+			if (herdBehavior == null || herdBehavior.HerdName != "player")
+				continue;
+
+			// Ordenar atacar a la criatura golpeada por el jugador
+			ComponentNewChaseBehavior chaseBehavior = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
+			if (chaseBehavior != null && chaseBehavior.Target == null)
+			{
+				chaseBehavior.Attack(targetCreature, 20f, 30f, false);
+			}
+		}
 	}
 
 	// Música aleatoria (se mantiene)
