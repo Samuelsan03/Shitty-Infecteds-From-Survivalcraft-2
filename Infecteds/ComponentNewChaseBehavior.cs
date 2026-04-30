@@ -451,21 +451,25 @@ namespace Game
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
 				return false;
+
 			IInventory inventory = m_componentMiner.Inventory;
 			for (int i = 0; i < inventory.SlotsCount; i++)
 			{
 				int slotValue = inventory.GetSlotValue(i);
 				if (inventory.GetSlotCount(i) <= 0)
 					continue;
+
 				int contents = Terrain.ExtractContents(slotValue);
-				if (contents != MusketBlock.Index && contents != CrossbowBlock.Index)
+
+				// Excluir explícitamente todas las armas a distancia y lanzables
+				if (contents == MusketBlock.Index || contents == CrossbowBlock.Index || contents == BowBlock.Index || IsThrowableItem(contents))
+					continue;
+
+				Block block = BlocksManager.Blocks[contents];
+				if (block.GetMeleePower(slotValue) > 0f)
 				{
-					Block block = BlocksManager.Blocks[contents];
-					if (block.GetMeleePower(slotValue) > 0f)
-					{
-						inventory.ActiveSlotIndex = i;
-						return true;
-					}
+					inventory.ActiveSlotIndex = i;
+					return true;
 				}
 			}
 			return false;
