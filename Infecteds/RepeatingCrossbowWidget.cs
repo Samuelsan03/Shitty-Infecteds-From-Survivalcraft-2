@@ -58,12 +58,11 @@ namespace Game
 			int data = Terrain.ExtractData(slotValue);
 			int draw = RepeatingCrossbowBlock.GetDraw(data);
 			int boltCount = RepeatingCrossbowBlock.GetBoltCount(data);
-			int boltType = RepeatingCrossbowBlock.GetBoltType(data);
-			string boltName = boltCount > 0 ? ((ArrowBlock.ArrowType)boltType).ToString() : "Ninguno";
+			RepeatingBoltBlock.RepeatingBoltType boltType = RepeatingCrossbowBlock.GetBoltType(data);
 
+			string boltName = boltCount > 0 ? boltType.ToString() : "Ninguno";
 			m_ammoLabel.Text = $"{boltName}: {boltCount}/8";
 
-			// Mismo comportamiento que CrossbowWidget original
 			if (draw < 15)
 			{
 				m_instructionsLabel.Text = "Tensa la ballesta";
@@ -73,7 +72,6 @@ namespace Game
 				m_instructionsLabel.Text = (boltCount == 0) ? "Arrastra virotes aquí para cargar" : "Lista para disparar";
 			}
 
-			// Arrastre para tensar - IDENTICO al CrossbowWidget original
 			if ((draw < 15 || boltCount == 0) && base.Input.Tap != null && HitTestGlobal(base.Input.Tap.Value, null) == m_inventorySlotWidget)
 			{
 				Vector2 localPos = m_inventorySlotWidget.ScreenToWidget(base.Input.Press.Value);

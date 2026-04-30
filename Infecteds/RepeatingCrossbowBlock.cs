@@ -51,14 +51,14 @@ namespace Game
 			int data = Terrain.ExtractData(value);
 			int draw = GetDraw(data);
 			int boltCount = GetBoltCount(data);
-			int boltType = GetBoltType(data);
+			RepeatingBoltBlock.RepeatingBoltType boltType = GetBoltType(data);
 
 			BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[draw], color, 2f * size, ref matrix, environmentData);
 
 			if (boltCount > 0)
 			{
 				Matrix boltMatrix = Matrix.CreateRotationX(-MathF.PI / 2f) * Matrix.CreateTranslation(0f, 0.2f * size, -0.09f * size) * matrix;
-				int boltValue = Terrain.MakeBlockValue(m_boltBlock.BlockIndex, 0, ArrowBlock.SetArrowType(0, (ArrowBlock.ArrowType)boltType));
+				int boltValue = Terrain.MakeBlockValue(m_boltBlock.BlockIndex, 0, RepeatingBoltBlock.SetBoltType(0, boltType));
 				m_boltBlock.DrawBlock(primitivesRenderer, boltValue, color, size, ref boltMatrix, environmentData);
 			}
 		}
@@ -75,42 +75,29 @@ namespace Game
 
 		public override bool IsSwapAnimationNeeded(int oldValue, int newValue)
 		{
+			int oldContents = Terrain.ExtractContents(oldValue);
+			int newContents = Terrain.ExtractContents(newValue);
+
+			if (oldContents != newContents)
+				return true;
+
 			int oldData = Terrain.ExtractData(oldValue);
 			int newData = Terrain.ExtractData(newValue);
 			int oldCount = GetBoltCount(oldData);
 			int newCount = GetBoltCount(newData);
-			// Solo animar si cambia la presencia de virotes (vacío ↔ cargado) o el tipo
+
 			if ((oldCount == 0) != (newCount == 0))
 				return true;
-			if (GetBoltType(oldData) != GetBoltType(newData))
+
+			if (oldCount > 0 && newCount > 0 && GetBoltType(oldData) != GetBoltType(newData))
 				return true;
+
 			return false;
 		}
 
 		public override IEnumerable<int> GetCreativeValues()
 		{
-			// CORREGIDO: Ballesta vacía y sin tensar por defecto
 			yield return Terrain.MakeBlockValue(Index, 0, 0);
-		}
-
-		public override string GetDisplayName(SubsystemTerrain subsystemTerrain, int value)
-		{
-			int data = Terrain.ExtractData(value);
-			int boltCount = GetBoltCount(data);
-			int boltType = GetBoltType(data);
-
-			string typeName = ((ArrowBlock.ArrowType)boltType) switch
-			{
-				ArrowBlock.ArrowType.IronBolt => "Hierro",
-				ArrowBlock.ArrowType.DiamondBolt => "Diamante",
-				ArrowBlock.ArrowType.ExplosiveBolt => "Explosivo",
-				_ => ""
-			};
-
-			if (boltCount > 0)
-				return $"Ballesta Repetidora ({typeName}: {boltCount}/8)";
-			else
-				return "Ballesta Repetidora (Vacía)";
 		}
 
 		public static int GetDraw(int data) => data & 0xF;
@@ -119,7 +106,7 @@ namespace Game
 		public static int GetBoltCount(int data) => (data >> 4) & 0xF;
 		public static int SetBoltCount(int data, int count) => (data & ~0xF0) | ((count & 0xF) << 4);
 
-		public static int GetBoltType(int data) => (data >> 8) & 0xF;
-		public static int SetBoltType(int data, int type) => (data & ~0xF00) | ((type & 0xF) << 8);
+		public static RepeatingBoltBlock.RepeatingBoltType GetBoltType(int data) => (RepeatingBoltBlock.RepeatingBoltType)((data >> 8) & 0xF);
+		public static int SetBoltType(int data, RepeatingBoltBlock.RepeatingBoltType type) => (data & ~0xF00) | (((int)type & 0xF) << 8);
 	}
 }

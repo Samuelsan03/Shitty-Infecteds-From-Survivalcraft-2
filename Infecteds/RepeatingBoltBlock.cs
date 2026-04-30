@@ -9,13 +9,21 @@ namespace Game
 	{
 		public static int Index = 301;
 
+		public enum RepeatingBoltType
+		{
+			RepeatingCopperBolt = 0,      // NUEVO: cobre primero
+			RepeatingIronBolt = 1,
+			RepeatingDiamondBolt = 2,
+			RepeatingExplosiveBolt = 3
+		}
+
 		private List<BlockMesh> m_standaloneBlockMeshes = new List<BlockMesh>();
 
 		public override void Initialize()
 		{
 			Model model = ContentManager.Get<Model>("Models/repeat bolt");
 
-			foreach (ArrowBlock.ArrowType type in new[] { ArrowBlock.ArrowType.IronBolt, ArrowBlock.ArrowType.DiamondBolt, ArrowBlock.ArrowType.ExplosiveBolt })
+			foreach (RepeatingBoltType type in Enum.GetValues(typeof(RepeatingBoltType)))
 			{
 				int idx = (int)type;
 				Matrix tipBone = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("ArrowTip", true).ParentBone);
@@ -53,30 +61,38 @@ namespace Game
 
 		public override void DrawBlock(PrimitivesRenderer3D primitivesRenderer, int value, Color color, float size, ref Matrix matrix, DrawBlockEnvironmentData environmentData)
 		{
-			// IDÉNTICO al ArrowBlock original: usa directamente el ArrowType como índice
-			int arrowType = (int)ArrowBlock.GetArrowType(Terrain.ExtractData(value));
-			// Los virotes están en las posiciones 5, 6, 7 del enum; las mapeamos a 0,1,2
-			int index = arrowType - 5;
+			int index = Terrain.ExtractData(value) & 0x3;
 			if (index >= 0 && index < m_standaloneBlockMeshes.Count)
 				BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[index], color, 2f * size, ref matrix, environmentData);
 		}
 
+		public static RepeatingBoltType GetBoltType(int data)
+		{
+			return (RepeatingBoltType)(data & 0x3);
+		}
+
+		public static int SetBoltType(int data, RepeatingBoltType boltType)
+		{
+			return (data & ~0x3) | ((int)boltType & 0x3);
+		}
+
 		public override float GetProjectilePower(int value)
 		{
-			return (ArrowBlock.GetArrowType(Terrain.ExtractData(value))) switch
+			return GetBoltType(Terrain.ExtractData(value)) switch
 			{
-				ArrowBlock.ArrowType.IronBolt => 28f,
-				ArrowBlock.ArrowType.DiamondBolt => 36f,
-				ArrowBlock.ArrowType.ExplosiveBolt => 8f,
+				RepeatingBoltType.RepeatingCopperBolt => 20f,      // NUEVO: daño de cobre
+				RepeatingBoltType.RepeatingIronBolt => 28f,
+				RepeatingBoltType.RepeatingDiamondBolt => 36f,
+				RepeatingBoltType.RepeatingExplosiveBolt => 8f,
 				_ => 0f
 			};
 		}
 
 		public override float GetExplosionPressure(int value)
 		{
-			return (ArrowBlock.GetArrowType(Terrain.ExtractData(value))) switch
+			return GetBoltType(Terrain.ExtractData(value)) switch
 			{
-				ArrowBlock.ArrowType.ExplosiveBolt => 40f,
+				RepeatingBoltType.RepeatingExplosiveBolt => 40f,
 				_ => 0f
 			};
 		}
@@ -88,24 +104,27 @@ namespace Game
 
 		public override IEnumerable<int> GetCreativeValues()
 		{
-			yield return Terrain.MakeBlockValue(Index, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.IronBolt));
-			yield return Terrain.MakeBlockValue(Index, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.DiamondBolt));
-			yield return Terrain.MakeBlockValue(Index, 0, ArrowBlock.SetArrowType(0, ArrowBlock.ArrowType.ExplosiveBolt));
+			yield return Terrain.MakeBlockValue(Index, 0, SetBoltType(0, RepeatingBoltType.RepeatingCopperBolt));   // NUEVO
+			yield return Terrain.MakeBlockValue(Index, 0, SetBoltType(0, RepeatingBoltType.RepeatingIronBolt));
+			yield return Terrain.MakeBlockValue(Index, 0, SetBoltType(0, RepeatingBoltType.RepeatingDiamondBolt));
+			yield return Terrain.MakeBlockValue(Index, 0, SetBoltType(0, RepeatingBoltType.RepeatingExplosiveBolt));
 		}
 
 		public override string GetDisplayName(SubsystemTerrain subsystemTerrain, int value)
 		{
-			return (ArrowBlock.GetArrowType(Terrain.ExtractData(value))) switch
+			return GetBoltType(Terrain.ExtractData(value)) switch
 			{
-				ArrowBlock.ArrowType.IronBolt => "Virote de Hierro",
-				ArrowBlock.ArrowType.DiamondBolt => "Virote de Diamante",
-				ArrowBlock.ArrowType.ExplosiveBolt => "Virote Explosivo",
-				_ => "Virote"
+				RepeatingBoltType.RepeatingCopperBolt => "Virote Repetidor de Cobre",     // NUEVO
+				RepeatingBoltType.RepeatingIronBolt => "Virote Repetidor de Hierro",
+				RepeatingBoltType.RepeatingDiamondBolt => "Virote Repetidor de Diamante",
+				RepeatingBoltType.RepeatingExplosiveBolt => "Virote Repetidor Explosivo",
+				_ => "Virote Repetidor"
 			};
 		}
 
-		private static int[] m_tipTextureSlots = { 0, 0, 0, 0, 0, 63, 182, 183, 0 };
-		private static int[] m_shaftTextureSlots = { 0, 0, 0, 0, 0, 63, 63, 63, 0 };
-		private static int[] m_stabTextureSlots = { 0, 0, 0, 0, 0, 63, 63, 63, 0 };
+		// Texturas: cobre (punta 181), hierro (63), diamante (182), explosivo (225)
+		private static int[] m_tipTextureSlots = { 181, 63, 182, 225 };
+		private static int[] m_shaftTextureSlots = { 63, 63, 63, 63 };
+		private static int[] m_stabTextureSlots = { 63, 63, 63, 63 };
 	}
 }

@@ -19,8 +19,8 @@ namespace Game
 
 		public override void OnFiredAsProjectile(Projectile projectile)
 		{
-			// Si es virote explosivo, añadir estela de humo (opcional)
-			if (ArrowBlock.GetArrowType(Terrain.ExtractData(projectile.Value)) == ArrowBlock.ArrowType.ExplosiveBolt)
+			RepeatingBoltBlock.RepeatingBoltType boltType = RepeatingBoltBlock.GetBoltType(Terrain.ExtractData(projectile.Value));
+			if (boltType == RepeatingBoltBlock.RepeatingBoltType.RepeatingExplosiveBolt)
 			{
 				m_subsystemProjectiles.AddTrail(projectile, Vector3.Zero,
 					new SmokeTrailParticleSystem(20, 0.5f, float.MaxValue, Color.White));
@@ -29,16 +29,17 @@ namespace Game
 
 		public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem)
 		{
-			var type = ArrowBlock.GetArrowType(Terrain.ExtractData(worldItem.Value));
+			RepeatingBoltBlock.RepeatingBoltType boltType = RepeatingBoltBlock.GetBoltType(Terrain.ExtractData(worldItem.Value));
 			if (worldItem.Velocity.Length() > 10f)
 			{
-				float breakChance = 0f;
-				switch (type)
+				float breakChance = boltType switch
 				{
-					case ArrowBlock.ArrowType.IronBolt: breakChance = 0.05f; break;
-					case ArrowBlock.ArrowType.DiamondBolt: breakChance = 0f; break;
-					case ArrowBlock.ArrowType.ExplosiveBolt: breakChance = 0f; break;
-				}
+					RepeatingBoltBlock.RepeatingBoltType.RepeatingCopperBolt => 0.1f,     // NUEVO: más frágil que hierro
+					RepeatingBoltBlock.RepeatingBoltType.RepeatingIronBolt => 0.05f,
+					RepeatingBoltBlock.RepeatingBoltType.RepeatingDiamondBolt => 0f,
+					RepeatingBoltBlock.RepeatingBoltType.RepeatingExplosiveBolt => 0f,
+					_ => 0f
+				};
 				if (m_random.Float(0f, 1f) < breakChance)
 					return true; // se rompe
 			}

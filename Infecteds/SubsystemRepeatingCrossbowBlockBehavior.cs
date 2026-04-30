@@ -49,7 +49,7 @@ namespace Game
 			int data = Terrain.ExtractData(slotValue);
 			int draw = RepeatingCrossbowBlock.GetDraw(data);
 			int boltCount = RepeatingCrossbowBlock.GetBoltCount(data);
-			int boltType = RepeatingCrossbowBlock.GetBoltType(data);
+			RepeatingBoltBlock.RepeatingBoltType boltType = RepeatingCrossbowBlock.GetBoltType(data);
 
 			double gameTime = m_subsystemTime.GameTime;
 
@@ -102,18 +102,16 @@ namespace Game
 					{
 						Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition + componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f - componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
 						Vector3 v2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
-						int value = Terrain.MakeBlockValue(RepeatingBoltBlock.Index, 0, ArrowBlock.SetArrowType(0, (ArrowBlock.ArrowType)boltType));
+						int boltValue = Terrain.MakeBlockValue(RepeatingBoltBlock.Index, 0, RepeatingBoltBlock.SetBoltType(0, boltType));
 						float s = 38f;
 						Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + s * v2;
-						if (m_subsystemProjectiles.FireProjectile(value, vector, velocity, Vector3.Zero, componentMiner.ComponentCreature) != null)
+						if (m_subsystemProjectiles.FireProjectile(boltValue, vector, velocity, Vector3.Zero, componentMiner.ComponentCreature) != null)
 						{
 							m_subsystemAudio.PlaySound("Audio/Bow", 1f, m_random.Float(-0.1f, 0.1f), componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, 0.05f);
 						}
 
 						boltCount--;
 						int newData = RepeatingCrossbowBlock.SetBoltCount(data, boltCount);
-						// NO MODIFICAR DRAW - se mantiene en 15 hasta que se acaben los virotes
-						// Solo bajar al llegar a 0
 						if (boltCount == 0)
 						{
 							newData = RepeatingCrossbowBlock.SetDraw(newData, 0);
@@ -123,6 +121,22 @@ namespace Game
 						inventory.RemoveSlotItems(activeSlotIndex, 1);
 						inventory.AddSlotItems(activeSlotIndex, Terrain.MakeBlockValue(contents, 0, newData), 1);
 					}
+					else if (draw != 15)
+					{
+						ComponentPlayer componentPlayer3 = componentMiner.ComponentPlayer;
+						if (componentPlayer3 != null)
+						{
+							componentPlayer3.ComponentGui.DisplaySmallMessage("Cuerda no tensada", Color.White, true, false);
+						}
+						// Destensar si no estaba tensada (igual que el original)
+						int newData2 = RepeatingCrossbowBlock.SetDraw(data, 0);
+						if (newData2 != data)
+						{
+							inventory.RemoveSlotItems(activeSlotIndex, 1);
+							inventory.AddSlotItems(activeSlotIndex, Terrain.MakeBlockValue(contents, 0, newData2), 1);
+							m_subsystemAudio.PlaySound("Audio/CrossbowBoing", 1f, m_random.Float(-0.1f, 0.1f), componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, 0f);
+						}
+					}
 					else if (boltCount == 0)
 					{
 						ComponentPlayer componentPlayer2 = componentMiner.ComponentPlayer;
@@ -130,14 +144,11 @@ namespace Game
 						{
 							componentPlayer2.ComponentGui.DisplaySmallMessage("Sin virotes", Color.White, true, false);
 						}
-					}
-					else if (draw < 15)
-					{
-						ComponentPlayer componentPlayer3 = componentMiner.ComponentPlayer;
-						if (componentPlayer3 != null)
-						{
-							componentPlayer3.ComponentGui.DisplaySmallMessage("Cuerda no tensada", Color.White, true, false);
-						}
+						// Destensar la ballesta al intentar disparar sin virotes
+						int newData2 = RepeatingCrossbowBlock.SetDraw(data, 0);
+						inventory.RemoveSlotItems(activeSlotIndex, 1);
+						inventory.AddSlotItems(activeSlotIndex, Terrain.MakeBlockValue(contents, 0, newData2), 1);
+						m_subsystemAudio.PlaySound("Audio/CrossbowBoing", 1f, m_random.Float(-0.1f, 0.1f), componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, 0f);
 					}
 					m_aimStartTimes.Remove(componentMiner);
 					return false;
@@ -151,15 +162,20 @@ namespace Game
 				return 0;
 
 			int crossbowData = Terrain.ExtractData(inventory.GetSlotValue(slotIndex));
+			int draw = RepeatingCrossbowBlock.GetDraw(crossbowData);
+
+			if (draw != 15)
+				return 0;
+
 			int currentCount = RepeatingCrossbowBlock.GetBoltCount(crossbowData);
 			if (currentCount >= 8)
 				return 0;
 
-			int incomingType = (int)ArrowBlock.GetArrowType(Terrain.ExtractData(value));
+			RepeatingBoltBlock.RepeatingBoltType incomingType = RepeatingBoltBlock.GetBoltType(Terrain.ExtractData(value));
 			if (currentCount == 0)
 				return 1;
 
-			int currentType = RepeatingCrossbowBlock.GetBoltType(crossbowData);
+			RepeatingBoltBlock.RepeatingBoltType currentType = RepeatingCrossbowBlock.GetBoltType(crossbowData);
 			return (incomingType == currentType) ? 1 : 0;
 		}
 
@@ -169,7 +185,7 @@ namespace Game
 			{
 				int currentData = Terrain.ExtractData(inventory.GetSlotValue(slotIndex));
 				int boltCount = RepeatingCrossbowBlock.GetBoltCount(currentData);
-				int boltType = (int)ArrowBlock.GetArrowType(Terrain.ExtractData(value));
+				RepeatingBoltBlock.RepeatingBoltType boltType = RepeatingBoltBlock.GetBoltType(Terrain.ExtractData(value));
 
 				if (boltCount == 0)
 					currentData = RepeatingCrossbowBlock.SetBoltType(currentData, boltType);
