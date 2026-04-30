@@ -60,23 +60,26 @@ namespace Game
 		{
 			// ==========================================
 			// LOGICA 1: NORMAL (Cualquier hora, 100%)
+			// IDs EXACTOS: 2, 6, 7, 8
 			// ==========================================
 			m_creatureTypes.Add(new CreatureType("WerewolfShit", SpawnLocationType.Surface, true, false)
 			{
 				SpawnSuitabilityFunction = delegate (CreatureType _, Point3 point)
 				{
 					int terrainBlock = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
-					if (terrainBlock != 2 && terrainBlock != 6 && terrainBlock != 78)
+					if (terrainBlock != 2 && terrainBlock != 6 && terrainBlock != 7 && terrainBlock != 8)
 					{
 						return 0f;
 					}
 					return 1f; // 100%
 				},
+				// UTILIZA EL TEMPLATE "WerewolfShit"
 				SpawnFunction = ((CreatureType creatureType, Point3 point) => SpawnCreatures(creatureType, "WerewolfShit", point, 1).Count)
 			});
 
 			// ==========================================
 			// LOGICA 2: CONSTANT (Solo noche, 50%)
+			// IDs EXACTOS: 2, 6, 7, 8
 			// ==========================================
 			m_creatureTypes.Add(new CreatureType("WerewolfShit Constant", SpawnLocationType.Surface, false, true)
 			{
@@ -88,7 +91,7 @@ namespace Game
 						if (cellLightFast <= 7)
 						{
 							int terrainBlock = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
-							if (terrainBlock == 2 || terrainBlock == 6 || terrainBlock == 78)
+							if (terrainBlock == 2 || terrainBlock == 6 || terrainBlock == 7 || terrainBlock == 8)
 							{
 								return 0.5f; // 50%
 							}
@@ -96,7 +99,8 @@ namespace Game
 					}
 					return 0f;
 				},
-				SpawnFunction = ((CreatureType creatureType, Point3 point) => SpawnCreatures(creatureType, "WerewolfShit Constant", point, 1).Count)
+				// UTILIZA EL MISMO TEMPLATE "WerewolfShit", EL SISTEMA LE ASIGNARA ConstantSpawn = true AUTOMATICAMENTE
+				SpawnFunction = ((CreatureType creatureType, Point3 point) => SpawnCreatures(creatureType, "WerewolfShit", point, 1).Count)
 			});
 		}
 
@@ -221,6 +225,7 @@ namespace Game
 				if (point2 != null && CalculateSpawnSuitability(creatureType, point2.Value) > 0f)
 				{
 					Vector3 position = new Vector3((float)point2.Value.X + m_random.Float(0.4f, 0.6f), (float)point2.Value.Y + 1.1f, (float)point2.Value.Z + m_random.Float(0.4f, 0.6f));
+					// AQUI ES DONDE SE LE ASIGNA EL CONSTANT SPAWN DE FORMA AUTOMATICA
 					Entity entity = SpawnCreature(templateName, position, creatureType.ConstantSpawn);
 					if (entity != null)
 					{
@@ -241,6 +246,7 @@ namespace Game
 				Entity entity = DatabaseManager.CreateEntity(Project, templateName, true);
 				entity.FindComponent<ComponentBody>(true).Position = position;
 				entity.FindComponent<ComponentBody>(true).Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, m_random.Float(0f, 6.2831855f));
+				// SE LE PONE LA ETIQUETA CONSTANT AL NPC
 				entity.FindComponent<ComponentCreature>(true).ConstantSpawn = constantSpawn;
 				Project.AddEntity(entity);
 				result = entity;

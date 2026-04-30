@@ -1,46 +1,45 @@
 ﻿using System;
-using System.Collections.Generic;
 using Engine;
 using Engine.Graphics;
+using Game;
 
 namespace Game
 {
 	public class RepeatingCrossbowBlock : Block
 	{
-		public static int Index = 300;
-
-		private BlockMesh[] m_standaloneBlockMeshes = new BlockMesh[16];
-		private Block m_boltBlock;
+		public static int Index = 805;
+		public BlockMesh[] m_standaloneBlockMeshes = new BlockMesh[16];
+		private Block arrowBlock;
 
 		public override void Initialize()
 		{
 			Model model = ContentManager.Get<Model>("Models/repeat crossbow");
 
-			Matrix body = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("Body", true).ParentBone);
-			Matrix bowRelaxed = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("BowRelaxed", true).ParentBone);
-			Matrix stringRelaxed = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("StringRelaxed", true).ParentBone);
-			Matrix bowTensed = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("BowTensed", true).ParentBone);
-			Matrix stringTensed = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("StringTensed", true).ParentBone);
+			Matrix boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("Body", true).ParentBone);
+			Matrix boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("BowRelaxed", true).ParentBone);
+			Matrix boneAbsoluteTransform3 = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("StringRelaxed", true).ParentBone);
+			Matrix boneAbsoluteTransform4 = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("BowTensed", true).ParentBone);
+			Matrix boneAbsoluteTransform5 = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("StringTensed", true).ParentBone);
 
-			BlockMesh relaxedMesh = new BlockMesh();
-			relaxedMesh.AppendModelMeshPart(model.FindMesh("Body", true).MeshParts[0], body * Matrix.CreateTranslation(0, 0, 0), false, false, false, false, Color.White);
-			relaxedMesh.AppendModelMeshPart(model.FindMesh("BowRelaxed", true).MeshParts[0], bowRelaxed * Matrix.CreateTranslation(0, 0, 0), false, false, false, false, Color.White);
-			relaxedMesh.AppendModelMeshPart(model.FindMesh("StringRelaxed", true).MeshParts[0], stringRelaxed * Matrix.CreateTranslation(0, 0, 0), false, false, false, false, Color.White);
+			BlockMesh blockMesh = new BlockMesh();
+			blockMesh.AppendModelMeshPart(model.FindMesh("Body", true).MeshParts[0], boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
+			blockMesh.AppendModelMeshPart(model.FindMesh("BowRelaxed", true).MeshParts[0], boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
+			blockMesh.AppendModelMeshPart(model.FindMesh("StringRelaxed", true).MeshParts[0], boneAbsoluteTransform3 * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
 
-			BlockMesh tensedMesh = new BlockMesh();
-			tensedMesh.AppendModelMeshPart(model.FindMesh("Body", true).MeshParts[0], body * Matrix.CreateTranslation(0, 0, 0), false, false, false, false, Color.White);
-			tensedMesh.AppendModelMeshPart(model.FindMesh("BowTensed", true).MeshParts[0], bowTensed * Matrix.CreateTranslation(0, 0, 0), false, false, false, false, Color.White);
-			tensedMesh.AppendModelMeshPart(model.FindMesh("StringTensed", true).MeshParts[0], stringTensed * Matrix.CreateTranslation(0, 0, 0), false, false, false, false, Color.White);
+			BlockMesh blockMesh2 = new BlockMesh();
+			blockMesh2.AppendModelMeshPart(model.FindMesh("Body", true).MeshParts[0], boneAbsoluteTransform * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
+			blockMesh2.AppendModelMeshPart(model.FindMesh("BowTensed", true).MeshParts[0], boneAbsoluteTransform4 * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
+			blockMesh2.AppendModelMeshPart(model.FindMesh("StringTensed", true).MeshParts[0], boneAbsoluteTransform5 * Matrix.CreateTranslation(0f, 0f, 0f), false, false, false, false, Color.White);
 
 			for (int i = 0; i < 16; i++)
 			{
 				float factor = (float)i / 15f;
 				m_standaloneBlockMeshes[i] = new BlockMesh();
-				m_standaloneBlockMeshes[i].AppendBlockMesh(relaxedMesh);
-				m_standaloneBlockMeshes[i].BlendBlockMesh(tensedMesh, factor);
+				m_standaloneBlockMeshes[i].AppendBlockMesh(blockMesh);
+				m_standaloneBlockMeshes[i].BlendBlockMesh(blockMesh2, factor);
 			}
 
-			m_boltBlock = BlocksManager.GetBlock<RepeatingBoltBlock>(false);
+			arrowBlock = BlocksManager.GetBlock<RepeatingBoltBlock>();
 			base.Initialize();
 		}
 
@@ -50,63 +49,80 @@ namespace Game
 		{
 			int data = Terrain.ExtractData(value);
 			int draw = GetDraw(data);
-			int boltCount = GetBoltCount(data);
-			RepeatingBoltBlock.RepeatingBoltType boltType = GetBoltType(data);
+			int? arrowType = GetArrowType(data);
 
 			BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[draw], color, 2f * size, ref matrix, environmentData);
 
-			if (boltCount > 0)
+			if (arrowType != null)
 			{
-				Matrix boltMatrix = Matrix.CreateRotationX(-MathF.PI / 2f) * Matrix.CreateTranslation(0f, 0.2f * size, -0.09f * size) * matrix;
-				int boltValue = Terrain.MakeBlockValue(m_boltBlock.BlockIndex, 0, RepeatingBoltBlock.SetBoltType(0, boltType));
-				m_boltBlock.DrawBlock(primitivesRenderer, boltValue, color, size, ref boltMatrix, environmentData);
+				Matrix matrix2 = Matrix.CreateRotationX(-1.5707964f) * Matrix.CreateTranslation(0f, 0.2f * size, -0.09f * size) * matrix;
+				int value2 = Terrain.MakeBlockValue(arrowBlock.BlockIndex, 0, RepeatingBoltBlock.SetArrowType(0, arrowType.Value));
+				arrowBlock.DrawBlock(primitivesRenderer, value2, color, size, ref matrix2, environmentData);
 			}
 		}
 
 		public override int GetDamage(int value)
 		{
-			return 0;
+			return Terrain.ExtractData(value) >> 8 & 255;
 		}
 
 		public override int SetDamage(int value, int damage)
 		{
-			return value;
+			int num = Terrain.ExtractData(value);
+			num &= -65281;
+			num |= Math.Clamp(damage, 0, 255) << 8;
+			return Terrain.ReplaceData(value, num);
 		}
 
 		public override bool IsSwapAnimationNeeded(int oldValue, int newValue)
 		{
-			int oldContents = Terrain.ExtractContents(oldValue);
-			int newContents = Terrain.ExtractContents(newValue);
-
-			if (oldContents != newContents)
-				return true;
-
-			int oldData = Terrain.ExtractData(oldValue);
-			int newData = Terrain.ExtractData(newValue);
-			int oldCount = GetBoltCount(oldData);
-			int newCount = GetBoltCount(newData);
-
-			if ((oldCount == 0) != (newCount == 0))
-				return true;
-
-			if (oldCount > 0 && newCount > 0 && GetBoltType(oldData) != GetBoltType(newData))
-				return true;
-
-			return false;
+			int num = Terrain.ExtractContents(oldValue);
+			int data = Terrain.ExtractData(oldValue);
+			int data2 = Terrain.ExtractData(newValue);
+			if (num == BlockIndex)
+			{
+				int? arrowType = GetArrowType(data);
+				int? arrowType2 = GetArrowType(data2);
+				return !(arrowType.GetValueOrDefault() == arrowType2.GetValueOrDefault() && arrowType != null == (arrowType2 != null));
+			}
+			return true;
 		}
 
-		public override IEnumerable<int> GetCreativeValues()
+		public static int? GetArrowType(int data)
 		{
-			yield return Terrain.MakeBlockValue(Index, 0, 0);
+			int num = data >> 4 & 15;
+			if (num != 0) return num - 1;
+			return null;
 		}
 
-		public static int GetDraw(int data) => data & 0xF;
-		public static int SetDraw(int data, int draw) => (data & ~0xF) | (draw & 0xF);
+		public static int SetArrowType(int data, int? arrowType)
+		{
+			// Si arrowType es null, guardamos 0 (sin flecha)
+			// Si tiene valor, guardamos arrowType.Value + 1 (1-4)
+			int num = (arrowType != null) ? (arrowType.Value + 1) : 0;
+			// Limpiar bits 4-7 y establecer nuevos
+			return (data & ~(15 << 4)) | ((num & 15) << 4);
+		}
 
-		public static int GetBoltCount(int data) => (data >> 4) & 0xF;
-		public static int SetBoltCount(int data, int count) => (data & ~0xF0) | ((count & 0xF) << 4);
+		public static int GetDraw(int data)
+		{
+			return data & 15;
+		}
 
-		public static RepeatingBoltBlock.RepeatingBoltType GetBoltType(int data) => (RepeatingBoltBlock.RepeatingBoltType)((data >> 8) & 0xF);
-		public static int SetBoltType(int data, RepeatingBoltBlock.RepeatingBoltType type) => (data & ~0xF00) | (((int)type & 0xF) << 8);
+		public static int SetDraw(int data, int draw)
+		{
+			return (data & -16) | (draw & 15);
+		}
+
+		// CORREGIDOS: operan sobre el valor completo del bloque, no solo los datos
+		public static int GetLoadCount(int value)
+		{
+			return (value >> 8) & 15;
+		}
+
+		public static int SetLoadCount(int value, int count)
+		{
+			return (value & ~(15 << 8)) | ((count & 15) << 8);
+		}
 	}
 }
