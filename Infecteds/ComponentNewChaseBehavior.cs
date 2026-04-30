@@ -89,8 +89,11 @@ namespace Game
 				m_chaseTime -= dt;
 				m_componentCreature.ComponentCreatureModel.LookAtOrder = m_target.ComponentCreatureModel.EyePosition;
 
+				// Nueva verificación de línea de visión (se usa varias veces en el frame)
+				bool targetVisible = IsTargetVisible(m_target);
+
 				// ----- INICIO: Lógica de cambio inmediato de arma según distancia -----
-				// Solo se aplica en AttackType.Default
+				// Solo se aplica en AttackType.Default y cuando el objetivo es visible
 				if (m_attackType == AttackType.Default)
 				{
 					float dist = Vector3.Distance(
@@ -100,60 +103,34 @@ namespace Game
 					bool isInMeleeRange = dist < m_rangedAttackRange.X;
 					bool isInRangedRange = dist >= m_rangedAttackRange.X && dist <= m_rangedAttackRange.Y;
 
-					if (isInMeleeRange)
+					// Solo cambiamos de arma si tenemos visión directa del objetivo
+					if (targetVisible)
 					{
-						// Cancelar inmediatamente cualquier apunte o enfriamiento activo
-						if (m_isAiming)
+						if (isInMeleeRange)
 						{
-							m_isAiming = false;
-							m_aimingTimer = 0f;
-
-							// Si teníamos una ballesta, devolverla a estado relajado y sin virote
-							if (IsActiveCrossbow() && m_componentMiner.Inventory != null)
+							// Cancelar inmediatamente cualquier apunte o enfriamiento activo
+							if (m_isAiming)
 							{
-								IInventory inv = m_componentMiner.Inventory;
-								int slot = inv.ActiveSlotIndex;
-								int value = inv.GetSlotValue(slot);
-								int data = Terrain.ExtractData(value);
-								data = CrossbowBlock.SetArrowType(data, null);
-								data = CrossbowBlock.SetDraw(data, 0);
-								int newValue = Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data);
-								inv.RemoveSlotItems(slot, 1);
-								inv.AddSlotItems(slot, newValue, 1);
+								CancelAiming();
 							}
-
-							// Si teníamos un arco, devolverlo a estado relajado y sin flecha
-							if (IsActiveBow() && m_componentMiner.Inventory != null)
+							if (m_cooldownTimer > 0f)
 							{
-								IInventory inv = m_componentMiner.Inventory;
-								int slot = inv.ActiveSlotIndex;
-								int value = inv.GetSlotValue(slot);
-								int data = Terrain.ExtractData(value);
-								data = BowBlock.SetArrowType(data, null);
-								data = BowBlock.SetDraw(data, 0);
-								int newValue = Terrain.MakeBlockValue(BowBlock.Index, 0, data);
-								inv.RemoveSlotItems(slot, 1);
-								inv.AddSlotItems(slot, newValue, 1);
+								m_cooldownTimer = 0f;
+							}
+							// Cambiar a arma cuerpo a cuerpo si tenemos un arma a distancia equipada
+							if (IsHoldingRangedWeapon())
+							{
+								TryEquipMeleeWeapon();
 							}
 						}
-						if (m_cooldownTimer > 0f)
+						else if (isInRangedRange)
 						{
-							m_cooldownTimer = 0f;
-						}
-						// Cambiar a arma cuerpo a cuerpo si tenemos un arma a distancia equipada
-						if (IsHoldingRangedWeapon())
-						{
-							TryEquipMeleeWeapon();
-							// Nota: Si no hay arma cuerpo a cuerpo, se mantiene el arma actual
-						}
-					}
-					else if (isInRangedRange)
-					{
-						// Si estamos en rango de distancia y no estamos apuntando ni en enfriamiento,
-						// volvemos a equipar un arma a distancia si no lo tenemos ya.
-						if (!m_isAiming && m_cooldownTimer <= 0f && !IsHoldingRangedWeapon())
-						{
-							TryEquipRangedWeapon();
+							// Si estamos en rango de distancia y no estamos apuntando ni en enfriamiento,
+							// volvemos a equipar un arma a distancia si no lo tenemos ya.
+							if (!m_isAiming && m_cooldownTimer <= 0f && !IsHoldingRangedWeapon())
+							{
+								TryEquipRangedWeapon();
+							}
 						}
 					}
 				}
@@ -162,27 +139,33 @@ namespace Game
 				// Control de apunte con animación y detención del movimiento
 				if (m_isAiming)
 				{
-					m_aimingTimer -= dt;
-
-					// Animación de apunte cada frame
-					Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-					Vector3 aimDir = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos);
-					Ray3 aimRay = new Ray3(eyePos, aimDir);
-					m_componentMiner.Aim(aimRay, AimState.InProgress);
-
-					// La ballesta ya está tensada desde el inicio del apunte, no se hace nada aquí
-
-					// Al terminar el tiempo de apunte, disparar
-					if (m_aimingTimer <= 0f)
+					// Perdió la visión mientras apuntaba => cancelar
+					if (!targetVisible)
 					{
-						PerformRangedAttack();
-						m_isAiming = false;
-						if (IsActiveCrossbow())
-							m_cooldownTimer = CrossbowCooldownTime;
-						else if (IsActiveBow())
-							m_cooldownTimer = BowCooldownTime;
-						else
-							m_cooldownTimer = MusketCooldownTime;
+						CancelAiming();
+					}
+					else
+					{
+						m_aimingTimer -= dt;
+
+						// Animación de apunte cada frame
+						Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+						Vector3 aimDir = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos);
+						Ray3 aimRay = new Ray3(eyePos, aimDir);
+						m_componentMiner.Aim(aimRay, AimState.InProgress);
+
+						// Al terminar el tiempo de apunte, disparar
+						if (m_aimingTimer <= 0f)
+						{
+							PerformRangedAttack();
+							m_isAiming = false;
+							if (IsActiveCrossbow())
+								m_cooldownTimer = CrossbowCooldownTime;
+							else if (IsActiveBow())
+								m_cooldownTimer = BowCooldownTime;
+							else
+								m_cooldownTimer = MusketCooldownTime;
+						}
 					}
 				}
 				else if (m_cooldownTimer > 0f)
@@ -194,7 +177,8 @@ namespace Game
 
 				if (useRanged)
 				{
-					if (!m_isAiming && m_cooldownTimer <= 0f)
+					// Solo iniciar apunte si el objetivo es visible
+					if (!m_isAiming && m_cooldownTimer <= 0f && targetVisible)
 					{
 						// Iniciar apunte: detener todo movimiento
 						m_isAiming = true;
@@ -256,7 +240,8 @@ namespace Game
 					{
 						m_isAiming = false;
 					}
-					if (IsTargetInAttackRange(m_target.ComponentBody))
+					// Ataque cuerpo a cuerpo solo si el objetivo está visible y en rango
+					if (IsTargetInAttackRange(m_target.ComponentBody) && targetVisible)
 						m_componentCreatureModel.AttackOrder = true;
 				}
 
@@ -282,9 +267,75 @@ namespace Game
 			}
 		}
 
+		// ----- NUEVO MÉTODO DE VERIFICACIÓN DE LÍNEA DE VISIÓN -----
+		/// <summary>
+		/// Verifica si el objetivo está dentro de un cono de 45° horizontales y si no hay obstáculos
+		/// (bloques o cuerpos) entre la criatura y el objetivo.
+		/// </summary>
+		private bool IsTargetVisible(ComponentCreature target)
+		{
+			if (target == null) return false;
+
+			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 targetEyePos = target.ComponentCreatureModel.EyePosition;
+			Vector3 dirToTarget = targetEyePos - eyePos;
+			float distSq = dirToTarget.LengthSquared();
+			if (distSq < 0.01f) return true;
+			float dist = MathF.Sqrt(distSq);
+
+			// Comprobación del ángulo horizontal (45°)
+			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
+			float flatForwardLen = new Vector2(forward.X, forward.Z).Length();
+			if (flatForwardLen < 0.001f) return false; // sin dirección horizontal válida
+
+			Vector2 flatDir = new Vector2(dirToTarget.X, dirToTarget.Z);
+			float flatDist = flatDir.Length();
+			if (flatDist < 0.001f) return true; // objetivo justo encima/debajo, se permite si está muy cerca
+
+			float dot = Vector2.Dot(
+				new Vector2(forward.X, forward.Z) / flatForwardLen,
+				flatDir / flatDist);
+			if (dot < MathF.Cos(0.785398f)) // cos(45°) ≈ 0.7071068
+				return false;
+
+			// Raycast de terreno para detectar bloques
+			TerrainRaycastResult? terrainResult = m_subsystemTerrain.Raycast(eyePos, targetEyePos, false, true, null);
+			if (terrainResult != null && terrainResult.Value.Distance < dist - 0.01f)
+			{
+				return false;
+			}
+
+			// Raycast de cuerpos para detectar otras criaturas
+			Ray3 ray = new Ray3(eyePos, dirToTarget / dist);
+			BodyRaycastResult? bodyResult = m_componentMiner.Raycast<BodyRaycastResult>(ray, RaycastMode.Interaction, true, true, true, null);
+			if (bodyResult != null && bodyResult.Value.Distance < dist - 0.01f)
+			{
+				ComponentBody hitBody = bodyResult.Value.ComponentBody;
+				// Si no es el objetivo ni está emparentado con él, bloquea la visión
+				if (hitBody != target.ComponentBody &&
+					!hitBody.IsChildOfBody(target.ComponentBody) &&
+					!target.ComponentBody.IsChildOfBody(hitBody))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+		// ----- FIN DEL MÉTODO DE VISIÓN -----
+
+		// ----- MÉTODO AUXILIAR PARA CANCELAR EL APUNTADO (sin restaurar armas) -----
+		private void CancelAiming()
+		{
+			if (!m_isAiming) return;
+			m_isAiming = false;
+			m_aimingTimer = 0f;
+			m_cooldownTimer = 0f;
+		}
+		// ----- FIN DEL MÉTODO CANCELAR APUNTADO -----
+
 		// ----- MÉTODOS AUXILIARES GENÉRICOS PARA ARMAS A DISTANCIA -----
 
-		// Determina si el arma activa es una ballesta (Crossbow)
 		private bool IsActiveCrossbow()
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
@@ -294,7 +345,6 @@ namespace Game
 			return Terrain.ExtractContents(activeValue) == CrossbowBlock.Index;
 		}
 
-		// Determina si el arma activa es un mosquete (Musket)
 		private bool IsActiveMusket()
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
@@ -304,13 +354,11 @@ namespace Game
 			return Terrain.ExtractContents(activeValue) == MusketBlock.Index;
 		}
 
-		// Determina si el arma activa es un arma a distancia (mosquete, ballesta o arco)
 		private bool IsHoldingRangedWeapon()
 		{
 			return IsActiveMusket() || IsActiveCrossbow() || IsActiveBow();
 		}
 
-		// Busca y equipa el primer arma a distancia (mosquete, ballesta o arco) del inventario
 		private bool TryEquipRangedWeapon()
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
@@ -333,8 +381,6 @@ namespace Game
 			return false;
 		}
 
-
-		// Busca y equipa un arma cuerpo a cuerpo (excluyendo mosquete y ballesta)
 		private bool TryEquipMeleeWeapon()
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
@@ -348,7 +394,6 @@ namespace Game
 					continue;
 
 				int contents = Terrain.ExtractContents(slotValue);
-				// Excluimos el mosquete, la ballesta y cualquier objeto sin poder de ataque cuerpo a cuerpo
 				if (contents != MusketBlock.Index && contents != CrossbowBlock.Index)
 				{
 					Block block = BlocksManager.Blocks[contents];
@@ -362,7 +407,6 @@ namespace Game
 			return false;
 		}
 
-		// Determina si el arma activa es un arco (Bow)
 		private bool IsActiveBow()
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
@@ -510,17 +554,14 @@ namespace Game
 				return;
 			}
 
-			// Guardar referencia al último proyectil antes de disparar para modificarlo después
 			SubsystemProjectiles subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>();
 			int projectileCountBefore = (subsystemProjectiles != null) ? subsystemProjectiles.Projectiles.Count : 0;
 
-			// Disparar usando el sistema de Aim del block behavior correspondiente
 			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
 			Vector3 aimDir = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos);
 			Ray3 aimRay = new Ray3(eyePos, aimDir);
 			m_componentMiner.Aim(aimRay, AimState.Completed);
 
-			// Si es ballesta o arco, hacer que los proyectiles desaparezcan al impactar en lugar de volverse pickables
 			if ((contents == CrossbowBlock.Index || contents == BowBlock.Index) && subsystemProjectiles != null)
 			{
 				for (int i = projectileCountBefore; i < subsystemProjectiles.Projectiles.Count; i++)
@@ -534,7 +575,6 @@ namespace Game
 			}
 		}
 		// ----- FIN DEL ATAQUE A DISTANCIA UNIFICADO -----
-		// ----- FIN DEL ATAQUE A DISTANCIA UNIFICADO -----
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
@@ -544,6 +584,7 @@ namespace Game
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
+			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true); // Añadido para la comprobación de visión
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
@@ -874,6 +915,7 @@ namespace Game
 		public SubsystemBodies m_subsystemBodies;
 		public SubsystemTime m_subsystemTime;
 		public SubsystemNoise m_subsystemNoise;
+		public SubsystemTerrain m_subsystemTerrain; // nuevo campo para la detección de bloques
 		public ComponentCreature m_componentCreature;
 		public ComponentPathfinding m_componentPathfinding;
 		public ComponentMiner m_componentMiner;
@@ -930,7 +972,6 @@ namespace Game
 		public float CrossbowCooldownTime = 0.02f;
 		public float BowAimingTime = 1.5f;
 		public float BowCooldownTime = 0.01f;
-
 
 		private bool m_isAiming;
 		private float m_aimingTimer;
