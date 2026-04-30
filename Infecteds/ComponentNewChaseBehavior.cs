@@ -107,13 +107,27 @@ namespace Game
 						{
 							m_isAiming = false;
 							m_aimingTimer = 0f;
+
+							// Si teníamos una ballesta, devolverla a estado relajado y sin virote
+							if (IsActiveCrossbow() && m_componentMiner.Inventory != null)
+							{
+								IInventory inv = m_componentMiner.Inventory;
+								int slot = inv.ActiveSlotIndex;
+								int value = inv.GetSlotValue(slot);
+								int data = Terrain.ExtractData(value);
+								data = CrossbowBlock.SetArrowType(data, null);
+								data = CrossbowBlock.SetDraw(data, 0);
+								int newValue = Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data);
+								inv.RemoveSlotItems(slot, 1);
+								inv.AddSlotItems(slot, newValue, 1);
+							}
 						}
 						if (m_cooldownTimer > 0f)
 						{
 							m_cooldownTimer = 0f;
 						}
 						// Cambiar a arma cuerpo a cuerpo si tenemos un arma a distancia equipada
-						if (IsActiveRangedWeapon())
+						if (IsHoldingRangedWeapon())
 						{
 							TryEquipMeleeWeapon();
 							// Nota: Si no hay arma cuerpo a cuerpo, se mantiene el arma actual
@@ -122,10 +136,10 @@ namespace Game
 					else if (isInRangedRange)
 					{
 						// Si estamos en rango de distancia y no estamos apuntando ni en enfriamiento,
-						// volvemos a equipar el mosquete si no lo tenemos ya.
-						if (!m_isAiming && m_cooldownTimer <= 0f && !IsActiveRangedWeapon())
+						// volvemos a equipar un arma a distancia si no lo tenemos ya.
+						if (!m_isAiming && m_cooldownTimer <= 0f && !IsHoldingRangedWeapon())
 						{
-							TryEquipMusket();
+							TryEquipRangedWeapon();
 						}
 					}
 				}
@@ -142,12 +156,14 @@ namespace Game
 					Ray3 aimRay = new Ray3(eyePos, aimDir);
 					m_componentMiner.Aim(aimRay, AimState.InProgress);
 
+					// La ballesta ya está tensada desde el inicio del apunte, no se hace nada aquí
+
 					// Al terminar el tiempo de apunte, disparar
 					if (m_aimingTimer <= 0f)
 					{
-						PerformRangedAttack(); // Aquí se llama a AimState.Completed
+						PerformRangedAttack();
 						m_isAiming = false;
-						m_cooldownTimer = MusketCooldownTime;
+						m_cooldownTimer = IsActiveCrossbow() ? CrossbowCooldownTime : MusketCooldownTime;
 					}
 				}
 				else if (m_cooldownTimer > 0f)
@@ -163,9 +179,30 @@ namespace Game
 					{
 						// Iniciar apunte: detener todo movimiento
 						m_isAiming = true;
-						m_aimingTimer = MusketAimingTime;
+						m_aimingTimer = IsActiveCrossbow() ? CrossbowAimingTime : MusketAimingTime;
 						m_componentPathfinding.Stop();
 						m_componentCreature.ComponentLocomotion.WalkOrder = null;
+
+						// Si es ballesta, tensar instantáneamente y colocar virote para mostrar durante el apunte
+						if (IsActiveCrossbow() && m_componentMiner.Inventory != null)
+						{
+							IInventory inv = m_componentMiner.Inventory;
+							int slot = inv.ActiveSlotIndex;
+							int value = inv.GetSlotValue(slot);
+							int data = Terrain.ExtractData(value);
+							// Tensado instantáneo
+							data = CrossbowBlock.SetDraw(data, 15);
+							// Colocar virote ahora para que se muestre durante el apunte
+							ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
+							if (arrowType == null)
+							{
+								ArrowBlock.ArrowType newArrow = m_crossbowArrowTypes[m_random.Int(0, m_crossbowArrowTypes.Length - 1)];
+								data = CrossbowBlock.SetArrowType(data, newArrow);
+							}
+							int newValue = Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data);
+							inv.RemoveSlotItems(slot, 1);
+							inv.AddSlotItems(slot, newValue, 1);
+						}
 					}
 				}
 				else
@@ -200,8 +237,20 @@ namespace Game
 			}
 		}
 
-		// NUEVO CAMBIO: Método para detectar si el arma activa actual es de distancia (mosquete)
-		private bool IsActiveRangedWeapon()
+		// ----- MÉTODOS AUXILIARES GENÉRICOS PARA ARMAS A DISTANCIA -----
+
+		// Determina si el arma activa es una ballesta (Crossbow)
+		private bool IsActiveCrossbow()
+		{
+			if (m_componentMiner == null || m_componentMiner.Inventory == null)
+				return false;
+
+			int activeValue = m_componentMiner.ActiveBlockValue;
+			return Terrain.ExtractContents(activeValue) == CrossbowBlock.Index;
+		}
+
+		// Determina si el arma activa es un mosquete (Musket)
+		private bool IsActiveMusket()
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
 				return false;
@@ -210,7 +259,36 @@ namespace Game
 			return Terrain.ExtractContents(activeValue) == MusketBlock.Index;
 		}
 
-		// NUEVO CAMBIO: Método para equipar un arma cuerpo a cuerpo desde el inventario
+		// Determina si el arma activa es un arma a distancia (mosquete o ballesta)
+		private bool IsHoldingRangedWeapon()
+		{
+			return IsActiveMusket() || IsActiveCrossbow();
+		}
+
+		// Busca y equipa el primer arma a distancia (mosquete o ballesta) del inventario
+		private bool TryEquipRangedWeapon()
+		{
+			if (m_componentMiner == null || m_componentMiner.Inventory == null)
+				return false;
+
+			IInventory inventory = m_componentMiner.Inventory;
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int slotValue = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) <= 0)
+					continue;
+
+				int contents = Terrain.ExtractContents(slotValue);
+				if (contents == MusketBlock.Index || contents == CrossbowBlock.Index)
+				{
+					inventory.ActiveSlotIndex = i;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// Busca y equipa un arma cuerpo a cuerpo (excluyendo mosquete y ballesta)
 		private bool TryEquipMeleeWeapon()
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
@@ -224,8 +302,8 @@ namespace Game
 					continue;
 
 				int contents = Terrain.ExtractContents(slotValue);
-				// Excluimos el mosquete y cualquier objeto sin poder de ataque cuerpo a cuerpo
-				if (contents != MusketBlock.Index)
+				// Excluimos el mosquete, la ballesta y cualquier objeto sin poder de ataque cuerpo a cuerpo
+				if (contents != MusketBlock.Index && contents != CrossbowBlock.Index)
 				{
 					Block block = BlocksManager.Blocks[contents];
 					if (block.GetMeleePower(slotValue) > 0f)
@@ -237,6 +315,8 @@ namespace Game
 			}
 			return false;
 		}
+
+		// ----- FIN DE MÉTODOS AUXILIARES -----
 
 		private bool ShouldUseRangedAttack()
 		{
@@ -300,15 +380,9 @@ namespace Game
 			if (projectileBB != null) projectileBB.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
 		}
 
+		// ----- ATAQUE A DISTANCIA UNIFICADO -----
 		private void PerformRangedAttack()
 		{
-			// 5% de probabilidad de disparar las tres balas a la vez
-			if (m_random.Float() < 0.05f)
-			{
-				TripleShot();
-				return;
-			}
-
 			IInventory inventory = m_componentMiner.Inventory;
 			if (inventory == null)
 				return;
@@ -317,71 +391,88 @@ namespace Game
 			int slotValue = inventory.GetSlotValue(slotIndex);
 			int contents = Terrain.ExtractContents(slotValue);
 
-			if (contents != MusketBlock.Index)
+			if (contents != MusketBlock.Index && contents != CrossbowBlock.Index)
 			{
-				if (!TryEquipMusket())
+				if (!TryEquipRangedWeapon())
 					return;
 				slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
 				contents = Terrain.ExtractContents(slotValue);
-				if (contents != MusketBlock.Index)
+			}
+
+			// --- Mosquete ---
+			if (contents == MusketBlock.Index)
+			{
+				if (m_random.Float() < 0.05f)
+				{
+					TripleShot();
 					return;
-			}
+				}
 
-			// Selección aleatoria de bala
-			BulletBlock.BulletType bulletType;
-			int rnd = m_random.Int(0, 2);
-			switch (rnd)
+				int data = Terrain.ExtractData(slotValue);
+				BulletBlock.BulletType bulletType;
+				int rnd = m_random.Int(0, 2);
+				switch (rnd)
+				{
+					case 0: bulletType = BulletBlock.BulletType.MusketBall; break;
+					case 1: bulletType = BulletBlock.BulletType.Buckshot; break;
+					default: bulletType = BulletBlock.BulletType.BuckshotBall; break;
+				}
+
+				MusketBlock.LoadState loadState = MusketBlock.GetLoadState(data);
+				if (loadState != MusketBlock.LoadState.Loaded || !MusketBlock.GetHammerState(data))
+				{
+					int newData = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
+					newData = MusketBlock.SetBulletType(newData, bulletType);
+					newData = MusketBlock.SetHammerState(newData, true);
+					int newValue = Terrain.MakeBlockValue(MusketBlock.Index, 0, newData);
+					inventory.RemoveSlotItems(slotIndex, 1);
+					inventory.AddSlotItems(slotIndex, newValue, 1);
+				}
+
+				slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
+				data = Terrain.ExtractData(slotValue);
+				if (!MusketBlock.GetHammerState(data))
+				{
+					int hammerData = MusketBlock.SetHammerState(data, true);
+					int hammerValue = Terrain.MakeBlockValue(MusketBlock.Index, 0, hammerData);
+					inventory.RemoveSlotItems(inventory.ActiveSlotIndex, 1);
+					inventory.AddSlotItems(inventory.ActiveSlotIndex, hammerValue, 1);
+				}
+			}
+			// --- Ballesta ---
+			else if (contents == CrossbowBlock.Index)
 			{
-				case 0: bulletType = BulletBlock.BulletType.MusketBall; break;
-				case 1: bulletType = BulletBlock.BulletType.Buckshot; break;
-				default: bulletType = BulletBlock.BulletType.BuckshotBall; break;
+				slotValue = inventory.GetSlotValue(slotIndex);
 			}
-
-			int data = Terrain.ExtractData(slotValue);
-			MusketBlock.LoadState loadState = MusketBlock.GetLoadState(data);
-			if (loadState != MusketBlock.LoadState.Loaded || !MusketBlock.GetHammerState(data))
+			else
 			{
-				int newData = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
-				newData = MusketBlock.SetBulletType(newData, bulletType);
-				newData = MusketBlock.SetHammerState(newData, true);
-				int newValue = Terrain.MakeBlockValue(MusketBlock.Index, 0, newData);
-				inventory.RemoveSlotItems(slotIndex, 1);
-				inventory.AddSlotItems(slotIndex, newValue, 1);
+				return;
 			}
 
-			slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
-			data = Terrain.ExtractData(slotValue);
-			if (!MusketBlock.GetHammerState(data))
-			{
-				int hammerData = MusketBlock.SetHammerState(data, true);
-				int hammerValue = Terrain.MakeBlockValue(MusketBlock.Index, 0, hammerData);
-				inventory.RemoveSlotItems(inventory.ActiveSlotIndex, 1);
-				inventory.AddSlotItems(inventory.ActiveSlotIndex, hammerValue, 1);
-			}
+			// Guardar referencia al último proyectil antes de disparar para modificarlo después
+			SubsystemProjectiles subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>();
+			int projectileCountBefore = (subsystemProjectiles != null) ? subsystemProjectiles.Projectiles.Count : 0;
 
+			// Disparar usando el sistema de Aim del block behavior correspondiente
 			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
 			Vector3 aimDir = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos);
 			Ray3 aimRay = new Ray3(eyePos, aimDir);
 			m_componentMiner.Aim(aimRay, AimState.Completed);
-		}
 
-		private bool TryEquipMusket()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-
-			IInventory inventory = m_componentMiner.Inventory;
-			for (int i = 0; i < inventory.SlotsCount; i++)
+			// Si es ballesta, hacer que los virotes desaparezcan al impactar en lugar de volverse pickables
+			if (contents == CrossbowBlock.Index && subsystemProjectiles != null)
 			{
-				int slotValue = inventory.GetSlotValue(i);
-				if (Terrain.ExtractContents(slotValue) == MusketBlock.Index && inventory.GetSlotCount(i) > 0)
+				for (int i = projectileCountBefore; i < subsystemProjectiles.Projectiles.Count; i++)
 				{
-					inventory.ActiveSlotIndex = i;
-					return true;
+					Projectile projectile = subsystemProjectiles.Projectiles[i];
+					if (projectile != null && !projectile.ToRemove)
+					{
+						projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+					}
 				}
 			}
-			return false;
 		}
+		// ----- FIN DEL ATAQUE A DISTANCIA UNIFICADO -----
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
@@ -550,7 +641,7 @@ namespace Game
 				else
 				{
 					if (m_isAiming)
-						return; // <--- AÑADIR ESTA LÍNEA
+						return;
 					if (ScoreTarget(m_target) <= 0f)
 						m_targetUnsuitableTime += m_dt;
 					else
@@ -576,7 +667,7 @@ namespace Game
 							1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
 
 						if (m_isAiming)
-							return; // No moverse mientras se apunta
+							return;
 						if (PlayAngrySoundWhenChasing && m_random.Float(0f, 1f) < 0.33f * m_dt)
 							m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
 					}
@@ -773,9 +864,19 @@ namespace Game
 
 		public float MusketAimingTime = 1.0f;
 		public float MusketCooldownTime = 0.5f;
+		public float CrossbowAimingTime = 1.5f;
+		public float CrossbowCooldownTime = 0.03f;
 
 		private bool m_isAiming;
 		private float m_aimingTimer;
 		private float m_cooldownTimer;
+
+		// Tipos de virote soportados por la ballesta
+		private static ArrowBlock.ArrowType[] m_crossbowArrowTypes = new ArrowBlock.ArrowType[]
+		{
+			ArrowBlock.ArrowType.IronBolt,
+			ArrowBlock.ArrowType.DiamondBolt,
+			ArrowBlock.ArrowType.ExplosiveBolt
+		};
 	}
 }
