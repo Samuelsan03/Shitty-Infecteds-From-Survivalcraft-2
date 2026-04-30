@@ -148,7 +148,7 @@ namespace Game
 				if (m_isAiming)
 				{
 					// Perdió la visión mientras apuntaba => cancelar
-					if (!targetVisible)
+					if (!targetVisible || m_componentPathfinding.IsStuck)
 					{
 						CancelAiming();
 					}
@@ -181,7 +181,7 @@ namespace Game
 				if (useRanged)
 				{
 					// Solo iniciar apunte si el objetivo es visible
-					if (!m_isAiming && m_cooldownTimer <= 0f && targetVisible)
+					if (!m_isAiming && m_cooldownTimer <= 0f && targetVisible && !m_componentPathfinding.IsStuck)
 					{
 						// Intentar equipar primero arma lanzable, luego arma de fuego
 						bool throwableEquipped = TryEquipThrowableWeapon();
