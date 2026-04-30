@@ -121,6 +121,20 @@ namespace Game
 								inv.RemoveSlotItems(slot, 1);
 								inv.AddSlotItems(slot, newValue, 1);
 							}
+
+							// Si teníamos un arco, devolverlo a estado relajado y sin flecha
+							if (IsActiveBow() && m_componentMiner.Inventory != null)
+							{
+								IInventory inv = m_componentMiner.Inventory;
+								int slot = inv.ActiveSlotIndex;
+								int value = inv.GetSlotValue(slot);
+								int data = Terrain.ExtractData(value);
+								data = BowBlock.SetArrowType(data, null);
+								data = BowBlock.SetDraw(data, 0);
+								int newValue = Terrain.MakeBlockValue(BowBlock.Index, 0, data);
+								inv.RemoveSlotItems(slot, 1);
+								inv.AddSlotItems(slot, newValue, 1);
+							}
 						}
 						if (m_cooldownTimer > 0f)
 						{
@@ -163,7 +177,12 @@ namespace Game
 					{
 						PerformRangedAttack();
 						m_isAiming = false;
-						m_cooldownTimer = IsActiveCrossbow() ? CrossbowCooldownTime : MusketCooldownTime;
+						if (IsActiveCrossbow())
+							m_cooldownTimer = CrossbowCooldownTime;
+						else if (IsActiveBow())
+							m_cooldownTimer = BowCooldownTime;
+						else
+							m_cooldownTimer = MusketCooldownTime;
 					}
 				}
 				else if (m_cooldownTimer > 0f)
@@ -179,7 +198,12 @@ namespace Game
 					{
 						// Iniciar apunte: detener todo movimiento
 						m_isAiming = true;
-						m_aimingTimer = IsActiveCrossbow() ? CrossbowAimingTime : MusketAimingTime;
+						if (IsActiveCrossbow())
+							m_aimingTimer = CrossbowAimingTime;
+						else if (IsActiveBow())
+							m_aimingTimer = BowAimingTime;
+						else
+							m_aimingTimer = MusketAimingTime;
 						m_componentPathfinding.Stop();
 						m_componentCreature.ComponentLocomotion.WalkOrder = null;
 
@@ -200,6 +224,27 @@ namespace Game
 								data = CrossbowBlock.SetArrowType(data, newArrow);
 							}
 							int newValue = Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data);
+							inv.RemoveSlotItems(slot, 1);
+							inv.AddSlotItems(slot, newValue, 1);
+						}
+
+						// Si es arco, tensar instantáneamente y colocar flecha para mostrar durante el apunte
+						if (IsActiveBow() && m_componentMiner.Inventory != null)
+						{
+							IInventory inv = m_componentMiner.Inventory;
+							int slot = inv.ActiveSlotIndex;
+							int value = inv.GetSlotValue(slot);
+							int data = Terrain.ExtractData(value);
+							// Tensado instantáneo al máximo
+							data = BowBlock.SetDraw(data, 15);
+							// Colocar flecha ahora para que se muestre durante el apunte
+							ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
+							if (arrowType == null)
+							{
+								ArrowBlock.ArrowType newArrow = m_bowArrowTypes[m_random.Int(0, m_bowArrowTypes.Length - 1)];
+								data = BowBlock.SetArrowType(data, newArrow);
+							}
+							int newValue = Terrain.MakeBlockValue(BowBlock.Index, 0, data);
 							inv.RemoveSlotItems(slot, 1);
 							inv.AddSlotItems(slot, newValue, 1);
 						}
@@ -259,13 +304,13 @@ namespace Game
 			return Terrain.ExtractContents(activeValue) == MusketBlock.Index;
 		}
 
-		// Determina si el arma activa es un arma a distancia (mosquete o ballesta)
+		// Determina si el arma activa es un arma a distancia (mosquete, ballesta o arco)
 		private bool IsHoldingRangedWeapon()
 		{
-			return IsActiveMusket() || IsActiveCrossbow();
+			return IsActiveMusket() || IsActiveCrossbow() || IsActiveBow();
 		}
 
-		// Busca y equipa el primer arma a distancia (mosquete o ballesta) del inventario
+		// Busca y equipa el primer arma a distancia (mosquete, ballesta o arco) del inventario
 		private bool TryEquipRangedWeapon()
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
@@ -279,7 +324,7 @@ namespace Game
 					continue;
 
 				int contents = Terrain.ExtractContents(slotValue);
-				if (contents == MusketBlock.Index || contents == CrossbowBlock.Index)
+				if (contents == MusketBlock.Index || contents == CrossbowBlock.Index || contents == BowBlock.Index)
 				{
 					inventory.ActiveSlotIndex = i;
 					return true;
@@ -287,6 +332,7 @@ namespace Game
 			}
 			return false;
 		}
+
 
 		// Busca y equipa un arma cuerpo a cuerpo (excluyendo mosquete y ballesta)
 		private bool TryEquipMeleeWeapon()
@@ -314,6 +360,16 @@ namespace Game
 				}
 			}
 			return false;
+		}
+
+		// Determina si el arma activa es un arco (Bow)
+		private bool IsActiveBow()
+		{
+			if (m_componentMiner == null || m_componentMiner.Inventory == null)
+				return false;
+
+			int activeValue = m_componentMiner.ActiveBlockValue;
+			return Terrain.ExtractContents(activeValue) == BowBlock.Index;
 		}
 
 		// ----- FIN DE MÉTODOS AUXILIARES -----
@@ -391,7 +447,7 @@ namespace Game
 			int slotValue = inventory.GetSlotValue(slotIndex);
 			int contents = Terrain.ExtractContents(slotValue);
 
-			if (contents != MusketBlock.Index && contents != CrossbowBlock.Index)
+			if (contents != MusketBlock.Index && contents != CrossbowBlock.Index && contents != BowBlock.Index)
 			{
 				if (!TryEquipRangedWeapon())
 					return;
@@ -444,6 +500,11 @@ namespace Game
 			{
 				slotValue = inventory.GetSlotValue(slotIndex);
 			}
+			// --- Arco ---
+			else if (contents == BowBlock.Index)
+			{
+				slotValue = inventory.GetSlotValue(slotIndex);
+			}
 			else
 			{
 				return;
@@ -459,8 +520,8 @@ namespace Game
 			Ray3 aimRay = new Ray3(eyePos, aimDir);
 			m_componentMiner.Aim(aimRay, AimState.Completed);
 
-			// Si es ballesta, hacer que los virotes desaparezcan al impactar en lugar de volverse pickables
-			if (contents == CrossbowBlock.Index && subsystemProjectiles != null)
+			// Si es ballesta o arco, hacer que los proyectiles desaparezcan al impactar en lugar de volverse pickables
+			if ((contents == CrossbowBlock.Index || contents == BowBlock.Index) && subsystemProjectiles != null)
 			{
 				for (int i = projectileCountBefore; i < subsystemProjectiles.Projectiles.Count; i++)
 				{
@@ -472,6 +533,7 @@ namespace Game
 				}
 			}
 		}
+		// ----- FIN DEL ATAQUE A DISTANCIA UNIFICADO -----
 		// ----- FIN DEL ATAQUE A DISTANCIA UNIFICADO -----
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
@@ -865,7 +927,10 @@ namespace Game
 		public float MusketAimingTime = 1.0f;
 		public float MusketCooldownTime = 0.5f;
 		public float CrossbowAimingTime = 1.5f;
-		public float CrossbowCooldownTime = 0.03f;
+		public float CrossbowCooldownTime = 0.02f;
+		public float BowAimingTime = 1.5f;
+		public float BowCooldownTime = 0.01f;
+
 
 		private bool m_isAiming;
 		private float m_aimingTimer;
@@ -877,6 +942,17 @@ namespace Game
 			ArrowBlock.ArrowType.IronBolt,
 			ArrowBlock.ArrowType.DiamondBolt,
 			ArrowBlock.ArrowType.ExplosiveBolt
+		};
+
+		// Tipos de flecha soportados por el arco
+		private static ArrowBlock.ArrowType[] m_bowArrowTypes = new ArrowBlock.ArrowType[]
+		{
+			ArrowBlock.ArrowType.WoodenArrow,
+			ArrowBlock.ArrowType.StoneArrow,
+			ArrowBlock.ArrowType.CopperArrow,
+			ArrowBlock.ArrowType.IronArrow,
+			ArrowBlock.ArrowType.DiamondArrow,
+			ArrowBlock.ArrowType.FireArrow
 		};
 	}
 }
