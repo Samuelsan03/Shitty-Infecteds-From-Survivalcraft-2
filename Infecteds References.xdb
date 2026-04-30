@@ -1,25 +1,43 @@
-<Infecteds>
-<Parameter Name="Class" Guid="a83a741c-c426-4c47-957e-edd2a1a88ab7" new-Value="Game.NewHerdBehavior" Type="string"/>
-<Parameter Name="Class" Guid="353c4b03-8188-46f0-a5f0-ff1ccdc3b4a1" new-Value="Game.NewChaseBehavior" Type="string"/>
+<Infecteds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://gitee.com/THPRC/survivalcraft-api/raw/SCAPI1.8/Survivalcraft/Content/Assets/Database.xsd">
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
-        <ComponentTemplate Name="NewHerdBehavior" Description="Improved behavior that makes a creature stay close to similar creatures with better herding mechanics" Guid="07bef841-0415-4c20-9f5a-b2917770e42e" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
-  <Parameter Name="Class" Guid="3d165b30-90e1-48bf-87ea-5e9c37bf23bb" Value="Game.NewHerdBehavior" Type="string"/>
-  <Parameter Name="AutoNearbyCreaturesHelp" Description="If true, when a nearby creature from the same herd is attacked will automatically attack its attacker" Guid="870594aa-4fc9-4c80-bfc5-58bbe86f69a3" Value="False" Type="bool"/>
-  <Parameter Name="HerdName" Description="Identifier used to find members of the same species for herding purposes" Guid="7c116c81-4ae0-4fcd-8164-4402fc289745" Value="KaalusGlitch" Type="string"/>
-  <Parameter Name="HerdingRange" Description="Maximum distance to search for herd members when determining herd center" Guid="f8b6040e-9433-46e1-a984-487a416ef8e9" Value="32" Type="float"/>
+    <ComponentTemplate Name="PickableGatherer" Description="Behavior that makes a creature pick up certain items based on categories and probabilities" Guid="78692df4-7e31-4ed2-9ba7-7cbe22c31850" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="1f72aa55-1e79-4797-a866-08656be78184" Value="Game.ComponentPickPickableBehavior" Type="string" />
+  <ParameterSet Name="PickFactors" Description="可拾取的类别" Guid="ddfc5e01-0ef4-4ff1-9991-7fcb902a1f0b">
+				<Parameter Name="Terrain" Description="地形方块" Guid="0ddf1c5b-5efb-4720-9e76-dbe3de315d6e" Value="0" Type="float" />
+				<Parameter Name="Plants" Description="植物" Guid="b1bb34c4-ad3d-4fe0-b41b-4985a429d5d0" Value="0" Type="float" />
+				<Parameter Name="Construction" Description="建筑结构件" Guid="0bb786ec-8638-47ee-ac28-b37ebbf96229" Value="0" Type="float" />
+				<Parameter Name="Items" Description="物品" Guid="c9c0fc62-60fc-4307-ba92-e54a9d0b4e80" Value="0" Type="float" />
+				<Parameter Name="Tools" Description="工具, 0 to infinity" Guid="2a68bcb5-c8ab-4d35-b9c9-d7dedab8e5c2" Value="0" Type="float" />
+				<Parameter Name="Clothes" Description="衣物, 0 to infinity" Guid="0c487546-710e-436a-9f3b-0c4bf567da46" Value="0" Type="float" />
+				<Parameter Name="Electrics" Description="电路元件, 0 to infinity" Guid="f87f7dc6-a3fc-4413-852c-049a656ec0e3" Value="0" Type="float" />
+				<Parameter Name="Food" Description="食物, 0 to infinity" Guid="f7fdf081-ec46-4c69-b46e-e08f59a41d16" Value="0" Type="float" />
+				<Parameter Name="Spawner Eggs" Description="原版蛋, 0 to infinity" Guid="82d757be-0e1d-4963-8ab4-2b6c5206ab64" Value="0" Type="float" />
+				<Parameter Name="Painted" Description="染色方块" Guid="5ca7beff-8939-4bea-a482-534f74ae5518" Value="0" Type="float" />
+				<Parameter Name="Dyed" Description="染色衣物, 0 to infinity" Guid="707f9f44-3808-48fa-9b27-e2367e6d3a4d" Value="0" Type="float" />
+				<Parameter Name="Fireworks" Description="烟花, 0 to infinity" Guid="88528776-47c6-4669-9e34-ff32c67998d5" Value="0" Type="float" />
+				<Parameter Name="Weapons" Guid="37134d8a-f209-43a5-bfc5-bfdb606fc130" Value="0" Type="float" />				
+			</ParameterSet>
 </ComponentTemplate>
 
-<ComponentTemplate Name="NewChaseBehavior" Description="Improved behavior that makes a creature chase intruders and protect player if part of player herd" Guid="7778cd2c-1eeb-4d71-a888-32715e259107" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
-  <Parameter Name="Class" Guid="3d39b1c5-0717-4678-9cd8-f68d37c810bb" Value="Game.NewChaseBehavior" Type="string"/>
-  <Parameter Name="ChaseWhenAttackedProbability" Description="Probability that creature will chase when attacked" Guid="6c4f3fec-7821-4ab5-81c4-91490c679f98" Value="1" Type="float"/>
-  <Parameter Name="NightChaseTime" Description="Chase time when creature starts to chase during the night, in seconds" Guid="f22ccc46-3b32-4bb4-90ea-0cdd37562268" Value="10" Type="float"/>
-  <Parameter Name="DayChaseRange" Description="Range when creature starts to chase during the day" Guid="5dc86eca-3ca9-42c9-8bae-4f566178d168" Value="1.5" Type="float"/>
-  <Parameter Name="ChaseOnTouchProbability" Description="Whether creature should chase if touched by AutoChaseMask creature" Guid="dfb55644-c9d1-4e66-a719-a9605518b785" Value="1" Type="float"/>
-  <Parameter Name="DayChaseTime" Description="Chase time when creature starts to chase during the day, in seconds" Guid="d67812f2-445e-4cab-8439-600f804c9d3c" Value="10" Type="float"/>
-  <Parameter Name="NightChaseRange" Description="Range when creature starts to chase during the night" Guid="572303ac-5a9f-4037-a0d1-d9394f66d33f" Value="1.5" Type="float"/>
-  <Parameter Name="AutoChaseMask" Description="Creature categories to chase" Guid="0efec540-4fc0-4c5a-ba53-79746f659c8e" Value="LandOther, Bird" Type="Game.CreatureCategory"/>
-  <Parameter Name="ChaseNonPlayerProbability" Description="Probability of creature chasing a non-player target when in range, 0 to 1" Guid="c23a5760-f1dd-4534-be24-0d7be43a566f" Value="0" Type="float"/>
+    <ComponentTemplate Name="NewChaseBehavior" Description="Comportamiento que hace que una criatura persiga a intrusos. Versión compatible con NewHerdBehavior para proteger al jugador." Guid="ac087cf3-2de5-4e76-9167-95e9754b69fd" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="fcd46c9e-6959-4c0b-a0f7-c8cceadf991e" Value="Game.ComponentNewChaseBehavior" Type="string" />
+  <Parameter Name="ChaseWhenAttackedProbability" Description="Probabilidad de que la criatura persiga cuando es atacada" Guid="98c97dcb-0a27-4451-bb50-8b3102dec2fe" Value="1" Type="float" />
+  <Parameter Name="NightChaseTime" Description="Tiempo de persecución cuando la criatura empieza a perseguir durante la noche, en segundos" Guid="81c354c4-d99a-4211-b87e-0b5c58419989" Value="10" Type="float" />
+  <Parameter Name="DayChaseRange" Description="Rango cuando la criatura empieza a perseguir durante el día" Guid="67968332-40f5-4909-9a00-112419e1f220" Value="1.5" Type="float" />
+  <Parameter Name="ChaseOnTouchProbability" Description="Probabilidad de que la criatura persiga si es tocada por una criatura de AutoChaseMask" Guid="7d478b56-bcda-48de-8151-6debe34307a3" Value="1" Type="float" />
+  <Parameter Name="DayChaseTime" Description="Tiempo de persecución cuando la criatura empieza a perseguir durante el día, en segundos" Guid="eff4140c-f9b3-4b1e-847a-e6d05b859e07" Value="10" Type="float" />
+  <Parameter Name="NightChaseRange" Description="Rango cuando la criatura empieza a perseguir durante la noche" Guid="3473bace-e628-4028-be54-8123837f7d94" Value="1.5" Type="float" />
+  <Parameter Name="AutoChaseMask" Description="Categorías de criaturas a perseguir" Guid="c74e40cf-1c82-4997-a230-2b8cea61eb91" Value="LandOther, Bird" Type="Game.CreatureCategory" />
+  <Parameter Name="ChaseNonPlayerProbability" Description="Probabilidad de que la criatura persiga a un objetivo no jugador cuando está en rango, de 0 a 1" Guid="54db5623-3f54-4274-9b89-4d72d91acc9b" Value="0" Type="float" />
+  <Parameter Name="RangedAttackRange" Description="Rango mínimo y máximo para usar ataque a distancia (min,max)" Guid="e0f4d360-2932-4289-937a-2c6ffbdf1b38" Value="8,25" Type="Vector2" />
+</ComponentTemplate>
+
+<ComponentTemplate Name="NewHerdBehavior" Description="Comportamiento que hace que una criatura permanezca cerca de criaturas similares o siga al jugador si HerdName es 'player'. Las criaturas con HerdName='player' protegerán al jugador." Guid="e8f5a293-55ce-4a36-acf6-f215e5f9c93f" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="AutoNearbyCreaturesHelp" Description="Si es verdadero, cuando una criatura cercana de la misma manada es atacada, atacará automáticamente a su atacante" Guid="5fc7b6ec-bb8a-4416-9f03-f09352a394e9" Value="False" Type="bool" />
+  <Parameter Name="HerdName" Description="Identificador usado para encontrar miembros de la misma especie para agruparse. Usa 'player' para que la criatura siga y proteja al jugador." Guid="7212b035-38a0-4aec-9bf6-509ac1fb095b" Value="KaalusGlitch" Type="string" />
+  <Parameter Name="Class" Guid="720ae469-7471-4274-aded-91b41177a17c" Value="Game.ComponentNewHerdBehavior" Type="string" />
+  <Parameter Name="HerdingRange" Description="Distancia máxima para buscar miembros de la manada al determinar el centro de la manada" Guid="fe38a859-622e-4a97-b9ba-7262ebdae592" Value="32" Type="float" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="ZombieHerdBehavior" Description="Comportamiento de manada para zombis. Agrupa a los zombis por nombre de manada y les permite llamar ayuda entre compañeros" Guid="5a8d1636-1ad9-4344-8c36-a39d9bb2524d" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
@@ -52,4 +70,16 @@
   <Parameter Name="Suppressed" Description="Si es verdadero, desactiva temporalmente el comportamiento de persecución del zombi" Guid="92ea0975-ce0e-4ae5-b4e6-2fc32e1b031d" Value="false" Type="bool"/>
 </ComponentTemplate>
     </Folder>
+
+    <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+    <MemberSubsystemTemplate Name="CreaturesNormalSpawn" Guid="13f67614-75e3-4e8e-84b3-3a386e22a622" InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
+    <Parameter Name="Class" Guid="71726b82-902f-431b-82f6-41dea71c69c5" Value="Game.SubsystemCreaturesNormalSpawn" Type="string" />
+  </MemberSubsystemTemplate>
+<MemberSubsystemTemplate Name="RepeatingBoltBlockBehavior" Guid="3e80ad64-4a44-4c87-9839-72c3c380f0d8" InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
+    <Parameter Name="Class" Guid="99bb8830-0ce4-4f50-a81b-95c56dc91e34" Value="Game.SubsystemRepeatingBoltBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+  <MemberSubsystemTemplate Name="RepeatingCrossbowBlockBehavior" Guid="2bf9a8df-99f7-480b-b958-00bdc1aaaa4f" InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
+    <Parameter Name="Class" Guid="06957a64-bb95-4bae-8d5f-fa038b253a76" Value="Game.SubsystemRepeatingCrossbowBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+</ProjectTemplate>
 </Infecteds>
