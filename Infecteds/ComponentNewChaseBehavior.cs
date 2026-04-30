@@ -100,36 +100,44 @@ namespace Game
 						m_componentCreature.ComponentBody.Position,
 						m_target.ComponentBody.Position);
 
-					bool isInMeleeRange = dist < m_rangedAttackRange.X;
-					bool isInRangedRange = dist >= m_rangedAttackRange.X && dist <= m_rangedAttackRange.Y;
+					bool hasThrowable = HasThrowableWeaponInInventory();
+					// Si hay arma lanzable, se usa su rango; si no, se recurre al arma de fuego.
+					float meleeRange = m_rangedAttackRange.X; // rango cuerpo a cuerpo se toma del inicio del rango a distancia
+					float preferredMax = hasThrowable ? m_throwableAttackRange.Y : m_rangedAttackRange.Y;
+					float preferredMin = hasThrowable ? m_throwableAttackRange.X : m_rangedAttackRange.X;
 
-					// Solo cambiamos de arma si tenemos visión directa del objetivo
+					bool isInMeleeRange = dist < meleeRange;
+					bool isInPreferredRange = !isInMeleeRange && dist >= preferredMin && dist <= preferredMax;
+
 					if (targetVisible)
 					{
 						if (isInMeleeRange)
 						{
-							// Cancelar inmediatamente cualquier apunte o enfriamiento activo
+							// Cancelar cualquier apunte o enfriamiento activo
 							if (m_isAiming)
-							{
 								CancelAiming();
-							}
 							if (m_cooldownTimer > 0f)
-							{
 								m_cooldownTimer = 0f;
-							}
-							// Cambiar a arma cuerpo a cuerpo si tenemos un arma a distancia equipada
-							if (IsHoldingRangedWeapon())
-							{
+							// Cambiar a arma cuerpo a cuerpo si no tenemos ya una
+							if (!IsHoldingMeleeWeapon())
 								TryEquipMeleeWeapon();
-							}
 						}
-						else if (isInRangedRange)
+						else if (isInPreferredRange)
 						{
-							// Si estamos en rango de distancia y no estamos apuntando ni en enfriamiento,
-							// volvemos a equipar un arma a distancia si no lo tenemos ya.
-							if (!m_isAiming && m_cooldownTimer <= 0f && !IsHoldingRangedWeapon())
+							if (!m_isAiming && m_cooldownTimer <= 0f)
 							{
-								TryEquipRangedWeapon();
+								if (hasThrowable && !IsHoldingThrowableWeapon())
+								{
+									CancelAiming();
+									m_cooldownTimer = 0f;
+									TryEquipThrowableWeapon();
+								}
+								else if (!hasThrowable && !IsHoldingRangedWeapon())
+								{
+									CancelAiming();
+									m_cooldownTimer = 0f;
+									TryEquipRangedWeapon();
+								}
 							}
 						}
 					}
@@ -154,17 +162,12 @@ namespace Game
 						Ray3 aimRay = new Ray3(eyePos, aimDir);
 						m_componentMiner.Aim(aimRay, AimState.InProgress);
 
-						// Al terminar el tiempo de apunte, disparar
+						// Al terminar el tiempo de apunte, disparar/lanzar
 						if (m_aimingTimer <= 0f)
 						{
 							PerformRangedAttack();
 							m_isAiming = false;
-							if (IsActiveCrossbow())
-								m_cooldownTimer = CrossbowCooldownTime;
-							else if (IsActiveBow())
-								m_cooldownTimer = BowCooldownTime;
-							else
-								m_cooldownTimer = MusketCooldownTime;
+							// El cooldown se establece dentro de PerformRangedAttack según el arma
 						}
 					}
 				}
@@ -180,57 +183,60 @@ namespace Game
 					// Solo iniciar apunte si el objetivo es visible
 					if (!m_isAiming && m_cooldownTimer <= 0f && targetVisible)
 					{
-						// Iniciar apunte: detener todo movimiento
-						m_isAiming = true;
-						if (IsActiveCrossbow())
-							m_aimingTimer = CrossbowAimingTime;
-						else if (IsActiveBow())
-							m_aimingTimer = BowAimingTime;
-						else
-							m_aimingTimer = MusketAimingTime;
-						m_componentPathfinding.Stop();
-						m_componentCreature.ComponentLocomotion.WalkOrder = null;
+						// Intentar equipar primero arma lanzable, luego arma de fuego
+						bool throwableEquipped = TryEquipThrowableWeapon();
+						bool rangedEquipped = throwableEquipped ? false : (IsHoldingRangedWeapon() || TryEquipRangedWeapon());
 
-						// Si es ballesta, tensar instantáneamente y colocar virote para mostrar durante el apunte
-						if (IsActiveCrossbow() && m_componentMiner.Inventory != null)
+						if (throwableEquipped || rangedEquipped)
 						{
-							IInventory inv = m_componentMiner.Inventory;
-							int slot = inv.ActiveSlotIndex;
-							int value = inv.GetSlotValue(slot);
-							int data = Terrain.ExtractData(value);
-							// Tensado instantáneo
-							data = CrossbowBlock.SetDraw(data, 15);
-							// Colocar virote ahora para que se muestre durante el apunte
-							ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
-							if (arrowType == null)
-							{
-								ArrowBlock.ArrowType newArrow = m_crossbowArrowTypes[m_random.Int(0, m_crossbowArrowTypes.Length - 1)];
-								data = CrossbowBlock.SetArrowType(data, newArrow);
-							}
-							int newValue = Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data);
-							inv.RemoveSlotItems(slot, 1);
-							inv.AddSlotItems(slot, newValue, 1);
-						}
+							m_isAiming = true;
+							if (throwableEquipped)
+								m_aimingTimer = ThrowableAimingTime;
+							else if (IsActiveCrossbow())
+								m_aimingTimer = CrossbowAimingTime;
+							else if (IsActiveBow())
+								m_aimingTimer = BowAimingTime;
+							else
+								m_aimingTimer = MusketAimingTime;
 
-						// Si es arco, tensar instantáneamente y colocar flecha para mostrar durante el apunte
-						if (IsActiveBow() && m_componentMiner.Inventory != null)
-						{
-							IInventory inv = m_componentMiner.Inventory;
-							int slot = inv.ActiveSlotIndex;
-							int value = inv.GetSlotValue(slot);
-							int data = Terrain.ExtractData(value);
-							// Tensado instantáneo al máximo
-							data = BowBlock.SetDraw(data, 15);
-							// Colocar flecha ahora para que se muestre durante el apunte
-							ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
-							if (arrowType == null)
+							m_componentPathfinding.Stop();
+							m_componentCreature.ComponentLocomotion.WalkOrder = null;
+
+							// Si es ballesta o arco, tensar y colocar proyectil durante el apunte
+							if (IsActiveCrossbow() && m_componentMiner.Inventory != null)
 							{
-								ArrowBlock.ArrowType newArrow = m_bowArrowTypes[m_random.Int(0, m_bowArrowTypes.Length - 1)];
-								data = BowBlock.SetArrowType(data, newArrow);
+								IInventory inv = m_componentMiner.Inventory;
+								int slot = inv.ActiveSlotIndex;
+								int value = inv.GetSlotValue(slot);
+								int data = Terrain.ExtractData(value);
+								data = CrossbowBlock.SetDraw(data, 15);
+								ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
+								if (arrowType == null)
+								{
+									ArrowBlock.ArrowType newArrow = m_crossbowArrowTypes[m_random.Int(0, m_crossbowArrowTypes.Length - 1)];
+									data = CrossbowBlock.SetArrowType(data, newArrow);
+								}
+								int newValue = Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data);
+								inv.RemoveSlotItems(slot, 1);
+								inv.AddSlotItems(slot, newValue, 1);
 							}
-							int newValue = Terrain.MakeBlockValue(BowBlock.Index, 0, data);
-							inv.RemoveSlotItems(slot, 1);
-							inv.AddSlotItems(slot, newValue, 1);
+							if (IsActiveBow() && m_componentMiner.Inventory != null)
+							{
+								IInventory inv = m_componentMiner.Inventory;
+								int slot = inv.ActiveSlotIndex;
+								int value = inv.GetSlotValue(slot);
+								int data = Terrain.ExtractData(value);
+								data = BowBlock.SetDraw(data, 15);
+								ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
+								if (arrowType == null)
+								{
+									ArrowBlock.ArrowType newArrow = m_bowArrowTypes[m_random.Int(0, m_bowArrowTypes.Length - 1)];
+									data = BowBlock.SetArrowType(data, newArrow);
+								}
+								int newValue = Terrain.MakeBlockValue(BowBlock.Index, 0, data);
+								inv.RemoveSlotItems(slot, 1);
+								inv.AddSlotItems(slot, newValue, 1);
+							}
 						}
 					}
 				}
@@ -334,13 +340,76 @@ namespace Game
 		}
 		// ----- FIN DEL MÉTODO CANCELAR APUNTADO -----
 
-		// ----- MÉTODOS AUXILIARES GENÉRICOS PARA ARMAS A DISTANCIA -----
+		// ----- NUEVOS MÉTODOS PARA ARMAS LANZABLES -----
+		/// <summary>
+		/// Determina si un bloque es un arma lanzable (ej. lanza, bomba).
+		/// Se considera lanzable si es apuntable y no es mosquete, ballesta ni arco.
+		/// </summary>
+		private bool IsThrowableItem(int contents)
+		{
+			Block block = BlocksManager.Blocks[contents];
+			return block != null && block.IsAimable_(0) && contents != MusketBlock.Index && contents != CrossbowBlock.Index && contents != BowBlock.Index;
+		}
 
+		private bool IsHoldingThrowableWeapon()
+		{
+			if (m_componentMiner == null || m_componentMiner.Inventory == null)
+				return false;
+			int activeValue = m_componentMiner.ActiveBlockValue;
+			return IsThrowableItem(Terrain.ExtractContents(activeValue));
+		}
+
+		private bool HasThrowableWeaponInInventory()
+		{
+			if (m_componentMiner == null || m_componentMiner.Inventory == null)
+				return false;
+			IInventory inventory = m_componentMiner.Inventory;
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int slotValue = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0 && IsThrowableItem(Terrain.ExtractContents(slotValue)))
+					return true;
+			}
+			return false;
+		}
+
+		private bool TryEquipThrowableWeapon()
+		{
+			if (m_componentMiner == null || m_componentMiner.Inventory == null)
+				return false;
+			IInventory inventory = m_componentMiner.Inventory;
+			// Si ya lo tiene equipado, éxito
+			if (IsHoldingThrowableWeapon())
+				return true;
+			// Buscar y equipar el primer arma lanzable del inventario
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int slotValue = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0 && IsThrowableItem(Terrain.ExtractContents(slotValue)))
+				{
+					inventory.ActiveSlotIndex = i;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private bool IsHoldingMeleeWeapon()
+		{
+			if (m_componentMiner == null || m_componentMiner.Inventory == null)
+				return false;
+			int activeValue = m_componentMiner.ActiveBlockValue;
+			int contents = Terrain.ExtractContents(activeValue);
+			// No es arma a distancia ni lanzable -> consideramos cuerpo a cuerpo
+			return contents != MusketBlock.Index && contents != CrossbowBlock.Index && contents != BowBlock.Index && !IsThrowableItem(contents);
+		}
+		// ----- FIN DE MÉTODOS PARA ARMAS LANZABLES -----
+
+		// ----- MÉTODOS AUXILIARES GENÉRICOS PARA ARMAS A DISTANCIA -----
 		private bool IsActiveCrossbow()
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
 				return false;
-
 			int activeValue = m_componentMiner.ActiveBlockValue;
 			return Terrain.ExtractContents(activeValue) == CrossbowBlock.Index;
 		}
@@ -349,7 +418,6 @@ namespace Game
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
 				return false;
-
 			int activeValue = m_componentMiner.ActiveBlockValue;
 			return Terrain.ExtractContents(activeValue) == MusketBlock.Index;
 		}
@@ -363,14 +431,12 @@ namespace Game
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
 				return false;
-
 			IInventory inventory = m_componentMiner.Inventory;
 			for (int i = 0; i < inventory.SlotsCount; i++)
 			{
 				int slotValue = inventory.GetSlotValue(i);
 				if (inventory.GetSlotCount(i) <= 0)
 					continue;
-
 				int contents = Terrain.ExtractContents(slotValue);
 				if (contents == MusketBlock.Index || contents == CrossbowBlock.Index || contents == BowBlock.Index)
 				{
@@ -385,14 +451,12 @@ namespace Game
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
 				return false;
-
 			IInventory inventory = m_componentMiner.Inventory;
 			for (int i = 0; i < inventory.SlotsCount; i++)
 			{
 				int slotValue = inventory.GetSlotValue(i);
 				if (inventory.GetSlotCount(i) <= 0)
 					continue;
-
 				int contents = Terrain.ExtractContents(slotValue);
 				if (contents != MusketBlock.Index && contents != CrossbowBlock.Index)
 				{
@@ -411,21 +475,17 @@ namespace Game
 		{
 			if (m_componentMiner == null || m_componentMiner.Inventory == null)
 				return false;
-
 			int activeValue = m_componentMiner.ActiveBlockValue;
 			return Terrain.ExtractContents(activeValue) == BowBlock.Index;
 		}
-
 		// ----- FIN DE MÉTODOS AUXILIARES -----
 
 		private bool ShouldUseRangedAttack()
 		{
 			if (m_attackType == AttackType.CleanHands)
 				return false;
-
 			if (m_attackType == AttackType.Remote)
 				return true;
-
 			if (m_target == null)
 				return false;
 
@@ -433,7 +493,11 @@ namespace Game
 				m_componentCreature.ComponentBody.Position,
 				m_target.ComponentBody.Position);
 
-			return dist >= m_rangedAttackRange.X && dist <= m_rangedAttackRange.Y;
+			// Prioridad: si hay arma lanzable, usar su rango; si no, el de armas de fuego.
+			if (HasThrowableWeaponInInventory())
+				return dist >= m_throwableAttackRange.X && dist <= m_throwableAttackRange.Y;
+			else
+				return dist >= m_rangedAttackRange.X && dist <= m_rangedAttackRange.Y;
 		}
 
 		private void TripleShot()
@@ -491,6 +555,18 @@ namespace Game
 			int slotValue = inventory.GetSlotValue(slotIndex);
 			int contents = Terrain.ExtractContents(slotValue);
 
+			// Si es un arma lanzable, lanzar directamente y salir
+			if (IsThrowableItem(contents))
+			{
+				Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+				Vector3 aimDir = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos);
+				Ray3 aimRay = new Ray3(eyePos, aimDir);
+				m_componentMiner.Aim(aimRay, AimState.Completed);
+				m_cooldownTimer = ThrowableCooldownTime;
+				return;
+			}
+
+			// A partir de aquí, manejo normal de armas de fuego
 			if (contents != MusketBlock.Index && contents != CrossbowBlock.Index && contents != BowBlock.Index)
 			{
 				if (!TryEquipRangedWeapon())
@@ -557,10 +633,10 @@ namespace Game
 			SubsystemProjectiles subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>();
 			int projectileCountBefore = (subsystemProjectiles != null) ? subsystemProjectiles.Projectiles.Count : 0;
 
-			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-			Vector3 aimDir = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos);
-			Ray3 aimRay = new Ray3(eyePos, aimDir);
-			m_componentMiner.Aim(aimRay, AimState.Completed);
+			Vector3 eyePos2 = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 aimDir2 = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos2);
+			Ray3 aimRay2 = new Ray3(eyePos2, aimDir2);
+			m_componentMiner.Aim(aimRay2, AimState.Completed);
 
 			if ((contents == CrossbowBlock.Index || contents == BowBlock.Index) && subsystemProjectiles != null)
 			{
@@ -573,6 +649,14 @@ namespace Game
 					}
 				}
 			}
+
+			// Establecer cooldown según el arma de fuego
+			if (IsActiveCrossbow())
+				m_cooldownTimer = CrossbowCooldownTime;
+			else if (IsActiveBow())
+				m_cooldownTimer = BowCooldownTime;
+			else
+				m_cooldownTimer = MusketCooldownTime;
 		}
 		// ----- FIN DEL ATAQUE A DISTANCIA UNIFICADO -----
 
@@ -584,7 +668,7 @@ namespace Game
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
-			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true); // Añadido para la comprobación de visión
+			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
@@ -915,7 +999,7 @@ namespace Game
 		public SubsystemBodies m_subsystemBodies;
 		public SubsystemTime m_subsystemTime;
 		public SubsystemNoise m_subsystemNoise;
-		public SubsystemTerrain m_subsystemTerrain; // nuevo campo para la detección de bloques
+		public SubsystemTerrain m_subsystemTerrain;
 		public ComponentCreature m_componentCreature;
 		public ComponentPathfinding m_componentPathfinding;
 		public ComponentMiner m_componentMiner;
@@ -965,6 +1049,8 @@ namespace Game
 		// NUEVOS CAMPOS
 		public AttackType m_attackType = AttackType.Default;
 		public Vector2 m_rangedAttackRange = new Vector2(8f, 25f);
+		// Rango para armas lanzables (no se carga desde diccionario, se puede ajustar externamente)
+		public Vector2 m_throwableAttackRange = new Vector2(5f, 15f);
 
 		public float MusketAimingTime = 1.0f;
 		public float MusketCooldownTime = 0.5f;
@@ -972,6 +1058,10 @@ namespace Game
 		public float CrossbowCooldownTime = 0.02f;
 		public float BowAimingTime = 1.5f;
 		public float BowCooldownTime = 0.01f;
+
+		// Tiempos para armas lanzables
+		public float ThrowableAimingTime = 1.5f;
+		public float ThrowableCooldownTime = 0.01f;
 
 		private bool m_isAiming;
 		private float m_aimingTimer;
