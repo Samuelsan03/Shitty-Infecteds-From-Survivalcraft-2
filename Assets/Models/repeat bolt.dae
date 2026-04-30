@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <asset>
+    <contributor>
+      <author>Blender User</author>
+      <authoring_tool>Blender 4.5.4 LTS commit date:2025-10-27, commit time:12:46, hash:b3efe983cc58</authoring_tool>
+    </contributor>
+    <created>2026-04-29T21:44:45</created>
+    <modified>2026-04-29T21:44:45</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images/>
+  <library_geometries>
+    <geometry id="ArrowStabilizer-mesh" name="ArrowStabilizer">
+      <mesh>
+        <source id="ArrowStabilizer-mesh-positions">
+          <float_array id="ArrowStabilizer-mesh-positions-array" count="15">2.995676 5.198646 -0.09356498 10e-7 0 18 -2.995673 -5.198647 0 5.198647 -2.995674 0 -5.198647 2.995675 0</float_array>
+          <technique_common>
+            <accessor source="#ArrowStabilizer-mesh-positions-array" count="5" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="ArrowStabilizer-mesh-normals">
+          <float_array id="ArrowStabilizer-mesh-normals-array" count="6">-0.8664413 0.4992792 0 -0.4992792 -0.8664413 0</float_array>
+          <technique_common>
+            <accessor source="#ArrowStabilizer-mesh-normals-array" count="2" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="ArrowStabilizer-mesh-map-0">
+          <float_array id="ArrowStabilizer-mesh-map-0-array" count="12">0.001702964 0.998212 0.001702964 0.976242 0.02367287 0.998212 0.02367287 0.998212 0.01268798 0.987227 0.01268798 0.987227</float_array>
+          <technique_common>
+            <accessor source="#ArrowStabilizer-mesh-map-0-array" count="6" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="ArrowStabilizer-mesh-vertices">
+          <input semantic="POSITION" source="#ArrowStabilizer-mesh-positions"/>
+        </vertices>
+        <triangles count="2">
+          <input semantic="VERTEX" source="#ArrowStabilizer-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#ArrowStabilizer-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#ArrowStabilizer-mesh-map-0" offset="2" set="0"/>
+          <p>0 0 0 2 0 1 1 0 2 1 1 3 4 1 4 3 1 5</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="ArrowShaft-mesh" name="ArrowShaft">
+      <mesh>
+        <source id="ArrowShaft-mesh-positions">
+          <float_array id="ArrowShaft-mesh-positions-array" count="18">2.4 0 0 2.400005 0 93.87839 -1.199995 2.078461 93.87839 -1.2 2.078461 0 -1.199995 -2.078461 93.87839 -1.2 -2.078461 0</float_array>
+          <technique_common>
+            <accessor source="#ArrowShaft-mesh-positions-array" count="6" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="ArrowShaft-mesh-normals">
+          <float_array id="ArrowShaft-mesh-normals-array" count="21">0.8320327 -1.5104e-5 -0.5547267 -0.499988 0.8660324 0 1 -1.40397e-5 0 -0.4160034 0.720569 -0.5547265 -0.5000119 -0.8660186 0 -0.4159833 -0.7205806 -0.5547265 0 0 -1</float_array>
+          <technique_common>
+            <accessor source="#ArrowShaft-mesh-normals-array" count="7" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="ArrowShaft-mesh-map-0">
+          <float_array id="ArrowShaft-mesh-map-0-array" count="42">0.005034983 0.994706 0.006915867 0.994259 0.006915867 0.994706 0.005034983 0.994706 0.005034983 0.994259 0.006915867 0.994259 0.005034983 0.994259 0.006915867 0.993812 0.006915867 0.994259 0.005034983 0.994259 0.005034983 0.993812 0.006915867 0.993812 0.005034983 0.993812 0.006915867 0.993365 0.006915867 0.993812 0.005034983 0.993812 0.005034983 0.993365 0.006915867 0.993365 0.005034983 0.994706 0.005034983 0.993812 0.005034983 0.994259</float_array>
+          <technique_common>
+            <accessor source="#ArrowShaft-mesh-map-0-array" count="21" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="ArrowShaft-mesh-vertices">
+          <input semantic="POSITION" source="#ArrowShaft-mesh-positions"/>
+        </vertices>
+        <triangles count="7">
+          <input semantic="VERTEX" source="#ArrowShaft-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#ArrowShaft-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#ArrowShaft-mesh-map-0" offset="2" set="0"/>
+          <p>0 0 0 2 1 1 1 2 2 0 0 3 3 3 4 2 1 5 3 3 6 4 4 7 2 1 8 3 3 9 5 5 10 4 4 11 5 5 12 1 2 13 4 4 14 5 5 15 0 0 16 1 2 17 0 6 18 5 6 19 3 6 20</p>
+        </triangles>
+      </mesh>
+    </geometry>
+    <geometry id="ArrowTip-mesh" name="ArrowTip">
+      <mesh>
+        <source id="ArrowTip-mesh-positions">
+          <float_array id="ArrowTip-mesh-positions-array" count="69">-2.493531 -1.676105 2.116427 -8.778043 -1.176576 -2.280203 -8.351547 -0.006659269 4.556518 0.06479394 -2.819938 2.267475 -7e-6 -10e-7 14.80599 4.245929 -7.566885 5 4.091053 -0.006672978 -3.625008 -2.074339 3.570811 -3.625007 -2.079195 -3.634906 -3.625007 2.474196 1.451097 2.029094 -0.0102868 2.892724 2.029094 0.4829996 0.62701 10.45357 3.741605 8.404126 -1.305439 3.82052 6.378849 6.207524 8.577902 14.7471 -5.161899 5.397345 7.443376 -1.30544 2.338654 -1.482861 2.267474 8.863471 -15.54294 -6.33442 3.76257 -9.406277 -2.008998 6.036429 -8.069201 -2.008998 -2.491312 1.616914 2.116427 -17.10245 -0.4830589 -6.191983 -8.776493 1.12815 -2.280203</float_array>
+          <technique_common>
+            <accessor source="#ArrowTip-mesh-positions-array" count="23" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="ArrowTip-mesh-normals">
+          <float_array id="ArrowTip-mesh-normals-array" count="126">-0.2006826 -0.9634623 0.1773893 -0.7805239 -0.6107433 0.1333234 -3.43331e-7 0 -1 0.9487257 0.2358165 0.2104998 0.5003036 0.8622171 -0.07923358 -0.7607697 0.6245999 0.1763649 -0.7231271 0.6649619 0.1868501 -0.2249629 -0.3876968 -0.8939144 0.9201089 -0.3671137 0.1364821 -0.2198623 -0.3789066 -0.8989385 0.9329979 -0.3273927 0.1494293 0.9367045 -0.281626 0.2080187 0.5058085 -0.8601882 -0.06506973 -0.2232257 -0.9512583 0.2127862 -0.6609015 -0.7134486 0.2328099 -0.2497705 0.4247649 -0.8701664 0.9042212 0.3751336 0.2041051 -0.2440129 0.4149737 -0.8765013 0.9472231 0.2277008 0.2256563 -0.9973895 6.72179e-4 -0.07220685 -0.6059353 0.7654868 0.2165005 -0.5991908 -0.7699457 0.2194406 -0.1637145 -0.9706249 0.1763088 -0.2000735 0.9662286 0.1623975 0.5732203 -3.85842e-4 -0.8194013 -0.2652307 0.9483724 0.1739036 0.4252801 -2.86473e-4 -0.9050619 -0.2049791 -0.9643016 0.1676487 -0.7900928 -0.5773367 0.2059991 0.340909 0.9244129 0.1710032 0.5003037 0.8622172 -0.07923352 -0.2741589 0.9378986 0.2125635 -0.5835357 -0.7921429 -0.1788738 -0.7486304 0.6464926 0.14697 -0.2249621 -0.3876971 -0.8939145 0.9184032 -0.3699193 0.1403404 0.5058085 -0.8601882 -0.06506961 -0.2497709 0.4247649 -0.8701663 0.9275038 0.3498762 0.1316184 -0.9973895 6.72135e-4 -0.07220691 -0.1956753 0.965395 0.1724058 0.5732205 -3.86188e-4 -0.8194012</float_array>
+          <technique_common>
+            <accessor source="#ArrowTip-mesh-normals-array" count="42" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="ArrowTip-mesh-map-0">
+          <float_array id="ArrowTip-mesh-map-0-array" count="252">0.01707756 0.9584099 0.01278156 0.9641388 0.01675099 0.9501249 0.02300888 0.967096 0.01569819 0.9732761 0.02985841 0.9975362 0.03027087 0.9525183 0.01985949 0.9539915 0.03376662 0.9538103 0.03285187 0.9659552 0.02985841 0.9975362 0.03027087 0.9525183 0.03285187 0.9659552 0.03376662 0.9538103 0.03426498 0.9663036 0.03426498 0.9663036 0.04407888 0.9755019 0.04688912 0.9576971 0.04688912 0.9576971 0.04407888 0.9755019 0.06178629 0.9476163 0.03285187 0.9659552 0.04688912 0.9576971 0.04606992 0.9573853 0.03285187 0.9659552 0.04407888 0.9755019 0.02985841 0.9975362 0.04606992 0.9573853 0.04688912 0.9576971 0.06178629 0.9476163 0.04407888 0.9755019 0.04606992 0.9573853 0.06178629 0.9476163 0.02985841 0.9975362 0.0269221 0.9666683 0.03027087 0.9525183 0.02300888 0.967096 0.03027087 0.9525183 0.0269221 0.9666683 0.02300888 0.967096 0.02985841 0.9975362 0.01985949 0.9539915 0.01569819 0.9732761 0.01130592 0.9565983 8.24833e-4 0.9453043 0.02300888 0.967096 0.01516294 0.9560658 0.01130592 0.9565983 0.0269221 0.9666683 0.01569819 0.9732761 0.01516294 0.9560658 0.01130592 0.9565983 0.01516294 0.9560658 8.24833e-4 0.9453043 0.01516294 0.9560658 0.01569819 0.9732761 8.24833e-4 0.9453043 0.01707756 0.9584099 0.03376662 0.9538103 0.01985949 0.9539915 0.02353274 0.9582674 0.02985841 0.9975362 0.03376662 0.9538103 0.02985841 0.9975362 0.01707756 0.9584099 0.01985949 0.9539915 0.01675099 0.9501249 0.01278156 0.9641388 0.01158589 0.9429282 0.02353274 0.9582674 0.01278156 0.9641388 0.02985841 0.9975362 0.02353274 0.9582674 0.01675099 0.9501249 0.02177393 0.9488349 0.01278156 0.9641388 0.02177393 0.9488349 0.01158589 0.9429282 0.02177393 0.9488349 0.01675099 0.9501249 0.01158589 0.9429282 0.01707756 0.9584099 0.02985841 0.9975362 0.01278156 0.9641388 0.02300888 0.967096 0.01130592 0.9565983 0.01569819 0.9732761 0.03285187 0.9659552 0.03095978 0.9865716 0.02985841 0.9975362 0.03285187 0.9659552 0.03027087 0.9525183 0.03376662 0.9538103 0.03426498 0.9663036 0.03376662 0.9538103 0.02985841 0.9975362 0.03095978 0.9865716 0.02985841 0.9975362 0.03426498 0.9663036 0.03426498 0.9663036 0.02985841 0.9975362 0.04407888 0.9755019 0.03285187 0.9659552 0.03426498 0.9663036 0.04688912 0.9576971 0.03285187 0.9659552 0.04606992 0.9573853 0.04407888 0.9755019 0.02300888 0.967096 0.01985949 0.9539915 0.03027087 0.9525183 0.02300888 0.967096 0.0269221 0.9666683 0.01516294 0.9560658 0.0269221 0.9666683 0.02985841 0.9975362 0.01569819 0.9732761 0.01707756 0.9584099 0.02353274 0.9582674 0.03376662 0.9538103 0.02353274 0.9582674 0.02177393 0.9488349 0.01278156 0.9641388 0.02353274 0.9582674 0.01707756 0.9584099 0.01675099 0.9501249</float_array>
+          <technique_common>
+            <accessor source="#ArrowTip-mesh-map-0-array" count="126" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="ArrowTip-mesh-vertices">
+          <input semantic="POSITION" source="#ArrowTip-mesh-positions"/>
+        </vertices>
+        <triangles count="42">
+          <input semantic="VERTEX" source="#ArrowTip-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#ArrowTip-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#ArrowTip-mesh-map-0" offset="2" set="0"/>
+          <p>0 0 0 2 0 1 1 0 2 3 1 3 5 1 4 4 1 5 6 2 6 8 2 7 7 2 8 9 3 9 4 3 10 6 3 11 9 4 12 7 4 13 10 4 14 10 5 15 13 5 16 12 5 17 12 6 18 13 6 19 14 6 20 9 7 21 12 7 22 15 7 23 9 8 24 13 8 25 4 8 26 15 9 27 12 9 28 14 9 29 13 10 30 15 10 31 14 10 32 4 11 33 16 11 34 6 11 35 3 12 36 6 12 37 16 12 38 3 13 39 4 13 40 8 13 41 5 14 42 18 14 43 17 14 44 3 15 45 19 15 46 18 15 47 16 16 48 5 16 49 19 16 50 18 17 51 19 17 52 17 17 53 19 18 54 5 18 55 17 18 56 0 19 57 7 19 58 8 19 59 20 20 60 4 20 61 7 20 62 4 21 63 0 21 64 8 21 65 1 22 66 2 22 67 21 22 68 20 23 69 2 23 70 4 23 71 20 24 72 1 24 73 22 24 74 2 25 75 22 25 76 21 25 77 22 26 78 1 26 79 21 26 80 0 27 81 4 27 82 2 27 83 3 28 84 18 28 85 5 28 86 9 29 87 11 29 88 4 29 89 9 30 90 6 30 91 7 30 92 10 31 93 7 31 94 4 31 95 11 32 96 4 32 97 10 32 98 10 33 99 4 33 100 13 33 101 9 34 102 10 34 103 12 34 104 9 35 105 15 35 106 13 35 107 3 36 108 8 36 109 6 36 110 3 37 111 16 37 112 19 37 113 16 38 114 4 38 115 5 38 116 0 39 117 20 39 118 7 39 119 20 40 120 22 40 121 2 40 122 20 41 123 0 41 124 1 41 125</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="Scene" name="Scene">
+      <node id="未命名" name="未命名" type="NODE">
+        <matrix sid="transform">1 0 0 0 0 1 -3.57628e-7 0 0 3.57628e-7 1 0 0 0 0 1</matrix>
+        <node id="ArrowTip" name="ArrowTip" type="NODE">
+          <matrix sid="transform">0.007435706 0 0 0 0 -2.09784e-9 0.007435706 0.7894738 0 -0.007435706 -2.09784e-9 -4.608e-5 0 0 0 1</matrix>
+          <instance_geometry url="#ArrowTip-mesh" name="ArrowTip"/>
+        </node>
+        <node id="ArrowShaft" name="ArrowShaft" type="NODE">
+          <matrix sid="transform">0.008299476 0 0 0 0 -2.34153e-9 0.008299476 0 0 -0.008299476 -2.34153e-9 0 0 0 0 1</matrix>
+          <instance_geometry url="#ArrowShaft-mesh" name="ArrowShaft"/>
+        </node>
+        <node id="ArrowStabilizer" name="ArrowStabilizer" type="NODE">
+          <matrix sid="transform">0.01389762 0 0 0 0 -3.92094e-9 0.01389762 0 0 -0.01389762 -3.92094e-9 0 0 0 0 1</matrix>
+          <instance_geometry url="#ArrowStabilizer-mesh" name="ArrowStabilizer"/>
+        </node>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Scene"/>
+  </scene>
+</COLLADA>
