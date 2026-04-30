@@ -261,6 +261,30 @@ namespace Game
 						m_chaseTime = MathUtils.Max(m_chaseTime, x);
 						m_componentMiner.Hit(hitBody, hitPoint, m_componentCreature.ComponentBody.Matrix.Forward);
 						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
+
+						// Invocar rayo si la habilidad está activada (50% de probabilidad)
+						if (m_invokeLightningOnHit && m_target != null && m_random.Float(0f, 1f) < 0.5f)
+						{
+							m_subsystemSky.MakeLightningStrike(m_target.ComponentBody.Position, false);
+						}
+
+						// Explotar al golpear si la habilidad está activada (10% de probabilidad)
+						// Valores fijos: presión 555f, no incendiaria, sonido de explosión activado
+						if (m_explodeOnHit && m_target != null && m_random.Float(0f, 1f) < 0.1f)
+						{
+							Vector3 pos = m_target.ComponentBody.Position;
+							int cellX = Terrain.ToCell(pos.X);
+							int cellY = Terrain.ToCell(pos.Y);
+							int cellZ = Terrain.ToCell(pos.Z);
+							m_subsystemExplosions.AddExplosion(
+								x: cellX,
+								y: cellY,
+								z: cellZ,
+								pressure: 555f,
+								isIncendiary: false,
+								noExplosionSound: false
+							);
+						}
 					}
 				}
 			}
@@ -673,6 +697,7 @@ namespace Game
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
+			m_subsystemExplosions = Project.FindSubsystem<SubsystemExplosions>(true); // NUEVO
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
@@ -693,6 +718,8 @@ namespace Game
 			// NUEVOS PARÁMETROS
 			m_attackType = valuesDictionary.GetValue<AttackType>("AttackType", AttackType.Default);
 			m_rangedAttackRange = valuesDictionary.GetValue<Vector2>("RangedAttackRange", new Vector2(8f, 25f));
+			m_invokeLightningOnHit = valuesDictionary.GetValue<bool>("InvokeLightningOnHit", false);
+			m_explodeOnHit = valuesDictionary.GetValue<bool>("ExplodeOnHit", false);
 
 			ComponentBody componentBody = m_componentCreature.ComponentBody;
 			componentBody.CollidedWithBody = (Action<ComponentBody>)Delegate.Combine(componentBody.CollidedWithBody, new Action<ComponentBody>(delegate (ComponentBody body)
@@ -1000,6 +1027,7 @@ namespace Game
 		public SubsystemGameInfo m_subsystemGameInfo;
 		public SubsystemPlayers m_subsystemPlayers;
 		public SubsystemSky m_subsystemSky;
+		public SubsystemExplosions m_subsystemExplosions; // NUEVO
 		public SubsystemBodies m_subsystemBodies;
 		public SubsystemTime m_subsystemTime;
 		public SubsystemNoise m_subsystemNoise;
@@ -1066,6 +1094,12 @@ namespace Game
 		// Tiempos para armas lanzables
 		public float ThrowableAimingTime = 1.5f;
 		public float ThrowableCooldownTime = 0.01f;
+
+		// Nueva habilidad: invocar rayo al golpear
+		public bool m_invokeLightningOnHit = false;
+
+		// Nueva habilidad: explotar al golpear (solo se carga el bool, los detalles van fijos en código)
+		public bool m_explodeOnHit = false;
 
 		private bool m_isAiming;
 		private float m_aimingTimer;
