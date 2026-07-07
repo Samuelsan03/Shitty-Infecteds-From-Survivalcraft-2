@@ -22,8 +22,14 @@ namespace Game
 		}
 
 		public Vector2 AttackDistanceRange = new Vector2(5f, 100f);
+
+		// Tiempos del Mosquete
 		public float MusketCooldown = 0.01f;
 		public float MusketAimTime = 1.5f;
+
+		// Tiempos de la Ballesta
+		public float CrossbowCooldown = 0.01f;
+		public float CrossbowAimTime = 1.5f;
 
 		private bool m_canUseInventory;
 		private float m_aimTimer;
@@ -32,6 +38,7 @@ namespace Game
 		private ComponentCreature m_componentCreature;
 		private ComponentMiner m_componentMiner;
 		private SubsystemTime m_subsystemTime;
+		private SubsystemProjectiles m_subsystemProjectiles;
 
 		private Random m_random;
 
@@ -41,8 +48,8 @@ namespace Game
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
+			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
 
-			// Inicialización normal
 			m_random = new Random();
 		}
 
@@ -93,10 +100,23 @@ namespace Game
 			}
 
 			int musketSlot = FindMusketSlot();
-			if (musketSlot < 0) return;
+			int crossbowSlot = musketSlot >= 0 ? -1 : FindCrossbowSlot();
+			int activeSlot = musketSlot >= 0 ? musketSlot : crossbowSlot;
 
-			m_componentMiner.Inventory.ActiveSlotIndex = musketSlot;
-			EnsureMusketLoaded(musketSlot);
+			if (activeSlot < 0) return;
+
+			m_componentMiner.Inventory.ActiveSlotIndex = activeSlot;
+
+			bool isCrossbow = crossbowSlot >= 0;
+
+			if (isCrossbow)
+			{
+				EnsureCrossbowLoaded(crossbowSlot);
+			}
+			else
+			{
+				EnsureMusketLoaded(musketSlot);
+			}
 
 			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
 			Vector3 targetPos = target.ComponentCreatureModel.EyePosition;
@@ -114,37 +134,65 @@ namespace Game
 				m_aimTimer += m_subsystemTime.GameTimeDelta;
 				m_componentMiner.Aim(aimRay, AimState.InProgress);
 
-				if (m_aimTimer >= MusketAimTime)
+				// Evaluar el AimTime dependiendo del arma que se está usando
+				float requiredAimTime = isCrossbow ? CrossbowAimTime : MusketAimTime;
+
+				if (m_aimTimer >= requiredAimTime)
 				{
-					// NUEVA LÓGICA: 5% de probabilidad de disparo triple
-					if (m_random.Float() < 0.05f)
+					if (isCrossbow)
 					{
-						FireBullet(BulletBlock.BulletType.MusketBall, aimRay);
-						FireBullet(BulletBlock.BulletType.Buckshot, aimRay);
-						FireBullet(BulletBlock.BulletType.BuckshotBall, aimRay);
+						FireCrossbow(aimRay);
 					}
 					else
 					{
-						// LÓGICA NORMAL: Variación aleatoria de bala
-						BulletBlock.BulletType[] bulletTypes = new BulletBlock.BulletType[]
+						if (m_random.Float() < 0.05f)
 						{
-							BulletBlock.BulletType.MusketBall,
-							BulletBlock.BulletType.Buckshot,
-							BulletBlock.BulletType.BuckshotBall
-						};
+							FireBullet(BulletBlock.BulletType.MusketBall, aimRay);
+							FireBullet(BulletBlock.BulletType.Buckshot, aimRay);
+							FireBullet(BulletBlock.BulletType.BuckshotBall, aimRay);
+						}
+						else
+						{
+							BulletBlock.BulletType[] bulletTypes = new BulletBlock.BulletType[]
+							{
+								BulletBlock.BulletType.MusketBall,
+								BulletBlock.BulletType.Buckshot,
+								BulletBlock.BulletType.BuckshotBall
+							};
 
-						BulletBlock.BulletType selectedBullet = bulletTypes[m_random.Int(0, bulletTypes.Length - 1)];
-						FireBullet(selectedBullet, aimRay);
+							BulletBlock.BulletType selectedBullet = bulletTypes[m_random.Int(0, bulletTypes.Length - 1)];
+							FireBullet(selectedBullet, aimRay);
+						}
 					}
 
 					m_isAiming = false;
-					m_cooldownTimer = MusketCooldown;
+
+					// Aplicar el Cooldown dependiendo del arma que se usó
+					m_cooldownTimer = isCrossbow ? CrossbowCooldown : MusketCooldown;
+
 					m_aimTimer = 0f;
 				}
 			}
 		}
 
-		// NUEVO MÉTODO: Se encarga de forzar la carga del tipo de bala y disparar inmediatamente
+		private void FireCrossbow(Ray3 aimRay)
+		{
+			// 1. Ejecutamos el Aim Completed original para que la ballesta haga su lógica nativa, sonidos y animaciones
+			m_componentMiner.Aim(aimRay, AimState.Completed);
+
+			// 2. Buscamos el proyectil que acaba de ser disparado por esta criatura en la lista global
+			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
+			for (int i = projectiles.Count - 1; i >= 0; i--)
+			{
+				if (projectiles[i].Owner == m_componentCreature)
+				{
+					// 3. Forzamos a que el virote DESAPAREZCA al tocar el piso en lugar de convertirse en objeto
+					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+					break; // Rompemos el ciclo porque ya encontramos el más reciente
+				}
+			}
+		}
+
 		private void FireBullet(BulletBlock.BulletType bulletType, Ray3 aimRay)
 		{
 			int musketSlot = FindMusketSlot();
@@ -153,14 +201,12 @@ namespace Game
 			int value = m_componentMiner.Inventory.GetSlotValue(musketSlot);
 			int data = Terrain.ExtractData(value);
 
-			// Forzar la carga y el tipo de bala específico
 			data = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
 			data = MusketBlock.SetBulletType(data, bulletType);
 
 			m_componentMiner.Inventory.RemoveSlotItems(musketSlot, 1);
 			m_componentMiner.Inventory.AddSlotItems(musketSlot, Terrain.MakeBlockValue(MusketBlock.Index, 0, data), 1);
 
-			// Ejecutar el disparo
 			m_componentMiner.Aim(aimRay, AimState.Completed);
 		}
 
@@ -206,6 +252,18 @@ namespace Game
 			return -1;
 		}
 
+		private int FindCrossbowSlot()
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == CrossbowBlock.Index)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+
 		private void EnsureMusketLoaded(int slotIndex)
 		{
 			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
@@ -213,10 +271,36 @@ namespace Game
 			if (MusketBlock.GetLoadState(data) != MusketBlock.LoadState.Loaded)
 			{
 				data = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
-				data = MusketBlock.SetBulletType(data, BulletBlock.BulletType.MusketBall); // Carga estándar mientras apunta
+				data = MusketBlock.SetBulletType(data, BulletBlock.BulletType.MusketBall);
 
 				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
 				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(MusketBlock.Index, 0, data), 1);
+			}
+		}
+
+		private void EnsureCrossbowLoaded(int slotIndex)
+		{
+			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
+			int data = Terrain.ExtractData(value);
+			int draw = CrossbowBlock.GetDraw(data);
+			ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
+
+			if (draw != 15 || arrowType == null)
+			{
+				ArrowBlock.ArrowType[] boltTypes = new ArrowBlock.ArrowType[]
+				{
+					ArrowBlock.ArrowType.IronBolt,
+					ArrowBlock.ArrowType.DiamondBolt,
+					ArrowBlock.ArrowType.ExplosiveBolt
+				};
+
+				ArrowBlock.ArrowType selectedBolt = boltTypes[m_random.Int(0, boltTypes.Length - 1)];
+
+				data = CrossbowBlock.SetDraw(data, 15);
+				data = CrossbowBlock.SetArrowType(data, new ArrowBlock.ArrowType?(selectedBolt));
+
+				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
+				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data), 1);
 			}
 		}
 	}
