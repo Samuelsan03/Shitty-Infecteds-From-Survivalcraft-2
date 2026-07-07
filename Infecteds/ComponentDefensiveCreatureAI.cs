@@ -116,12 +116,52 @@ namespace Game
 
 				if (m_aimTimer >= MusketAimTime)
 				{
-					m_componentMiner.Aim(aimRay, AimState.Completed);
+					// NUEVA LÓGICA: 5% de probabilidad de disparo triple
+					if (m_random.Float() < 0.05f)
+					{
+						FireBullet(BulletBlock.BulletType.MusketBall, aimRay);
+						FireBullet(BulletBlock.BulletType.Buckshot, aimRay);
+						FireBullet(BulletBlock.BulletType.BuckshotBall, aimRay);
+					}
+					else
+					{
+						// LÓGICA NORMAL: Variación aleatoria de bala
+						BulletBlock.BulletType[] bulletTypes = new BulletBlock.BulletType[]
+						{
+							BulletBlock.BulletType.MusketBall,
+							BulletBlock.BulletType.Buckshot,
+							BulletBlock.BulletType.BuckshotBall
+						};
+
+						BulletBlock.BulletType selectedBullet = bulletTypes[m_random.Int(0, bulletTypes.Length - 1)];
+						FireBullet(selectedBullet, aimRay);
+					}
+
 					m_isAiming = false;
 					m_cooldownTimer = MusketCooldown;
 					m_aimTimer = 0f;
 				}
 			}
+		}
+
+		// NUEVO MÉTODO: Se encarga de forzar la carga del tipo de bala y disparar inmediatamente
+		private void FireBullet(BulletBlock.BulletType bulletType, Ray3 aimRay)
+		{
+			int musketSlot = FindMusketSlot();
+			if (musketSlot < 0) return;
+
+			int value = m_componentMiner.Inventory.GetSlotValue(musketSlot);
+			int data = Terrain.ExtractData(value);
+
+			// Forzar la carga y el tipo de bala específico
+			data = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
+			data = MusketBlock.SetBulletType(data, bulletType);
+
+			m_componentMiner.Inventory.RemoveSlotItems(musketSlot, 1);
+			m_componentMiner.Inventory.AddSlotItems(musketSlot, Terrain.MakeBlockValue(MusketBlock.Index, 0, data), 1);
+
+			// Ejecutar el disparo
+			m_componentMiner.Aim(aimRay, AimState.Completed);
 		}
 
 		private void CancelAim()
@@ -173,19 +213,8 @@ namespace Game
 			if (MusketBlock.GetLoadState(data) != MusketBlock.LoadState.Loaded)
 			{
 				data = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
+				data = MusketBlock.SetBulletType(data, BulletBlock.BulletType.MusketBall); // Carga estándar mientras apunta
 
-				// Array con los tipos de perdigones/balas
-				BulletBlock.BulletType[] bulletTypes = new BulletBlock.BulletType[]
-				{
-					BulletBlock.BulletType.MusketBall,
-					BulletBlock.BulletType.Buckshot,
-					BulletBlock.BulletType.BuckshotBall
-				};
-
-				// Selección aleatoria normal
-				BulletBlock.BulletType selectedBullet = bulletTypes[m_random.Int(0, bulletTypes.Length - 1)];
-
-				data = MusketBlock.SetBulletType(data, selectedBullet);
 				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
 				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(MusketBlock.Index, 0, data), 1);
 			}
