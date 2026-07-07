@@ -104,7 +104,7 @@ namespace Game
 				this.m_pickable = null;
 			}, delegate
 			{
-				if (this.m_collectionNeed < 1f)
+				if (this.m_collectionNeed < 1f && this.HasInventorySpace())
 				{
 					if (this.m_pickable == null)
 					{
@@ -213,12 +213,18 @@ namespace Game
 
 						if (this.m_gatherTime <= 0.0)
 						{
-							// Ejecutar la animación de poke UNA SOLA VEZ justo al recoger
-							if (this.m_componentMiner != null)
+							if (!this.HasInventorySpace())
 							{
-								this.m_componentMiner.Poke(true);
+								this.m_importanceLevel = 0f;
 							}
-							this.PerformGather();
+							else
+							{
+								if (this.m_componentMiner != null)
+								{
+									this.m_componentMiner.Poke(true);
+								}
+								this.PerformGather();
+							}
 						}
 					}
 					else
@@ -253,6 +259,23 @@ namespace Game
 			}, null);
 
 			this.m_stateMachine.TransitionTo("Inactive");
+		}
+
+		public virtual bool HasInventorySpace()
+		{
+			IInventory inventory = this.Inventory;
+			if (inventory == null)
+			{
+				return false;
+			}
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				if (inventory.GetSlotCount(i) == 0)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public virtual float GetCategoryFactor(string category)
