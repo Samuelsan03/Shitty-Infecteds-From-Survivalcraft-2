@@ -22,7 +22,7 @@ namespace Game
 		}
 
 		public Vector2 AttackDistanceRange = new Vector2(5f, 100f);
-		public float MusketCooldown = 0.5f;
+		public float MusketCooldown = 0.01f;
 		public float MusketAimTime = 1.5f;
 
 		private bool m_canUseInventory;
