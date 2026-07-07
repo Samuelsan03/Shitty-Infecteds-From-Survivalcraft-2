@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
@@ -6,13 +6,6 @@ using TemplatesDatabase;
 
 namespace Game
 {
-	public enum AttackType
-	{
-		Default,
-		CleanHands,
-		Remote
-	}
-
 	public class ComponentNewChaseBehavior : ComponentBehavior, IUpdateable
 	{
 		public ComponentCreature Target
@@ -52,9 +45,6 @@ namespace Game
 			m_isPersistent = isPersistent;
 			m_importanceLevel = (isPersistent ? ImportanceLevelPersistent : ImportanceLevelNonPersistent);
 			m_autoChaseSuppressionTime = 0f;
-			m_isAiming = false;
-			m_aimingTimer = 0f;
-			m_cooldownTimer = 0f;
 			m_hasDestroyedBlocksWhileStuck = false;
 			IsActive = true;
 		}
@@ -74,7 +64,6 @@ namespace Game
 			m_chaseTime = 0f;
 			m_isPersistent = false;
 			m_importanceLevel = 0f;
-			m_isAiming = false;
 			m_hasDestroyedBlocksWhileStuck = false;
 		}
 
@@ -92,178 +81,10 @@ namespace Game
 
 				bool targetVisible = IsTargetVisible(m_target);
 
-				if (m_attackType == AttackType.Default)
-				{
-					float dist = Vector3.Distance(
-						m_componentCreature.ComponentBody.Position,
-						m_target.ComponentBody.Position);
+				if (IsTargetInAttackRange(m_target.ComponentBody) && targetVisible)
+					m_componentCreatureModel.AttackOrder = true;
 
-					bool hasThrowable = HasThrowableWeaponInInventory();
-					float meleeRange = m_rangedAttackRange.X;
-					float preferredMax = hasThrowable ? m_throwableAttackRange.Y : m_rangedAttackRange.Y;
-					float preferredMin = hasThrowable ? m_throwableAttackRange.X : m_rangedAttackRange.X;
-
-					bool isInMeleeRange = dist < meleeRange;
-					bool isInPreferredRange = !isInMeleeRange && dist >= preferredMin && dist <= preferredMax;
-
-					if (targetVisible)
-					{
-						if (isInMeleeRange)
-						{
-							if (m_isAiming)
-								CancelAiming();
-							if (m_cooldownTimer > 0f)
-								m_cooldownTimer = 0f;
-							if (!IsHoldingMeleeWeapon())
-								TryEquipMeleeWeapon();
-						}
-						else if (isInPreferredRange)
-						{
-							if (!m_isAiming && m_cooldownTimer <= 0f)
-							{
-								if (hasThrowable && !IsHoldingThrowableWeapon())
-								{
-									CancelAiming();
-									m_cooldownTimer = 0f;
-									TryEquipThrowableWeapon();
-								}
-								else if (!hasThrowable && !IsHoldingRangedWeapon())
-								{
-									CancelAiming();
-									m_cooldownTimer = 0f;
-									TryEquipRangedWeapon();
-								}
-							}
-						}
-					}
-				}
-
-				if (m_isAiming)
-				{
-					if (!targetVisible || m_componentPathfinding.IsStuck)
-					{
-						CancelAiming();
-					}
-					else
-					{
-						m_aimingTimer -= dt;
-
-						Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-						Vector3 aimDir = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos);
-						Ray3 aimRay = new Ray3(eyePos, aimDir);
-						m_componentMiner.Aim(aimRay, AimState.InProgress);
-
-						if (m_aimingTimer <= 0f)
-						{
-							PerformRangedAttack();
-							m_isAiming = false;
-						}
-					}
-				}
-				else if (m_cooldownTimer > 0f)
-				{
-					m_cooldownTimer -= dt;
-				}
-
-				bool useRanged = ShouldUseRangedAttack();
-
-				if (useRanged)
-				{
-					if (!m_isAiming && m_cooldownTimer <= 0f && targetVisible && !m_componentPathfinding.IsStuck)
-					{
-						bool throwableEquipped = IsHoldingThrowableWeapon();
-						bool rangedEquipped = IsHoldingRangedWeapon();
-
-						if (throwableEquipped || rangedEquipped)
-						{
-							m_isAiming = true;
-
-							if (throwableEquipped)
-								m_aimingTimer = ThrowableAimingTime;
-							else if (IsActiveRepeatingCrossbow())
-								m_aimingTimer = RepeatingCrossbowAimingTime;
-							else if (IsActiveCrossbow())
-								m_aimingTimer = CrossbowAimingTime;
-							else if (IsActiveBow())
-								m_aimingTimer = BowAimingTime;
-							else
-								m_aimingTimer = MusketAimingTime;
-
-							m_componentPathfinding.Stop();
-							m_componentCreature.ComponentLocomotion.WalkOrder = null;
-
-														if (IsActiveRepeatingCrossbow() && m_componentMiner.Inventory != null)
-							{
-								IInventory inv = m_componentMiner.Inventory;
-								int slot = inv.ActiveSlotIndex;
-								int value = inv.GetSlotValue(slot);
-								int data = Terrain.ExtractData(value);
-								data = RepeatingCrossbowBlock.SetDraw(data, 15);
-								int loadCount = RepeatingCrossbowBlock.GetLoadCount(value);
-								int? boltType = RepeatingCrossbowBlock.GetArrowType(data);
-								if (boltType == null && loadCount > 0)
-								{
-									boltType = m_repeatingCrossbowBoltTypes[m_random.Int(0, m_repeatingCrossbowBoltTypes.Length - 1)];
-									data = RepeatingCrossbowBlock.SetArrowType(data, boltType);
-								}
-								int newValue = Terrain.MakeBlockValue(RepeatingCrossbowBlock.Index, 0, data);
-								inv.RemoveSlotItems(slot, 1);
-								inv.AddSlotItems(slot, newValue, 1);
-							}
-							if (IsActiveCrossbow() && m_componentMiner.Inventory != null)
-							{
-								IInventory inv = m_componentMiner.Inventory;
-								int slot = inv.ActiveSlotIndex;
-								int value = inv.GetSlotValue(slot);
-								int data = Terrain.ExtractData(value);
-								data = CrossbowBlock.SetDraw(data, 15);
-								ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
-								if (arrowType == null)
-								{
-									ArrowBlock.ArrowType newArrow = m_crossbowArrowTypes[m_random.Int(0, m_crossbowArrowTypes.Length - 1)];
-									data = CrossbowBlock.SetArrowType(data, newArrow);
-								}
-								int newValue = Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data);
-								inv.RemoveSlotItems(slot, 1);
-								inv.AddSlotItems(slot, newValue, 1);
-							}
-							if (IsActiveBow() && m_componentMiner.Inventory != null)
-							{
-								IInventory inv = m_componentMiner.Inventory;
-								int slot = inv.ActiveSlotIndex;
-								int value = inv.GetSlotValue(slot);
-								int data = Terrain.ExtractData(value);
-								data = BowBlock.SetDraw(data, 15);
-								ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
-								if (arrowType == null)
-								{
-									ArrowBlock.ArrowType newArrow = m_bowArrowTypes[m_random.Int(0, m_bowArrowTypes.Length - 1)];
-									data = BowBlock.SetArrowType(data, newArrow);
-								}
-								int newValue = Terrain.MakeBlockValue(BowBlock.Index, 0, data);
-								inv.RemoveSlotItems(slot, 1);
-								inv.AddSlotItems(slot, newValue, 1);
-							}
-						}
-						else
-						{
-							bool tryThrowable = TryEquipThrowableWeapon();
-							if (!tryThrowable)
-								TryEquipRangedWeapon();
-						}
-					}
-				}
-				else
-				{
-					if (m_isAiming)
-					{
-						m_isAiming = false;
-					}
-					if (IsTargetInAttackRange(m_target.ComponentBody) && targetVisible)
-						m_componentCreatureModel.AttackOrder = true;
-				}
-
-				if (!useRanged && m_componentCreatureModel.IsAttackHitMoment)
+				if (m_componentCreatureModel.IsAttackHitMoment)
 				{
 					Vector3 hitPoint;
 					ComponentBody hitBody = GetHitBody(m_target.ComponentBody, out hitPoint);
@@ -410,334 +231,6 @@ namespace Game
 			return true;
 		}
 
-		private void CancelAiming()
-		{
-			if (!m_isAiming) return;
-
-			if (m_componentMiner != null)
-			{
-				Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-				m_componentMiner.Aim(new Ray3(eyePos, Vector3.UnitY), AimState.Cancelled);
-			}
-
-			m_isAiming = false;
-			m_aimingTimer = 0f;
-			m_cooldownTimer = 0f;
-		}
-
-		private bool IsThrowableItem(int contents)
-		{
-			Block block = BlocksManager.Blocks[contents];
-			return block != null && block.IsAimable_(0) && contents != MusketBlock.Index && contents != CrossbowBlock.Index && contents != RepeatingCrossbowBlock.Index && contents != BowBlock.Index;
-		}
-
-		private bool IsHoldingThrowableWeapon()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-			int activeValue = m_componentMiner.ActiveBlockValue;
-			return IsThrowableItem(Terrain.ExtractContents(activeValue));
-		}
-
-		private bool HasThrowableWeaponInInventory()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-			IInventory inventory = m_componentMiner.Inventory;
-			for (int i = 0; i < inventory.SlotsCount; i++)
-			{
-				int slotValue = inventory.GetSlotValue(i);
-				if (inventory.GetSlotCount(i) > 0 && IsThrowableItem(Terrain.ExtractContents(slotValue)))
-					return true;
-			}
-			return false;
-		}
-
-		private bool TryEquipThrowableWeapon()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-			IInventory inventory = m_componentMiner.Inventory;
-			if (IsHoldingThrowableWeapon())
-				return true;
-			for (int i = 0; i < inventory.SlotsCount; i++)
-			{
-				int slotValue = inventory.GetSlotValue(i);
-				if (inventory.GetSlotCount(i) > 0 && IsThrowableItem(Terrain.ExtractContents(slotValue)))
-				{
-					inventory.ActiveSlotIndex = i;
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private bool IsHoldingMeleeWeapon()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-			int activeValue = m_componentMiner.ActiveBlockValue;
-			int contents = Terrain.ExtractContents(activeValue);
-			return contents != MusketBlock.Index && contents != CrossbowBlock.Index && contents != RepeatingCrossbowBlock.Index && contents != BowBlock.Index && !IsThrowableItem(contents);
-		}
-
-		private bool IsActiveCrossbow()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-			int activeValue = m_componentMiner.ActiveBlockValue;
-			return Terrain.ExtractContents(activeValue) == CrossbowBlock.Index;
-		}
-
-		private bool IsActiveRepeatingCrossbow()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-			int activeValue = m_componentMiner.ActiveBlockValue;
-			return Terrain.ExtractContents(activeValue) == RepeatingCrossbowBlock.Index;
-		}
-
-		private bool IsActiveMusket()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-			int activeValue = m_componentMiner.ActiveBlockValue;
-			return Terrain.ExtractContents(activeValue) == MusketBlock.Index;
-		}
-
-		private bool IsHoldingRangedWeapon()
-		{
-			return IsActiveMusket() || IsActiveCrossbow() || IsActiveRepeatingCrossbow() || IsActiveBow();
-		}
-
-		private bool TryEquipRangedWeapon()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-			IInventory inventory = m_componentMiner.Inventory;
-			for (int i = 0; i < inventory.SlotsCount; i++)
-			{
-				int slotValue = inventory.GetSlotValue(i);
-				if (inventory.GetSlotCount(i) <= 0)
-					continue;
-				int contents = Terrain.ExtractContents(slotValue);
-				if (contents == MusketBlock.Index || contents == CrossbowBlock.Index || contents == RepeatingCrossbowBlock.Index || contents == BowBlock.Index)
-				{
-					inventory.ActiveSlotIndex = i;
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private bool TryEquipMeleeWeapon()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-
-			IInventory inventory = m_componentMiner.Inventory;
-			for (int i = 0; i < inventory.SlotsCount; i++)
-			{
-				int slotValue = inventory.GetSlotValue(i);
-				if (inventory.GetSlotCount(i) <= 0)
-					continue;
-
-				int contents = Terrain.ExtractContents(slotValue);
-
-				if (contents == MusketBlock.Index || contents == CrossbowBlock.Index || contents == RepeatingCrossbowBlock.Index || contents == BowBlock.Index || IsThrowableItem(contents))
-					continue;
-
-				Block block = BlocksManager.Blocks[contents];
-				if (block.GetMeleePower(slotValue) > 0f)
-				{
-					inventory.ActiveSlotIndex = i;
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private bool IsActiveBow()
-		{
-			if (m_componentMiner == null || m_componentMiner.Inventory == null)
-				return false;
-			int activeValue = m_componentMiner.ActiveBlockValue;
-			return Terrain.ExtractContents(activeValue) == BowBlock.Index;
-		}
-
-		private bool ShouldUseRangedAttack()
-		{
-			if (m_attackType == AttackType.CleanHands)
-				return false;
-			if (m_attackType == AttackType.Remote)
-				return true;
-			if (m_target == null)
-				return false;
-
-			float dist = Vector3.Distance(
-				m_componentCreature.ComponentBody.Position,
-				m_target.ComponentBody.Position);
-
-			if (HasThrowableWeaponInInventory())
-				return dist >= m_throwableAttackRange.X && dist <= m_throwableAttackRange.Y;
-			else
-				return dist >= m_rangedAttackRange.X && dist <= m_rangedAttackRange.Y;
-		}
-
-		private void TripleShot()
-		{
-			SubsystemProjectiles subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>();
-			if (subsystemProjectiles == null)
-				return;
-
-			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-			Vector3 aimDir = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos);
-			Vector3 vector = eyePos + m_componentCreature.ComponentBody.Matrix.Right * 0.3f - m_componentCreature.ComponentBody.Matrix.Up * 0.2f;
-			Vector3 vector2 = Vector3.Normalize(vector + aimDir * 10f - vector);
-			Vector3 vector3 = Vector3.Normalize(Vector3.Cross(vector2, Vector3.UnitY));
-			Vector3 v2 = Vector3.Normalize(Vector3.Cross(vector2, vector3));
-
-			ComponentCreature owner = m_componentCreature;
-
-			int musketBallValue = Terrain.MakeBlockValue(BulletBlock.Index, 0, BulletBlock.SetBulletType(0, BulletBlock.BulletType.MusketBall));
-			Vector3 velocityMB = m_componentCreature.ComponentBody.Velocity + 120f * vector2;
-			Projectile projectileMB = subsystemProjectiles.FireProjectile(musketBallValue, vector, velocityMB, Vector3.Zero, owner);
-			if (projectileMB != null) projectileMB.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-
-			int buckshotBallValue = Terrain.MakeBlockValue(BulletBlock.Index, 0, BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall));
-			Vector3 zeroBuckshot = new Vector3(0.04f, 0.04f, 0.25f);
-			for (int i = 0; i < 8; i++)
-			{
-				Vector3 v3 = m_random.Float(0f - zeroBuckshot.X, zeroBuckshot.X) * vector3 +
-						   m_random.Float(0f - zeroBuckshot.Y, zeroBuckshot.Y) * v2 +
-						   m_random.Float(0f - zeroBuckshot.Z, zeroBuckshot.Z) * vector2;
-				Vector3 velocityBuck = m_componentCreature.ComponentBody.Velocity + 80f * (vector2 + v3);
-				Projectile projectileBuck = subsystemProjectiles.FireProjectile(buckshotBallValue, vector, velocityBuck, Vector3.Zero, owner);
-				if (projectileBuck != null) projectileBuck.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-			}
-
-			int buckshotBallSingleValue = Terrain.MakeBlockValue(BulletBlock.Index, 0, BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall));
-			Vector3 zeroBB = new Vector3(0.06f, 0.06f, 0f);
-			Vector3 vBB = m_random.Float(0f - zeroBB.X, zeroBB.X) * vector3 + m_random.Float(0f - zeroBB.Y, zeroBB.Y) * v2;
-			Vector3 velocityBB = m_componentCreature.ComponentBody.Velocity + 60f * (vector2 + vBB);
-			Projectile projectileBB = subsystemProjectiles.FireProjectile(buckshotBallSingleValue, vector, velocityBB, Vector3.Zero, owner);
-			if (projectileBB != null) projectileBB.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-		}
-
-		private void PerformRangedAttack()
-		{
-			IInventory inventory = m_componentMiner.Inventory;
-			if (inventory == null)
-				return;
-
-			int slotIndex = inventory.ActiveSlotIndex;
-			int slotValue = inventory.GetSlotValue(slotIndex);
-			int contents = Terrain.ExtractContents(slotValue);
-
-			if (IsThrowableItem(contents))
-			{
-				Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-				Vector3 aimDir = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos);
-				Ray3 aimRay = new Ray3(eyePos, aimDir);
-				m_componentMiner.Aim(aimRay, AimState.Completed);
-				m_cooldownTimer = ThrowableCooldownTime;
-				return;
-			}
-
-			if (contents != MusketBlock.Index && contents != CrossbowBlock.Index && contents != RepeatingCrossbowBlock.Index && contents != BowBlock.Index)
-			{
-				if (!TryEquipRangedWeapon())
-					return;
-				slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
-				contents = Terrain.ExtractContents(slotValue);
-			}
-
-			if (contents == MusketBlock.Index)
-			{
-				if (m_random.Float() < 0.05f)
-				{
-					TripleShot();
-					return;
-				}
-
-				int data = Terrain.ExtractData(slotValue);
-				BulletBlock.BulletType bulletType;
-				int rnd = m_random.Int(0, 2);
-				switch (rnd)
-				{
-					case 0: bulletType = BulletBlock.BulletType.MusketBall; break;
-					case 1: bulletType = BulletBlock.BulletType.Buckshot; break;
-					default: bulletType = BulletBlock.BulletType.BuckshotBall; break;
-				}
-
-				MusketBlock.LoadState loadState = MusketBlock.GetLoadState(data);
-				if (loadState != MusketBlock.LoadState.Loaded || !MusketBlock.GetHammerState(data))
-				{
-					int newData = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
-					newData = MusketBlock.SetBulletType(newData, bulletType);
-					newData = MusketBlock.SetHammerState(newData, true);
-					int newValue = Terrain.MakeBlockValue(MusketBlock.Index, 0, newData);
-					inventory.RemoveSlotItems(slotIndex, 1);
-					inventory.AddSlotItems(slotIndex, newValue, 1);
-				}
-
-				slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
-				data = Terrain.ExtractData(slotValue);
-				if (!MusketBlock.GetHammerState(data))
-				{
-					int hammerData = MusketBlock.SetHammerState(data, true);
-					int hammerValue = Terrain.MakeBlockValue(MusketBlock.Index, 0, hammerData);
-					inventory.RemoveSlotItems(inventory.ActiveSlotIndex, 1);
-					inventory.AddSlotItems(inventory.ActiveSlotIndex, hammerValue, 1);
-				}
-			}
-			else if (contents == CrossbowBlock.Index)
-			{
-				slotValue = inventory.GetSlotValue(slotIndex);
-			}
-			else if (contents == RepeatingCrossbowBlock.Index)
-			{
-				slotValue = inventory.GetSlotValue(slotIndex);
-			}
-			else if (contents == BowBlock.Index)
-			{
-				slotValue = inventory.GetSlotValue(slotIndex);
-			}
-			else
-			{
-				return;
-			}
-
-			SubsystemProjectiles subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>();
-			int projectileCountBefore = (subsystemProjectiles != null) ? subsystemProjectiles.Projectiles.Count : 0;
-
-			Vector3 eyePos2 = m_componentCreature.ComponentCreatureModel.EyePosition;
-			Vector3 aimDir2 = Vector3.Normalize(m_target.ComponentCreatureModel.EyePosition - eyePos2);
-			Ray3 aimRay2 = new Ray3(eyePos2, aimDir2);
-			m_componentMiner.Aim(aimRay2, AimState.Completed);
-
-			if ((contents == CrossbowBlock.Index || contents == RepeatingCrossbowBlock.Index || contents == BowBlock.Index) && subsystemProjectiles != null)
-			{
-				for (int i = projectileCountBefore; i < subsystemProjectiles.Projectiles.Count; i++)
-				{
-					Projectile projectile = subsystemProjectiles.Projectiles[i];
-					if (projectile != null && !projectile.ToRemove)
-					{
-						projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-					}
-				}
-			}
-
-			if (IsActiveRepeatingCrossbow())
-				m_cooldownTimer = RepeatingCrossbowCooldownTime;
-			else if (IsActiveCrossbow())
-				m_cooldownTimer = CrossbowCooldownTime;
-			else if (IsActiveBow())
-				m_cooldownTimer = BowCooldownTime;
-			else
-				m_cooldownTimer = MusketCooldownTime;
-		}
-
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
@@ -766,8 +259,6 @@ namespace Game
 			m_chaseWhenAttackedProbability = valuesDictionary.GetValue<float>("ChaseWhenAttackedProbability");
 			m_chaseOnTouchProbability = valuesDictionary.GetValue<float>("ChaseOnTouchProbability");
 
-			m_attackType = valuesDictionary.GetValue<AttackType>("AttackType", AttackType.Default);
-			m_rangedAttackRange = valuesDictionary.GetValue<Vector2>("RangedAttackRange", new Vector2(8f, 25f));
 			m_invokeLightningOnHit = valuesDictionary.GetValue<bool>("InvokeLightningOnHit", false);
 			m_explodeOnHit = valuesDictionary.GetValue<bool>("ExplodeOnHit", false);
 			m_destroyBlocksWhenStuck = valuesDictionary.GetValue<bool>("DestroyBlocksWhenStuck", false);
@@ -909,8 +400,6 @@ namespace Game
 					m_stateMachine.TransitionTo("RandomMoving");
 				else
 				{
-					if (m_isAiming)
-						return;
 					if (ScoreTarget(m_target) <= 0f)
 						m_targetUnsuitableTime += m_dt;
 					else
@@ -935,8 +424,6 @@ namespace Game
 							center2 + predict * dist * m_target.ComponentBody.Velocity,
 							1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
 
-						if (m_isAiming)
-							return;
 						if (PlayAngrySoundWhenChasing && m_random.Float(0f, 1f) < 0.33f * m_dt)
 							m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
 					}
@@ -1130,53 +617,10 @@ namespace Game
 		public float TargetInRangeTimeToChase = 3f;
 		public ComponentNewHerdBehavior m_componentNewHerdBehavior;
 
-		public AttackType m_attackType = AttackType.Default;
-		public Vector2 m_rangedAttackRange = new Vector2(8f, 25f);
-		public Vector2 m_throwableAttackRange = new Vector2(5f, 15f);
-
-		public float MusketAimingTime = 1.0f;
-		public float MusketCooldownTime = 0.5f;
-		public float CrossbowAimingTime = 1.5f;
-		public float CrossbowCooldownTime = 0.02f;
-		public float RepeatingCrossbowAimingTime = 1.5f;
-		public float RepeatingCrossbowCooldownTime = 0.02f;
-		public float BowAimingTime = 1.5f;
-		public float BowCooldownTime = 0.01f;
-
-		public float ThrowableAimingTime = 1.5f;
-		public float ThrowableCooldownTime = 0.01f;
-
 		public bool m_invokeLightningOnHit = false;
 		public bool m_explodeOnHit = false;
 		public bool m_destroyBlocksWhenStuck = false;
 
-		private bool m_isAiming;
-		private float m_aimingTimer;
-		private float m_cooldownTimer;
 		private bool m_hasDestroyedBlocksWhileStuck;
-
-		private static ArrowBlock.ArrowType[] m_crossbowArrowTypes = new ArrowBlock.ArrowType[]
-		{
-			ArrowBlock.ArrowType.IronBolt,
-			ArrowBlock.ArrowType.DiamondBolt,
-			ArrowBlock.ArrowType.ExplosiveBolt
-		};
-		private static int[] m_repeatingCrossbowBoltTypes = new int[]
-{
-			(int)RepeatingBoltBlock.ArrowType.CopperRepeatingBolt,
-			(int)RepeatingBoltBlock.ArrowType.IronRepeatingBolt,
-			(int)RepeatingBoltBlock.ArrowType.DiamondRepeatingBolt,
-			(int)RepeatingBoltBlock.ArrowType.ExplosiveRepeatingBolt,
-};
-
-		private static ArrowBlock.ArrowType[] m_bowArrowTypes = new ArrowBlock.ArrowType[]
-		{
-			ArrowBlock.ArrowType.WoodenArrow,
-			ArrowBlock.ArrowType.StoneArrow,
-			ArrowBlock.ArrowType.CopperArrow,
-			ArrowBlock.ArrowType.IronArrow,
-			ArrowBlock.ArrowType.DiamondArrow,
-			ArrowBlock.ArrowType.FireArrow
-		};
 	}
 }
