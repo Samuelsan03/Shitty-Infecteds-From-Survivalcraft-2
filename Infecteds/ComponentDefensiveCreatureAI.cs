@@ -33,12 +33,17 @@ namespace Game
 		private ComponentMiner m_componentMiner;
 		private SubsystemTime m_subsystemTime;
 
+		private Random m_random;
+
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			m_canUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory");
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
+
+			// Inicialización normal
+			m_random = new Random();
 		}
 
 		public void Update(float dt)
@@ -168,7 +173,19 @@ namespace Game
 			if (MusketBlock.GetLoadState(data) != MusketBlock.LoadState.Loaded)
 			{
 				data = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
-				data = MusketBlock.SetBulletType(data, BulletBlock.BulletType.MusketBall);
+
+				// Array con los tipos de perdigones/balas
+				BulletBlock.BulletType[] bulletTypes = new BulletBlock.BulletType[]
+				{
+					BulletBlock.BulletType.MusketBall,
+					BulletBlock.BulletType.Buckshot,
+					BulletBlock.BulletType.BuckshotBall
+				};
+
+				// Selección aleatoria normal
+				BulletBlock.BulletType selectedBullet = bulletTypes[m_random.Int(0, bulletTypes.Length - 1)];
+
+				data = MusketBlock.SetBulletType(data, selectedBullet);
 				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
 				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(MusketBlock.Index, 0, data), 1);
 			}
