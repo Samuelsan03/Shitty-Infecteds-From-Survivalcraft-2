@@ -14,9 +14,6 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	private Game.Random random = new Game.Random();
 
-	private static bool m_greenNightDialogShown = false;
-	private static ComponentPlayer m_pendingPlayer = null;
-
 	public override void __ModInitialize()
 	{
 		ModsManager.RegisterHook("MenuPlayMusic", this);
@@ -30,11 +27,11 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override bool OnPlayerSpawned(PlayerData.SpawnMode spawnMode, ComponentPlayer player, Vector3 position)
 	{
-		if ((spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro) && !m_greenNightDialogShown)
+		// SpawnsCount ya fue incrementado ANTES de este hook (mira SpawnPlayer en PlayerData)
+		// Entonces en el primer spawn de cualquier mundo, SpawnsCount == 1
+		if ((spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro)
+			&& player.PlayerData.SpawnsCount <= 1)
 		{
-			m_greenNightDialogShown = true;
-			m_pendingPlayer = player;
-
 			if (player?.GuiWidget != null)
 			{
 				DialogsManager.ShowDialog(player.GuiWidget, new GreenNightConfigDialog(player));
@@ -152,7 +149,6 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override void OnMainMenuScreenCreated(MainMenuScreen mainMenuScreen, StackPanelWidget leftBottomBar, StackPanelWidget rightBottomBar)
 	{
-		m_greenNightDialogShown = false;
 
 		RectangleWidget logo = mainMenuScreen.Children.Find<RectangleWidget>("Logo", true);
 		if (logo != null)
