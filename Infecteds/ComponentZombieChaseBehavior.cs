@@ -7,7 +7,7 @@ namespace Game
 {
 	public class ComponentZombieChaseBehavior : ComponentBehavior, IUpdateable
 	{
-		// NUEVOS PARÁMETROS
+		// PARÁMETROS
 		public float ChaseRangeDay { get; set; }
 		public float ChaseRangeNight { get; set; }
 		public float ChaseTimeDay { get; set; }
@@ -15,14 +15,9 @@ namespace Game
 		public float ChaseNonPlayerProbability { get; set; }
 		public float ChaseWhenAttackedProbability { get; set; }
 		public float ChaseOnTouchProbability { get; set; }
-		public float ImportanceLevelNonPersistent { get; set; }
-		public float ImportanceLevelPersistent { get; set; }
-		public float MaxAttackRange { get; set; }
 		public bool AttacksPlayer { get; set; }
 		public bool AttacksNonPlayerCreature { get; set; }
-		public float MinHealthToAttackActively { get; set; }
-		public float TargetInRangeTimeToChase { get; set; }
-		public bool Suppressed { get; set; }
+		public bool MoreAggressiveOnGreenNight { get; set; }
 
 		// CAMPOS PRIVADOS
 		private SubsystemGameInfo m_subsystemGameInfo;
@@ -31,6 +26,7 @@ namespace Game
 		private SubsystemBodies m_subsystemBodies;
 		private SubsystemTime m_subsystemTime;
 		private SubsystemNoise m_subsystemNoise;
+		private SubsystemGreenNightSky m_subsystemGreenNight;
 		private ComponentCreature m_componentCreature;
 		private ComponentPathfinding m_componentPathfinding;
 		private ComponentMiner m_componentMiner;
@@ -41,7 +37,6 @@ namespace Game
 		private StateMachine m_stateMachine = new StateMachine();
 		private ComponentCreature m_target;
 		private float m_importanceLevel;
-		private float m_targetInRangeTime;
 		private float m_targetUnsuitableTime;
 		private double m_nextUpdateTime;
 		private float m_dt;
@@ -50,6 +45,7 @@ namespace Game
 		private bool m_isPersistent;
 		private float m_autoChaseSuppressionTime;
 		private string m_myHerdName;
+		private const float MaxAttackRange = 1.75f; // Valor interno estándar para validar el golpe
 
 		public ComponentCreature Target => m_target;
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -57,19 +53,16 @@ namespace Game
 
 		public void Attack(ComponentCreature target, float maxRange, float maxChaseTime, bool isPersistent)
 		{
-			if (Suppressed) return;
-
-			// VERIFICAR SI ES COMPAÑERO DE MANADA
 			ComponentZombieHerdBehavior targetHerd = target.Entity.FindComponent<ComponentZombieHerdBehavior>();
 			if (targetHerd != null && !string.IsNullOrEmpty(targetHerd.HerdName) && targetHerd.HerdName == m_myHerdName)
-				return; // NO ATACAR COMPAÑEROS
+				return;
 
 			m_target = target;
 			m_nextUpdateTime = 0.0;
 			m_range = maxRange;
 			m_chaseTime = maxChaseTime;
 			m_isPersistent = isPersistent;
-			m_importanceLevel = isPersistent ? ImportanceLevelPersistent : ImportanceLevelNonPersistent;
+			m_importanceLevel = m_isPersistent ? 100f : 50f;
 		}
 
 		public void StopAttack()
@@ -86,14 +79,18 @@ namespace Game
 
 		public void Update(float dt)
 		{
-			if (Suppressed)
-				StopAttack();
-
 			m_autoChaseSuppressionTime -= dt;
 
 			if (IsActive && m_target != null)
 			{
 				m_chaseTime -= dt;
+
+				// LÓGICA DE NOCHE VERDE: Mantiene la persecución infinita mientras sea de noche y el objetivo sea el jugador
+				if (m_chaseTime <= 0f && MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive && m_subsystemPlayers.IsPlayer(m_target.Entity))
+				{
+					m_chaseTime = 1f;
+				}
+
 				m_componentCreature.ComponentCreatureModel.LookAtOrder = new Vector3?(m_target.ComponentCreatureModel.EyePosition);
 
 				if (IsTargetInAttackRange(m_target.ComponentBody))
@@ -123,20 +120,19 @@ namespace Game
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
-			// CARGAR SUBSISTEMAS
 			m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
 			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 			m_subsystemSky = Project.FindSubsystem<SubsystemSky>(true);
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
+			m_subsystemGreenNight = Project.FindSubsystem<SubsystemGreenNightSky>(false);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentCreatureModel = Entity.FindComponent<ComponentCreatureModel>(true);
 			m_componentFactors = Entity.FindComponent<ComponentFactors>(true);
 
-			// CARGAR NUEVOS PARÁMETROS DESDE XDB
 			ChaseRangeDay = valuesDictionary.GetValue<float>("ChaseRangeDay");
 			ChaseRangeNight = valuesDictionary.GetValue<float>("ChaseRangeNight");
 			ChaseTimeDay = valuesDictionary.GetValue<float>("ChaseTimeDay");
@@ -144,19 +140,13 @@ namespace Game
 			ChaseNonPlayerProbability = valuesDictionary.GetValue<float>("ChaseNonPlayerProbability");
 			ChaseWhenAttackedProbability = valuesDictionary.GetValue<float>("ChaseWhenAttackedProbability");
 			ChaseOnTouchProbability = valuesDictionary.GetValue<float>("ChaseOnTouchProbability");
-			ImportanceLevelNonPersistent = valuesDictionary.GetValue<float>("ImportanceLevelNonPersistent");
-			ImportanceLevelPersistent = valuesDictionary.GetValue<float>("ImportanceLevelPersistent");
-			MaxAttackRange = valuesDictionary.GetValue<float>("MaxAttackRange");
 			AttacksPlayer = valuesDictionary.GetValue<bool>("AttacksPlayer");
 			AttacksNonPlayerCreature = valuesDictionary.GetValue<bool>("AttacksNonPlayerCreature");
-			MinHealthToAttackActively = valuesDictionary.GetValue<float>("MinHealthToAttackActively");
-			TargetInRangeTimeToChase = valuesDictionary.GetValue<float>("TargetInRangeTimeToChase");
+			MoreAggressiveOnGreenNight = valuesDictionary.GetValue<bool>("MoreAggressiveOnGreenNight", false);
 
-			// OBTENER NOMBRE DE MANADA DEL ZOMBI
 			ComponentZombieHerdBehavior herd = Entity.FindComponent<ComponentZombieHerdBehavior>();
 			m_myHerdName = (herd != null) ? herd.HerdName : null;
 
-			// SUSCRIBIRSE A COLISIONES
 			ComponentBody body = m_componentCreature.ComponentBody;
 			body.CollidedWithBody += delegate (ComponentBody otherBody)
 			{
@@ -168,7 +158,6 @@ namespace Game
 						bool isPlayer = m_subsystemPlayers.IsPlayer(otherBody.Entity);
 						ComponentZombieHerdBehavior otherHerd = creature.Entity.FindComponent<ComponentZombieHerdBehavior>();
 
-						// NO ATACAR COMPAÑEROS DE MANADA
 						if (otherHerd != null && otherHerd.HerdName == m_myHerdName)
 							return;
 
@@ -178,7 +167,6 @@ namespace Game
 				}
 			};
 
-			// SUSCRIBIRSE A DAÑO RECIBIDO - LOS ZOMBIS IGNORAN Y NO HUYEN
 			ComponentHealth health = m_componentCreature.ComponentHealth;
 			health.Injured += delegate (Injury injury)
 			{
@@ -187,7 +175,6 @@ namespace Game
 				{
 					ComponentZombieHerdBehavior attackerHerd = attacker.Entity.FindComponent<ComponentZombieHerdBehavior>();
 
-					// NO ATACAR COMPAÑEROS DE MANADA
 					if (attackerHerd != null && attackerHerd.HerdName == m_myHerdName)
 						return;
 
@@ -197,7 +184,6 @@ namespace Game
 				}
 			};
 
-			// MÁQUINA DE ESTADOS
 			m_stateMachine.AddState("LookingForTarget", delegate
 			{
 				m_importanceLevel = 0f;
@@ -210,18 +196,13 @@ namespace Game
 					return;
 				}
 
-				if (!Suppressed && m_autoChaseSuppressionTime <= 0f && m_componentCreature.ComponentHealth.Health > MinHealthToAttackActively)
+				if (m_autoChaseSuppressionTime <= 0f)
 				{
 					m_range = ((m_subsystemSky.SkyLightIntensity < 0.2f) ? ChaseRangeNight : ChaseRangeDay);
 					m_range *= m_componentFactors.GetOtherFactorResult("ChaseRange", false, false);
 
 					ComponentCreature target = FindTarget();
 					if (target != null)
-						m_targetInRangeTime += m_dt;
-					else
-						m_targetInRangeTime = 0f;
-
-					if (m_targetInRangeTime > TargetInRangeTimeToChase)
 					{
 						bool isDay = m_subsystemSky.SkyLightIntensity >= 0.1f;
 						float maxRange = isDay ? (ChaseRangeDay + 6f) : (ChaseRangeNight + 6f);
@@ -238,11 +219,13 @@ namespace Game
 				m_nextUpdateTime = 0.0;
 			}, delegate
 			{
+				bool isGreenNightActive = MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive && m_target != null && m_subsystemPlayers.IsPlayer(m_target.Entity);
+
 				if (!IsActive)
 				{
 					m_stateMachine.TransitionTo("LookingForTarget");
 				}
-				else if (m_chaseTime <= 0f)
+				else if (!isGreenNightActive && m_chaseTime <= 0f)
 				{
 					m_autoChaseSuppressionTime = m_random.Float(10f, 60f);
 					m_importanceLevel = 0f;
@@ -251,7 +234,7 @@ namespace Game
 				{
 					m_importanceLevel = 0f;
 				}
-				else if (!m_isPersistent && m_componentPathfinding.IsStuck)
+				else if (!isGreenNightActive && !m_isPersistent && m_componentPathfinding.IsStuck)
 				{
 					m_importanceLevel = 0f;
 				}
@@ -262,13 +245,13 @@ namespace Game
 					else
 						m_targetUnsuitableTime = 0f;
 
-					if (m_targetUnsuitableTime > 3f)
+					if (!isGreenNightActive && m_targetUnsuitableTime > 3f)
 					{
 						m_importanceLevel = 0f;
 					}
 					else
 					{
-						int maxPathfinding = m_isPersistent ? ((m_subsystemTime.FixedTimeStep != null) ? 2000 : 500) : 0;
+						int maxPathfinding = (m_isPersistent || isGreenNightActive) ? ((m_subsystemTime.FixedTimeStep != null) ? 2000 : 500) : 0;
 						Vector3 targetPos = m_target.ComponentBody.BoundingBox.Center();
 						float distance = Vector3.Distance(m_componentCreature.ComponentBody.BoundingBox.Center(), targetPos);
 						float slowDown = (distance < 4f) ? 0.2f : 0f;
@@ -313,13 +296,11 @@ namespace Game
 		{
 			if (target == m_componentCreature) return 0f;
 
-			// VERIFICAR SI ES COMPAÑERO DE MANADA
 			ComponentZombieHerdBehavior targetHerd = target.Entity.FindComponent<ComponentZombieHerdBehavior>();
 			if (targetHerd != null && !string.IsNullOrEmpty(targetHerd.HerdName) && targetHerd.HerdName == m_myHerdName)
-				return 0f; // COMPAÑERO, NO ATACAR
+				return 0f;
 
 			bool isPlayer = target.Entity.FindComponent<ComponentPlayer>() != null;
-			bool isAquatic = m_componentCreature.Category != CreatureCategory.WaterPredator && m_componentCreature.Category != CreatureCategory.WaterOther;
 			bool canAttackPlayer = AttacksPlayer && isPlayer && m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
 			bool canAttackCreature = AttacksNonPlayerCreature && !isPlayer;
 
