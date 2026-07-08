@@ -30,15 +30,19 @@ namespace Game
 				return;
 
 			Vector3 position = target.ComponentBody.Position;
+			// CORREGIDO: Aumentado rango de 256 a 1600 (40 bloques) para mejor respuesta
+			float rangeSquared = 1600f;
+
 			foreach (ComponentCreature componentCreature in m_subsystemCreatureSpawn.Creatures)
 			{
-				if (Vector3.DistanceSquared(position, componentCreature.ComponentBody.Position) < 256f)
+				if (Vector3.DistanceSquared(position, componentCreature.ComponentBody.Position) < rangeSquared)
 				{
 					ComponentNewHerdBehavior componentHerdBehavior = componentCreature.Entity.FindComponent<ComponentNewHerdBehavior>();
 					if (componentHerdBehavior != null && !string.IsNullOrEmpty(componentHerdBehavior.HerdName) && componentHerdBehavior.HerdName == HerdName && componentHerdBehavior.m_autoNearbyCreaturesHelp)
 					{
 						ComponentNewChaseBehavior chaseBehavior = componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
-						if (chaseBehavior != null && chaseBehavior.Target == null)
+						// CORREGIDO: Removida la verificación Target == null para forzar ataque inmediato
+						if (chaseBehavior != null)
 						{
 							chaseBehavior.Attack(target, maxRange, maxChaseTime, isPersistent);
 						}
@@ -210,11 +214,9 @@ namespace Game
 		{
 			if (injury.Attacker != null && HerdName == "player")
 			{
-				var chaseBehavior = Entity.FindComponent<ComponentNewChaseBehavior>();
-				if (chaseBehavior != null)
-				{
-					chaseBehavior.Attack(injury.Attacker, 20f, 30f, false);
-				}
+				// CORREGIDO: Llamar a CallNearbyCreaturesHelp para que TODAS las criaturas reaccionen
+				// no solo esta criatura individual
+				CallNearbyCreaturesHelp(injury.Attacker, 20f, 30f, false);
 			}
 		}
 
