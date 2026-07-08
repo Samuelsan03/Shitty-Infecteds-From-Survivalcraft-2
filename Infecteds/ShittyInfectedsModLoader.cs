@@ -14,6 +14,11 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	private Game.Random random = new Game.Random();
 
+	// Variables para el diálogo de noche verde
+	private static bool m_greenNightDialogShown = false;
+	private static bool m_showGreenNightDialog = false;
+	private static ComponentPlayer m_pendingPlayer = null;
+
 	public override void __ModInitialize()
 	{
 		ModsManager.RegisterHook("MenuPlayMusic", this);
@@ -21,6 +26,20 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("OnMinerHit", this);
 		ModsManager.RegisterHook("CalculateCreatureInjuryAmount", this);
 		ModsManager.RegisterHook("OnWidgetConstruct", this);
+		ModsManager.RegisterHook("OnPlayerSpawned", this);
+	}
+
+	public override bool OnPlayerSpawned(PlayerData.SpawnMode spawnMode, ComponentPlayer player, Vector3 position)
+	{
+		if ((spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro) && !m_greenNightDialogShown)
+		{
+			m_greenNightDialogShown = true;
+			m_showGreenNightDialog = true;
+			m_pendingPlayer = player;
+		}
+		DialogsManager.ShowDialog(m_pendingPlayer.GuiWidget, new GreenNightConfigDialog(m_pendingPlayer));
+
+		return false;
 	}
 
 	public override void OnWidgetConstruct(ref Widget widget)
@@ -123,6 +142,8 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override void OnMainMenuScreenCreated(MainMenuScreen mainMenuScreen, StackPanelWidget leftBottomBar, StackPanelWidget rightBottomBar)
 	{
+		m_greenNightDialogShown = false;
+
 		RectangleWidget logo = mainMenuScreen.Children.Find<RectangleWidget>("Logo", true);
 		if (logo != null)
 		{
