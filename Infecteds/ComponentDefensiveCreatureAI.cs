@@ -24,6 +24,11 @@ namespace Game
 		public Vector2 AttackDistanceRange = new Vector2(5f, 100f);
 		public Vector2 ThrowableObjectThrowingDistance = new Vector2(5f, 15f);
 
+		// Distancia de seguridad para uso de virotes explosivos
+		// X = distancia mínima para usar virotes normales (si estamos al mínimo, NO usar explosivo)
+		// Y = distancia máxima para variación (si estamos al máximo, usar virote explosivo)
+		public Vector2 SafetyDistanceUseOfExplosiveBolt = new Vector2(20f, 100f);
+
 		// Tiempos del Mosquete
 		public float MusketCooldown = 0.01f;
 		public float MusketAimTime = 1.5f;
@@ -149,12 +154,12 @@ namespace Game
 					}
 					else
 					{
-						HandleRangedAttack(target);
+						HandleRangedAttack(target, distance);
 					}
 				}
 				else
 				{
-					HandleRangedAttack(target);
+					HandleRangedAttack(target, distance);
 				}
 			}
 			else
@@ -279,7 +284,7 @@ namespace Game
 			m_componentMiner.Aim(aimRay, AimState.Completed);
 		}
 
-		private void HandleRangedAttack(ComponentCreature target)
+		private void HandleRangedAttack(ComponentCreature target, float distance)
 		{
 			if (m_cooldownTimer > 0f)
 			{
@@ -303,7 +308,7 @@ namespace Game
 
 			if (isCrossbow)
 			{
-				EnsureCrossbowLoaded(crossbowSlot);
+				EnsureCrossbowLoaded(crossbowSlot, distance);
 			}
 			else if (isBow)
 			{
@@ -542,7 +547,7 @@ namespace Game
 			}
 		}
 
-		private void EnsureCrossbowLoaded(int slotIndex)
+		private void EnsureCrossbowLoaded(int slotIndex, float distanceToTarget)
 		{
 			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
 			int data = Terrain.ExtractData(value);
@@ -551,14 +556,35 @@ namespace Game
 
 			if (draw != 15 || arrowType == null)
 			{
-				ArrowBlock.ArrowType[] boltTypes = new ArrowBlock.ArrowType[]
-				{
-					ArrowBlock.ArrowType.IronBolt,
-					ArrowBlock.ArrowType.DiamondBolt,
-					ArrowBlock.ArrowType.ExplosiveBolt
-				};
+				ArrowBlock.ArrowType selectedBolt;
 
-				ArrowBlock.ArrowType selectedBolt = boltTypes[m_random.Int(0, boltTypes.Length - 1)];
+				// Lógica de distancia de seguridad para virotes explosivos
+				if (distanceToTarget <= SafetyDistanceUseOfExplosiveBolt.X)
+				{
+					// DISTANCIA MÍNIMA: No usar explosivo, solo virotes normales
+					ArrowBlock.ArrowType[] normalBolts = new ArrowBlock.ArrowType[]
+					{
+						ArrowBlock.ArrowType.IronBolt,
+						ArrowBlock.ArrowType.DiamondBolt
+					};
+					selectedBolt = normalBolts[m_random.Int(0, normalBolts.Length - 1)];
+				}
+				else if (distanceToTarget >= SafetyDistanceUseOfExplosiveBolt.Y)
+				{
+					// DISTANCIA MÁXIMA: Usar variación normal pero con virote explosivo
+					selectedBolt = ArrowBlock.ArrowType.ExplosiveBolt;
+				}
+				else
+				{
+					// DISTANCIA INTERMEDIA: Puede usar cualquier tipo de virote
+					ArrowBlock.ArrowType[] allBolts = new ArrowBlock.ArrowType[]
+					{
+						ArrowBlock.ArrowType.IronBolt,
+						ArrowBlock.ArrowType.DiamondBolt,
+						ArrowBlock.ArrowType.ExplosiveBolt
+					};
+					selectedBolt = allBolts[m_random.Int(0, allBolts.Length - 1)];
+				}
 
 				data = CrossbowBlock.SetDraw(data, 15);
 				data = CrossbowBlock.SetArrowType(data, new ArrowBlock.ArrowType?(selectedBolt));
