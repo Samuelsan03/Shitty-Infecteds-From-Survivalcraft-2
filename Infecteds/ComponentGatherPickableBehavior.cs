@@ -55,10 +55,20 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
-			if (this.m_collectionNeed > 0f)
+			// CANCELAR RECOLECCIÓN SI HAY PERSECUCIÓN ACTIVA
+			if (this.m_importanceLevel > 0f)
 			{
-				this.m_collectionNeed = MathUtils.Max(this.m_collectionNeed - 0.01f * this.m_subsystemTime.GameTimeDelta, 0f);
+				foreach (ComponentBehavior behavior in base.Entity.FindComponents<ComponentBehavior>())
+				{
+					if (behavior != this && behavior.IsActive && (behavior is ComponentChaseBehavior || behavior is ComponentZombieChaseBehavior || behavior is ComponentNewChaseBehavior))
+					{
+						this.m_importanceLevel = 0f;
+						this.m_stateMachine.TransitionTo("Inactive");
+						break;
+					}
+				}
 			}
+
 			this.m_stateMachine.Update();
 		}
 
@@ -104,7 +114,19 @@ namespace Game
 				this.m_pickable = null;
 			}, delegate
 			{
-				if (this.m_collectionNeed < 1f && this.HasInventorySpace())
+				// Solo busca si no hay persecución activa
+				bool isChasing = false;
+				foreach (ComponentBehavior behavior in base.Entity.FindComponents<ComponentBehavior>())
+				{
+					if (behavior != this && behavior.IsActive && (behavior is ComponentChaseBehavior || behavior is ComponentZombieChaseBehavior || behavior is ComponentNewChaseBehavior))
+					{
+						isChasing = true;
+						break;
+					}
+				}
+
+				// ELIMINADA la condición m_collectionNeed < 1f - La recolección no tiene "necesidad" como el comer
+				if (!isChasing && this.HasInventorySpace())
 				{
 					if (this.m_pickable == null)
 					{
@@ -130,8 +152,9 @@ namespace Game
 			{
 				if (this.m_pickable != null)
 				{
-					float speed = (this.m_collectionNeed == 0f) ? this.m_random.Float(0.5f, 0.7f) : 0.5f;
-					int maxPathfindingPositions = (this.m_collectionNeed == 0f) ? 1000 : 500;
+					// ELIMINADA la lógica de velocidad basada en m_collectionNeed
+					float speed = this.m_random.Float(0.5f, 0.7f);
+					int maxPathfindingPositions = 1000;
 					float num = Vector3.Distance(this.m_componentCreature.ComponentCreatureModel.EyePosition, this.m_componentCreature.ComponentBody.Position);
 					this.m_componentPathfinding.SetDestination(new Vector3?(this.m_pickable.Position), speed, 1f + num, maxPathfindingPositions, true, false, true, null);
 					if (this.m_random.Float(0f, 1f) < 0.66f)
@@ -151,8 +174,8 @@ namespace Game
 				}
 				else if (this.m_componentPathfinding.IsStuck)
 				{
+					// ELIMINADO m_collectionNeed += 0.75f - No aplica para recolección
 					this.m_importanceLevel = 0f;
-					this.m_collectionNeed += 0.75f;
 				}
 				else if (this.m_componentPathfinding.Destination == null)
 				{
@@ -238,8 +261,8 @@ namespace Game
 						this.m_blockedCount++;
 						if (this.m_blockedCount >= 3)
 						{
+							// ELIMINADO m_collectionNeed += 0.75f
 							this.m_importanceLevel = 0f;
-							this.m_collectionNeed += 0.75f;
 						}
 						else
 						{
@@ -335,7 +358,7 @@ namespace Game
 				return false;
 			}
 
-			if (Vector3.DistanceSquared(pickable.Position, this.m_componentCreature.ComponentBody.Position) < 256f)
+			if (!this.m_pickables.ContainsKey(pickable) && Vector3.DistanceSquared(pickable.Position, this.m_componentCreature.ComponentBody.Position) < 256f)
 			{
 				this.m_pickables.Add(pickable, true);
 				return true;
@@ -372,7 +395,7 @@ namespace Game
 			if (actuallyGathered > 0)
 			{
 				this.m_pickable.Count -= actuallyGathered;
-				this.m_collectionNeed += 1f;
+				// ELIMINADO m_collectionNeed += 1f
 
 				if (this.m_pickable.Count == 0)
 				{
