@@ -38,18 +38,17 @@ namespace Game
 			return Math.Max(0, (int)Math.Floor(daysRemaining));
 		}
 
+		// Inicia cuando el sol está a la mitad de su caída (Middusk) 
+		// y termina cuando la luna está a la mitad de su caída (Middawn)
 		public bool IsNightTime
 		{
 			get
 			{
 				if (m_subsystemTimeOfDay == null) return false;
 				float timeOfDay = m_subsystemTimeOfDay.TimeOfDay;
-				float midday = m_subsystemTimeOfDay.Midday;
-				float midnight = m_subsystemTimeOfDay.Midnight;
-				float halfDayDuration = 0.25f;
-				float eventStart = IntervalUtils.Add(midday, halfDayDuration);
-				float eventEnd = IntervalUtils.Add(midnight, halfDayDuration);
-				return IntervalUtils.IsBetween(timeOfDay, eventStart, eventEnd);
+				float middusk = m_subsystemTimeOfDay.Middusk;
+				float middawn = m_subsystemTimeOfDay.Middawn;
+				return IntervalUtils.IsBetween(timeOfDay, middusk, middawn);
 			}
 		}
 
@@ -61,7 +60,9 @@ namespace Game
 				float timeOfDay = m_subsystemTimeOfDay.TimeOfDay;
 				float midnight = m_subsystemTimeOfDay.Midnight;
 				float distFromMidnight = Math.Abs(IntervalUtils.Distance(timeOfDay, midnight));
-				return MathUtils.Saturate(1f - distFromMidnight / 0.25f);
+				float halfDuration = Math.Abs(IntervalUtils.Distance(m_subsystemTimeOfDay.Middusk, midnight));
+				if (halfDuration <= 0f) return 1f;
+				return MathUtils.Saturate(1f - distFromMidnight / halfDuration);
 			}
 		}
 
