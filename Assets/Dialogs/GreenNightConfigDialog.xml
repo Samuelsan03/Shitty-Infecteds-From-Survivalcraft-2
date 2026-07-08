@@ -1,0 +1,36 @@
+<CanvasWidget xmlns="runtime-namespace:Game">
+
+  <CanvasWidget Size="600, 420" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+    <BevelledRectangleWidget Style="{Styles/DialogArea}" />
+
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="20, 10">
+
+      <LabelWidget Text="Configuración de Noche Verde" HorizontalAlignment="Center" Margin="0, 10" FontScale="1.1" Color="0, 255, 94" DropShadow="true" />
+
+      <LabelWidget Text="Escoga los días que ocurrirá la noche verde" HorizontalAlignment="Center" Margin="0, 8" Color="200, 200, 200" />
+
+      <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
+        <LabelWidget Text="Noche verde en:" Color="180, 180, 180" VerticalAlignment="Center" Margin="0, 0, 10, 0" />
+        <BevelledButtonWidget Name="GreenNightConfig.DaysButton" Text="4 días" Style="{Styles/ButtonStyle_160x60}" />
+      </StackPanelWidget>
+
+      <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 5">
+        <LabelWidget Text="Días que te quedarán de vida:" Color="180, 180, 180" VerticalAlignment="Center" Margin="0, 0, 10, 0" />
+        <LabelWidget Name="GreenNightConfig.LifeDaysLabel" Text="4" Color="255, 100, 100" VerticalAlignment="Center" />
+      </StackPanelWidget>
+
+      <CanvasWidget Size="470, 80" HorizontalAlignment="Center" Margin="0, 12">
+        <ScrollPanelWidget Direction="Vertical">
+          <LabelWidget Name="GreenNightConfig.Description" Text="El tiempo vuela cuando te divertes, ¿verdad? Bueno, aquí también vuela, pero no porque te estés divirtiendo.\n Los infectados se multiplicarán más rápido y la oscuridad será más densa.\n Al menos tendrás tiempo de cavar tu tumba con calma." Color="150, 150, 150" FontScale="0.75" />
+        </ScrollPanelWidget>
+      </CanvasWidget>
+
+      <UniformSpacingPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 8">
+        <BevelledButtonWidget Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Center" Name="GreenNightConfig.OkButton" Text="Aceptar" />
+        <BevelledButtonWidget Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Center" Name="GreenNightConfig.CancelButton" Text="Cancelar" />
+      </UniformSpacingPanelWidget>
+
+    </StackPanelWidget>
+
+  </CanvasWidget>
+</CanvasWidget>
