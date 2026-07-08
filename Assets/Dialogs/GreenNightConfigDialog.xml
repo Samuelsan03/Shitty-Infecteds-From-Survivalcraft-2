@@ -10,13 +10,8 @@
       <LabelWidget Text="Escoga los días que ocurrirá la noche verde" HorizontalAlignment="Center" Margin="0, 8" Color="200, 200, 200" />
 
       <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
-        <LabelWidget Text="Noche verde en:" Color="180, 180, 180" VerticalAlignment="Center" Margin="0, 0, 10, 0" />
-        <BevelledButtonWidget Name="GreenNightConfig.DaysButton" Text="4 días" Style="{Styles/ButtonStyle_160x60}" />
-      </StackPanelWidget>
-
-      <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 5">
         <LabelWidget Text="Días que te quedarán de vida:" Color="180, 180, 180" VerticalAlignment="Center" Margin="0, 0, 10, 0" />
-        <LabelWidget Name="GreenNightConfig.LifeDaysLabel" Text="4" Color="255, 100, 100" VerticalAlignment="Center" />
+        <BevelledButtonWidget Name="GreenNightConfig.DaysButton" Text="4 días" Style="{Styles/ButtonStyle_160x60}" />
       </StackPanelWidget>
 
       <CanvasWidget Size="470, 80" HorizontalAlignment="Center" Margin="0, 12">
