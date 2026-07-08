@@ -22,6 +22,7 @@ namespace Game
 		}
 
 		public Vector2 AttackDistanceRange = new Vector2(5f, 100f);
+		public Vector2 ThrowableObjectThrowingDistance = new Vector2(5f, 15f);
 
 		// Tiempos del Mosquete
 		public float MusketCooldown = 0.01f;
@@ -35,14 +36,21 @@ namespace Game
 		public float BowCooldown = 0.01f;
 		public float BowAimTime = 1.5f;
 
+		// Tiempos de objetos lanzables
+		public float ThrowableAimTime = 1.5f;
+		public float ThrowableCooldown = 0.01f;
+
 		private bool m_canUseInventory;
 		private float m_aimTimer;
 		private float m_cooldownTimer;
 		private bool m_isAiming;
+		private bool m_isThrowing;
 		private ComponentCreature m_componentCreature;
 		private ComponentMiner m_componentMiner;
+		private ComponentPathfinding m_componentPathfinding;
 		private SubsystemTime m_subsystemTime;
 		private SubsystemProjectiles m_subsystemProjectiles;
+		private SubsystemBlockBehaviors m_subsystemBlockBehaviors;
 
 		private Random m_random;
 
@@ -51,8 +59,10 @@ namespace Game
 			m_canUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory");
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
+			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>();
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
+			m_subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true);
 
 			m_random = new Random();
 		}
@@ -69,6 +79,36 @@ namespace Game
 
 			float distance = Vector3.Distance(m_componentCreature.ComponentBody.Position, target.ComponentBody.Position);
 
+			int throwableSlot = FindThrowableSlot();
+
+			// Si estamos en el rango de las lanzables y tenemos lanzables, priorizar lanzables
+			if (throwableSlot >= 0 && distance >= ThrowableObjectThrowingDistance.X && distance <= ThrowableObjectThrowingDistance.Y)
+			{
+				// Si estábamos apuntando con un arma a distancia, cancelar el arma a distancia primero
+				if (m_isAiming && !m_isThrowing)
+				{
+					CancelAim();
+					m_cooldownTimer = 0f;
+				}
+
+				// Detener el pathfinding al lanzar
+				if (m_componentPathfinding != null)
+				{
+					m_componentPathfinding.Stop();
+				}
+				HandleThrowableAttack(target, throwableSlot);
+				return;
+			}
+
+			// Si se sale del rango de las lanzables mientras se lanza, cancelar y pasar a armas a distancia inmediatamente
+			if (m_isThrowing)
+			{
+				CancelAim();
+				m_isThrowing = false;
+				m_cooldownTimer = 0f;
+			}
+
+			// Si estamos fuera del rango de lanzables pero dentro del rango de armas a distancia, usar armas a distancia
 			if (distance <= AttackDistanceRange.Y)
 			{
 				if (distance < AttackDistanceRange.X)
@@ -93,6 +133,50 @@ namespace Game
 			{
 				CancelAim();
 			}
+		}
+
+		private void HandleThrowableAttack(ComponentCreature target, int throwableSlot)
+		{
+			if (m_cooldownTimer > 0f)
+			{
+				m_cooldownTimer -= m_subsystemTime.GameTimeDelta;
+				return;
+			}
+
+			m_componentMiner.Inventory.ActiveSlotIndex = throwableSlot;
+
+			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 targetPos = target.ComponentCreatureModel.EyePosition;
+			Vector3 direction = Vector3.Normalize(targetPos - eyePos);
+			Ray3 aimRay = new Ray3(eyePos, direction);
+
+			if (!m_isAiming)
+			{
+				m_isAiming = true;
+				m_isThrowing = true;
+				m_aimTimer = 0f;
+				m_componentMiner.Aim(aimRay, AimState.InProgress);
+			}
+			else
+			{
+				m_aimTimer += m_subsystemTime.GameTimeDelta;
+				m_componentMiner.Aim(aimRay, AimState.InProgress);
+
+				if (m_aimTimer >= ThrowableAimTime)
+				{
+					FireThrowable(aimRay);
+					m_isAiming = false;
+					m_isThrowing = false;
+					m_cooldownTimer = ThrowableCooldown;
+					m_aimTimer = 0f;
+				}
+			}
+		}
+
+		private void FireThrowable(Ray3 aimRay)
+		{
+			// Ejecutamos el Aim Completed para que el SubsystemThrowableBlockBehavior lo lance de forma normal
+			m_componentMiner.Aim(aimRay, AimState.Completed);
 		}
 
 		private void HandleRangedAttack(ComponentCreature target)
@@ -222,7 +306,7 @@ namespace Game
 				{
 					// 3. Forzamos a que el virote DESAPAREZCA al tocar el piso en lugar de convertirse en objeto
 					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-					break; // Rompemos el ciclo porque ya encontramos el más reciente
+					break;
 				}
 			}
 		}
@@ -253,6 +337,7 @@ namespace Game
 				Ray3 aimRay = new Ray3(eyePos, direction);
 				m_componentMiner.Aim(aimRay, AimState.Cancelled);
 				m_isAiming = false;
+				m_isThrowing = false;
 				m_aimTimer = 0f;
 			}
 		}
@@ -268,6 +353,39 @@ namespace Game
 					if (block.GetMeleePower(value) > 1f && !block.IsAimable_(value))
 					{
 						return i;
+					}
+				}
+			}
+			return -1;
+		}
+
+		private int FindThrowableSlot()
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0)
+				{
+					int value = m_componentMiner.Inventory.GetSlotValue(i);
+					int blockId = Terrain.ExtractContents(value);
+
+					// Excluir mosquete, arco y ballesta
+					if (blockId == MusketBlock.Index || blockId == BowBlock.Index || blockId == CrossbowBlock.Index)
+						continue;
+
+					// Usar el SubsystemThrowableBlockBehavior para detectar si el bloque es lanzable
+					if (m_subsystemBlockBehaviors != null)
+					{
+						SubsystemBlockBehavior[] behaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(blockId);
+						if (behaviors != null)
+						{
+							for (int j = 0; j < behaviors.Length; j++)
+							{
+								if (behaviors[j] is SubsystemThrowableBlockBehavior)
+								{
+									return i;
+								}
+							}
+						}
 					}
 				}
 			}
