@@ -1,633 +1,669 @@
 using System;
+using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
 
 namespace Game
 {
-	public class ComponentDefensiveCreatureAI : Component, IUpdateable
+	public class ComponentNewChaseBehavior : ComponentBehavior, IUpdateable
 	{
-		public UpdateOrder UpdateOrder => UpdateOrder.Default;
-
-		public bool CanUseInventory
+		public ComponentCreature Target
 		{
-			get
+			get { return m_target; }
+		}
+
+		public UpdateOrder UpdateOrder
+		{
+			get { return UpdateOrder.Default; }
+		}
+
+		public override float ImportanceLevel
+		{
+			get { return m_importanceLevel; }
+		}
+
+		public virtual void Attack(ComponentCreature componentCreature, float maxRange, float maxChaseTime, bool isPersistent)
+		{
+			if (componentCreature != null && IsPlayerHerd() && componentCreature.Entity.FindComponent<ComponentPlayer>() != null)
+				return;
+
+			if (componentCreature != null && m_componentNewHerdBehavior != null)
 			{
-				return m_canUseInventory;
+				ComponentNewHerdBehavior targetHerd = componentCreature.Entity.FindComponent<ComponentNewHerdBehavior>();
+				if (targetHerd != null && targetHerd.HerdName == m_componentNewHerdBehavior.HerdName)
+					return;
 			}
-			set
+
+			if (Suppressed)
+				return;
+
+			m_target = componentCreature;
+			m_nextUpdateTime = 0.0;
+			m_range = maxRange;
+			m_chaseTime = maxChaseTime;
+			m_isPersistent = isPersistent;
+			m_importanceLevel = (isPersistent ? ImportanceLevelPersistent : ImportanceLevelNonPersistent);
+			m_autoChaseSuppressionTime = 0f;
+			m_hasDestroyedBlocksWhileStuck = false;
+			m_targetInRangeTime = TargetInRangeTimeToChase + 1f;
+			m_targetUnsuitableTime = 0f;
+			IsActive = true;
+
+			// CORREGIDO: Forzar que el comportamiento de manada se desactive inmediatamente
+			// para evitar conflictos de pathfinding
+			if (m_componentNewHerdBehavior != null)
 			{
-				m_canUseInventory = value;
+				m_componentNewHerdBehavior.m_importanceLevel = 0f;
+			}
+
+			// FORZAR transición inmediata al estado Chasing
+			if (m_stateMachine.CurrentState != "Chasing")
+			{
+				m_stateMachine.TransitionTo("Chasing");
 			}
 		}
 
-		public Vector2 AttackDistanceRange = new Vector2(5f, 100f);
-		public Vector2 ThrowableObjectThrowingDistance = new Vector2(5f, 15f);
-
-		// Distancia de seguridad para uso de virotes explosivos
-		// X = distancia mínima para usar virotes normales (si estamos al mínimo, NO usar explosivo)
-		// Y = distancia máxima para variación (si estamos al máximo, usar virote explosivo)
-		public Vector2 SafetyDistanceUseOfExplosiveBolt = new Vector2(20f, 100f);
-
-		// Tiempos del Mosquete
-		public float MusketCooldown = 0.01f;
-		public float MusketAimTime = 1.5f;
-
-		// Tiempos de la Ballesta
-		public float CrossbowCooldown = 0.01f;
-		public float CrossbowAimTime = 1.5f;
-
-		// Tiempos del Arco
-		public float BowCooldown = 0.01f;
-		public float BowAimTime = 1.5f;
-
-		// Tiempos de objetos lanzables
-		public float ThrowableAimTime = 1.5f;
-		public float ThrowableCooldown = 0.01f;
-
-		private bool m_canUseInventory;
-		private float m_aimTimer;
-		private float m_cooldownTimer;
-		private bool m_isAiming;
-		private bool m_isThrowing;
-		private ComponentCreature m_componentCreature;
-		private ComponentMiner m_componentMiner;
-		private ComponentPathfinding m_componentPathfinding;
-		private SubsystemTime m_subsystemTime;
-		private SubsystemProjectiles m_subsystemProjectiles;
-		private SubsystemBlockBehaviors m_subsystemBlockBehaviors;
-		private SubsystemTerrain m_subsystemTerrain;
-		private SubsystemBodies m_subsystemBodies;
-
-		private Random m_random;
-
-		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
+		private bool IsPlayerHerd()
 		{
-			m_canUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory");
-			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
-			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
-			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>();
-			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
-			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
-			m_subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true);
-			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
-			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
-
-			m_random = new Random();
+			return m_componentNewHerdBehavior != null && m_componentNewHerdBehavior.HerdName == "player";
 		}
 
-		public void Update(float dt)
+		public virtual void StopAttack()
 		{
-			if (!m_canUseInventory || m_componentMiner.Inventory == null) return;
+			m_stateMachine.TransitionTo("LookingForTarget");
+			IsActive = false;
+			m_target = null;
+			m_nextUpdateTime = 0.0;
+			m_range = 0f;
+			m_chaseTime = 0f;
+			m_isPersistent = false;
+			m_importanceLevel = 0f;
+			m_hasDestroyedBlocksWhileStuck = false;
+			m_targetInRangeTime = 0f;
+			m_targetUnsuitableTime = 0f;
+		}
 
-			ComponentNewChaseBehavior chaseBehavior = m_componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
+		public virtual void Update(float dt)
+		{
+			if (Suppressed)
+				StopAttack();
 
-			// CORREGIDO: No depender de IsActive (de la clase base) porque puede no estar actualizado
-			// Verificar directamente si hay un target válido y chaseTime > 0
-			if (chaseBehavior == null || chaseBehavior.Target == null || chaseBehavior.m_chaseTime <= 0f) return;
+			m_autoChaseSuppressionTime -= dt;
 
-			ComponentCreature target = chaseBehavior.Target;
-			if (target.ComponentHealth.Health <= 0f) return;
-
-			float distance = Vector3.Distance(m_componentCreature.ComponentBody.Position, target.ComponentBody.Position);
-
-			int throwableSlot = FindThrowableSlot();
-			if (throwableSlot >= 0 && distance >= ThrowableObjectThrowingDistance.X && distance <= ThrowableObjectThrowingDistance.Y)
+			// CORREGIDO: Ejecutar lógica de persecución si tenemos target y chaseTime > 0,
+			// independientemente de si IsActive (de la clase base) se ha actualizado o no
+			// Esto soluciona la demora cuando el sistema de comportamientos no ha reconocido
+			// este comportamiento como activo aún
+			if (m_target != null && m_chaseTime > 0f)
 			{
-				// Si estamos atascados, no hacer nada con el objeto lanzable y dejar pasar a armas a distancia
-				if (m_componentPathfinding != null && m_componentPathfinding.IsStuck)
-				{
-					if (m_isThrowing)
-					{
-						CancelAim();
-						m_isThrowing = false;
-						m_cooldownTimer = 0f;
-					}
-				}
-				else
-				{
-					Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-					Vector3 targetPos = target.ComponentCreatureModel.EyePosition;
+				m_chaseTime -= dt;
+				m_componentCreature.ComponentCreatureModel.LookAtOrder = m_target.ComponentCreatureModel.EyePosition;
 
-					bool isBehind = IsTargetBehind(target);
-					bool hasLOS = HasClearLineOfSight(eyePos, targetPos, target);
+				bool targetVisible = IsTargetVisible(m_target);
 
-					// Si no está atrás y hay línea de visión libre, apuntar y lanzar
-					if (!isBehind && hasLOS)
+				if (IsTargetInAttackRange(m_target.ComponentBody) && targetVisible)
+					m_componentCreatureModel.AttackOrder = true;
+
+				if (m_componentCreatureModel.IsAttackHitMoment)
+				{
+					Vector3 hitPoint;
+					ComponentBody hitBody = GetHitBody(m_target.ComponentBody, out hitPoint);
+					if (hitBody != null)
 					{
-						if (m_componentPathfinding != null)
+						float x = m_isPersistent ? m_random.Float(8f, 10f) : 2f;
+						m_chaseTime = MathUtils.Max(m_chaseTime, x);
+						m_componentMiner.Hit(hitBody, hitPoint, m_componentCreature.ComponentBody.Matrix.Forward);
+						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
+
+						if (m_invokeLightningOnHit && m_target != null && m_random.Float(0f, 1f) < 0.5f)
 						{
-							m_componentPathfinding.Stop();
+							m_subsystemSky.MakeLightningStrike(m_target.ComponentBody.Position, false);
 						}
-						HandleThrowableAttack(target, throwableSlot);
-						return;
-					}
-					else
-					{
-						// Si está atrás o no hay línea de visión, cancelar apunte y moverse a los lados
-						if (m_isThrowing)
+
+						if (m_explodeOnHit && m_target != null && m_random.Float(0f, 1f) < 0.1f)
 						{
-							CancelAim();
-							m_isThrowing = false;
+							Vector3 pos = m_target.ComponentBody.Position;
+							int cellX = Terrain.ToCell(pos.X);
+							int cellY = Terrain.ToCell(pos.Y);
+							int cellZ = Terrain.ToCell(pos.Z);
+							m_subsystemExplosions.AddExplosion(
+								x: cellX,
+								y: cellY,
+								z: cellZ,
+								pressure: 555f,
+								isIncendiary: false,
+								noExplosionSound: false
+							);
 						}
-						MoveToGetClearLineOfSight(target);
-						return;
 					}
 				}
 			}
 
-			// Si estábamos lanzando pero ya no estamos en rango, cancelar, limpiar cooldown y continuar
-			if (m_isThrowing)
+			if (m_destroyBlocksWhenStuck && m_componentPathfinding.IsStuck && !m_hasDestroyedBlocksWhileStuck)
 			{
-				CancelAim();
-				m_isThrowing = false;
-				m_cooldownTimer = 0f;
+				DestroyBlocksInLookDirection();
+				m_hasDestroyedBlocksWhileStuck = true;
 			}
 
-			// Luego verificar armas a distancia
-			if (distance <= AttackDistanceRange.Y)
+			if (m_subsystemTime.GameTime >= m_nextUpdateTime)
 			{
-				if (distance < AttackDistanceRange.X)
-				{
-					int meleeSlot = FindMeleeWeaponSlot();
-					if (meleeSlot >= 0)
-					{
-						CancelAim();
-						m_componentMiner.Inventory.ActiveSlotIndex = meleeSlot;
-					}
-					else
-					{
-						HandleRangedAttack(target, distance);
-					}
-				}
-				else
-				{
-					HandleRangedAttack(target, distance);
-				}
+				m_dt = m_random.Float(0.25f, 0.35f) + MathUtils.Min((float)(m_subsystemTime.GameTime - m_nextUpdateTime), 0.1f);
+				m_nextUpdateTime = m_subsystemTime.GameTime + (double)m_dt;
+				m_stateMachine.Update();
+			}
+		}
+
+		private void DestroyBlocksInLookDirection()
+		{
+			if (!IsActive || m_stateMachine.CurrentState != "Chasing")
+				return;
+
+			Vector3 bodyPos = m_componentCreature.ComponentBody.Position;
+			Vector3 lookDir = Vector3.Normalize(m_componentCreature.ComponentCreatureModel.EyeRotation.GetForwardVector());
+			Vector3 bodyForward = m_componentCreature.ComponentBody.Matrix.Forward;
+
+			Point3 cell1, cell2;
+			if (lookDir.Y > 0.7f)
+			{
+				int baseY = Terrain.ToCell(bodyPos.Y + m_componentCreature.ComponentBody.BoxSize.Y + 0.5f);
+				cell1 = new Point3(Terrain.ToCell(bodyPos.X), baseY, Terrain.ToCell(bodyPos.Z));
+				cell2 = new Point3(cell1.X, baseY + 1, cell1.Z);
+			}
+			else if (lookDir.Y < -0.7f)
+			{
+				int baseY = Terrain.ToCell(bodyPos.Y - 0.1f);
+				cell1 = new Point3(Terrain.ToCell(bodyPos.X), baseY, Terrain.ToCell(bodyPos.Z));
+				cell2 = new Point3(cell1.X, baseY - 1, cell1.Z);
 			}
 			else
 			{
-				CancelAim();
+				Vector3 targetPos = bodyPos + bodyForward * 1.5f;
+				int baseY = Terrain.ToCell(bodyPos.Y + m_componentCreature.ComponentBody.BoxSize.Y * 0.5f);
+				cell1 = new Point3(Terrain.ToCell(targetPos.X), baseY, Terrain.ToCell(targetPos.Z));
+				cell2 = new Point3(cell1.X, baseY + 1, cell1.Z);
+			}
+
+			int value1 = m_subsystemTerrain.Terrain.GetCellValue(cell1.X, cell1.Y, cell1.Z);
+			if (Terrain.ExtractContents(value1) != BedrockBlock.Index)
+			{
+				m_subsystemSoundMaterials.PlayImpactSound(value1, new Vector3(cell1.X + 0.5f, cell1.Y + 0.5f, cell1.Z + 0.5f), 1f);
+				m_subsystemTerrain.DestroyCell(4, cell1.X, cell1.Y, cell1.Z, 0, false, false, null);
+			}
+
+			int value2 = m_subsystemTerrain.Terrain.GetCellValue(cell2.X, cell2.Y, cell2.Z);
+			if (Terrain.ExtractContents(value2) != BedrockBlock.Index)
+			{
+				m_subsystemSoundMaterials.PlayImpactSound(value2, new Vector3(cell2.X + 0.5f, cell2.Y + 0.5f, cell2.Z + 0.5f), 1f);
+				m_subsystemTerrain.DestroyCell(4, cell2.X, cell2.Y, cell2.Z, 0, false, false, null);
 			}
 		}
 
-		private bool HasClearLineOfSight(Vector3 from, Vector3 to, ComponentCreature target)
+		private bool IsTargetVisible(ComponentCreature target)
 		{
-			float dist = Vector3.Distance(from, to);
-			if (dist < 0.1f) return true;
+			if (target == null) return false;
 
-			// Verificar si un bloque nos tapa la visión
-			TerrainRaycastResult? terrainHit = m_subsystemTerrain.Raycast(from, to, false, true, null);
-			if (terrainHit != null && terrainHit.Value.Distance < dist - 0.1f)
+			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 targetEyePos = target.ComponentCreatureModel.EyePosition;
+			Vector3 dirToTarget = targetEyePos - eyePos;
+			float distSq = dirToTarget.LengthSquared();
+			if (distSq < 0.01f) return true;
+			float dist = MathF.Sqrt(distSq);
+
+			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
+			float flatForwardLen = new Vector2(forward.X, forward.Z).Length();
+			if (flatForwardLen < 0.001f) return false;
+
+			Vector2 flatDir = new Vector2(dirToTarget.X, dirToTarget.Z);
+			float flatDist = flatDir.Length();
+			if (flatDist < 0.001f) return true;
+
+			float dot = Vector2.Dot(
+				new Vector2(forward.X, forward.Z) / flatForwardLen,
+				flatDir / flatDist);
+			if (dot < MathF.Cos(0.785398f))
+				return false;
+
+			TerrainRaycastResult? terrainResult = m_subsystemTerrain.Raycast(eyePos, targetEyePos, false, true, null);
+			if (terrainResult != null && terrainResult.Value.Distance < dist - 0.01f)
 			{
 				return false;
 			}
 
-			// Verificar si un cuerpo que no es el objetivo nos tapa la visión
-			BodyRaycastResult? bodyHit = m_subsystemBodies.Raycast(from, to, 0.35f, delegate (ComponentBody b, float d)
+			Ray3 ray = new Ray3(eyePos, dirToTarget / dist);
+			BodyRaycastResult? bodyResult = m_componentMiner.Raycast<BodyRaycastResult>(ray, RaycastMode.Interaction, true, true, true, null);
+			if (bodyResult != null && bodyResult.Value.Distance < dist - 0.01f)
 			{
-				return b.Entity != m_componentCreature.Entity &&
-					   !b.IsChildOfBody(m_componentCreature.ComponentBody) &&
-					   !m_componentCreature.ComponentBody.IsChildOfBody(b) &&
-					   b.Entity != target.Entity &&
-					   !target.ComponentBody.IsChildOfBody(b);
-			});
-
-			if (bodyHit != null && bodyHit.Value.Distance < dist - 0.1f)
-			{
-				return false;
+				ComponentBody hitBody = bodyResult.Value.ComponentBody;
+				if (hitBody != target.ComponentBody &&
+					!hitBody.IsChildOfBody(target.ComponentBody) &&
+					!target.ComponentBody.IsChildOfBody(hitBody))
+				{
+					return false;
+				}
 			}
 
 			return true;
 		}
 
-		private bool IsTargetBehind(ComponentCreature target)
+		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
-			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
-			Vector3 toTarget = target.ComponentBody.Position - m_componentCreature.ComponentBody.Position;
+			m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
+			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
+			m_subsystemSky = Project.FindSubsystem<SubsystemSky>(true);
+			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
+			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
+			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
+			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
+			m_subsystemExplosions = Project.FindSubsystem<SubsystemExplosions>(true);
+			m_subsystemSoundMaterials = Project.FindSubsystem<SubsystemSoundMaterials>(true);
+			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
+			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
+			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
+			m_componentFeedBehavior = Entity.FindComponent<ComponentRandomFeedBehavior>();
+			m_componentCreatureModel = Entity.FindComponent<ComponentCreatureModel>(true);
+			m_componentFactors = Entity.FindComponent<ComponentFactors>(true);
+			m_componentNewHerdBehavior = Entity.FindComponent<ComponentNewHerdBehavior>();
 
-			// Ignorar la altura para el cálculo del ángulo en el plano horizontal
-			toTarget.Y = 0f;
-			forward.Y = 0f;
+			m_dayChaseRange = valuesDictionary.GetValue<float>("DayChaseRange");
+			m_nightChaseRange = valuesDictionary.GetValue<float>("NightChaseRange");
+			m_dayChaseTime = valuesDictionary.GetValue<float>("DayChaseTime");
+			m_nightChaseTime = valuesDictionary.GetValue<float>("NightChaseTime");
+			m_autoChaseMask = valuesDictionary.GetValue<CreatureCategory>("AutoChaseMask");
+			m_chaseNonPlayerProbability = valuesDictionary.GetValue<float>("ChaseNonPlayerProbability");
+			m_chaseWhenAttackedProbability = valuesDictionary.GetValue<float>("ChaseWhenAttackedProbability");
+			m_chaseOnTouchProbability = valuesDictionary.GetValue<float>("ChaseOnTouchProbability");
 
-			if (forward.LengthSquared() < 0.001f || toTarget.LengthSquared() < 0.001f) return false;
+			m_invokeLightningOnHit = valuesDictionary.GetValue<bool>("InvokeLightningOnHit", false);
+			m_explodeOnHit = valuesDictionary.GetValue<bool>("ExplodeOnHit", false);
+			m_destroyBlocksWhenStuck = valuesDictionary.GetValue<bool>("DestroyBlocksWhenStuck", false);
 
-			float dot = Vector3.Dot(Vector3.Normalize(forward), Vector3.Normalize(toTarget));
-
-			// Si el producto punto es negativo, el objetivo está atrás
-			return dot < 0f;
-		}
-
-		private void MoveToGetClearLineOfSight(ComponentCreature target)
-		{
-			if (m_componentPathfinding == null) return;
-
-			Vector3 myPos = m_componentCreature.ComponentBody.Position;
-			Vector3 targetPos = target.ComponentBody.Position;
-			Vector3 dirToTarget = Vector3.Normalize(targetPos - myPos);
-			dirToTarget.Y = 0f;
-
-			// Calcular dirección perpendicular (lateral) para esquivar
-			Vector3 sideDir = new Vector3(-dirToTarget.Z, 0f, dirToTarget.X);
-
-			// Alternar aleatoriamente entre izquierda y derecha si se llama múltiples veces seguidas
-			if (m_random.Bool(0.5f))
+			ComponentBody componentBody = m_componentCreature.ComponentBody;
+			componentBody.CollidedWithBody = (Action<ComponentBody>)Delegate.Combine(componentBody.CollidedWithBody, new Action<ComponentBody>(delegate (ComponentBody body)
 			{
-				sideDir = -sideDir;
-			}
-
-			// Moverse 3 bloques a un lado para intentar conseguir línea de visión
-			Vector3 moveDestination = myPos + sideDir * 3f;
-			moveDestination.Y = targetPos.Y;
-
-			m_componentPathfinding.SetDestination(moveDestination, 1f, 1f, 50, true, false, false, target.ComponentBody);
-		}
-
-		private void HandleThrowableAttack(ComponentCreature target, int throwableSlot)
-		{
-			if (m_cooldownTimer > 0f)
-			{
-				m_cooldownTimer -= m_subsystemTime.GameTimeDelta;
-				return;
-			}
-
-			m_componentMiner.Inventory.ActiveSlotIndex = throwableSlot;
-
-			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-			Vector3 targetPos = target.ComponentCreatureModel.EyePosition;
-			Vector3 direction = Vector3.Normalize(targetPos - eyePos);
-			Ray3 aimRay = new Ray3(eyePos, direction);
-
-			if (!m_isAiming)
-			{
-				m_isAiming = true;
-				m_isThrowing = true;
-				m_aimTimer = 0f;
-				m_componentMiner.Aim(aimRay, AimState.InProgress);
-			}
-			else
-			{
-				m_aimTimer += m_subsystemTime.GameTimeDelta;
-				m_componentMiner.Aim(aimRay, AimState.InProgress);
-
-				if (m_aimTimer >= ThrowableAimTime)
+				if (m_target == null && m_autoChaseSuppressionTime <= 0f && m_random.Float(0f, 1f) < m_chaseOnTouchProbability)
 				{
-					FireThrowable(aimRay);
-					m_isAiming = false;
-					m_isThrowing = false;
-					m_cooldownTimer = ThrowableCooldown;
-					m_aimTimer = 0f;
-				}
-			}
-		}
-
-		private void FireThrowable(Ray3 aimRay)
-		{
-			// Ejecutamos el Aim Completed para que el SubsystemThrowableBlockBehavior lo lance de forma normal
-			m_componentMiner.Aim(aimRay, AimState.Completed);
-		}
-
-		private void HandleRangedAttack(ComponentCreature target, float distance)
-		{
-			if (m_cooldownTimer > 0f)
-			{
-				m_cooldownTimer -= m_subsystemTime.GameTimeDelta;
-				return;
-			}
-
-			// Prioridad de armas: Mosquete > Ballesta > Arco
-			int musketSlot = FindMusketSlot();
-			int crossbowSlot = musketSlot >= 0 ? -1 : FindCrossbowSlot();
-			int bowSlot = (musketSlot >= 0 || crossbowSlot >= 0) ? -1 : FindBowSlot();
-
-			int activeSlot = musketSlot >= 0 ? musketSlot : (crossbowSlot >= 0 ? crossbowSlot : bowSlot);
-
-			if (activeSlot < 0) return;
-
-			m_componentMiner.Inventory.ActiveSlotIndex = activeSlot;
-
-			bool isCrossbow = crossbowSlot >= 0;
-			bool isBow = bowSlot >= 0;
-
-			if (isCrossbow)
-			{
-				EnsureCrossbowLoaded(crossbowSlot, distance);
-			}
-			else if (isBow)
-			{
-				EnsureBowLoaded(bowSlot);
-			}
-			else
-			{
-				EnsureMusketLoaded(musketSlot);
-			}
-
-			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-			Vector3 targetPos = target.ComponentCreatureModel.EyePosition;
-			Vector3 direction = Vector3.Normalize(targetPos - eyePos);
-			Ray3 aimRay = new Ray3(eyePos, direction);
-
-			if (!m_isAiming)
-			{
-				m_isAiming = true;
-				m_aimTimer = 0f;
-				m_componentMiner.Aim(aimRay, AimState.InProgress);
-			}
-			else
-			{
-				m_aimTimer += m_subsystemTime.GameTimeDelta;
-				m_componentMiner.Aim(aimRay, AimState.InProgress);
-
-				// Evaluar el AimTime dependiendo del arma que se está usando
-				float requiredAimTime = isBow ? BowAimTime : (isCrossbow ? CrossbowAimTime : MusketAimTime);
-
-				if (m_aimTimer >= requiredAimTime)
-				{
-					if (isCrossbow)
+					ComponentCreature componentCreature = body.Entity.FindComponent<ComponentCreature>();
+					if (componentCreature != null)
 					{
-						FireCrossbow(aimRay);
+						bool isPlayer = m_subsystemPlayers.IsPlayer(body.Entity);
+						bool flag2 = (componentCreature.Category & m_autoChaseMask) > (CreatureCategory)0;
+
+						if ((AttacksPlayer && isPlayer && m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless) ||
+							(AttacksNonPlayerCreature && !isPlayer && flag2))
+						{
+							Attack(componentCreature, ChaseRangeOnTouch, ChaseTimeOnTouch, false);
+						}
 					}
-					else if (isBow)
+				}
+
+				if (m_target != null && JumpWhenTargetStanding && body == m_target.ComponentBody && body.StandingOnBody == m_componentCreature.ComponentBody)
+				{
+					m_componentCreature.ComponentLocomotion.JumpOrder = 1f;
+				}
+			}));
+
+			ComponentHealth componentHealth = m_componentCreature.ComponentHealth;
+			componentHealth.Injured = (Action<Injury>)Delegate.Combine(componentHealth.Injured, new Action<Injury>(delegate (Injury injury)
+			{
+				ComponentCreature attacker = injury.Attacker;
+				if (m_random.Float(0f, 1f) < m_chaseWhenAttackedProbability)
+				{
+					bool persistent = false;
+					float range, time;
+					if (m_chaseWhenAttackedProbability >= 1f)
 					{
-						FireBow(aimRay);
+						range = 30f;
+						time = 60f;
+						persistent = true;
 					}
 					else
 					{
-						if (m_random.Float() < 0.05f)
-						{
-							FireBullet(BulletBlock.BulletType.MusketBall, aimRay);
-							FireBullet(BulletBlock.BulletType.Buckshot, aimRay);
-							FireBullet(BulletBlock.BulletType.BuckshotBall, aimRay);
-						}
-						else
-						{
-							BulletBlock.BulletType[] bulletTypes = new BulletBlock.BulletType[]
-							{
-								BulletBlock.BulletType.MusketBall,
-								BulletBlock.BulletType.Buckshot,
-								BulletBlock.BulletType.BuckshotBall
-							};
-
-							BulletBlock.BulletType selectedBullet = bulletTypes[m_random.Int(0, bulletTypes.Length - 1)];
-							FireBullet(selectedBullet, aimRay);
-						}
+						range = 7f;
+						time = 7f;
 					}
-
-					m_isAiming = false;
-
-					// Aplicar el Cooldown dependiendo del arma que se usó
-					m_cooldownTimer = isBow ? BowCooldown : (isCrossbow ? CrossbowCooldown : MusketCooldown);
-
-					m_aimTimer = 0f;
+					range = ChaseRangeOnAttacked.GetValueOrDefault(range);
+					time = ChaseTimeOnAttacked.GetValueOrDefault(time);
+					persistent = ChasePersistentOnAttacked.GetValueOrDefault(persistent);
+					Attack(attacker, range, time, persistent);
 				}
-			}
-		}
+			}));
 
-		private void FireBow(Ray3 aimRay)
-		{
-			// 1. Ejecutamos el Aim Completed original para que el arco haga su cálculo de velocidad, sonidos y animaciones
-			m_componentMiner.Aim(aimRay, AimState.Completed);
-
-			// 2. Buscamos la flecha que acaba de ser disparada por esta criatura en la lista global
-			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
-			for (int i = projectiles.Count - 1; i >= 0; i--)
+			m_stateMachine.AddState("LookingForTarget", delegate
 			{
-				if (projectiles[i].Owner == m_componentCreature)
+				if (!IsActive && m_target == null)
 				{
-					// 3. Forzamos a que la flecha DESAPAREZCA al tocar el piso
-					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-					break;
+					m_importanceLevel = 0f;
 				}
-			}
-		}
-
-		private void FireCrossbow(Ray3 aimRay)
-		{
-			// 1. Ejecutamos el Aim Completed original para que la ballesta haga su lógica nativa, sonidos y animaciones
-			m_componentMiner.Aim(aimRay, AimState.Completed);
-
-			// 2. Buscamos el proyectil que acaba de ser disparado por esta criatura en la lista global
-			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
-			for (int i = projectiles.Count - 1; i >= 0; i--)
+			}, delegate
 			{
-				if (projectiles[i].Owner == m_componentCreature)
+				if (m_target != null && m_chaseTime > 0f)
 				{
-					// 3. Forzamos a que el virote DESAPAREZCA al tocar el piso en lugar de convertirse en objeto
-					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-					break;
+					m_stateMachine.TransitionTo("Chasing");
+					return;
 				}
-			}
-		}
 
-		private void FireBullet(BulletBlock.BulletType bulletType, Ray3 aimRay)
-		{
-			int musketSlot = FindMusketSlot();
-			if (musketSlot < 0) return;
-
-			int value = m_componentMiner.Inventory.GetSlotValue(musketSlot);
-			int data = Terrain.ExtractData(value);
-
-			data = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
-			data = MusketBlock.SetBulletType(data, bulletType);
-
-			m_componentMiner.Inventory.RemoveSlotItems(musketSlot, 1);
-			m_componentMiner.Inventory.AddSlotItems(musketSlot, Terrain.MakeBlockValue(MusketBlock.Index, 0, data), 1);
-
-			m_componentMiner.Aim(aimRay, AimState.Completed);
-		}
-
-		private void CancelAim()
-		{
-			if (m_isAiming)
-			{
-				Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-				Vector3 direction = m_componentCreature.ComponentBody.Matrix.Forward;
-				Ray3 aimRay = new Ray3(eyePos, direction);
-				m_componentMiner.Aim(aimRay, AimState.Cancelled);
-				m_isAiming = false;
-				m_isThrowing = false;
-				m_aimTimer = 0f;
-			}
-		}
-
-		private int FindMeleeWeaponSlot()
-		{
-			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
-			{
-				if (m_componentMiner.Inventory.GetSlotCount(i) > 0)
+				if (IsActive && m_target != null)
 				{
-					int value = m_componentMiner.Inventory.GetSlotValue(i);
-					Block block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
-					if (block.GetMeleePower(value) > 1f && !block.IsAimable_(value))
+					m_stateMachine.TransitionTo("Chasing");
+					return;
+				}
+
+				if (!Suppressed && m_autoChaseSuppressionTime <= 0f &&
+					(m_target == null || ScoreTarget(m_target) <= 0f) &&
+					m_componentCreature.ComponentHealth.Health > MinHealthToAttackActively)
+				{
+					m_range = (m_subsystemSky.SkyLightIntensity < 0.2f) ? m_nightChaseRange : m_dayChaseRange;
+					m_range *= m_componentFactors.GetOtherFactorResult("ChaseRange", false, false);
+					ComponentCreature creature = FindTarget();
+
+					if (creature != null)
+						m_targetInRangeTime += m_dt;
+					else
+						m_targetInRangeTime = 0f;
+
+					if (m_targetInRangeTime > TargetInRangeTimeToChase)
 					{
-						return i;
+						bool isDay = m_subsystemSky.SkyLightIntensity >= 0.1f;
+						float maxRange = isDay ? (m_dayChaseRange + 6f) : (m_nightChaseRange + 6f);
+						float maxTime = isDay ? (m_dayChaseTime * m_random.Float(0.75f, 1f)) : (m_nightChaseTime * m_random.Float(0.75f, 1f));
+						Attack(creature, maxRange, maxTime, !isDay);
 					}
 				}
-			}
-			return -1;
-		}
+			}, null);
 
-		private int FindThrowableSlot()
-		{
-			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			m_stateMachine.AddState("RandomMoving", delegate
 			{
-				if (m_componentMiner.Inventory.GetSlotCount(i) > 0)
+				m_componentPathfinding.SetDestination(
+					m_componentCreature.ComponentBody.Position + new Vector3(6f * m_random.Float(-1f, 1f), 0f, 6f * m_random.Float(-1f, 1f)),
+					1f, 1f, 0, false, true, false, null);
+			}, delegate
+			{
+				if (m_componentPathfinding.IsStuck || m_componentPathfinding.Destination == null)
+					m_stateMachine.TransitionTo("Chasing");
+				if (!IsActive && m_target == null)
+					m_stateMachine.TransitionTo("LookingForTarget");
+			}, delegate
+			{
+				m_componentPathfinding.Stop();
+			});
+
+			m_stateMachine.AddState("Chasing", delegate
+			{
+				m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody, 0.25f, 6f);
+				if (PlayIdleSoundWhenStartToChase)
+					m_componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
+				m_nextUpdateTime = 0.0;
+			}, delegate
+			{
+				if (!IsActive && m_target == null)
 				{
-					int value = m_componentMiner.Inventory.GetSlotValue(i);
-					int blockId = Terrain.ExtractContents(value);
+					m_stateMachine.TransitionTo("LookingForTarget");
+					return;
+				}
 
-					// Excluir mosquete, arco y ballesta
-					if (blockId == MusketBlock.Index || blockId == BowBlock.Index || blockId == CrossbowBlock.Index)
-						continue;
-
-					// Usar el SubsystemThrowableBlockBehavior para detectar si el bloque es lanzable
-					if (m_subsystemBlockBehaviors != null)
+				if (m_target == null || m_chaseTime <= 0f)
+				{
+					if (m_chaseTime <= 0f && m_target != null)
 					{
-						SubsystemBlockBehavior[] behaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(blockId);
-						if (behaviors != null)
-						{
-							for (int j = 0; j < behaviors.Length; j++)
-							{
-								if (behaviors[j] is SubsystemThrowableBlockBehavior)
-								{
-									return i;
-								}
-							}
-						}
+						m_autoChaseSuppressionTime = m_random.Float(10f, 60f);
 					}
+					m_importanceLevel = 0f;
+					m_target = null;
+					IsActive = false;
 				}
-			}
-			return -1;
-		}
-
-		private int FindMusketSlot()
-		{
-			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
-			{
-				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == MusketBlock.Index)
+				else if (m_target.ComponentHealth.Health <= 0f)
 				{
-					return i;
-				}
-			}
-			return -1;
-		}
-
-		private int FindCrossbowSlot()
-		{
-			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
-			{
-				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == CrossbowBlock.Index)
-				{
-					return i;
-				}
-			}
-			return -1;
-		}
-
-		private int FindBowSlot()
-		{
-			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
-			{
-				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == BowBlock.Index)
-				{
-					return i;
-				}
-			}
-			return -1;
-		}
-
-		private void EnsureMusketLoaded(int slotIndex)
-		{
-			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
-			int data = Terrain.ExtractData(value);
-			if (MusketBlock.GetLoadState(data) != MusketBlock.LoadState.Loaded)
-			{
-				data = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
-				data = MusketBlock.SetBulletType(data, BulletBlock.BulletType.MusketBall);
-
-				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
-				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(MusketBlock.Index, 0, data), 1);
-			}
-		}
-
-		private void EnsureCrossbowLoaded(int slotIndex, float distanceToTarget)
-		{
-			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
-			int data = Terrain.ExtractData(value);
-			int draw = CrossbowBlock.GetDraw(data);
-			ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
-
-			if (draw != 15 || arrowType == null)
-			{
-				ArrowBlock.ArrowType selectedBolt;
-
-				// Lógica de distancia de seguridad para virotes explosivos
-				if (distanceToTarget <= SafetyDistanceUseOfExplosiveBolt.X)
-				{
-					// DISTANCIA MÍNIMA: No usar explosivo, solo virotes normales
-					ArrowBlock.ArrowType[] normalBolts = new ArrowBlock.ArrowType[]
+					if (m_componentFeedBehavior != null)
 					{
-						ArrowBlock.ArrowType.IronBolt,
-						ArrowBlock.ArrowType.DiamondBolt
-					};
-					selectedBolt = normalBolts[m_random.Int(0, normalBolts.Length - 1)];
+						ComponentCreature deadTarget = m_target;
+						m_subsystemTime.QueueGameTimeDelayedExecution(m_subsystemTime.GameTime + (double)m_random.Float(1f, 3f), delegate
+						{
+							if (deadTarget != null && deadTarget.ComponentBody != null)
+								m_componentFeedBehavior.Feed(deadTarget.ComponentBody.Position);
+						});
+					}
+					m_importanceLevel = 0f;
+					m_target = null;
+					IsActive = false;
 				}
-				else if (distanceToTarget >= SafetyDistanceUseOfExplosiveBolt.Y)
+				else if (!m_isPersistent && m_componentPathfinding.IsStuck)
 				{
-					// DISTANCIA MÁXIMA: Usar variación normal pero con virote explosivo
-					selectedBolt = ArrowBlock.ArrowType.ExplosiveBolt;
+					m_importanceLevel = 0f;
+					m_target = null;
+					IsActive = false;
+				}
+				else if (m_isPersistent && m_componentPathfinding.IsStuck)
+				{
+					m_stateMachine.TransitionTo("RandomMoving");
 				}
 				else
 				{
-					// DISTANCIA INTERMEDIA: Puede usar cualquier tipo de virote
-					ArrowBlock.ArrowType[] allBolts = new ArrowBlock.ArrowType[]
+					if (ScoreTarget(m_target) <= 0f)
+						m_targetUnsuitableTime += m_dt;
+					else
+						m_targetUnsuitableTime = 0f;
+
+					if (m_targetUnsuitableTime > 3f)
 					{
-						ArrowBlock.ArrowType.IronBolt,
-						ArrowBlock.ArrowType.DiamondBolt,
-						ArrowBlock.ArrowType.ExplosiveBolt
-					};
-					selectedBolt = allBolts[m_random.Int(0, allBolts.Length - 1)];
+						m_importanceLevel = 0f;
+						m_target = null;
+						IsActive = false;
+					}
+					else
+					{
+						int maxPos = 0;
+						if (m_isPersistent)
+							maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
+
+						BoundingBox bb1 = m_componentCreature.ComponentBody.BoundingBox;
+						BoundingBox bb2 = m_target.ComponentBody.BoundingBox;
+						Vector3 center1 = 0.5f * (bb1.Min + bb1.Max);
+						Vector3 center2 = 0.5f * (bb2.Min + bb2.Max);
+						float dist = Vector3.Distance(center1, center2);
+						float predict = (dist < 4f) ? 0.2f : 0f;
+
+						m_componentPathfinding.SetDestination(
+							center2 + predict * dist * m_target.ComponentBody.Velocity,
+							1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
+
+						if (PlayAngrySoundWhenChasing && m_random.Float(0f, 1f) < 0.33f * m_dt)
+							m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
+					}
 				}
+			}, null);
 
-				data = CrossbowBlock.SetDraw(data, 15);
-				data = CrossbowBlock.SetArrowType(data, new ArrowBlock.ArrowType?(selectedBolt));
-
-				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
-				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data), 1);
-			}
+			m_stateMachine.TransitionTo("LookingForTarget");
 		}
 
-		private void EnsureBowLoaded(int slotIndex)
+		public virtual ComponentCreature FindTarget()
 		{
-			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
-			int data = Terrain.ExtractData(value);
-			int draw = BowBlock.GetDraw(data);
-			ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
+			Vector3 pos = m_componentCreature.ComponentBody.Position;
+			ComponentCreature result = null;
+			float bestScore = 0f;
 
-			// Si no está completamente tenso (draw 15) o no tiene flecha asignada
-			if (draw != 15 || arrowType == null)
+			m_componentBodies.Clear();
+			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(pos.X, pos.Z), m_range, m_componentBodies);
+
+			for (int i = 0; i < m_componentBodies.Count; i++)
 			{
-				// Tipos de flechas soportados según el SubsystemBowBlockBehavior original
-				ArrowBlock.ArrowType[] arrowTypes = new ArrowBlock.ArrowType[]
+				ComponentCreature creature = m_componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
+				if (creature != null)
 				{
-					ArrowBlock.ArrowType.WoodenArrow,
-					ArrowBlock.ArrowType.StoneArrow,
-					ArrowBlock.ArrowType.CopperArrow,
-					ArrowBlock.ArrowType.IronArrow,
-					ArrowBlock.ArrowType.DiamondArrow,
-					ArrowBlock.ArrowType.FireArrow
-				};
-
-				// Variación aleatoria de flechas
-				ArrowBlock.ArrowType selectedArrow = arrowTypes[m_random.Int(0, arrowTypes.Length - 1)];
-
-				// Tensar completamente y asignar la flecha
-				data = BowBlock.SetDraw(data, 15);
-				data = BowBlock.SetArrowType(data, new ArrowBlock.ArrowType?(selectedArrow));
-
-				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
-				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(BowBlock.Index, 0, data), 1);
+					float score = ScoreTarget(creature);
+					if (score > bestScore)
+					{
+						bestScore = score;
+						result = creature;
+					}
+				}
 			}
+			return result;
 		}
+
+		public virtual float ScoreTarget(ComponentCreature componentCreature)
+		{
+			if (m_componentNewHerdBehavior != null)
+			{
+				ComponentNewHerdBehavior targetHerd = componentCreature.Entity.FindComponent<ComponentNewHerdBehavior>();
+				if (targetHerd != null && targetHerd.HerdName == m_componentNewHerdBehavior.HerdName)
+					return 0f;
+			}
+
+			float score = 0f;
+			bool isPlayer = componentCreature.Entity.FindComponent<ComponentPlayer>() != null;
+			bool notWater = m_componentCreature.Category != CreatureCategory.WaterPredator && m_componentCreature.Category != CreatureCategory.WaterOther;
+			bool isTargetOrGameMode = componentCreature == Target || m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
+			bool matchesMask = (componentCreature.Category & m_autoChaseMask) > (CreatureCategory)0;
+			bool randomPass = componentCreature == Target || (matchesMask && MathUtils.Remainder(0.004999999888241291 * m_subsystemTime.GameTime + (double)((float)(GetHashCode() % 1000) / 1000f) + (double)((float)(componentCreature.GetHashCode() % 1000) / 1000f), 1.0) < (double)m_chaseNonPlayerProbability);
+
+			if (m_componentNewHerdBehavior != null && m_componentNewHerdBehavior.HerdName == "player" && isPlayer)
+			{
+				score = 0f;
+			}
+			else if (componentCreature != m_componentCreature && ((!isPlayer && randomPass) || (isPlayer && isTargetOrGameMode)) &&
+					 componentCreature.Entity.IsAddedToProject && componentCreature.ComponentHealth.Health > 0f &&
+					 (notWater || IsTargetInWater(componentCreature.ComponentBody)))
+			{
+				float dist = Vector3.Distance(m_componentCreature.ComponentBody.Position, componentCreature.ComponentBody.Position);
+				if (dist < m_range)
+					score = m_range - dist;
+			}
+			return score;
+		}
+
+		public virtual bool IsTargetInWater(ComponentBody target)
+		{
+			return target.ImmersionDepth > 0f || (target.ParentBody != null && IsTargetInWater(target.ParentBody)) ||
+				   (target.StandingOnBody != null && target.StandingOnBody.Position.Y < target.Position.Y && IsTargetInWater(target.StandingOnBody));
+		}
+
+		public virtual bool IsTargetInAttackRange(ComponentBody target)
+		{
+			if (IsBodyInAttackRange(target))
+				return true;
+			BoundingBox bb1 = m_componentCreature.ComponentBody.BoundingBox;
+			BoundingBox bb2 = target.BoundingBox;
+			Vector3 c1 = 0.5f * (bb1.Min + bb1.Max);
+			Vector3 c2 = 0.5f * (bb2.Min + bb2.Max) - c1;
+			float len = c2.Length();
+			Vector3 dir = c2 / len;
+			float width = 0.5f * (bb1.Max.X - bb1.Min.X + bb2.Max.X - bb2.Min.X);
+			float height = 0.5f * (bb1.Max.Y - bb1.Min.Y + bb2.Max.Y - bb2.Min.Y);
+
+			if (MathF.Abs(c2.Y) < height * 0.99f)
+			{
+				if (len < width + 0.99f && Vector3.Dot(dir, m_componentCreature.ComponentBody.Matrix.Forward) > 0.25f)
+					return true;
+			}
+			else if (len < height + 0.3f && MathF.Abs(Vector3.Dot(dir, Vector3.UnitY)) > 0.8f)
+				return true;
+
+			return (target.ParentBody != null && IsTargetInAttackRange(target.ParentBody)) ||
+				   (AllowAttackingStandingOnBody && target.StandingOnBody != null && target.StandingOnBody.Position.Y < target.Position.Y && IsTargetInAttackRange(target.StandingOnBody));
+		}
+
+		public virtual bool IsBodyInAttackRange(ComponentBody target)
+		{
+			BoundingBox bb1 = m_componentCreature.ComponentBody.BoundingBox;
+			BoundingBox bb2 = target.BoundingBox;
+			Vector3 c1 = 0.5f * (bb1.Min + bb1.Max);
+			Vector3 c2 = 0.5f * (bb2.Min + bb2.Max) - c1;
+			float len = c2.Length();
+			Vector3 dir = c2 / len;
+			float width = 0.5f * (bb1.Max.X - bb1.Min.X + bb2.Max.X - bb2.Min.X);
+			float height = 0.5f * (bb1.Max.Y - bb1.Min.Y + bb2.Max.Y - bb2.Min.Y);
+
+			if (MathF.Abs(c2.Y) < height * 0.99f)
+			{
+				if (len < width + 0.99f && Vector3.Dot(dir, m_componentCreature.ComponentBody.Matrix.Forward) > 0.25f)
+					return true;
+			}
+			else if (len < height + 0.3f && MathF.Abs(Vector3.Dot(dir, Vector3.UnitY)) > 0.8f)
+				return true;
+
+			return false;
+		}
+
+		public virtual ComponentBody GetHitBody(ComponentBody target, out Vector3 hitPoint)
+		{
+			Vector3 eye = m_componentCreature.ComponentBody.BoundingBox.Center();
+			Vector3 targetCenter = target.BoundingBox.Center();
+			Ray3 ray = new Ray3(eye, Vector3.Normalize(targetCenter - eye));
+			BodyRaycastResult? raycast = m_componentMiner.Raycast<BodyRaycastResult>(ray, RaycastMode.Interaction, true, true, true, null);
+
+			if (raycast != null && raycast.Value.Distance < MaxAttackRange &&
+				(raycast.Value.ComponentBody == target || raycast.Value.ComponentBody.IsChildOfBody(target) ||
+				 target.IsChildOfBody(raycast.Value.ComponentBody) ||
+				 (target.StandingOnBody == raycast.Value.ComponentBody && AllowAttackingStandingOnBody)))
+			{
+				hitPoint = raycast.Value.HitPoint();
+				return raycast.Value.ComponentBody;
+			}
+
+			hitPoint = default(Vector3);
+			return null;
+		}
+
+		public SubsystemGameInfo m_subsystemGameInfo;
+		public SubsystemPlayers m_subsystemPlayers;
+		public SubsystemSky m_subsystemSky;
+		public SubsystemExplosions m_subsystemExplosions;
+		public SubsystemSoundMaterials m_subsystemSoundMaterials;
+		public SubsystemBodies m_subsystemBodies;
+		public SubsystemTime m_subsystemTime;
+		public SubsystemNoise m_subsystemNoise;
+		public SubsystemTerrain m_subsystemTerrain;
+		public ComponentCreature m_componentCreature;
+		public ComponentPathfinding m_componentPathfinding;
+		public ComponentMiner m_componentMiner;
+		public ComponentRandomFeedBehavior m_componentFeedBehavior;
+		public ComponentCreatureModel m_componentCreatureModel;
+		public DynamicArray<ComponentBody> m_componentBodies = new DynamicArray<ComponentBody>();
+		public Random m_random = new Random();
+		public StateMachine m_stateMachine = new StateMachine();
+		public ComponentFactors m_componentFactors;
+		public float m_dayChaseRange;
+		public float m_nightChaseRange;
+		public float m_dayChaseTime;
+		public float m_nightChaseTime;
+		public float m_chaseNonPlayerProbability;
+		public float m_chaseWhenAttackedProbability;
+		public float m_chaseOnTouchProbability;
+		public CreatureCategory m_autoChaseMask;
+		public float m_importanceLevel;
+		public float m_targetUnsuitableTime;
+		public float m_targetInRangeTime;
+		public double m_nextUpdateTime;
+		public ComponentCreature m_target;
+		public float m_dt;
+		public float m_range;
+		public float m_chaseTime;
+		public bool m_isPersistent;
+		public float m_autoChaseSuppressionTime;
+		public float ImportanceLevelNonPersistent = 200f;
+		public float ImportanceLevelPersistent = 200f;
+		public float MaxAttackRange = 1.75f;
+		public bool AllowAttackingStandingOnBody = true;
+		public bool JumpWhenTargetStanding = true;
+		public bool AttacksPlayer = true;
+		public bool AttacksNonPlayerCreature = true;
+		public float ChaseRangeOnTouch = 7f;
+		public float ChaseTimeOnTouch = 7f;
+		public float? ChaseRangeOnAttacked;
+		public float? ChaseTimeOnAttacked;
+		public bool? ChasePersistentOnAttacked;
+		public float MinHealthToAttackActively = 0.4f;
+		public bool Suppressed;
+		public bool PlayIdleSoundWhenStartToChase = true;
+		public bool PlayAngrySoundWhenChasing = true;
+		public float TargetInRangeTimeToChase = 3f;
+		public ComponentNewHerdBehavior m_componentNewHerdBehavior;
+
+		public bool m_invokeLightningOnHit = false;
+		public bool m_explodeOnHit = false;
+		public bool m_destroyBlocksWhenStuck = false;
+
+		private bool m_hasDestroyedBlocksWhileStuck;
 	}
 }
