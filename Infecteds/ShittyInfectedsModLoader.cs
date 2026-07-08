@@ -14,9 +14,7 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	private Game.Random random = new Game.Random();
 
-	// Variables para el diálogo de noche verde
 	private static bool m_greenNightDialogShown = false;
-	private static bool m_showGreenNightDialog = false;
 	private static ComponentPlayer m_pendingPlayer = null;
 
 	public override void __ModInitialize()
@@ -27,6 +25,7 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("CalculateCreatureInjuryAmount", this);
 		ModsManager.RegisterHook("OnWidgetConstruct", this);
 		ModsManager.RegisterHook("OnPlayerSpawned", this);
+		ModsManager.RegisterHook("ChangeSkyColor", this);
 	}
 
 	public override bool OnPlayerSpawned(PlayerData.SpawnMode spawnMode, ComponentPlayer player, Vector3 position)
@@ -34,11 +33,13 @@ public class ShittyInfectedsModLoader : ModLoader
 		if ((spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro) && !m_greenNightDialogShown)
 		{
 			m_greenNightDialogShown = true;
-			m_showGreenNightDialog = true;
 			m_pendingPlayer = player;
-		}
-		DialogsManager.ShowDialog(m_pendingPlayer.GuiWidget, new GreenNightConfigDialog(m_pendingPlayer));
 
+			if (player?.GuiWidget != null)
+			{
+				DialogsManager.ShowDialog(player.GuiWidget, new GreenNightConfigDialog(player));
+			}
+		}
 		return false;
 	}
 
@@ -138,6 +139,15 @@ public class ShittyInfectedsModLoader : ModLoader
 	{
 		int index = random.Int(ListaMusica.Count);
 		contentMusicPath = ListaMusica[index];
+	}
+
+	public override Color ChangeSkyColor(Color color, Vector3 direction, float timeOfDay, int temperature)
+	{
+		if (SubsystemGreenNightSky.Instance != null && SubsystemGreenNightSky.Instance.IsGreenNightActive)
+		{
+			return new Color(16, 81, 0);
+		}
+		return color;
 	}
 
 	public override void OnMainMenuScreenCreated(MainMenuScreen mainMenuScreen, StackPanelWidget leftBottomBar, StackPanelWidget rightBottomBar)
