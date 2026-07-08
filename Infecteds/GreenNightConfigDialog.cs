@@ -25,7 +25,6 @@ namespace Game
 		private ButtonWidget m_okButton;
 		private ButtonWidget m_cancelButton;
 		private ButtonWidget m_daysButton;
-		private LabelWidget m_lifeDaysLabel;
 		private LabelWidget m_description;
 
 		public GreenNightConfigDialog(ComponentPlayer player)
@@ -39,7 +38,6 @@ namespace Game
 			m_okButton = this.Children.Find<ButtonWidget>("GreenNightConfig.OkButton", true);
 			m_cancelButton = this.Children.Find<ButtonWidget>("GreenNightConfig.CancelButton", true);
 			m_daysButton = this.Children.Find<ButtonWidget>("GreenNightConfig.DaysButton", true);
-			m_lifeDaysLabel = this.Children.Find<LabelWidget>("GreenNightConfig.LifeDaysLabel", true);
 			m_description = this.Children.Find<LabelWidget>("GreenNightConfig.Description", true);
 
 			m_currentIndex = 0;
@@ -52,10 +50,6 @@ namespace Game
 			if (m_daysButton != null)
 			{
 				m_daysButton.Text = m_dayOptions[m_currentIndex] + " días";
-			}
-			if (m_lifeDaysLabel != null)
-			{
-				m_lifeDaysLabel.Text = m_dayOptions[m_currentIndex].ToString();
 			}
 			if (m_description != null)
 			{
