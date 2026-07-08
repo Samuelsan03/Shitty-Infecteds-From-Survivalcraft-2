@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Game;
 using Engine;
@@ -27,21 +28,39 @@ public class ShittyInfectedsModLoader : ModLoader
 		if (injury == null || injury.ComponentHealth == null)
 			return;
 
-		// Solo si la víctima es un jugador
-		if (!(injury.ComponentHealth.m_componentCreature is ComponentPlayer))
-			return;
-
-		// Verificar que estamos en modo Creativo
-		SubsystemGameInfo gameInfo = injury.ComponentHealth.m_subsystemGameInfo;
-		if (gameInfo.WorldSettings.GameMode != GameMode.Creative)
-			return;
-
-		// Obtener atacante
+		// Obtener el atacante (quien causó la herida)
 		ComponentCreature attacker = injury.Attacker;
 		if (attacker == null)
 			return;
 
-		// Ordenar a todos los aliados de la manada "player" atacar al agresor
+		// Obtener la víctima
+		ComponentCreature victim = injury.ComponentHealth.m_componentCreature;
+		if (victim == null || victim == attacker)
+			return;
+
+		// Determinar quién es el enemigo que debe ser atacado
+		ComponentCreature enemy = null;
+
+		if (attacker is ComponentPlayer)
+		{
+			// El jugador atacó a una criatura, las aliadas deben atacar a la víctima
+			enemy = victim;
+		}
+		else if (victim is ComponentPlayer)
+		{
+			// Una criatura atacó al jugador, las aliadas deben atacar al agresor
+			enemy = attacker;
+		}
+		else
+		{
+			return; // No es una situación donde debamos intervenir
+		}
+
+		if (enemy == null)
+			return;
+
+		// CORREGIDO: Buscar UNA criatura aliada y usar CallNearbyCreaturesHelp
+		// Esto es más eficiente y garantiza que todas reaccionen
 		SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
 		foreach (ComponentCreature creature in creatureSpawn.Creatures)
 		{
@@ -49,13 +68,11 @@ public class ShittyInfectedsModLoader : ModLoader
 				continue;
 
 			ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
-			if (herd == null || herd.HerdName != "player")
-				continue;
-
-			ComponentNewChaseBehavior chase = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
-			if (chase != null && chase.Target == null)
+			if (herd != null && herd.HerdName == "player")
 			{
-				chase.Attack(attacker, 20f, 30f, false);
+				// Usar CallNearbyCreaturesHelp que alerta a todos los cercanos
+				herd.CallNearbyCreaturesHelp(enemy, 20f, 30f, false);
+				break; // Solo necesitamos llamar una vez
 			}
 		}
 	}
@@ -69,8 +86,8 @@ public class ShittyInfectedsModLoader : ModLoader
 		if (player == null)
 			return;
 
-		// Solo reaccionar si el golpe es exitoso (probabilidad >= 1.0 o fallo garantizado)
-		if (systemHitProbability < 1f)
+		// Si la probabilidad de golpe es 0 o menor, no hacemos nada
+		if (hitProbability <= 0f)
 			return;
 
 		// Verificar que el objetivo es una criatura válida
@@ -78,8 +95,10 @@ public class ShittyInfectedsModLoader : ModLoader
 		if (targetCreature == null)
 			return;
 
-		// Buscar criaturas aliadas del jugador (manada "player")
+		// CORREGIDO: Forzar que el golpe SIEMPRE acierte cuando hay aliados disponibles
+		// para garantizar que CalculateCreatureInjuryAmount se dispare
 		SubsystemCreatureSpawn creatureSpawn = miner.Project.FindSubsystem<SubsystemCreatureSpawn>();
+		bool hasAllies = false;
 
 		foreach (ComponentCreature creature in creatureSpawn.Creatures)
 		{
@@ -87,14 +106,18 @@ public class ShittyInfectedsModLoader : ModLoader
 				continue;
 
 			ComponentNewHerdBehavior herdBehavior = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
-			if (herdBehavior == null || herdBehavior.HerdName != "player")
-				continue;
-
-			ComponentNewChaseBehavior chaseBehavior = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
-			if (chaseBehavior != null && chaseBehavior.Target == null)
+			if (herdBehavior != null && herdBehavior.HerdName == "player")
 			{
-				chaseBehavior.Attack(targetCreature, 20f, 30f, false);
+				hasAllies = true;
+				break;
 			}
+		}
+
+		// Si hay aliados disponibles, forzamos el acierto
+		if (hasAllies)
+		{
+			hitProbability = 1f;
+			systemHitProbability = 1f;
 		}
 	}
 
@@ -134,14 +157,12 @@ public class ShittyInfectedsModLoader : ModLoader
 		// 3. Agregar botón cuadrado en la barra lateral derecha
 		if (rightBottomBar != null)
 		{
-			// Crear el botón cuadrado
 			BevelledButtonWidget configButton = new BevelledButtonWidget
 			{
 				Size = new Vector2(60f, 60f),
 				Name = "ZombiConfigButton"
 			};
 
-			// Crear el rectángulo con la textura del icono
 			RectangleWidget icon = new RectangleWidget
 			{
 				Size = new Vector2(28f, 28f),
@@ -153,7 +174,6 @@ public class ShittyInfectedsModLoader : ModLoader
 			};
 
 			configButton.Children.Add(icon);
-			// Insertar al inicio para que aparezca antes que otros botones (pantalla completa, reporte)
 			rightBottomBar.Children.Insert(0, configButton);
 		}
 
