@@ -51,6 +51,8 @@ namespace Game
 		private SubsystemTime m_subsystemTime;
 		private SubsystemProjectiles m_subsystemProjectiles;
 		private SubsystemBlockBehaviors m_subsystemBlockBehaviors;
+		private SubsystemTerrain m_subsystemTerrain;
+		private SubsystemBodies m_subsystemBodies;
 
 		private Random m_random;
 
@@ -63,6 +65,8 @@ namespace Game
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
 			m_subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true);
+			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
+			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 
 			m_random = new Random();
 		}
@@ -80,27 +84,51 @@ namespace Game
 			float distance = Vector3.Distance(m_componentCreature.ComponentBody.Position, target.ComponentBody.Position);
 
 			int throwableSlot = FindThrowableSlot();
-
-			// Si estamos en el rango de las lanzables y tenemos lanzables, priorizar lanzables
 			if (throwableSlot >= 0 && distance >= ThrowableObjectThrowingDistance.X && distance <= ThrowableObjectThrowingDistance.Y)
 			{
-				// Si estábamos apuntando con un arma a distancia, cancelar el arma a distancia primero
-				if (m_isAiming && !m_isThrowing)
+				// Si estamos atascados, no hacer nada con el objeto lanzable y dejar pasar a armas a distancia
+				if (m_componentPathfinding != null && m_componentPathfinding.IsStuck)
 				{
-					CancelAim();
-					m_cooldownTimer = 0f;
+					if (m_isThrowing)
+					{
+						CancelAim();
+						m_isThrowing = false;
+						m_cooldownTimer = 0f;
+					}
 				}
+				else
+				{
+					Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+					Vector3 targetPos = target.ComponentCreatureModel.EyePosition;
 
-				// Detener el pathfinding al lanzar
-				if (m_componentPathfinding != null)
-				{
-					m_componentPathfinding.Stop();
+					bool isBehind = IsTargetBehind(target);
+					bool hasLOS = HasClearLineOfSight(eyePos, targetPos, target);
+
+					// Si no está atrás y hay línea de visión libre, apuntar y lanzar
+					if (!isBehind && hasLOS)
+					{
+						if (m_componentPathfinding != null)
+						{
+							m_componentPathfinding.Stop();
+						}
+						HandleThrowableAttack(target, throwableSlot);
+						return;
+					}
+					else
+					{
+						// Si está atrás o no hay línea de visión, cancelar apunte y moverse a los lados
+						if (m_isThrowing)
+						{
+							CancelAim();
+							m_isThrowing = false;
+						}
+						MoveToGetClearLineOfSight(target);
+						return;
+					}
 				}
-				HandleThrowableAttack(target, throwableSlot);
-				return;
 			}
 
-			// Si se sale del rango de las lanzables mientras se lanza, cancelar y pasar a armas a distancia inmediatamente
+			// Si estábamos lanzando pero ya no estamos en rango, cancelar, limpiar cooldown y continuar
 			if (m_isThrowing)
 			{
 				CancelAim();
@@ -108,7 +136,7 @@ namespace Game
 				m_cooldownTimer = 0f;
 			}
 
-			// Si estamos fuera del rango de lanzables pero dentro del rango de armas a distancia, usar armas a distancia
+			// Luego verificar armas a distancia
 			if (distance <= AttackDistanceRange.Y)
 			{
 				if (distance < AttackDistanceRange.X)
@@ -133,6 +161,78 @@ namespace Game
 			{
 				CancelAim();
 			}
+		}
+
+		private bool HasClearLineOfSight(Vector3 from, Vector3 to, ComponentCreature target)
+		{
+			float dist = Vector3.Distance(from, to);
+			if (dist < 0.1f) return true;
+
+			// Verificar si un bloque nos tapa la visión
+			TerrainRaycastResult? terrainHit = m_subsystemTerrain.Raycast(from, to, false, true, null);
+			if (terrainHit != null && terrainHit.Value.Distance < dist - 0.1f)
+			{
+				return false;
+			}
+
+			// Verificar si un cuerpo que no es el objetivo nos tapa la visión
+			BodyRaycastResult? bodyHit = m_subsystemBodies.Raycast(from, to, 0.35f, delegate (ComponentBody b, float d)
+			{
+				return b.Entity != m_componentCreature.Entity &&
+					   !b.IsChildOfBody(m_componentCreature.ComponentBody) &&
+					   !m_componentCreature.ComponentBody.IsChildOfBody(b) &&
+					   b.Entity != target.Entity &&
+					   !target.ComponentBody.IsChildOfBody(b);
+			});
+
+			if (bodyHit != null && bodyHit.Value.Distance < dist - 0.1f)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		private bool IsTargetBehind(ComponentCreature target)
+		{
+			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
+			Vector3 toTarget = target.ComponentBody.Position - m_componentCreature.ComponentBody.Position;
+
+			// Ignorar la altura para el cálculo del ángulo en el plano horizontal
+			toTarget.Y = 0f;
+			forward.Y = 0f;
+
+			if (forward.LengthSquared() < 0.001f || toTarget.LengthSquared() < 0.001f) return false;
+
+			float dot = Vector3.Dot(Vector3.Normalize(forward), Vector3.Normalize(toTarget));
+
+			// Si el producto punto es negativo, el objetivo está atrás
+			return dot < 0f;
+		}
+
+		private void MoveToGetClearLineOfSight(ComponentCreature target)
+		{
+			if (m_componentPathfinding == null) return;
+
+			Vector3 myPos = m_componentCreature.ComponentBody.Position;
+			Vector3 targetPos = target.ComponentBody.Position;
+			Vector3 dirToTarget = Vector3.Normalize(targetPos - myPos);
+			dirToTarget.Y = 0f;
+
+			// Calcular dirección perpendicular (lateral) para esquivar
+			Vector3 sideDir = new Vector3(-dirToTarget.Z, 0f, dirToTarget.X);
+
+			// Alternar aleatoriamente entre izquierda y derecha si se llama múltiples veces seguidas
+			if (m_random.Bool(0.5f))
+			{
+				sideDir = -sideDir;
+			}
+
+			// Moverse 3 bloques a un lado para intentar conseguir línea de visión
+			Vector3 moveDestination = myPos + sideDir * 3f;
+			moveDestination.Y = targetPos.Y;
+
+			m_componentPathfinding.SetDestination(moveDestination, 1f, 1f, 50, true, false, false, target.ComponentBody);
 		}
 
 		private void HandleThrowableAttack(ComponentCreature target, int throwableSlot)
