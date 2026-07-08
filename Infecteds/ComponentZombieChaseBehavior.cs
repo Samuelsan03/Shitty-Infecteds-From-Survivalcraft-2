@@ -45,7 +45,11 @@ namespace Game
 		private bool m_isPersistent;
 		private float m_autoChaseSuppressionTime;
 		private string m_myHerdName;
-		private const float MaxAttackRange = 1.75f; // Valor interno estándar para validar el golpe
+		private const float MaxAttackRange = 1.75f;
+
+		// Campos para la detección inmediata de la Noche Verde
+		private bool m_wasGreenNightActive = false;
+		private double m_lastGreenNightForcedSearch = 0.0;
 
 		public ComponentCreature Target => m_target;
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -81,12 +85,33 @@ namespace Game
 		{
 			m_autoChaseSuppressionTime -= dt;
 
+			// LÓGICA PRIORITARIA DE NOCHE VERDE
+			bool isGreenNightActiveNow = MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive;
+
+			// Si la noche verde acaba de iniciar, forzar búsqueda inmediata sin esperar tiempos
+			if (isGreenNightActiveNow && !m_wasGreenNightActive)
+			{
+				m_lastGreenNightForcedSearch = 0.0; // Resetea el cooldown para permitir búsqueda instantánea
+			}
+			m_wasGreenNightActive = isGreenNightActiveNow;
+
+			if (isGreenNightActiveNow)
+			{
+				bool isAlreadyChasingPlayer = m_target != null && m_subsystemPlayers.IsPlayer(m_target.Entity) && m_target.ComponentHealth.Health > 0f;
+
+				// Si no está persiguiendo a un jugador, forzar la búsqueda
+				if (!isAlreadyChasingPlayer)
+				{
+					ForceChasePlayerOnGreenNight();
+				}
+			}
+
 			if (IsActive && m_target != null)
 			{
 				m_chaseTime -= dt;
 
-				// LÓGICA DE NOCHE VERDE: Mantiene la persecución infinita mientras sea de noche y el objetivo sea el jugador
-				if (m_chaseTime <= 0f && MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive && m_subsystemPlayers.IsPlayer(m_target.Entity))
+				// Mantiene la persecución infinita mientras sea de noche y el objetivo sea el jugador
+				if (m_chaseTime <= 0f && isGreenNightActiveNow && m_subsystemPlayers.IsPlayer(m_target.Entity))
 				{
 					m_chaseTime = 1f;
 				}
@@ -115,6 +140,60 @@ namespace Game
 				m_dt = m_random.Float(0.25f, 0.35f) + MathUtils.Min((float)(m_subsystemTime.GameTime - m_nextUpdateTime), 0.1f);
 				m_nextUpdateTime = m_subsystemTime.GameTime + (double)m_dt;
 				m_stateMachine.Update();
+			}
+		}
+
+		private void ForceChasePlayerOnGreenNight()
+		{
+			// Cooldown de 1 segundo para no saturar el rendimiento buscando en cada frame
+			if (m_subsystemTime.GameTime - m_lastGreenNightForcedSearch < 1.0) return;
+			m_lastGreenNightForcedSearch = m_subsystemTime.GameTime;
+
+			// Durante la Noche Verde atacan sin importar el modo de juego
+			if (!AttacksPlayer) return;
+
+			float range = ChaseRangeNight + 50f; // Rango ampliado durante la noche verde
+			Vector3 position = m_componentCreature.ComponentBody.Position;
+
+			m_componentBodies.Clear();
+			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), range, m_componentBodies);
+
+			ComponentCreature bestPlayer = null;
+			float bestDistance = float.MaxValue;
+
+			for (int i = 0; i < m_componentBodies.Count; i++)
+			{
+				ComponentCreature creature = m_componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
+				if (creature != null && m_subsystemPlayers.IsPlayer(creature.Entity) && creature.ComponentHealth.Health > 0f)
+				{
+					ComponentZombieHerdBehavior otherHerd = creature.Entity.FindComponent<ComponentZombieHerdBehavior>();
+					if (otherHerd != null && !string.IsNullOrEmpty(otherHerd.HerdName) && otherHerd.HerdName == m_myHerdName)
+						continue;
+
+					float distance = Vector3.Distance(position, creature.ComponentBody.Position);
+					if (distance < bestDistance)
+					{
+						bestDistance = distance;
+						bestPlayer = creature;
+					}
+				}
+			}
+
+			if (bestPlayer != null)
+			{
+				// FORZAR ESTADO DIRECTAMENTE sin llamar a StopAttack que causaba el bug
+				m_target = bestPlayer;
+				m_range = range;
+				m_chaseTime = 100f;
+				m_isPersistent = true;
+				m_importanceLevel = 100f;
+				m_autoChaseSuppressionTime = 0f;
+				m_targetUnsuitableTime = 0f;
+				m_nextUpdateTime = 0.0; // Forzar actualización inmediata de la máquina de estados
+				IsActive = true;
+
+				// Forzar transición inmediata al estado Chasing
+				m_stateMachine.TransitionTo("Chasing");
 			}
 		}
 
@@ -196,6 +275,7 @@ namespace Game
 					return;
 				}
 
+				// Durante la Noche Verde, este estado es completamente ignorado gracias a ForceChasePlayerOnGreenNight
 				if (m_autoChaseSuppressionTime <= 0f)
 				{
 					m_range = ((m_subsystemSky.SkyLightIntensity < 0.2f) ? ChaseRangeNight : ChaseRangeDay);
