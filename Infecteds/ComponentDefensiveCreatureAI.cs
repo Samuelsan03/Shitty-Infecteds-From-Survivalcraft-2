@@ -81,7 +81,10 @@ namespace Game
 			if (!m_canUseInventory || m_componentMiner.Inventory == null) return;
 
 			ComponentNewChaseBehavior chaseBehavior = m_componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
-			if (chaseBehavior == null || !chaseBehavior.IsActive || chaseBehavior.Target == null) return;
+
+			// CORREGIDO: No depender de IsActive (de la clase base) porque puede no estar actualizado
+			// Verificar directamente si hay un target válido y chaseTime > 0
+			if (chaseBehavior == null || chaseBehavior.Target == null || chaseBehavior.m_chaseTime <= 0f) return;
 
 			ComponentCreature target = chaseBehavior.Target;
 			if (target.ComponentHealth.Health <= 0f) return;
