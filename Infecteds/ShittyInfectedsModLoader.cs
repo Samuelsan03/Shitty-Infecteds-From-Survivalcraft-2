@@ -6,7 +6,6 @@ using Engine;
 
 public class ShittyInfectedsModLoader : ModLoader
 {
-	// Lista de rutas de música (sin extensión) dentro del mod
 	private static readonly List<string> ListaMusica = new List<string>
 	{
 		"Music/Menu Music",
@@ -21,6 +20,15 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("OnMainMenuScreenCreated", this);
 		ModsManager.RegisterHook("OnMinerHit", this);
 		ModsManager.RegisterHook("CalculateCreatureInjuryAmount", this);
+		ModsManager.RegisterHook("OnWidgetConstruct", this);
+	}
+
+	public override void OnWidgetConstruct(ref Widget widget)
+	{
+		if (widget is PanoramaWidget)
+		{
+			widget = new ShittyInfectedsPanoramaWidget();
+		}
 	}
 
 	public override void CalculateCreatureInjuryAmount(Injury injury)
@@ -28,39 +36,32 @@ public class ShittyInfectedsModLoader : ModLoader
 		if (injury == null || injury.ComponentHealth == null)
 			return;
 
-		// Obtener el atacante (quien causó la herida)
 		ComponentCreature attacker = injury.Attacker;
 		if (attacker == null)
 			return;
 
-		// Obtener la víctima
 		ComponentCreature victim = injury.ComponentHealth.m_componentCreature;
 		if (victim == null || victim == attacker)
 			return;
 
-		// Determinar quién es el enemigo que debe ser atacado
 		ComponentCreature enemy = null;
 
 		if (attacker is ComponentPlayer)
 		{
-			// El jugador atacó a una criatura, las aliadas deben atacar a la víctima
 			enemy = victim;
 		}
 		else if (victim is ComponentPlayer)
 		{
-			// Una criatura atacó al jugador, las aliadas deben atacar al agresor
 			enemy = attacker;
 		}
 		else
 		{
-			return; // No es una situación donde debamos intervenir
+			return;
 		}
 
 		if (enemy == null)
 			return;
 
-		// CORREGIDO: Buscar UNA criatura aliada y usar CallNearbyCreaturesHelp
-		// Esto es más eficiente y garantiza que todas reaccionen
 		SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
 		foreach (ComponentCreature creature in creatureSpawn.Creatures)
 		{
@@ -70,9 +71,8 @@ public class ShittyInfectedsModLoader : ModLoader
 			ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
 			if (herd != null && herd.HerdName == "player")
 			{
-				// Usar CallNearbyCreaturesHelp que alerta a todos los cercanos
 				herd.CallNearbyCreaturesHelp(enemy, 20f, 30f, false);
-				break; // Solo necesitamos llamar una vez
+				break;
 			}
 		}
 	}
@@ -81,22 +81,17 @@ public class ShittyInfectedsModLoader : ModLoader
 	{
 		skip = false;
 
-		// Verificar que el que golpea es un jugador
 		ComponentPlayer player = miner.ComponentPlayer;
 		if (player == null)
 			return;
 
-		// Si la probabilidad de golpe es 0 o menor, no hacemos nada
 		if (hitProbability <= 0f)
 			return;
 
-		// Verificar que el objetivo es una criatura válida
 		ComponentCreature targetCreature = targetBody.Entity.FindComponent<ComponentCreature>();
 		if (targetCreature == null)
 			return;
 
-		// CORREGIDO: Forzar que el golpe SIEMPRE acierte cuando hay aliados disponibles
-		// para garantizar que CalculateCreatureInjuryAmount se dispare
 		SubsystemCreatureSpawn creatureSpawn = miner.Project.FindSubsystem<SubsystemCreatureSpawn>();
 		bool hasAllies = false;
 
@@ -113,7 +108,6 @@ public class ShittyInfectedsModLoader : ModLoader
 			}
 		}
 
-		// Si hay aliados disponibles, forzamos el acierto
 		if (hasAllies)
 		{
 			hitProbability = 1f;
@@ -121,7 +115,6 @@ public class ShittyInfectedsModLoader : ModLoader
 		}
 	}
 
-	// Música aleatoria (se mantiene)
 	public override void MenuPlayMusic(out string contentMusicPath)
 	{
 		int index = random.Int(ListaMusica.Count);
@@ -130,7 +123,6 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override void OnMainMenuScreenCreated(MainMenuScreen mainMenuScreen, StackPanelWidget leftBottomBar, StackPanelWidget rightBottomBar)
 	{
-		// 1. Ajustar logo
 		RectangleWidget logo = mainMenuScreen.Children.Find<RectangleWidget>("Logo", true);
 		if (logo != null)
 		{
@@ -138,7 +130,6 @@ public class ShittyInfectedsModLoader : ModLoader
 			logo.Size = new Vector2(320f, 136f);
 		}
 
-		// 2. Agregar título debajo de la etiqueta de la API en TopArea
 		StackPanelWidget topArea = mainMenuScreen.Children.Find<StackPanelWidget>("TopArea", true);
 		if (topArea != null)
 		{
@@ -154,7 +145,6 @@ public class ShittyInfectedsModLoader : ModLoader
 			topArea.Children.Add(titleLabel);
 		}
 
-		// 3. Agregar botón cuadrado en la barra lateral derecha
 		if (rightBottomBar != null)
 		{
 			BevelledButtonWidget configButton = new BevelledButtonWidget
@@ -177,7 +167,6 @@ public class ShittyInfectedsModLoader : ModLoader
 			rightBottomBar.Children.Insert(0, configButton);
 		}
 
-		// 4. Agregar enlace de TikTok encima del copyright
 		StackPanelWidget bottomInfos = mainMenuScreen.Children.Find<StackPanelWidget>("BottomInfos", true);
 		if (bottomInfos != null)
 		{
