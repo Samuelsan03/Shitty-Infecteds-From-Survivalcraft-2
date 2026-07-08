@@ -16,7 +16,7 @@
 
       <CanvasWidget Size="470, 80" HorizontalAlignment="Center" Margin="0, 12">
         <ScrollPanelWidget Direction="Vertical">
-          <LabelWidget Name="GreenNightConfig.Description" Text="El tiempo vuela cuando te divertes, ¿verdad? Bueno, aquí también vuela, pero no porque te estés divirtiendo.\n Los infectados se multiplicarán más rápido y la oscuridad será más densa.\n Al menos tendrás tiempo de cavar tu tumba con calma." Color="150, 150, 150" FontScale="0.75" />
+          <LabelWidget Name="GreenNightConfig.Description" Text="" Color="150, 150, 150" FontScale="0.75" />
         </ScrollPanelWidget>
       </CanvasWidget>
 
