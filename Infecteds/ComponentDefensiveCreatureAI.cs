@@ -31,6 +31,10 @@ namespace Game
 		public float CrossbowCooldown = 0.01f;
 		public float CrossbowAimTime = 1.5f;
 
+		// Tiempos del Arco
+		public float BowCooldown = 0.01f;
+		public float BowAimTime = 1.5f;
+
 		private bool m_canUseInventory;
 		private float m_aimTimer;
 		private float m_cooldownTimer;
@@ -99,19 +103,27 @@ namespace Game
 				return;
 			}
 
+			// Prioridad de armas: Mosquete > Ballesta > Arco
 			int musketSlot = FindMusketSlot();
 			int crossbowSlot = musketSlot >= 0 ? -1 : FindCrossbowSlot();
-			int activeSlot = musketSlot >= 0 ? musketSlot : crossbowSlot;
+			int bowSlot = (musketSlot >= 0 || crossbowSlot >= 0) ? -1 : FindBowSlot();
+
+			int activeSlot = musketSlot >= 0 ? musketSlot : (crossbowSlot >= 0 ? crossbowSlot : bowSlot);
 
 			if (activeSlot < 0) return;
 
 			m_componentMiner.Inventory.ActiveSlotIndex = activeSlot;
 
 			bool isCrossbow = crossbowSlot >= 0;
+			bool isBow = bowSlot >= 0;
 
 			if (isCrossbow)
 			{
 				EnsureCrossbowLoaded(crossbowSlot);
+			}
+			else if (isBow)
+			{
+				EnsureBowLoaded(bowSlot);
 			}
 			else
 			{
@@ -135,13 +147,17 @@ namespace Game
 				m_componentMiner.Aim(aimRay, AimState.InProgress);
 
 				// Evaluar el AimTime dependiendo del arma que se está usando
-				float requiredAimTime = isCrossbow ? CrossbowAimTime : MusketAimTime;
+				float requiredAimTime = isBow ? BowAimTime : (isCrossbow ? CrossbowAimTime : MusketAimTime);
 
 				if (m_aimTimer >= requiredAimTime)
 				{
 					if (isCrossbow)
 					{
 						FireCrossbow(aimRay);
+					}
+					else if (isBow)
+					{
+						FireBow(aimRay);
 					}
 					else
 					{
@@ -168,9 +184,27 @@ namespace Game
 					m_isAiming = false;
 
 					// Aplicar el Cooldown dependiendo del arma que se usó
-					m_cooldownTimer = isCrossbow ? CrossbowCooldown : MusketCooldown;
+					m_cooldownTimer = isBow ? BowCooldown : (isCrossbow ? CrossbowCooldown : MusketCooldown);
 
 					m_aimTimer = 0f;
+				}
+			}
+		}
+
+		private void FireBow(Ray3 aimRay)
+		{
+			// 1. Ejecutamos el Aim Completed original para que el arco haga su cálculo de velocidad, sonidos y animaciones
+			m_componentMiner.Aim(aimRay, AimState.Completed);
+
+			// 2. Buscamos la flecha que acaba de ser disparada por esta criatura en la lista global
+			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
+			for (int i = projectiles.Count - 1; i >= 0; i--)
+			{
+				if (projectiles[i].Owner == m_componentCreature)
+				{
+					// 3. Forzamos a que la flecha DESAPAREZCA al tocar el piso
+					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+					break;
 				}
 			}
 		}
@@ -264,6 +298,18 @@ namespace Game
 			return -1;
 		}
 
+		private int FindBowSlot()
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == BowBlock.Index)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+
 		private void EnsureMusketLoaded(int slotIndex)
 		{
 			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
@@ -301,6 +347,39 @@ namespace Game
 
 				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
 				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(CrossbowBlock.Index, 0, data), 1);
+			}
+		}
+
+		private void EnsureBowLoaded(int slotIndex)
+		{
+			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
+			int data = Terrain.ExtractData(value);
+			int draw = BowBlock.GetDraw(data);
+			ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
+
+			// Si no está completamente tenso (draw 15) o no tiene flecha asignada
+			if (draw != 15 || arrowType == null)
+			{
+				// Tipos de flechas soportados según el SubsystemBowBlockBehavior original
+				ArrowBlock.ArrowType[] arrowTypes = new ArrowBlock.ArrowType[]
+				{
+					ArrowBlock.ArrowType.WoodenArrow,
+					ArrowBlock.ArrowType.StoneArrow,
+					ArrowBlock.ArrowType.CopperArrow,
+					ArrowBlock.ArrowType.IronArrow,
+					ArrowBlock.ArrowType.DiamondArrow,
+					ArrowBlock.ArrowType.FireArrow
+				};
+
+				// Variación aleatoria de flechas
+				ArrowBlock.ArrowType selectedArrow = arrowTypes[m_random.Int(0, arrowTypes.Length - 1)];
+
+				// Tensar completamente y asignar la flecha
+				data = BowBlock.SetDraw(data, 15);
+				data = BowBlock.SetArrowType(data, new ArrowBlock.ArrowType?(selectedArrow));
+
+				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
+				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(BowBlock.Index, 0, data), 1);
 			}
 		}
 	}
