@@ -46,7 +46,15 @@ namespace Game
 			m_importanceLevel = (isPersistent ? ImportanceLevelPersistent : ImportanceLevelNonPersistent);
 			m_autoChaseSuppressionTime = 0f;
 			m_hasDestroyedBlocksWhileStuck = false;
+			m_targetInRangeTime = TargetInRangeTimeToChase + 1f; // Evitar retraso en transición
+			m_targetUnsuitableTime = 0f;
 			IsActive = true;
+
+			// FORZAR transición inmediata al estado Chasing
+			if (m_stateMachine.CurrentState != "Chasing")
+			{
+				m_stateMachine.TransitionTo("Chasing");
+			}
 		}
 
 		private bool IsPlayerHerd()
@@ -65,6 +73,8 @@ namespace Game
 			m_isPersistent = false;
 			m_importanceLevel = 0f;
 			m_hasDestroyedBlocksWhileStuck = false;
+			m_targetInRangeTime = 0f;
+			m_targetUnsuitableTime = 0f;
 		}
 
 		public virtual void Update(float dt)
@@ -125,12 +135,7 @@ namespace Game
 				m_hasDestroyedBlocksWhileStuck = true;
 			}
 
-			if (m_subsystemTime.GameTime >= m_nextUpdateTime)
-			{
-				m_dt = m_random.Float(0.25f, 0.35f) + MathUtils.Min((float)(m_subsystemTime.GameTime - m_nextUpdateTime), 0.1f);
-				m_nextUpdateTime = m_subsystemTime.GameTime + (double)m_dt;
-				m_stateMachine.Update();
-			}
+			// Eliminado el bloque duplicado que causaba problemas
 			if (m_subsystemTime.GameTime >= m_nextUpdateTime)
 			{
 				m_dt = m_random.Float(0.25f, 0.35f) + MathUtils.Min((float)(m_subsystemTime.GameTime - m_nextUpdateTime), 0.1f);
@@ -316,8 +321,12 @@ namespace Game
 
 			m_stateMachine.AddState("LookingForTarget", delegate
 			{
-				m_importanceLevel = 0f;
-				m_target = null;
+				// CORREGIDO: No resetear target si estamos activos (fueron llamados por Attack)
+				if (!IsActive)
+				{
+					m_importanceLevel = 0f;
+					m_target = null;
+				}
 			}, delegate
 			{
 				if (IsActive)
