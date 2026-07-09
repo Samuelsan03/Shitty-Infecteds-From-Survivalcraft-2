@@ -9,14 +9,20 @@ namespace Game
 	{
 		public static SubsystemGreenNightSky Instance { get; private set; }
 
-		public bool IsGreenNightActive => m_isGreenNightActive;
+		// Solo devuelve true si el sistema está ENCENDIDO y es de noche
+		public bool IsGreenNightActive => m_isGreenNightEnabled && m_isGreenNightActive;
+
+		// Expone el estado del interruptor maestro para el Dialog
+		public bool IsGreenNightEnabled => m_isGreenNightEnabled;
+
 		public DifficultyModes CurrentDifficulty => (DifficultyModes)m_difficultyModeValue;
 
+		private bool m_isGreenNightEnabled = false; // Interruptor maestro (Guardado)
 		private int m_greenNightIntervalDays = 4;
-		private bool m_isGreenNightActive = false;
+		private bool m_isGreenNightActive = false;  // Estado real de la noche actual
 		private double m_lastGreenNightDay = -1;
 		private bool m_greenNightTriggeredThisCycle = false;
-		private int m_difficultyModeValue = 2; // 2 = Normal por defecto
+		private int m_difficultyModeValue = 2;
 
 		private string[] m_difficultyNames = new string[]
 		{
@@ -94,6 +100,7 @@ namespace Game
 
 			m_greenNightIntervalDays = valuesDictionary.GetValue<int>("GreenNightIntervalDays", 4);
 			m_lastGreenNightDay = valuesDictionary.GetValue<double>("LastGreenNightDay", -1);
+			m_isGreenNightEnabled = valuesDictionary.GetValue<bool>("IsGreenNightEnabled", false);
 			m_isGreenNightActive = valuesDictionary.GetValue<bool>("IsGreenNightActive", false);
 			m_greenNightTriggeredThisCycle = valuesDictionary.GetValue<bool>("GreenNightTriggeredThisCycle", false);
 			m_difficultyModeValue = valuesDictionary.GetValue<int>("DifficultyMode", 2);
@@ -103,6 +110,7 @@ namespace Game
 		{
 			valuesDictionary.SetValue<int>("GreenNightIntervalDays", m_greenNightIntervalDays);
 			valuesDictionary.SetValue<double>("LastGreenNightDay", m_lastGreenNightDay);
+			valuesDictionary.SetValue<bool>("IsGreenNightEnabled", m_isGreenNightEnabled);
 			valuesDictionary.SetValue<bool>("IsGreenNightActive", m_isGreenNightActive);
 			valuesDictionary.SetValue<bool>("GreenNightTriggeredThisCycle", m_greenNightTriggeredThisCycle);
 			valuesDictionary.SetValue<int>("DifficultyMode", m_difficultyModeValue);
@@ -122,7 +130,12 @@ namespace Game
 
 		public void Update(float dt)
 		{
-			if (m_subsystemTimeOfDay == null) return;
+			// Si el sistema está desactivado, ocultar el HUD y detener toda la lógica
+			if (!m_isGreenNightEnabled || m_subsystemTimeOfDay == null)
+			{
+				HideHudLabel();
+				return;
+			}
 
 			double currentDay = m_subsystemTimeOfDay.Day;
 
@@ -138,7 +151,6 @@ namespace Game
 			{
 				m_greenNightTriggeredThisCycle = true;
 				m_isGreenNightActive = true;
-				NotifyGreenNightStart();
 			}
 
 			if (m_isGreenNightActive && !IsNightTime)
@@ -164,8 +176,10 @@ namespace Game
 					CreateHudLabel(player);
 				}
 
-				if (m_hudLabel != null)
+				if (m_hudLabel != null && m_hudContainer != null)
 				{
+					m_hudContainer.IsVisible = true; // Aseguramos que se muestre
+
 					int diffIndex = Math.Min(m_difficultyModeValue, m_difficultyNames.Length - 1);
 					string suffix = "\nNivel de sufrimiento: \n" + m_difficultyNames[diffIndex];
 
@@ -201,6 +215,15 @@ namespace Game
 				}
 
 				break;
+			}
+		}
+
+		private void HideHudLabel()
+		{
+			// Simplemente oculta el contenedor en lugar de destruirlo
+			if (m_hudContainer != null)
+			{
+				m_hudContainer.IsVisible = false;
 			}
 		}
 
@@ -260,13 +283,67 @@ namespace Game
 				if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
 				{
 					player.ComponentGui.DisplaySmallMessage(
-						"¡La Noche Verde ha comenzado!",
+						"Noche Verde activada.",
 						new Color(0, 255, 94),
 						false,
 						true
 					);
 				}
 			}
+		}
+
+		private void NotifyGreenNightEnd()
+		{
+			if (m_subsystemPlayers == null) return;
+
+			foreach (ComponentPlayer player in m_subsystemPlayers.ComponentPlayers)
+			{
+				if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
+				{
+					player.ComponentGui.DisplaySmallMessage(
+						"Noche Verde desactivada.",
+						new Color(180, 255, 180),
+						false,
+						true
+					);
+				}
+			}
+		}
+
+		public void SetGreenNightActive(bool isEnabled)
+		{
+			m_isGreenNightEnabled = isEnabled;
+
+			if (isEnabled)
+			{
+				// Al activar, inicializamos el contador si no existe
+				if (m_subsystemTimeOfDay != null && m_lastGreenNightDay < 0)
+				{
+					m_lastGreenNightDay = Math.Floor(m_subsystemTimeOfDay.Day) + m_greenNightIntervalDays;
+				}
+				NotifyGreenNightStart();
+			}
+			else
+			{
+				// Al desactivar, limpiamos estados y ocultamos el HUD
+				m_isGreenNightActive = false;
+				m_greenNightTriggeredThisCycle = false;
+
+				if (m_subsystemTimeOfDay != null)
+				{
+					m_lastGreenNightDay = Math.Floor(m_subsystemTimeOfDay.Day) + m_greenNightIntervalDays;
+				}
+				else
+				{
+					m_lastGreenNightDay = -1;
+				}
+
+				HideHudLabel();
+				NotifyGreenNightEnd();
+			}
+
+			// Forzar guardado inmediato al cambiar el estado
+			Project.Save();
 		}
 	}
 }
