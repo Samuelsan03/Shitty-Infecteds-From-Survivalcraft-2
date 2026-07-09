@@ -1,0 +1,13 @@
+<Zombie xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://gitee.com/THPRC/survivalcraft-api/raw/SCAPI1.8/Survivalcraft/Content/Assets/Database.xsd">
+
+  <!-- Modificaciones de las criaturas del juego original-->
+<EntityTemplate Name="Player" Guid="4be6c1c5-d65d-4537-8a8b-a391969e6dc2">
+<MemberComponentTemplate Name="NewHerdBehavior" Guid="c1e93f03-6b3c-4a80-9217-74b168b80227" InheritanceParent="e8f5a293-55ce-4a36-acf6-f215e5f9c93f">
+  <Parameter Name="HerdName" Guid="fa572541-57de-470a-8c5b-45daf82fc4b8" Value="player" Type="string" />
+  <Parameter Name="AutoNearbyCreaturesHelp" Guid="c9d1534f-27fd-44fe-9ce9-76a5bc558dc2" Value="True" Type="bool" />
+  <Parameter Name="HerdingRange" Guid="06824dc8-0fd4-4e5d-aae6-6e551a86b39f" Value="32" Type="float" />
+</MemberComponentTemplate>
+<MemberComponentTemplate Name="Pathfinding" Guid="741639b0-18b1-47b9-9cfe-052761a3b646" InheritanceParent="125dc475-9340-4137-b694-e003f740ea2d" />
+<MemberComponentTemplate Name="Pilot" Guid="27606199-41ff-4906-a80f-1debf67de67e" InheritanceParent="53510bee-16d1-4245-9b55-05cf26064cfc" />
+</EntityTemplate>
+</Zombie>
