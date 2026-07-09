@@ -9,17 +9,15 @@ namespace Game
 	{
 		public static SubsystemGreenNightSky Instance { get; private set; }
 
-		// Solo devuelve true si el sistema está ENCENDIDO y es de noche
 		public bool IsGreenNightActive => m_isGreenNightEnabled && m_isGreenNightActive;
 
-		// Expone el estado del interruptor maestro para el Dialog
 		public bool IsGreenNightEnabled => m_isGreenNightEnabled;
 
 		public DifficultyModes CurrentDifficulty => (DifficultyModes)m_difficultyModeValue;
 
-		private bool m_isGreenNightEnabled = false; // Interruptor maestro (Guardado)
+		private bool m_isGreenNightEnabled = true; // Por defecto activado
 		private int m_greenNightIntervalDays = 4;
-		private bool m_isGreenNightActive = false;  // Estado real de la noche actual
+		private bool m_isGreenNightActive = false;
 		private double m_lastGreenNightDay = -1;
 		private bool m_greenNightTriggeredThisCycle = false;
 		private int m_difficultyModeValue = 2;
@@ -94,13 +92,16 @@ namespace Game
 		{
 			Instance = this;
 
+			m_hudContainer = null;
+			m_hudLabel = null;
+
 			m_subsystemTimeOfDay = Project.FindSubsystem<SubsystemTimeOfDay>(true);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 
 			m_greenNightIntervalDays = valuesDictionary.GetValue<int>("GreenNightIntervalDays", 4);
 			m_lastGreenNightDay = valuesDictionary.GetValue<double>("LastGreenNightDay", -1);
-			m_isGreenNightEnabled = valuesDictionary.GetValue<bool>("IsGreenNightEnabled", false);
+			m_isGreenNightEnabled = valuesDictionary.GetValue<bool>("IsGreenNightEnabled", true); // Por defecto true
 			m_isGreenNightActive = valuesDictionary.GetValue<bool>("IsGreenNightActive", false);
 			m_greenNightTriggeredThisCycle = valuesDictionary.GetValue<bool>("GreenNightTriggeredThisCycle", false);
 			m_difficultyModeValue = valuesDictionary.GetValue<int>("DifficultyMode", 2);
@@ -118,10 +119,7 @@ namespace Game
 
 		public override void Dispose()
 		{
-			if (m_hudContainer != null && m_hudContainer.ParentWidget != null)
-			{
-				m_hudContainer.ParentWidget.Children.Remove(m_hudContainer);
-			}
+			DestroyHudLabel();
 
 			if (Instance == this)
 				Instance = null;
@@ -130,10 +128,9 @@ namespace Game
 
 		public void Update(float dt)
 		{
-			// Si el sistema está desactivado, ocultar el HUD y detener toda la lógica
 			if (!m_isGreenNightEnabled || m_subsystemTimeOfDay == null)
 			{
-				HideHudLabel();
+				DestroyHudLabel();
 				return;
 			}
 
@@ -173,12 +170,13 @@ namespace Game
 
 				if (m_hudContainer == null || m_hudContainer.ParentWidget != player.GuiWidget)
 				{
+					DestroyHudLabel();
 					CreateHudLabel(player);
 				}
 
 				if (m_hudLabel != null && m_hudContainer != null)
 				{
-					m_hudContainer.IsVisible = true; // Aseguramos que se muestre
+					m_hudContainer.IsVisible = true;
 
 					int diffIndex = Math.Min(m_difficultyModeValue, m_difficultyNames.Length - 1);
 					string suffix = "\nNivel de sufrimiento: \n" + m_difficultyNames[diffIndex];
@@ -218,12 +216,18 @@ namespace Game
 			}
 		}
 
-		private void HideHudLabel()
+		private void DestroyHudLabel()
 		{
-			// Simplemente oculta el contenedor en lugar de destruirlo
+			// En lugar de solo ocultar (IsVisible = false), lo REMUEVE por completo.
+			// Esto evita que el texto se quede "fantasma" en la pantalla al desactivar.
 			if (m_hudContainer != null)
 			{
-				m_hudContainer.IsVisible = false;
+				if (m_hudContainer.ParentWidget != null)
+				{
+					m_hudContainer.ParentWidget.Children.Remove(m_hudContainer);
+				}
+				m_hudContainer = null;
+				m_hudLabel = null;
 			}
 		}
 
@@ -316,7 +320,6 @@ namespace Game
 
 			if (isEnabled)
 			{
-				// Al activar, inicializamos el contador si no existe
 				if (m_subsystemTimeOfDay != null && m_lastGreenNightDay < 0)
 				{
 					m_lastGreenNightDay = Math.Floor(m_subsystemTimeOfDay.Day) + m_greenNightIntervalDays;
@@ -325,7 +328,6 @@ namespace Game
 			}
 			else
 			{
-				// Al desactivar, limpiamos estados y ocultamos el HUD
 				m_isGreenNightActive = false;
 				m_greenNightTriggeredThisCycle = false;
 
@@ -338,11 +340,10 @@ namespace Game
 					m_lastGreenNightDay = -1;
 				}
 
-				HideHudLabel();
+				DestroyHudLabel();
 				NotifyGreenNightEnd();
 			}
 
-			// Forzar guardado inmediato al cambiar el estado
 			Project.Save();
 		}
 	}
