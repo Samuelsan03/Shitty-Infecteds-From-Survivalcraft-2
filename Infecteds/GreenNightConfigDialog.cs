@@ -12,10 +12,10 @@ namespace Game
 		private int[] m_dayOptions = new int[] { 4, 8, 12, 16 };
 		private string[] m_descriptions = new string[]
 		{
-			"El tiempo vuela cuando te divertes, ¿verdad? Bueno, aquí también vuela, pero no porque te estés divirtiendo.\nLos infectados se multiplicarán más rápido y la oscuridad será más densa.\nAl menos tendrás tiempo de cavar tu tumba con calma.",
-			"Casi parece que te toman en serio. Puedes terminar esa pared que dejaste a medias... o no.\nProbablemente no. Al menos cuando mueras, será en una casa a medio construir.\nEso le da carácter.",
-			"Relativa calma. Suficiente para que te ilusiones con sobrevivir.\nTe recomiendo no hacer planes a largo plazo, como aprender a tejer o cultivar amistades.\nLos infectados no respetan los hobbies.",
-			"Prácticamente unas vacaciones. Tanto tiempo que podrías olvidar que hay zombis afuera.\nVeo que prefieres el estrés en dosis pequeñas. Inteligente.\nO cobarde. Las dos cosas suelen ir juntas."
+			"El tiempo vuela cuando te divertes, ¿verdad?\n Bueno, aquí también vuela,\n pero no porque te estés divirtiendo.\nLos infectados se multiplicarán más rápido y la oscuridad\n será más densa.\nAl menos tendrás tiempo de cavar tu tumba con calma.",
+			"Casi parece que te toman en serio.\n Puedes terminar esa pared que dejaste a medias... o no.\nProbablemente no. Al menos cuando mueras, será en una casa a medio construir.\nEso le da carácter.",
+			"Relativa calma. Suficiente para que te ilusiones con\n sobrevivir.\nTe recomiendo no hacer planes a largo plazo, como\n aprender a tejer o cultivar amistades.\nLos infectados no respetan los hobbies.",
+			"Prácticamente unas vacaciones.\n Tanto tiempo que podrías olvidar que hay zombis afuera.\nVeo que prefieres el estrés en dosis pequeñas.\n Inteligente.\nO cobarde. Las dos cosas suelen ir juntas."
 		};
 
 		private string[] m_difficultyNames = new string[]
@@ -59,8 +59,13 @@ namespace Game
 		private ButtonWidget m_daysButton;
 		private BevelledButtonWidget m_difficultyButton;
 		private LabelWidget m_description;
+		private LabelWidget m_warningText;
 
-		public GreenNightConfigDialog(ComponentPlayer player)
+		public GreenNightConfigDialog(ComponentPlayer player) : this(player, true)
+		{
+		}
+
+		public GreenNightConfigDialog(ComponentPlayer player, bool showWarningText)
 		{
 			m_player = player;
 			m_greenNightSky = player?.Project?.FindSubsystem<SubsystemGreenNightSky>();
@@ -73,12 +78,18 @@ namespace Game
 			m_daysButton = this.Children.Find<ButtonWidget>("GreenNightConfig.DaysButton", true);
 			m_difficultyButton = this.Children.Find<BevelledButtonWidget>("GreenNightConfig.DifficultyButton", true);
 			m_description = this.Children.Find<LabelWidget>("GreenNightConfig.Description", true);
+			m_warningText = this.Children.Find<LabelWidget>("GreenNightConfig.WarningText", true);
 
 			m_currentIndex = 0;
 			SelectedDays = m_dayOptions[m_currentIndex];
 			SelectedDifficulty = m_difficulties[m_currentDifficultyIndex];
 			UpdateDaysDisplay();
 			UpdateDifficultyDisplay();
+
+			if (!showWarningText && m_warningText != null)
+			{
+				m_warningText.IsVisible = false;
+			}
 		}
 
 		private void UpdateDaysDisplay()
@@ -121,39 +132,32 @@ namespace Game
 
 			if (m_okButton.IsClicked)
 			{
-				if (m_greenNightSky != null)
-				{
-					m_greenNightSky.SetGreenNightInterval(SelectedDays);
-				}
-
-				if (m_player != null && m_player.ComponentGui != null)
-				{
-					m_player.ComponentGui.DisplaySmallMessage(
-						"La Noche Verde estará en " + m_difficultyNames[m_currentDifficultyIndex] + " y ocurrirá en " + SelectedDays + " días",
-						new Color(0, 255, 94),
-						false,
-						true
-					);
-				}
+				ApplySettings(SelectedDays, SelectedDifficulty);
 				DialogsManager.HideDialog(this);
 			}
 			if (m_cancelButton.IsClicked || base.Input.Cancel)
 			{
-				if (m_greenNightSky != null)
-				{
-					m_greenNightSky.SetGreenNightInterval(4);
-				}
-
-				if (m_player != null && m_player.ComponentGui != null)
-				{
-					m_player.ComponentGui.DisplaySmallMessage(
-						"La Noche Verde estará en Tu Tumba ya Está Lista y ocurrirá en 4 días",
-						new Color(0, 255, 94),
-						false,
-						true
-					);
-				}
+				ApplySettings(4, DifficultyModes.Normal);
 				DialogsManager.HideDialog(this);
+			}
+		}
+
+		private void ApplySettings(int days, DifficultyModes difficulty)
+		{
+			if (m_greenNightSky != null)
+			{
+				m_greenNightSky.SetGreenNightInterval(days);
+				m_greenNightSky.SetDifficultyMode(difficulty);
+			}
+
+			if (m_player != null && m_player.ComponentGui != null)
+			{
+				m_player.ComponentGui.DisplaySmallMessage(
+					"La Noche Verde estará en " + m_difficultyNames[(int)difficulty] + " y ocurrirá en " + days + " días",
+					new Color(0, 255, 94),
+					false,
+					true
+				);
 			}
 		}
 	}
