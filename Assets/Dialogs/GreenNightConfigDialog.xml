@@ -1,6 +1,6 @@
 <CanvasWidget xmlns="runtime-namespace:Game">
 
-  <CanvasWidget Size="600, 420" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <CanvasWidget Size="600, 480" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
     <BevelledRectangleWidget Style="{Styles/DialogArea}" />
 
     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="20, 10">
@@ -11,7 +11,7 @@
 
       <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
         <LabelWidget Text="Días que te quedarán de vida:" Color="180, 180, 180" VerticalAlignment="Center" Margin="0, 0, 10, 0" />
-        <BevelledButtonWidget Name="GreenNightConfig.DaysButton" Text="4 días" Style="{Styles/ButtonStyle_160x60}" />
+        <BevelledButtonWidget Name="GreenNightConfig.DaysButton" Text="4 días" Size="160, 60" />
       </StackPanelWidget>
 
       <CanvasWidget Size="470, 80" HorizontalAlignment="Center" Margin="0, 12">
@@ -20,9 +20,13 @@
         </ScrollPanelWidget>
       </CanvasWidget>
 
-      <UniformSpacingPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 8">
-        <BevelledButtonWidget Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Center" Name="GreenNightConfig.OkButton" Text="Aceptar" />
-        <BevelledButtonWidget Style="{Styles/ButtonStyle_160x60}" HorizontalAlignment="Center" Name="GreenNightConfig.CancelButton" Text="Cancelar" />
+      <LabelWidget Text="¿Qué Tan Rápido Quieres Morir?" HorizontalAlignment="Center" Margin="0, 12, 0, 6" FontScale="0.9" Color="200, 150, 150" DropShadow="true" />
+
+      <BevelledButtonWidget Name="GreenNightConfig.DifficultyButton" Text="" Size="300, 60" HorizontalAlignment="Center" />
+
+      <UniformSpacingPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 12">
+        <BevelledButtonWidget Size="160, 60" HorizontalAlignment="Center" Name="GreenNightConfig.OkButton" Text="Aceptar" />
+        <BevelledButtonWidget Size="160, 60" HorizontalAlignment="Center" Name="GreenNightConfig.CancelButton" Text="Cancelar" />
       </UniformSpacingPanelWidget>
 
     </StackPanelWidget>
