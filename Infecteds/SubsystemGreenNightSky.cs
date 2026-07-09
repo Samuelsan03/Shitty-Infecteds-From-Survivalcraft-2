@@ -10,11 +10,13 @@ namespace Game
 		public static SubsystemGreenNightSky Instance { get; private set; }
 
 		public bool IsGreenNightActive => m_isGreenNightActive;
+		public DifficultyModes CurrentDifficulty => (DifficultyModes)m_difficultyModeValue;
 
 		private int m_greenNightIntervalDays = 4;
 		private bool m_isGreenNightActive = false;
 		private double m_lastGreenNightDay = -1;
 		private bool m_greenNightTriggeredThisCycle = false;
+		private int m_difficultyModeValue = 2; // 2 = Normal por defecto
 
 		private SubsystemTimeOfDay m_subsystemTimeOfDay;
 		private SubsystemTime m_subsystemTime;
@@ -24,8 +26,19 @@ namespace Game
 		private StackPanelWidget m_hudContainer;
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
-
 		public int[] DrawOrders => new int[] { 10 };
+
+		private bool IsGreenNightDay
+		{
+			get
+			{
+				if (m_subsystemTimeOfDay == null || m_lastGreenNightDay < 0)
+					return false;
+
+				double currentDay = m_subsystemTimeOfDay.Day;
+				return currentDay >= m_lastGreenNightDay && currentDay < m_lastGreenNightDay + 1.0;
+			}
+		}
 
 		public int GetDaysRemaining()
 		{
@@ -35,20 +48,20 @@ namespace Game
 			double currentDay = m_subsystemTimeOfDay.Day;
 			double daysRemaining = m_lastGreenNightDay - currentDay;
 
-			return Math.Max(0, (int)Math.Floor(daysRemaining));
+			return Math.Max(1, (int)Math.Floor(daysRemaining));
 		}
 
-		// Inicia cuando el sol está a la mitad de su caída (Middusk) 
-		// y termina cuando la luna está a la mitad de su caída (Middawn)
 		public bool IsNightTime
 		{
 			get
 			{
 				if (m_subsystemTimeOfDay == null) return false;
 				float timeOfDay = m_subsystemTimeOfDay.TimeOfDay;
-				float middusk = m_subsystemTimeOfDay.Middusk;
-				float middawn = m_subsystemTimeOfDay.Middawn;
-				return IntervalUtils.IsBetween(timeOfDay, middusk, middawn);
+
+				float eventStart = m_subsystemTimeOfDay.DuskStart;
+				float eventEnd = m_subsystemTimeOfDay.DawnStart;
+
+				return IntervalUtils.IsBetween(timeOfDay, eventStart, eventEnd);
 			}
 		}
 
@@ -57,12 +70,7 @@ namespace Game
 			get
 			{
 				if (m_subsystemTimeOfDay == null || !IsNightTime) return 0f;
-				float timeOfDay = m_subsystemTimeOfDay.TimeOfDay;
-				float midnight = m_subsystemTimeOfDay.Midnight;
-				float distFromMidnight = Math.Abs(IntervalUtils.Distance(timeOfDay, midnight));
-				float halfDuration = Math.Abs(IntervalUtils.Distance(m_subsystemTimeOfDay.Middusk, midnight));
-				if (halfDuration <= 0f) return 1f;
-				return MathUtils.Saturate(1f - distFromMidnight / halfDuration);
+				return 1f;
 			}
 		}
 
@@ -78,6 +86,7 @@ namespace Game
 			m_lastGreenNightDay = valuesDictionary.GetValue<double>("LastGreenNightDay", -1);
 			m_isGreenNightActive = valuesDictionary.GetValue<bool>("IsGreenNightActive", false);
 			m_greenNightTriggeredThisCycle = valuesDictionary.GetValue<bool>("GreenNightTriggeredThisCycle", false);
+			m_difficultyModeValue = valuesDictionary.GetValue<int>("DifficultyMode", 2);
 		}
 
 		public override void Save(ValuesDictionary valuesDictionary)
@@ -86,6 +95,7 @@ namespace Game
 			valuesDictionary.SetValue<double>("LastGreenNightDay", m_lastGreenNightDay);
 			valuesDictionary.SetValue<bool>("IsGreenNightActive", m_isGreenNightActive);
 			valuesDictionary.SetValue<bool>("GreenNightTriggeredThisCycle", m_greenNightTriggeredThisCycle);
+			valuesDictionary.SetValue<int>("DifficultyMode", m_difficultyModeValue);
 		}
 
 		public override void Dispose()
@@ -118,7 +128,6 @@ namespace Game
 			{
 				m_greenNightTriggeredThisCycle = true;
 				m_isGreenNightActive = true;
-
 				NotifyGreenNightStart();
 			}
 
@@ -147,35 +156,34 @@ namespace Game
 
 				if (m_hudLabel != null)
 				{
-					if (m_isGreenNightActive)
+					if (IsGreenNightDay)
 					{
-						m_hudLabel.Text = "Ellos vendrán...";
-						float pulse = 0.5f + 0.5f * MathF.Sin((float)Time.FrameStartTime * 3f);
-						int green = (int)(128 + 127 * pulse);
-						int greenLight = (int)(47 + 47 * pulse);
-						m_hudLabel.Color = new Color(0, green, greenLight);
+						if (m_isGreenNightActive)
+						{
+							m_hudLabel.Text = "Ellos vendrán…";
+							float pulse = 0.5f + 0.5f * MathF.Sin((float)Time.FrameStartTime * 3f);
+							int green = (int)(128 + 127 * pulse);
+							int greenLight = (int)(47 + 47 * pulse);
+							m_hudLabel.Color = new Color(0, green, greenLight);
+						}
+						else
+						{
+							m_hudLabel.Text = "Ellos vendrán…";
+							m_hudLabel.Color = new Color(0, 255, 94);
+						}
 					}
 					else
 					{
 						int daysRemaining = GetDaysRemaining();
-
-						if (daysRemaining == 0)
-						{
-							m_hudLabel.Text = "Ellos vendrán esta noche...";
-							float pulse = 0.7f + 0.3f * MathF.Sin((float)Time.FrameStartTime * 2f);
-							int green = (int)(200 + 55 * pulse);
-							m_hudLabel.Color = new Color(0, green, (int)(74 * pulse));
-						}
-						else if (daysRemaining == 1)
+						if (daysRemaining == 1)
 						{
 							m_hudLabel.Text = "Ellos vendrán en: 1 día";
-							m_hudLabel.Color = new Color(0, 255, 94);
 						}
 						else
 						{
 							m_hudLabel.Text = "Ellos vendrán en: " + daysRemaining + " días";
-							m_hudLabel.Color = new Color(0, 255, 94);
 						}
+						m_hudLabel.Color = new Color(0, 255, 94);
 					}
 				}
 
@@ -207,14 +215,11 @@ namespace Game
 			player.GuiWidget.Children.Add(m_hudContainer);
 		}
 
-		public void Draw(Camera camera, int drawOrder)
-		{
-		}
+		public void Draw(Camera camera, int drawOrder) { }
 
 		public void SetGreenNightInterval(int days)
 		{
 			m_greenNightIntervalDays = Math.Max(1, days);
-
 			if (m_subsystemTimeOfDay != null)
 			{
 				double currentDay = m_subsystemTimeOfDay.Day;
@@ -224,9 +229,13 @@ namespace Game
 			{
 				m_lastGreenNightDay = -1;
 			}
-
 			m_isGreenNightActive = false;
 			m_greenNightTriggeredThisCycle = false;
+		}
+
+		public void SetDifficultyMode(DifficultyModes mode)
+		{
+			m_difficultyModeValue = (int)mode;
 		}
 
 		private void NotifyGreenNightStart()
