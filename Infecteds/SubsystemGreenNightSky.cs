@@ -18,6 +18,16 @@ namespace Game
 		private bool m_greenNightTriggeredThisCycle = false;
 		private int m_difficultyModeValue = 2; // 2 = Normal por defecto
 
+		private string[] m_difficultyNames = new string[]
+		{
+			"Sobrevivirás... Quizás",
+			"La Muerte te Espera",
+			"Tu Tumba ya Está Lista",
+			"No Hay Esperanza",
+			"Suicidio Asegurado",
+			"Ni Dios Te Salva"
+		};
+
 		private SubsystemTimeOfDay m_subsystemTimeOfDay;
 		private SubsystemTime m_subsystemTime;
 		private SubsystemPlayers m_subsystemPlayers;
@@ -156,11 +166,14 @@ namespace Game
 
 				if (m_hudLabel != null)
 				{
+					int diffIndex = Math.Min(m_difficultyModeValue, m_difficultyNames.Length - 1);
+					string suffix = "\nNivel de sufrimiento: \n" + m_difficultyNames[diffIndex];
+
 					if (IsGreenNightDay)
 					{
 						if (m_isGreenNightActive)
 						{
-							m_hudLabel.Text = "Ellos vendrán…";
+							m_hudLabel.Text = "Ellos vendrán…" + suffix;
 							float pulse = 0.5f + 0.5f * MathF.Sin((float)Time.FrameStartTime * 3f);
 							int green = (int)(128 + 127 * pulse);
 							int greenLight = (int)(47 + 47 * pulse);
@@ -168,7 +181,7 @@ namespace Game
 						}
 						else
 						{
-							m_hudLabel.Text = "Ellos vendrán…";
+							m_hudLabel.Text = "Ellos vendrán…" + suffix;
 							m_hudLabel.Color = new Color(0, 255, 94);
 						}
 					}
@@ -177,11 +190,11 @@ namespace Game
 						int daysRemaining = GetDaysRemaining();
 						if (daysRemaining == 1)
 						{
-							m_hudLabel.Text = "Ellos vendrán en: 1 día";
+							m_hudLabel.Text = "Ellos vendrán en: 1 día" + suffix;
 						}
 						else
 						{
-							m_hudLabel.Text = "Ellos vendrán en: " + daysRemaining + " días";
+							m_hudLabel.Text = "Ellos vendrán en: " + daysRemaining + " días" + suffix;
 						}
 						m_hudLabel.Color = new Color(0, 255, 94);
 					}
