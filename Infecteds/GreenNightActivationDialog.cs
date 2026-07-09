@@ -1,6 +1,7 @@
 using System;
 using System.Xml.Linq;
 using Engine;
+using GameEntitySystem;
 
 namespace Game
 {
@@ -16,6 +17,8 @@ namespace Game
 
 		private ButtonWidget m_cancelButton;
 
+		private ButtonWidget m_configButton;
+
 		private const string DescriptionOff = "El mundo mantiene su equilibrio habitual\n con rangos de percepción limitados y\n persecuciones breves.";
 
 		private const string DescriptionOn = "El mundo entra en un estado de agresividad\n descontrolada. Las criaturas expanden\n drásticamente su campo de percepción, \ndesatan persecuciones inagotables que no\n ceden ante obstáculos ni pérdida de\n contacto visual,\n priorizando la caza de forma absoluta.";
@@ -28,11 +31,11 @@ namespace Game
 			this.m_descriptionLabel = this.Children.Find<LabelWidget>("GreenNightActivationDialog.Description", true);
 			this.m_okButton = this.Children.Find<ButtonWidget>("GreenNightActivationDialog.OkButton", true);
 			this.m_cancelButton = this.Children.Find<ButtonWidget>("GreenNightActivationDialog.CancelButton", true);
+			this.m_configButton = this.Children.Find<ButtonWidget>("GreenNightActivationDialog.ConfigButton", true);
 			this.m_subsystemGreenNight = subsystemGreenNight;
 
 			if (this.m_subsystemGreenNight != null)
 			{
-				// Ahora lee el estado del interruptor maestro
 				this.m_activateCheckbox.IsChecked = this.m_subsystemGreenNight.IsGreenNightEnabled;
 			}
 			this.UpdateDescription();
@@ -44,6 +47,29 @@ namespace Game
 			{
 				this.UpdateDescription();
 			}
+			if (this.m_configButton != null && this.m_configButton.IsClicked)
+			{
+				ComponentPlayer player = null;
+				if (m_subsystemGreenNight != null && m_subsystemGreenNight.Project != null)
+				{
+					foreach (Entity entity in m_subsystemGreenNight.Project.Entities)
+					{
+						if (entity != null)
+						{
+							ComponentPlayer p = entity.FindComponent<ComponentPlayer>();
+							if (p != null)
+							{
+								player = p;
+								break;
+							}
+						}
+					}
+				}
+				if (player != null)
+				{
+					DialogsManager.ShowDialog(null, new GreenNightConfigDialog(player));
+				}
+			}
 			if (this.m_okButton.IsClicked)
 			{
 				if (this.m_subsystemGreenNight != null)
@@ -51,7 +77,6 @@ namespace Game
 					bool newState = this.m_activateCheckbox.IsChecked;
 					bool oldState = this.m_subsystemGreenNight.IsGreenNightEnabled;
 
-					// Solo aplica cambios y muestra mensaje si el estado realmente cambió
 					if (newState != oldState)
 					{
 						this.m_subsystemGreenNight.SetGreenNightActive(newState);
