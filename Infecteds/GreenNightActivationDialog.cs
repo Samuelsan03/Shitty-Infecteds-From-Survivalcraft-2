@@ -67,7 +67,7 @@ namespace Game
 				}
 				if (player != null)
 				{
-					DialogsManager.ShowDialog(null, new GreenNightConfigDialog(player));
+					DialogsManager.ShowDialog(null, new GreenNightConfigDialog(player, false));
 				}
 			}
 			if (this.m_okButton.IsClicked)
