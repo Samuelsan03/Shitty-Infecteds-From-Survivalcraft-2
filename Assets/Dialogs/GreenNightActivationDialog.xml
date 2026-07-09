@@ -1,6 +1,6 @@
 <CanvasWidget xmlns="runtime-namespace:Game">
 
-  <CanvasWidget Size="600, 420" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <CanvasWidget Size="600, 490" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
     <BevelledRectangleWidget Style="{Styles/DialogArea}" />
 
     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="10, 0">
@@ -21,6 +21,8 @@
               <LabelWidget Name="GreenNightActivationDialog.Description" Text="El mundo mantiene su equilibrio habitual con rangos de percepción limitados y persecuciones breves." Color="255, 165, 0" HorizontalAlignment="Center" Margin="10, 5" />
             </ScrollPanelWidget>
           </CanvasWidget>
+
+          <BevelledButtonWidget Name="GreenNightActivationDialog.ConfigButton" Text="Config. Días y Sufrimiento" Size="360, 50" HorizontalAlignment="Center" Margin="0, 8" />
 
         </StackPanelWidget>
       </CanvasWidget>
