@@ -1,9 +1,9 @@
 <CanvasWidget xmlns="runtime-namespace:Game">
 
-  <CanvasWidget Size="600, 480" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+  <CanvasWidget Size="600, 580" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
     <BevelledRectangleWidget Style="{Styles/DialogArea}" />
 
-    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="20, 10">
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="20, 15">
 
       <LabelWidget Text="Configuración de Noche Verde" HorizontalAlignment="Center" Margin="0, 10" FontScale="1.1" Color="0, 255, 94" DropShadow="true" />
 
@@ -24,7 +24,9 @@
 
       <BevelledButtonWidget Name="GreenNightConfig.DifficultyButton" Text="" Size="300, 60" HorizontalAlignment="Center" />
 
-      <UniformSpacingPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 12">
+      <LabelWidget Name="GreenNightConfig.WarningText" Text="¿No estás seguro de cuántos días o nivel de sufrimiento escoger?&#10;Presiona Cancelar y la configuración quedará por defecto: 4 días,\n Tu Tumba ya Está Lista." Color="220, 50, 50" FontScale="0.7" HorizontalAlignment="Center" Margin="0, 12, 0, 0" />
+
+      <UniformSpacingPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 15">
         <BevelledButtonWidget Size="160, 60" HorizontalAlignment="Center" Name="GreenNightConfig.OkButton" Text="Aceptar" />
         <BevelledButtonWidget Size="160, 60" HorizontalAlignment="Center" Name="GreenNightConfig.CancelButton" Text="Cancelar" />
       </UniformSpacingPanelWidget>
