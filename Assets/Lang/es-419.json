@@ -1,7 +1,7 @@
 {
   "ShittyInfectedsSettingsScreen": {
-    "0": "Configuración de Shitty Infecteds",
-    "1": "Los aliados atacan cuando golpeas a una criatura",
-    "2": "Los aliados contraatacan cuando eres golpeado en Creativo"
+    "1": "Configuración de Shitty Infecteds",
+    "2": "Al golpear a una criatura, tus aliados de la manada la atacarán",
+    "3": "Cuando una criatura te ataque en modo creativo, tus aliados la atacarán"
   }
 }
