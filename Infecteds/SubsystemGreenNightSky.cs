@@ -15,7 +15,7 @@ namespace Game
 
 		public DifficultyModes CurrentDifficulty => (DifficultyModes)m_difficultyModeValue;
 
-		private bool m_isGreenNightEnabled = true; // Por defecto activado
+		private bool m_isGreenNightEnabled = true;
 		private int m_greenNightIntervalDays = 4;
 		private bool m_isGreenNightActive = false;
 		private double m_lastGreenNightDay = -1;
@@ -42,7 +42,7 @@ namespace Game
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 		public int[] DrawOrders => new int[] { 10 };
 
-		private bool IsGreenNightDay
+		public bool IsGreenNightDay
 		{
 			get
 			{
@@ -59,10 +59,11 @@ namespace Game
 			if (m_subsystemTimeOfDay == null || m_lastGreenNightDay < 0)
 				return m_greenNightIntervalDays;
 
-			double currentDay = m_subsystemTimeOfDay.Day;
-			double daysRemaining = m_lastGreenNightDay - currentDay;
+			// Calcular usando días enteros para evitar que se quede atascado
+			int currentDayInt = (int)Math.Floor(m_subsystemTimeOfDay.Day);
+			int scheduledDayInt = (int)Math.Floor(m_lastGreenNightDay);
 
-			return Math.Max(1, (int)Math.Floor(daysRemaining));
+			return Math.Max(0, scheduledDayInt - currentDayInt);
 		}
 
 		public bool IsNightTime
@@ -101,7 +102,7 @@ namespace Game
 
 			m_greenNightIntervalDays = valuesDictionary.GetValue<int>("GreenNightIntervalDays", 4);
 			m_lastGreenNightDay = valuesDictionary.GetValue<double>("LastGreenNightDay", -1);
-			m_isGreenNightEnabled = valuesDictionary.GetValue<bool>("IsGreenNightEnabled", true); // Por defecto true
+			m_isGreenNightEnabled = valuesDictionary.GetValue<bool>("IsGreenNightEnabled", true);
 			m_isGreenNightActive = valuesDictionary.GetValue<bool>("IsGreenNightActive", false);
 			m_greenNightTriggeredThisCycle = valuesDictionary.GetValue<bool>("GreenNightTriggeredThisCycle", false);
 			m_difficultyModeValue = valuesDictionary.GetValue<int>("DifficultyMode", 2);
@@ -142,12 +143,13 @@ namespace Game
 				m_greenNightTriggeredThisCycle = false;
 			}
 
-			bool shouldActivate = currentDay >= m_lastGreenNightDay && IsNightTime;
+			bool isScheduledDay = currentDay >= m_lastGreenNightDay && currentDay < m_lastGreenNightDay + 1.0;
 
-			if (shouldActivate && !m_greenNightTriggeredThisCycle)
+			if (isScheduledDay && IsNightTime && !m_greenNightTriggeredThisCycle)
 			{
 				m_greenNightTriggeredThisCycle = true;
 				m_isGreenNightActive = true;
+				NotifyGreenNightStart();
 			}
 
 			if (m_isGreenNightActive && !IsNightTime)
@@ -155,6 +157,7 @@ namespace Game
 				m_isGreenNightActive = false;
 				m_lastGreenNightDay = Math.Floor(currentDay) + m_greenNightIntervalDays;
 				m_greenNightTriggeredThisCycle = false;
+				NotifyGreenNightEnd();
 			}
 
 			UpdateHudLabel();
@@ -218,8 +221,6 @@ namespace Game
 
 		private void DestroyHudLabel()
 		{
-			// En lugar de solo ocultar (IsVisible = false), lo REMUEVE por completo.
-			// Esto evita que el texto se quede "fantasma" en la pantalla al desactivar.
 			if (m_hudContainer != null)
 			{
 				if (m_hudContainer.ParentWidget != null)
@@ -324,7 +325,6 @@ namespace Game
 				{
 					m_lastGreenNightDay = Math.Floor(m_subsystemTimeOfDay.Day) + m_greenNightIntervalDays;
 				}
-				NotifyGreenNightStart();
 			}
 			else
 			{
@@ -341,7 +341,6 @@ namespace Game
 				}
 
 				DestroyHudLabel();
-				NotifyGreenNightEnd();
 			}
 
 			Project.Save();
