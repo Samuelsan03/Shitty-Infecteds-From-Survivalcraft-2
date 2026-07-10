@@ -24,6 +24,9 @@ namespace Game
 		public float CrossbowCooldown = 0.01f;
 		public float CrossbowAimTime = 1.5f;
 
+		public float BowCooldown = 0.01f;
+		public float BowAimTime = 1.5f;
+
 		public float CooldownTimer;
 		public float AimTimeTimer;
 
@@ -159,13 +162,15 @@ namespace Game
 		{
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
-			return blockIndex == musketIndex || blockIndex == crossbowIndex;
+			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
+			return blockIndex == musketIndex || blockIndex == crossbowIndex || blockIndex == bowIndex;
 		}
 
 		private int FindRangedWeaponSlot(IInventory inventory)
 		{
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
+			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
 
 			for (int i = 0; i < inventory.SlotsCount; i++)
 			{
@@ -174,7 +179,7 @@ namespace Game
 
 				int value = inventory.GetSlotValue(i);
 				int contents = Terrain.ExtractContents(value);
-				if (contents == musketIndex || contents == crossbowIndex)
+				if (contents == musketIndex || contents == crossbowIndex || contents == bowIndex)
 					return i;
 			}
 			return -1;
@@ -216,6 +221,7 @@ namespace Game
 
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
+			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
 
 			if (contents == musketIndex)
 			{
@@ -224,6 +230,10 @@ namespace Game
 			else if (contents == crossbowIndex)
 			{
 				EnsureCrossbowLoaded(inventory, slot, value);
+			}
+			else if (contents == bowIndex)
+			{
+				EnsureBowLoaded(inventory, slot, value);
 			}
 		}
 
@@ -288,6 +298,45 @@ namespace Game
 			}
 		}
 
+		private void EnsureBowLoaded(IInventory inventory, int slot, int value)
+		{
+			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
+			int data = Terrain.ExtractData(value);
+			int draw = BowBlock.GetDraw(data);
+			ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
+
+			bool needsReload = false;
+
+			if (draw != 15)
+			{
+				data = BowBlock.SetDraw(data, 15);
+				needsReload = true;
+			}
+
+			if (arrowType == null)
+			{
+				ArrowBlock.ArrowType[] supportedArrows = new ArrowBlock.ArrowType[]
+				{
+					ArrowBlock.ArrowType.WoodenArrow,
+					ArrowBlock.ArrowType.StoneArrow,
+					ArrowBlock.ArrowType.CopperArrow,
+					ArrowBlock.ArrowType.IronArrow,
+					ArrowBlock.ArrowType.DiamondArrow,
+					ArrowBlock.ArrowType.FireArrow
+				};
+				ArrowBlock.ArrowType randomArrow = supportedArrows[m_random.Int(0, 5)];
+				data = BowBlock.SetArrowType(data, randomArrow);
+				needsReload = true;
+			}
+
+			if (needsReload)
+			{
+				int newValue = Terrain.MakeBlockValue(bowIndex, 0, data);
+				inventory.RemoveSlotItems(slot, 1);
+				inventory.AddSlotItems(slot, newValue, 1);
+			}
+		}
+
 		private void AimAndFire(ComponentCreature target)
 		{
 			CooldownTimer -= m_subsystemTime.GameTimeDelta;
@@ -330,10 +379,15 @@ namespace Game
 					CooldownTimer = MusketCooldown;
 					AimTimeTimer = MusketAimTime;
 				}
-				else
+				else if (contents == BlocksManager.GetBlockIndex<CrossbowBlock>())
 				{
 					CooldownTimer = CrossbowCooldown;
 					AimTimeTimer = CrossbowAimTime;
+				}
+				else
+				{
+					CooldownTimer = BowCooldown;
+					AimTimeTimer = BowAimTime;
 				}
 			}
 		}
