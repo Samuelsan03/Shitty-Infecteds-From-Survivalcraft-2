@@ -39,14 +39,15 @@ namespace Game
 				Margin = new Vector2(0, 3)
 			};
 
-			// Ya no creamos un StackPanel para título y descripción, solo la descripción
 			LabelWidget descriptionLabel = new LabelWidget
 			{
 				Text = descriptionText,
 				HorizontalAlignment = WidgetAlignment.Far,
 				VerticalAlignment = WidgetAlignment.Center,
 				Color = new Color(180, 180, 180),
-				Margin = new Vector2(20, 0)
+				Margin = new Vector2(20, 0),
+				// SOLUCIÓN: Activar el ajuste de línea automático del motor
+				WordWrap = true
 			};
 
 			BevelledButtonWidget button = new BevelledButtonWidget
@@ -72,6 +73,9 @@ namespace Game
 			if (m_enableCreatureAttacksButton.IsClicked)
 			{
 				ShittyInfectedsSettings.EnableCreatureAttacks = !ShittyInfectedsSettings.EnableCreatureAttacks;
+
+				// GUARDAR INMEDIATAMENTE AL CAMBIAR
+				ShittyInfectedsSettingsManager.Save();
 			}
 			m_enableCreatureAttacksButton.Text = ShittyInfectedsSettings.EnableCreatureAttacks
 				? LanguageControl.On
@@ -81,13 +85,15 @@ namespace Game
 			if (m_attackOnHitCreativeButton.IsClicked)
 			{
 				ShittyInfectedsSettings.AttackOnHitCreative = !ShittyInfectedsSettings.AttackOnHitCreative;
+
+				// GUARDAR INMEDIATAMENTE AL CAMBIAR
+				ShittyInfectedsSettingsManager.Save();
 			}
 			m_attackOnHitCreativeButton.Text = ShittyInfectedsSettings.AttackOnHitCreative
 				? LanguageControl.On
 				: LanguageControl.Off;
 
-			// CORRECCIÓN: Usar GoBack() para volver exactamente al Menú Principal
-			// en lugar de forzar la pantalla de "Settings"
+			// Botón de volver
 			if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back", true).IsClicked)
 			{
 				ScreensManager.GoBack();
