@@ -13,6 +13,9 @@ namespace Game
 
 		public ShittyInfectedsSettingsScreen()
 		{
+			// Forzar la lectura del XML más reciente al construir la pantalla
+			ShittyInfectedsSettingsManager.Load();
+
 			XElement node = ContentManager.Get<XElement>("Screens/ShittyInfectedsSettingsScreen");
 			LoadContents(this, node);
 
