@@ -9,6 +9,8 @@ namespace Game
 	{
 		private SubsystemTime m_subsystemTime;
 		private SubsystemProjectiles m_subsystemProjectiles;
+		private SubsystemTerrain m_subsystemTerrain;
+		private SubsystemBodies m_subsystemBodies;
 		private ComponentMiner m_componentMiner;
 		private ComponentCreature m_componentCreature;
 		private ComponentBody m_componentBody;
@@ -17,6 +19,7 @@ namespace Game
 		public bool CanUseInventory;
 
 		public Vector2 DistanceRange = new Vector2(5f, 100f);
+		public Vector2 DistanceRangeOfThrowable = new Vector2(5f, 15f);
 
 		public float MusketCooldown = 0.01f;
 		public float MusketAimTime = 1.5f;
@@ -26,6 +29,9 @@ namespace Game
 
 		public float BowCooldown = 0.01f;
 		public float BowAimTime = 1.5f;
+
+		public float ThrowableCooldown = 0.01f;
+		public float ThrowableAimTime = 1.5f;
 
 		public float CooldownTimer;
 		public float AimTimeTimer;
@@ -39,6 +45,8 @@ namespace Game
 			base.Load(valuesDictionary, idToEntityMap);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
+			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(false);
+			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(false);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentBody = Entity.FindComponent<ComponentBody>(true);
@@ -93,17 +101,190 @@ namespace Game
 			ComponentCreature target = m_componentChaseBehavior.Target;
 			float distance = Vector3.Distance(m_componentBody.Position, target.ComponentBody.Position);
 
-			if (distance < DistanceRange.X)
+			bool hasThrowable = FindThrowableSlot(inventory) >= 0;
+			bool hasRanged = FindRangedWeaponSlot(inventory) >= 0;
+			bool hasMelee = FindMeleeWeaponSlot(inventory) >= 0;
+
+			if (hasThrowable)
 			{
-				HandleCloseRange(inventory);
-			}
-			else if (distance <= DistanceRange.Y)
-			{
-				HandleRangedAttack(inventory, target);
+				if (distance < DistanceRangeOfThrowable.X)
+				{
+					if (hasMelee)
+					{
+						HandleCloseRange(inventory);
+					}
+					else
+					{
+						HandleThrowableAttack(inventory, target, distance);
+					}
+				}
+				else if (distance <= DistanceRangeOfThrowable.Y)
+				{
+					HandleThrowableAttack(inventory, target, distance);
+				}
+				else
+				{
+					if (hasRanged)
+					{
+						HandleRangedAttack(inventory, target);
+					}
+					else
+					{
+						CancelAiming();
+					}
+				}
 			}
 			else
 			{
+				if (distance < DistanceRange.X)
+				{
+					HandleCloseRange(inventory);
+				}
+				else if (distance <= DistanceRange.Y)
+				{
+					HandleRangedAttack(inventory, target);
+				}
+				else
+				{
+					CancelAiming();
+				}
+			}
+		}
+
+		private void HandleThrowableAttack(IInventory inventory, ComponentCreature target, float distance)
+		{
+			Vector3 dirToTarget = Vector3.Normalize(target.ComponentBody.Position - m_componentBody.Position);
+			float dot = Vector3.Dot(m_componentBody.Matrix.Forward, dirToTarget);
+
+			if (dot < 0.3f)
+			{
 				CancelAiming();
+				return;
+			}
+
+			if (!HasLineOfSight(target))
+			{
+				CancelAiming();
+				return;
+			}
+
+			ComponentPathfinding pathfinding = Entity.FindComponent<ComponentPathfinding>(false);
+
+			if (pathfinding != null && pathfinding.IsStuck)
+			{
+				CancelAiming();
+				if (pathfinding.Destination == null)
+				{
+					Vector3 randomDir = new Vector3(m_random.Float(-1f, 1f), 0f, m_random.Float(-1f, 1f));
+					if (randomDir.LengthSquared() > 0.01f)
+					{
+						randomDir = Vector3.Normalize(randomDir);
+						pathfinding.SetDestination(m_componentBody.Position + randomDir * 3f, 1f, 1f, 0, true, false, false, null);
+					}
+				}
+				return;
+			}
+
+			if (pathfinding != null && pathfinding.Destination != null)
+			{
+				pathfinding.Stop();
+			}
+
+			int activeSlot = inventory.ActiveSlotIndex;
+			int slotValue = inventory.GetSlotValue(activeSlot);
+			int contents = Terrain.ExtractContents(slotValue);
+
+			if (!IsThrowableBlock(contents))
+			{
+				int throwableSlot = FindThrowableSlot(inventory);
+				if (throwableSlot >= 0 && throwableSlot != activeSlot)
+				{
+					SwapSlots(inventory, activeSlot, throwableSlot);
+					CancelAiming();
+					return;
+				}
+				CancelAiming();
+				return;
+			}
+
+			AimAndFireThrowable(target);
+		}
+
+		private bool HasLineOfSight(ComponentCreature target)
+		{
+			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 targetCenter = target.ComponentBody.BoundingBox.Center();
+			float distanceToTarget = Vector3.Distance(eyePos, targetCenter);
+
+			if (m_subsystemTerrain != null)
+			{
+				TerrainRaycastResult? terrainHit = m_subsystemTerrain.Raycast(eyePos, targetCenter, true, true, null);
+				if (terrainHit.HasValue && terrainHit.Value.Distance < distanceToTarget - 0.5f)
+				{
+					return false;
+				}
+			}
+
+			if (m_subsystemBodies != null)
+			{
+				BodyRaycastResult? bodyHit = m_subsystemBodies.Raycast(eyePos, targetCenter, 0f, (ComponentBody body, float dist) =>
+					body.Entity != m_componentCreature.Entity &&
+					body.Entity != target.Entity);
+				if (bodyHit.HasValue && bodyHit.Value.Distance < distanceToTarget - 0.5f)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		private bool IsThrowableBlock(int blockIndex)
+		{
+			if (IsRangedWeapon(blockIndex)) return false;
+			if (blockIndex <= 0 || blockIndex >= BlocksManager.Blocks.Length) return false;
+			Block block = BlocksManager.Blocks[blockIndex];
+			return block.IsAimable && block.GetProjectileSpeed(0) > 0f;
+		}
+
+		private int FindThrowableSlot(IInventory inventory)
+		{
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				if (inventory.GetSlotCount(i) <= 0) continue;
+				int value = inventory.GetSlotValue(i);
+				int contents = Terrain.ExtractContents(value);
+				if (IsThrowableBlock(contents)) return i;
+			}
+			return -1;
+		}
+
+		private void AimAndFireThrowable(ComponentCreature target)
+		{
+			CooldownTimer -= m_subsystemTime.GameTimeDelta;
+
+			if (CooldownTimer > 0f)
+			{
+				CancelAiming();
+				return;
+			}
+
+			Vector3 eyePosition = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 targetCenter = target.ComponentBody.BoundingBox.Center();
+			Vector3 direction = targetCenter - eyePosition;
+
+			Ray3 aim = new Ray3(eyePosition, direction);
+
+			if (AimTimeTimer > 0f)
+			{
+				m_componentMiner.Aim(aim, AimState.InProgress);
+				AimTimeTimer -= m_subsystemTime.GameTimeDelta;
+			}
+			else
+			{
+				m_componentMiner.Aim(aim, AimState.Completed);
+				CooldownTimer = ThrowableCooldown;
+				AimTimeTimer = ThrowableAimTime;
 			}
 		}
 
@@ -113,7 +294,7 @@ namespace Game
 			int slotValue = inventory.GetSlotValue(activeSlot);
 			int contents = Terrain.ExtractContents(slotValue);
 
-			if (IsRangedWeapon(contents))
+			if (IsRangedWeapon(contents) || IsThrowableBlock(contents))
 			{
 				int meleeSlot = FindMeleeWeaponSlot(inventory);
 				if (meleeSlot >= 0)
@@ -198,7 +379,7 @@ namespace Game
 				int value = inventory.GetSlotValue(i);
 				int contents = Terrain.ExtractContents(value);
 
-				if (IsRangedWeapon(contents))
+				if (IsRangedWeapon(contents) || IsThrowableBlock(contents))
 					continue;
 
 				Block block = BlocksManager.Blocks[contents];
