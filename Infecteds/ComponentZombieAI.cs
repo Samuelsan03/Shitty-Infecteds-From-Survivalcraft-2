@@ -116,7 +116,7 @@ namespace Game
 					}
 					else
 					{
-						HandleThrowableAttack(inventory, target, distance);
+						CancelAiming();
 					}
 				}
 				else if (distance <= DistanceRangeOfThrowable.Y)
@@ -295,7 +295,7 @@ namespace Game
 			int slotValue = inventory.GetSlotValue(activeSlot);
 			int contents = Terrain.ExtractContents(slotValue);
 
-			if (IsRangedWeapon(contents) || IsThrowableBlock(contents))
+			if (IsRangedWeapon(contents))
 			{
 				int meleeSlot = FindMeleeWeaponSlot(inventory);
 				if (meleeSlot >= 0)
@@ -304,17 +304,27 @@ namespace Game
 					CancelAiming();
 					return;
 				}
-			}
-
-			if (IsRangedWeapon(contents))
-			{
+				// Si no tiene melee, sigue con el arma a distancia
 				EnsureRangedWeaponLoaded(inventory, distance);
 				AimAndFire(m_componentChaseBehavior.Target);
+				return;
 			}
-			else
+
+			if (IsThrowableBlock(contents))
 			{
+				int meleeSlot = FindMeleeWeaponSlot(inventory);
+				if (meleeSlot >= 0)
+				{
+					SwapSlots(inventory, activeSlot, meleeSlot);
+					CancelAiming();
+					return;
+				}
+				// Si tiene lanzable pero no melee, cancelar (no es útil a corta distancia)
 				CancelAiming();
+				return;
 			}
+
+			CancelAiming();
 		}
 
 		private void HandleRangedAttack(IInventory inventory, ComponentCreature target, float distance)
