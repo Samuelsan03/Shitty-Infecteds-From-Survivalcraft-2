@@ -1,23 +1,34 @@
 <Infecteds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://gitee.com/THPRC/survivalcraft-api/raw/SCAPI1.8/Survivalcraft/Content/Assets/Database.xsd">
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
-    <ComponentTemplate Name="PickableGatherer" Description="Behavior that makes a creature pick up certain items based on categories and probabilities" Guid="78692df4-7e31-4ed2-9ba7-7cbe22c31850" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
-  <Parameter Name="Class" Guid="1f72aa55-1e79-4797-a866-08656be78184" Value="Game.ComponentPickPickableBehavior" Type="string" />
-  <ParameterSet Name="PickFactors" Description="可拾取的类别" Guid="ddfc5e01-0ef4-4ff1-9991-7fcb902a1f0b">
-				<Parameter Name="Terrain" Description="地形方块" Guid="0ddf1c5b-5efb-4720-9e76-dbe3de315d6e" Value="0" Type="float" />
-				<Parameter Name="Plants" Description="植物" Guid="b1bb34c4-ad3d-4fe0-b41b-4985a429d5d0" Value="0" Type="float" />
-				<Parameter Name="Construction" Description="建筑结构件" Guid="0bb786ec-8638-47ee-ac28-b37ebbf96229" Value="0" Type="float" />
-				<Parameter Name="Items" Description="物品" Guid="c9c0fc62-60fc-4307-ba92-e54a9d0b4e80" Value="0" Type="float" />
-				<Parameter Name="Tools" Description="工具, 0 to infinity" Guid="2a68bcb5-c8ab-4d35-b9c9-d7dedab8e5c2" Value="0" Type="float" />
-				<Parameter Name="Clothes" Description="衣物, 0 to infinity" Guid="0c487546-710e-436a-9f3b-0c4bf567da46" Value="0" Type="float" />
-				<Parameter Name="Electrics" Description="电路元件, 0 to infinity" Guid="f87f7dc6-a3fc-4413-852c-049a656ec0e3" Value="0" Type="float" />
-				<Parameter Name="Food" Description="食物, 0 to infinity" Guid="f7fdf081-ec46-4c69-b46e-e08f59a41d16" Value="0" Type="float" />
-				<Parameter Name="Spawner Eggs" Description="原版蛋, 0 to infinity" Guid="82d757be-0e1d-4963-8ab4-2b6c5206ab64" Value="0" Type="float" />
-				<Parameter Name="Painted" Description="染色方块" Guid="5ca7beff-8939-4bea-a482-534f74ae5518" Value="0" Type="float" />
-				<Parameter Name="Dyed" Description="染色衣物, 0 to infinity" Guid="707f9f44-3808-48fa-9b27-e2367e6d3a4d" Value="0" Type="float" />
-				<Parameter Name="Fireworks" Description="烟花, 0 to infinity" Guid="88528776-47c6-4669-9e34-ff32c67998d5" Value="0" Type="float" />
-				<Parameter Name="Weapons" Guid="37134d8a-f209-43a5-bfc5-bfdb606fc130" Value="0" Type="float" />				
-			</ParameterSet>
+    <ComponentTemplate Name="AutoInteract" Description="Maneja la interaccion automatica con bloques cercanos como puertas y cofres" Guid="51b2e776-f7ff-4847-a1cf-74aeb77eef11" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+  <Parameter Name="AutoInteractRate" Description="Probabilidad de interactuar automaticamente con objetos cercanos" Guid="dbee6ff0-0ae7-4afe-b359-fa7f52628f34" Value="0" Type="float" />
+  <Parameter Name="Class" Guid="e0d0942f-146b-4c42-a9f5-c8677fce5fd3" Value="Game.ComponentAutoInteract" Type="string" />
+</ComponentTemplate>
+
+    <ComponentTemplate Name="DefensiveCreatureAI" Description="Inteligencia artificial defensiva para criaturas" Guid="4f686fb8-0650-4dd9-8281-1247d07a28a7" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="e1bf88cf-66fe-4788-8354-cc09f750a97a" Value="Game.ComponentDefensiveCreatureAI" Type="string" />
+  <Parameter Name="CanUseInventory" Description="Permite a la criatura usar armas a distancia del inventario" Guid="20f70221-3d9e-4411-8784-17ce96fc2663" Value="false" Type="bool" />
+</ComponentTemplate>
+
+<ComponentTemplate Name="GatherPickableBehavior" Description="Permite a la criatura recolectar objetos del suelo y almacenarlos en su inventario segun las categorias de bloques configuradas" Guid="0177b6c8-11b2-4f86-951f-205d38e8d9c6" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <ParameterSet Name="CategoryFactors" Guid="755b28cb-699d-4f40-8336-e93891089aa2">
+    <Parameter Name="Terrain" Description="Factor de probabilidad para recolectar bloques de categoria Terreno" Guid="f10c5e45-68fb-46cb-9191-29e9c82296fc" Value="0" Type="float" />
+    <Parameter Name="Minerals" Description="Factor de probabilidad para recolectar bloques de categoria Minerales" Guid="706c653b-731b-40e2-a148-a2cb6c8cc746" Value="0" Type="float" />
+    <Parameter Name="Plants" Description="Factor de probabilidad para recolectar bloques de categoria Plantas" Guid="022d3952-1ecc-43bc-bad4-805e48f396e9" Value="0" Type="float" />
+    <Parameter Name="Construction" Description="Factor de probabilidad para recolectar bloques de categoria Construccion" Guid="811dde31-f5df-4290-90b9-2943d5da7349" Value="0" Type="float" />
+    <Parameter Name="Items" Description="Factor de probabilidad para recolectar bloques de categoria Items" Guid="2fdec5a5-dfee-42d1-83a1-bd6d722a5763" Value="0" Type="float" />
+    <Parameter Name="Tools" Description="Factor de probabilidad para recolectar bloques de categoria Herramientas" Guid="06ce3ae8-8afe-48f3-931e-ae2bc7cba720" Value="0" Type="float" />
+    <Parameter Name="Weapons" Description="Factor de probabilidad para recolectar bloques de categoria Armas" Guid="f6a69995-9070-4da4-9357-159dc9add642" Value="0" Type="float" />
+    <Parameter Name="Clothes" Description="Factor de probabilidad para recolectar bloques de categoria Ropa" Guid="87a0086b-8d59-4149-b28e-ad93505796a4" Value="0" Type="float" />
+    <Parameter Name="Electrics" Description="Factor de probabilidad para recolectar bloques de categoria Electricos" Guid="3ae1568a-ed54-4886-9548-4c4d48f99bbc" Value="0" Type="float" />
+    <Parameter Name="Food" Description="Factor de probabilidad para recolectar bloques de categoria Comida" Guid="dbc6fb8b-089a-40b8-ac05-b8848d37fd98" Value="0" Type="float" />
+    <Parameter Name="Spawner Eggs" Description="Factor de probabilidad para recolectar bloques de categoria Huevos de spawn" Guid="9d34efe4-4105-49bf-8abe-de894c2e0d4b" Value="0" Type="float" />
+    <Parameter Name="Painted" Description="Factor de probabilidad para recolectar bloques de categoria Pintados" Guid="10205502-e878-40fe-9b92-ed2c1dd1ef07" Value="0" Type="float" />
+    <Parameter Name="Dyed" Description="Factor de probabilidad para recolectar bloques de categoria Teñidos" Guid="5b95c67a-5f82-441f-a5f4-6572b4a36dfe" Value="0" Type="float" />
+    <Parameter Name="Fireworks" Description="Factor de probabilidad para recolectar bloques de categoria Fuegos artificiales" Guid="eabf832f-05fd-4bab-ac8d-04ee597805e5" Value="0" Type="float" />
+  </ParameterSet>
+  <Parameter Name="Class" Guid="85e6c158-a955-46a8-abde-b3b9966be52e" Value="Game.ComponentGatherPickableBehavior" Type="string" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="NewChaseBehavior" Description="Comportamiento que hace que una criatura persiga a intrusos. Versión compatible con NewHerdBehavior para proteger al jugador." Guid="ac087cf3-2de5-4e76-9167-95e9754b69fd" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
@@ -31,6 +42,10 @@
   <Parameter Name="AutoChaseMask" Description="Categorías de criaturas a perseguir" Guid="c74e40cf-1c82-4997-a230-2b8cea61eb91" Value="LandOther, Bird" Type="Game.CreatureCategory" />
   <Parameter Name="ChaseNonPlayerProbability" Description="Probabilidad de que la criatura persiga a un objetivo no jugador cuando está en rango, de 0 a 1" Guid="54db5623-3f54-4274-9b89-4d72d91acc9b" Value="0" Type="float" />
   <Parameter Name="RangedAttackRange" Description="Rango mínimo y máximo para usar ataque a distancia (min,max)" Guid="e0f4d360-2932-4289-937a-2c6ffbdf1b38" Value="8,25" Type="Vector2" />
+  <Parameter Name="InvokeLightningOnHit" Description="Si es verdadero, al golpear cuerpo a cuerpo invoca un rayo sobre la víctima" Guid="f4a0ddb7-336d-4468-998c-eab878df6130" Value="false" Type="bool" />
+  <Parameter Name="ExplodeOnHit" Description="Si es verdadero, al golpear cuerpo a cuerpo crea una explosión normal en la víctima" Guid="cbbaa8e2-35e8-4e44-916e-4818b983f1f2" Value="false" Type="bool" />
+  <Parameter Name="DestroyBlocksWhenStuck" Description="Si es verdadero, al estar atascado rompe 2 bloques en la dirección de la mirada" Guid="f05f7c35-29b8-42fa-9ee4-4c70600ab7df" Value="false" Type="bool" />
+  <Parameter Name="PushVictimOnHit" Description="Si es verdadero, al golpear a su presa la empuja haciéndola salir volando" Guid="3f86b7ff-4e9d-4602-a6af-61b4b1db56cb" Value="false" Type="bool" />
 </ComponentTemplate>
 
 <ComponentTemplate Name="NewHerdBehavior" Description="Comportamiento que hace que una criatura permanezca cerca de criaturas similares o siga al jugador si HerdName es 'player'. Las criaturas con HerdName='player' protegerán al jugador." Guid="e8f5a293-55ce-4a36-acf6-f215e5f9c93f" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
@@ -58,28 +73,19 @@
   <Parameter Name="ChaseTimeDay" Description="Duración en segundos que el zombi perseguirá a su objetivo durante el día" Guid="ceb8d649-6e5c-4bdd-90bb-08c593af6da9" Value="15" Type="float"/>
   <Parameter Name="ChaseTimeNight" Description="Duración en segundos que el zombi perseguirá a su objetivo durante la noche" Guid="33b8c95e-e38a-4192-a2bf-c38ee6fb766e" Value="20" Type="float"/>
   <Parameter Name="ChaseNonPlayerProbability" Description="Probabilidad de 0 a 1 de que el zombi persiga a una criatura no jugador cuando está dentro del rango de persecución" Guid="526baa21-2b07-4e77-9265-2ee22c185b14" Value="1" Type="float"/>
+  <Parameter Name="AutoChaseMask" Description="Categorías de criaturas no jugador que este zombi puede perseguir automáticamente (se combina con la probabilidad de persecución)" Guid="a1b2c3d4-e5f6-7890-abcd-ef1234567890" Value="LandPredator" Type="Game.CreatureCategory"/>
   <Parameter Name="ChaseWhenAttackedProbability" Description="Probabilidad de 0 a 1 de que el zombi persiga al agresor cuando es atacado. Los zombis siempre persiguen a quien los ataca" Guid="a02cdac7-1a4c-4470-a7f8-ae593fab7250" Value="1" Type="float"/>
   <Parameter Name="ChaseOnTouchProbability" Description="Probabilidad de 0 a 1 de que el zombi persiga a una criatura que lo toca físicamente" Guid="2c1554a1-c319-48d2-840c-61c921af9176" Value="0.5" Type="float"/>
-  <Parameter Name="ImportanceLevelNonPersistent" Description="Nivel de importancia asignado cuando el zombi persigue temporalmente (no persistente). Afecta la prioridad sobre otros comportamientos" Guid="fe42ecf4-061c-47b0-84da-2eee3dc46e80" Value="200" Type="float"/>
-  <Parameter Name="ImportanceLevelPersistent" Description="Nivel de importancia asignado cuando el zombi persigue persistentemente. Afecta la prioridad sobre otros comportamientos" Guid="4b12c1ef-05cd-4489-9c04-e86202d8f661" Value="200" Type="float"/>
-  <Parameter Name="MaxAttackRange" Description="Distancia máxima en metros a la que el zombi puede golpear a su objetivo durante el ataque" Guid="be91b5a5-8a5c-4f58-a96f-a0919994b01c" Value="1.75" Type="float"/>
   <Parameter Name="AttacksPlayer" Description="Si es verdadero, el zombi atacará a los jugadores. Los zombis atacan a los jugadores por defecto" Guid="24165013-d2bf-4087-afbe-7208dab36b0e" Value="true" Type="bool"/>
   <Parameter Name="AttacksNonPlayerCreature" Description="Si es verdadero, el zombi atacará a otras criaturas no jugadores. Los zombis atacan a todas las criaturas excepto a los de su manada" Guid="508622b2-7a21-4951-91a7-6081177fa522" Value="true" Type="bool"/>
-  <Parameter Name="MinHealthToAttackActively" Description="Porcentaje mínimo de salud (0 a 1) requerido para que el zombi persiga activamente. Los zombis persiguen incluso con poca vida" Guid="ee64fc8b-e898-41aa-aae3-4c01b675368c" Value="0" Type="float"/>
-  <Parameter Name="TargetInRangeTimeToChase" Description="Tiempo en segundos que el objetivo debe permanecer dentro del rango antes de que el zombi comience a perseguirlo" Guid="ff626491-49cf-46ab-998d-a811bb80c474" Value="2" Type="float"/>
-  <Parameter Name="Suppressed" Description="Si es verdadero, desactiva temporalmente el comportamiento de persecución del zombi" Guid="92ea0975-ce0e-4ae5-b4e6-2fc32e1b031d" Value="false" Type="bool"/>
+  <Parameter Name="MoreAggressiveOnGreenNight" Description="Si es verdadero, el zombi se vuelve extremadamente agresivo y persigue al jugador hasta la muerte durante la Noche Verde" Guid="50bfb787-bf96-4b66-9ae0-d44ceddd6ac0" Value="false" Type="bool"/>
 </ComponentTemplate>
     </Folder>
 
-    <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
-    <MemberSubsystemTemplate Name="CreaturesNormalSpawn" Guid="13f67614-75e3-4e8e-84b3-3a386e22a622" InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
-    <Parameter Name="Class" Guid="71726b82-902f-431b-82f6-41dea71c69c5" Value="Game.SubsystemCreaturesNormalSpawn" Type="string" />
+     <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+    <MemberSubsystemTemplate Name="GreenNightSky" Description="Maneja el evento periódico de la noche verde y su activación" Guid="80bd2261-f596-4cdc-91b8-56c50bcab8bd" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Dependencies" Guid="60010386-31a3-45f2-ba9d-cff2d9c6b65f" Value="TimeOfDay, Time" Type="string" />
+  <Parameter Name="Class" Guid="f4efa050-f526-47cd-9431-36e2a634debf" Value="Game.SubsystemGreenNightSky" Type="string" />
   </MemberSubsystemTemplate>
-<MemberSubsystemTemplate Name="RepeatingBoltBlockBehavior" Guid="3e80ad64-4a44-4c87-9839-72c3c380f0d8" InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
-    <Parameter Name="Class" Guid="99bb8830-0ce4-4f50-a81b-95c56dc91e34" Value="Game.SubsystemRepeatingBoltBlockBehavior" Type="string" />
-  </MemberSubsystemTemplate>
-  <MemberSubsystemTemplate Name="RepeatingCrossbowBlockBehavior" Guid="2bf9a8df-99f7-480b-b958-00bdc1aaaa4f" InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
-    <Parameter Name="Class" Guid="06957a64-bb95-4bae-8d5f-fa038b253a76" Value="Game.SubsystemRepeatingCrossbowBlockBehavior" Type="string" />
-  </MemberSubsystemTemplate>
-</ProjectTemplate>
+  </ProjectTemplate>
 </Infecteds>
