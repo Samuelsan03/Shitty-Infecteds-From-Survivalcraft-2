@@ -18,6 +18,10 @@ namespace Game
 		public bool AttacksPlayer { get; set; }
 		public bool AttacksNonPlayerCreature { get; set; }
 		public bool MoreAggressiveOnGreenNight { get; set; }
+		public CreatureCategory AutoChaseMask { get; set; }
+
+		// AGREGADO: Tiempo de reacción (Idle) antes de perseguir
+		public float TargetInRangeTimeToChase { get; set; } = 3f;
 
 		// CAMPOS PRIVADOS
 		private SubsystemGameInfo m_subsystemGameInfo;
@@ -38,6 +42,7 @@ namespace Game
 		private ComponentCreature m_target;
 		private float m_importanceLevel;
 		private float m_targetUnsuitableTime;
+		private float m_targetInRangeTime; // CORREGIDO: Falta agregar el contador de idle
 		private double m_nextUpdateTime;
 		private float m_dt;
 		private float m_range;
@@ -57,6 +62,8 @@ namespace Game
 
 		public void Attack(ComponentCreature target, float maxRange, float maxChaseTime, bool isPersistent)
 		{
+			if (target == null) return;
+
 			ComponentZombieHerdBehavior targetHerd = target.Entity.FindComponent<ComponentZombieHerdBehavior>();
 			if (targetHerd != null && !string.IsNullOrEmpty(targetHerd.HerdName) && targetHerd.HerdName == m_myHerdName)
 				return;
@@ -67,6 +74,9 @@ namespace Game
 			m_chaseTime = maxChaseTime;
 			m_isPersistent = isPersistent;
 			m_importanceLevel = m_isPersistent ? 100f : 50f;
+			m_targetUnsuitableTime = 0f;
+			m_targetInRangeTime = 0f; // CORREGIDO: Resetear al cambiar de objetivo
+			IsActive = true;
 		}
 
 		public void StopAttack()
@@ -79,27 +89,25 @@ namespace Game
 			m_chaseTime = 0f;
 			m_isPersistent = false;
 			m_importanceLevel = 0f;
+			m_targetUnsuitableTime = 0f;
+			m_targetInRangeTime = 0f;
 		}
 
 		public void Update(float dt)
 		{
 			m_autoChaseSuppressionTime -= dt;
 
-			// LÓGICA PRIORITARIA DE NOCHE VERDE
 			bool isGreenNightActiveNow = MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive;
 
-			// Si la noche verde acaba de iniciar, forzar búsqueda inmediata sin esperar tiempos
 			if (isGreenNightActiveNow && !m_wasGreenNightActive)
 			{
-				m_lastGreenNightForcedSearch = 0.0; // Resetea el cooldown para permitir búsqueda instantánea
+				m_lastGreenNightForcedSearch = 0.0;
 			}
 			m_wasGreenNightActive = isGreenNightActiveNow;
 
 			if (isGreenNightActiveNow)
 			{
 				bool isAlreadyChasingPlayer = m_target != null && m_subsystemPlayers.IsPlayer(m_target.Entity) && m_target.ComponentHealth.Health > 0f;
-
-				// Si no está persiguiendo a un jugador, forzar la búsqueda
 				if (!isAlreadyChasingPlayer)
 				{
 					ForceChasePlayerOnGreenNight();
@@ -110,7 +118,6 @@ namespace Game
 			{
 				m_chaseTime -= dt;
 
-				// Mantiene la persecución infinita mientras sea de noche y el objetivo sea el jugador
 				if (m_chaseTime <= 0f && isGreenNightActiveNow && m_subsystemPlayers.IsPlayer(m_target.Entity))
 				{
 					m_chaseTime = 1f;
@@ -145,14 +152,12 @@ namespace Game
 
 		private void ForceChasePlayerOnGreenNight()
 		{
-			// Cooldown de 1 segundo para no saturar el rendimiento buscando en cada frame
 			if (m_subsystemTime.GameTime - m_lastGreenNightForcedSearch < 1.0) return;
 			m_lastGreenNightForcedSearch = m_subsystemTime.GameTime;
 
-			// Durante la Noche Verde atacan sin importar el modo de juego
 			if (!AttacksPlayer) return;
 
-			float range = ChaseRangeNight + 50f; // Rango ampliado durante la noche verde
+			float range = ChaseRangeNight + 50f;
 			Vector3 position = m_componentCreature.ComponentBody.Position;
 
 			m_componentBodies.Clear();
@@ -181,18 +186,16 @@ namespace Game
 
 			if (bestPlayer != null)
 			{
-				// FORZAR ESTADO DIRECTAMENTE sin llamar a StopAttack que causaba el bug
 				m_target = bestPlayer;
 				m_range = range;
 				m_chaseTime = 100f;
 				m_isPersistent = true;
-				m_importanceLevel = 100f;
+				m_importanceLevel = 1000f; // MEJORA: También ponerle prioridad absoluta en Noche Verde
 				m_autoChaseSuppressionTime = 0f;
 				m_targetUnsuitableTime = 0f;
-				m_nextUpdateTime = 0.0; // Forzar actualización inmediata de la máquina de estados
+				m_targetInRangeTime = 0f;
+				m_nextUpdateTime = 0.0;
 				IsActive = true;
-
-				// Forzar transición inmediata al estado Chasing
 				m_stateMachine.TransitionTo("Chasing");
 			}
 		}
@@ -222,6 +225,8 @@ namespace Game
 			AttacksPlayer = valuesDictionary.GetValue<bool>("AttacksPlayer");
 			AttacksNonPlayerCreature = valuesDictionary.GetValue<bool>("AttacksNonPlayerCreature");
 			MoreAggressiveOnGreenNight = valuesDictionary.GetValue<bool>("MoreAggressiveOnGreenNight", false);
+			AutoChaseMask = valuesDictionary.GetValue<CreatureCategory>("AutoChaseMask", (CreatureCategory)0);
+			TargetInRangeTimeToChase = valuesDictionary.GetValue<float>("TargetInRangeTimeToChase", 3f); // Cargar tiempo de idle
 
 			ComponentZombieHerdBehavior herd = Entity.FindComponent<ComponentZombieHerdBehavior>();
 			m_myHerdName = (herd != null) ? herd.HerdName : null;
@@ -240,7 +245,11 @@ namespace Game
 						if (otherHerd != null && otherHerd.HerdName == m_myHerdName)
 							return;
 
-						if ((AttacksPlayer && isPlayer) || (AttacksNonPlayerCreature && !isPlayer))
+						bool isInMask = (creature.Category & AutoChaseMask) > (CreatureCategory)0;
+						bool canChasePlayer = AttacksPlayer && isPlayer && m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
+						bool canChaseCreature = AttacksNonPlayerCreature && !isPlayer && isInMask;
+
+						if (canChasePlayer || canChaseCreature)
 							Attack(creature, 7f, 7f, false);
 					}
 				}
@@ -250,16 +259,23 @@ namespace Game
 			health.Injured += delegate (Injury injury)
 			{
 				ComponentCreature attacker = injury.Attacker;
-				if (attacker != null && m_random.Float(0f, 1f) < ChaseWhenAttackedProbability)
+				if (m_random.Float(0f, 1f) < ChaseWhenAttackedProbability)
 				{
-					ComponentZombieHerdBehavior attackerHerd = attacker.Entity.FindComponent<ComponentZombieHerdBehavior>();
+					if (attacker == null) return;
 
+					ComponentZombieHerdBehavior attackerHerd = attacker.Entity.FindComponent<ComponentZombieHerdBehavior>();
 					if (attackerHerd != null && attackerHerd.HerdName == m_myHerdName)
 						return;
 
 					float range = (ChaseWhenAttackedProbability >= 1f) ? 30f : 7f;
 					float time = (ChaseWhenAttackedProbability >= 1f) ? 60f : 7f;
-					Attack(attacker, range, time, ChaseWhenAttackedProbability >= 1f);
+					bool persistent = ChaseWhenAttackedProbability >= 1f;
+
+					Attack(attacker, range, time, persistent);
+
+					// CORRECCIÓN CLAVE: Sobrescribir la importancia a 1000f para superar la manada (250)
+					m_importanceLevel = 1000f;
+					m_autoChaseSuppressionTime = 0f;
 				}
 			};
 
@@ -275,14 +291,24 @@ namespace Game
 					return;
 				}
 
-				// Durante la Noche Verde, este estado es completamente ignorado gracias a ForceChasePlayerOnGreenNight
-				if (m_autoChaseSuppressionTime <= 0f)
+				// CORREGIDO: Lógica exacta del original con m_targetInRangeTime
+				if (m_autoChaseSuppressionTime <= 0f && (m_target == null || ScoreTarget(m_target) <= 0f))
 				{
 					m_range = ((m_subsystemSky.SkyLightIntensity < 0.2f) ? ChaseRangeNight : ChaseRangeDay);
 					m_range *= m_componentFactors.GetOtherFactorResult("ChaseRange", false, false);
 
 					ComponentCreature target = FindTarget();
 					if (target != null)
+					{
+						m_targetInRangeTime += m_dt; // Acumular tiempo de "reacción/Idle"
+					}
+					else
+					{
+						m_targetInRangeTime = 0f; // Si se pierde de vista, reiniciar contador
+					}
+
+					// Solo iniciar la persecución si completó el tiempo de reacción
+					if (m_targetInRangeTime > TargetInRangeTimeToChase)
 					{
 						bool isDay = m_subsystemSky.SkyLightIntensity >= 0.1f;
 						float maxRange = isDay ? (ChaseRangeDay + 6f) : (ChaseRangeNight + 6f);
@@ -382,7 +408,15 @@ namespace Game
 
 			bool isPlayer = target.Entity.FindComponent<ComponentPlayer>() != null;
 			bool canAttackPlayer = AttacksPlayer && isPlayer && m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
-			bool canAttackCreature = AttacksNonPlayerCreature && !isPlayer;
+
+			bool isInMask = (target.Category & AutoChaseMask) > (CreatureCategory)0;
+			bool canChaseByCategory = isInMask && MathUtils.Remainder(
+				0.005 * m_subsystemTime.GameTime +
+				(double)((float)(GetHashCode() % 1000) / 1000f) +
+				(double)((float)(target.GetHashCode() % 1000) / 1000f),
+				1.0) < (double)ChaseNonPlayerProbability;
+
+			bool canAttackCreature = AttacksNonPlayerCreature && !isPlayer && (target == m_target || canChaseByCategory);
 
 			if ((canAttackPlayer || canAttackCreature) && target.Entity.IsAddedToProject && target.ComponentHealth.Health > 0f)
 			{
