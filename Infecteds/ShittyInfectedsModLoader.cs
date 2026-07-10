@@ -23,10 +23,44 @@ public class ShittyInfectedsModLoader : ModLoader
         ModsManager.RegisterHook("OnWidgetConstruct", this);
         ModsManager.RegisterHook("OnPlayerSpawned", this);
         ModsManager.RegisterHook("ChangeSkyColor", this);
-        
-        // Registramos el hook nuevo para interceptar el clic derecho
         ModsManager.RegisterHook("OnPlayerInputInteract", this);
-    }
+		ModsManager.RegisterHook("OnProjectileRaycastBody", this);
+	}
+
+	public override void OnProjectileRaycastBody(ComponentBody body, Projectile projectile, float distance, out bool ignore)
+	{
+		ignore = false;
+		if (projectile?.OwnerEntity == null || body?.Entity == null) return;
+
+		ComponentCreature owner = projectile.OwnerEntity.FindComponent<ComponentCreature>();
+		ComponentCreature hit = body.Entity.FindComponent<ComponentCreature>();
+		if (owner == null || hit == null || owner.Entity == hit.Entity) return;
+
+		ComponentNewHerdBehavior ownerNewHerd = owner.Entity.FindComponent<ComponentNewHerdBehavior>();
+		ComponentNewHerdBehavior hitNewHerd = hit.Entity.FindComponent<ComponentNewHerdBehavior>();
+		ComponentZombieHerdBehavior ownerZombieHerd = owner.Entity.FindComponent<ComponentZombieHerdBehavior>();
+		ComponentZombieHerdBehavior hitZombieHerd = hit.Entity.FindComponent<ComponentZombieHerdBehavior>();
+
+		bool sameNewHerd = ownerNewHerd != null && hitNewHerd != null && ownerNewHerd.HerdName == hitNewHerd.HerdName && !string.IsNullOrEmpty(ownerNewHerd.HerdName);
+		bool sameZombieHerd = ownerZombieHerd != null && hitZombieHerd != null && ownerZombieHerd.HerdName == hitZombieHerd.HerdName && !string.IsNullOrEmpty(ownerZombieHerd.HerdName);
+		bool isPlayerHerd = (ownerNewHerd != null && ownerNewHerd.HerdName == "player") || owner.Entity.FindComponent<ComponentPlayer>() != null;
+		bool isHitPlayerHerd = hitNewHerd != null && hitNewHerd.HerdName == "player";
+
+		if (sameNewHerd || sameZombieHerd || (isPlayerHerd && isHitPlayerHerd))
+		{
+			bool isTarget = false;
+			ComponentNewChaseBehavior newChase = owner.Entity.FindComponent<ComponentNewChaseBehavior>();
+			if (newChase?.Target != null && newChase.Target.Entity == hit.Entity) isTarget = true;
+
+			if (!isTarget)
+			{
+				ComponentZombieChaseBehavior zombieChase = owner.Entity.FindComponent<ComponentZombieChaseBehavior>();
+				if (zombieChase?.Target != null && zombieChase.Target.Entity == hit.Entity) isTarget = true;
+			}
+
+			if (!isTarget) ignore = true;
+		}
+	}
 
 	public override void OnPlayerInputInteract(ComponentPlayer player, ref bool handled, ref double timeInterval, ref int priorityUse, ref int priorityInteract, ref int priorityPlace)
 	{
