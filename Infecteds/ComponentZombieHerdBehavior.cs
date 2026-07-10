@@ -7,7 +7,6 @@ namespace Game
 {
 	public class ComponentZombieHerdBehavior : ComponentBehavior, IUpdateable
 	{
-		// NUEVOS PARÁMETROS
 		public string HerdName { get; set; }
 		public float HerdingRange { get; set; }
 		public float ImportanceLevelForHerd { get; set; }
@@ -33,15 +32,22 @@ namespace Game
 		{
 			if (!AutoCallNearbyHelp || target == null) return;
 
+			// CONDICIÓN CLAVE: No llamar zombies aliados (HerdName = "Zombie") para que ataquen a otro zombie
+			ComponentZombieHerdBehavior targetHerd = target.Entity.FindComponent<ComponentZombieHerdBehavior>();
+			if (targetHerd != null && targetHerd.HerdName == "Zombie")
+			{
+				return;
+			}
+
 			Vector3 position = target.ComponentBody.Position;
 			foreach (ComponentCreature creature in m_subsystemCreatureSpawn.Creatures)
 			{
 				if (Vector3.DistanceSquared(position, creature.ComponentBody.Position) < HelpCallRange * HelpCallRange)
 				{
 					ComponentZombieHerdBehavior herd = creature.Entity.FindComponent<ComponentZombieHerdBehavior>();
-					if (herd != null && herd.HerdName == this.HerdName)
+					if (herd != null && herd.HerdName == "Zombie")
 					{
-						ComponentChaseBehavior chase = creature.Entity.FindComponent<ComponentChaseBehavior>();
+						ComponentZombieChaseBehavior chase = creature.Entity.FindComponent<ComponentZombieChaseBehavior>();
 						if (chase != null && chase.Target == null)
 						{
 							chase.Attack(target, HelpCallRange, HelpChaseTime, isPersistent);
@@ -64,7 +70,7 @@ namespace Game
 				if (creature.ComponentHealth.Health > 0f)
 				{
 					ComponentZombieHerdBehavior herd = creature.Entity.FindComponent<ComponentZombieHerdBehavior>();
-					if (herd != null && herd.HerdName == this.HerdName)
+					if (herd != null && herd.HerdName == HerdName)
 					{
 						Vector3 creaturePos = creature.ComponentBody.Position;
 						if (Vector3.DistanceSquared(position, creaturePos) < HerdingRange * HerdingRange)
@@ -95,7 +101,6 @@ namespace Game
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
 
-			// CARGAR NUEVOS PARÁMETROS DESDE XDB
 			HerdName = valuesDictionary.GetValue<string>("HerdName");
 			HerdingRange = valuesDictionary.GetValue<float>("HerdingRange");
 			ImportanceLevelForHerd = valuesDictionary.GetValue<float>("ImportanceLevelForHerd");
@@ -104,7 +109,6 @@ namespace Game
 			HelpCallRange = valuesDictionary.GetValue<float>("HelpCallRange");
 			HelpChaseTime = valuesDictionary.GetValue<float>("HelpChaseTime");
 
-			// SUSCRIBIRSE AL EVENTO DE DAÑO PARA LLAMAR AYUDA
 			ComponentHealth health = m_componentCreature.ComponentHealth;
 			health.Injured += delegate (Injury injury)
 			{
@@ -113,7 +117,6 @@ namespace Game
 					CallNearbyCreaturesHelp(attacker, HelpCallRange, HelpChaseTime, false);
 			};
 
-			// ESTADO INACTIVO
 			m_stateMachine.AddState("Inactive", null, delegate
 			{
 				if (m_subsystemTime.PeriodicGameTimeEvent(1.0, (double)(1f * ((float)(GetHashCode() % 256) / 256f))))
@@ -133,7 +136,6 @@ namespace Game
 					m_stateMachine.TransitionTo("Herd");
 			}, null);
 
-			// ESTADO STUCK
 			m_stateMachine.AddState("Stuck", delegate
 			{
 				m_stateMachine.TransitionTo("Herd");
@@ -141,7 +143,6 @@ namespace Game
 					m_componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
 			}, null, null);
 
-			// ESTADO HERD
 			m_stateMachine.AddState("Herd", delegate
 			{
 				Vector3? center = FindHerdCenter();
