@@ -1,7 +1,7 @@
 {
   "ShittyInfectedsSettingsScreen": {
-    "0": "Shitty Infecteds Settings",
-    "1": "Allies attack when you hit a creature",
-    "2": "Allies retaliate when you are hit in Creative"
+    "1": "Shitty Infecteds Settings",
+    "2": "When hitting a creature, your herd allies will attack it",
+    "3": "When a creature hits you in creative, your allies will attack it"
   }
 }
