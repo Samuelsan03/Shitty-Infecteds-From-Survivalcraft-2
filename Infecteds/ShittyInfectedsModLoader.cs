@@ -1,30 +1,32 @@
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using Game;
+using System.Linq;
+using System.Xml.Linq;
 using Engine;
+using Game;
 
 public class ShittyInfectedsModLoader : ModLoader
 {
-    private static readonly List<string> ListaMusica = new List<string>
-    {
-        "Music/Menu Music",
-        "Music/Menu Music 2",
-    };
+	private static readonly List<string> ListaMusica = new List<string>
+	{
+		"Music/Menu Music",
+		"Music/Menu Music 2",
+	};
 
-    private Game.Random random = new Game.Random();
+	private Game.Random random = new Game.Random();
 
-    public override void __ModInitialize()
-    {
-        ModsManager.RegisterHook("MenuPlayMusic", this);
-        ModsManager.RegisterHook("OnMainMenuScreenCreated", this);
-        ModsManager.RegisterHook("OnMinerHit", this);
-        ModsManager.RegisterHook("CalculateCreatureInjuryAmount", this);
-        ModsManager.RegisterHook("OnWidgetConstruct", this);
-        ModsManager.RegisterHook("OnPlayerSpawned", this);
-        ModsManager.RegisterHook("ChangeSkyColor", this);
-        ModsManager.RegisterHook("OnPlayerInputInteract", this);
+	public override void __ModInitialize()
+	{
+		ModsManager.RegisterHook("MenuPlayMusic", this);
+		ModsManager.RegisterHook("OnMainMenuScreenCreated", this);
+		ModsManager.RegisterHook("OnMinerHit", this);
+		ModsManager.RegisterHook("CalculateCreatureInjuryAmount", this);
+		ModsManager.RegisterHook("OnWidgetConstruct", this);
+		ModsManager.RegisterHook("OnPlayerSpawned", this);
+		ModsManager.RegisterHook("ChangeSkyColor", this);
+		ModsManager.RegisterHook("OnPlayerInputInteract", this);
 		ModsManager.RegisterHook("OnProjectileRaycastBody", this);
+		ModsManager.RegisterHook("AfterWidgetUpdate", this);
 	}
 
 	public override void OnProjectileRaycastBody(ComponentBody body, Projectile projectile, float distance, out bool ignore)
@@ -64,225 +66,253 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override void OnPlayerInputInteract(ComponentPlayer player, ref bool handled, ref double timeInterval, ref int priorityUse, ref int priorityInteract, ref int priorityPlace)
 	{
-		// Si ya fue manejado por otro mod, no hacemos nada
 		if (handled) return;
 
-		// Obtenemos el bloque que el jugador tiene en la mano
 		int activeBlockValue = player.ComponentMiner.ActiveBlockValue;
 		int activeBlockIndex = Terrain.ExtractContents(activeBlockValue);
 
-		// Verificamos si está sosteniendo el control remoto
 		if (activeBlockIndex == BlocksManager.GetBlockIndex<GreenNightRemoteControlBlock>())
 		{
-			// Obtenemos el subsistema necesario para el diálogo
 			SubsystemGreenNightSky subsystemGreenNight = player.Project.FindSubsystem<SubsystemGreenNightSky>(true);
 
-			// Verificamos que el subsistema exista antes de abrir el diálogo
 			if (subsystemGreenNight != null)
 			{
-				// Instanciamos y mostramos el diálogo
 				GreenNightActivationDialog dialog = new GreenNightActivationDialog(subsystemGreenNight);
-
-				// SOLUCIÓN: Pasar player.GuiWidget en lugar de null
 				DialogsManager.ShowDialog(player.GuiWidget, dialog);
 			}
 
-			// Marcamos como 'handled = true' para que ComponentPlayer NO ejecute 
-			// DealWithPlayerInteract y así se salte completamente la animación del poke.
 			handled = true;
 		}
 	}
 
 	public override bool OnPlayerSpawned(PlayerData.SpawnMode spawnMode, ComponentPlayer player, Vector3 position)
-    {
-        // SpawnsCount ya fue incrementado ANTES de este hook (mira SpawnPlayer en PlayerData)
-        // Entonces en el primer spawn de cualquier mundo, SpawnsCount == 1
-        if ((spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro)
-            && player.PlayerData.SpawnsCount <= 1)
-        {
-            if (player?.GuiWidget != null)
-            {
-                DialogsManager.ShowDialog(player.GuiWidget, new GreenNightConfigDialog(player));
-            }
-        }
-        return false;
-    }
+	{
+		if ((spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro)
+			&& player.PlayerData.SpawnsCount <= 1)
+		{
+			if (player?.GuiWidget != null)
+			{
+				DialogsManager.ShowDialog(player.GuiWidget, new GreenNightConfigDialog(player));
+			}
+		}
+		return false;
+	}
 
-    public override void OnWidgetConstruct(ref Widget widget)
-    {
-        if (widget is PanoramaWidget)
-        {
-            widget = new ShittyInfectedsPanoramaWidget();
-        }
-    }
+	public override void OnWidgetConstruct(ref Widget widget)
+	{
+		if (widget is PanoramaWidget)
+		{
+			widget = new ShittyInfectedsPanoramaWidget();
+		}
+	}
 
-    public override void CalculateCreatureInjuryAmount(Injury injury)
-    {
-        if (injury == null || injury.ComponentHealth == null)
-            return;
+	public override void CalculateCreatureInjuryAmount(Injury injury)
+	{
+		if (injury == null || injury.ComponentHealth == null)
+			return;
 
-        ComponentCreature attacker = injury.Attacker;
-        if (attacker == null)
-            return;
+		ComponentCreature attacker = injury.Attacker;
+		if (attacker == null)
+			return;
 
-        ComponentCreature victim = injury.ComponentHealth.m_componentCreature;
-        if (victim == null || victim == attacker)
-            return;
+		ComponentCreature victim = injury.ComponentHealth.m_componentCreature;
+		if (victim == null || victim == attacker)
+			return;
 
-        ComponentCreature enemy = null;
+		ComponentCreature enemy = null;
 
-        if (attacker is ComponentPlayer)
-        {
-            enemy = victim;
-        }
-        else if (victim is ComponentPlayer)
-        {
-            enemy = attacker;
-        }
-        else
-        {
-            return;
-        }
+		// CASO 1: El jugador ataca a una criatura
+		if (attacker is ComponentPlayer)
+		{
+			// Verificamos la configuración: "When hitting a creature, your herd allies will attack it"
+			if (!ShittyInfectedsSettings.EnableCreatureAttacks) return;
 
-        if (enemy == null)
-            return;
+			enemy = victim;
+		}
+		// CASO 2: Una criatura ataca al jugador
+		else if (victim is ComponentPlayer)
+		{
+			// Verificamos la configuración: "When a creature hits you in creative, your allies will attack it"
+			if (!ShittyInfectedsSettings.AttackOnHitCreative) return;
 
-        SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
-        foreach (ComponentCreature creature in creatureSpawn.Creatures)
-        {
-            if (creature.ComponentHealth.Health <= 0f)
-                continue;
+			enemy = attacker;
+		}
+		else
+		{
+			return;
+		}
 
-            ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
-            if (herd != null && herd.HerdName == "player")
-            {
-                herd.CallNearbyCreaturesHelp(enemy, 20f, 30f, false);
-                break;
-            }
-        }
-    }
+		if (enemy == null)
+			return;
 
-    public override void OnMinerHit(ComponentMiner miner, ComponentBody targetBody, Vector3 hitPoint, Vector3 hitDirection, ref float damage, ref float hitProbability, ref float systemHitProbability, out bool skip)
-    {
-        skip = false;
+		SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
+		foreach (ComponentCreature creature in creatureSpawn.Creatures)
+		{
+			if (creature.ComponentHealth.Health <= 0f)
+				continue;
 
-        ComponentPlayer player = miner.ComponentPlayer;
-        if (player == null)
-            return;
+			ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
+			if (herd != null && herd.HerdName == "player")
+			{
+				herd.CallNearbyCreaturesHelp(enemy, 20f, 30f, false);
+				break;
+			}
+		}
+	}
 
-        if (hitProbability <= 0f)
-            return;
+	public override void OnMinerHit(ComponentMiner miner, ComponentBody targetBody, Vector3 hitPoint, Vector3 hitDirection, ref float damage, ref float hitProbability, ref float systemHitProbability, out bool skip)
+	{
+		skip = false;
 
-        ComponentCreature targetCreature = targetBody.Entity.FindComponent<ComponentCreature>();
-        if (targetCreature == null)
-            return;
+		// Verificamos la configuración: Si está desactivado, no hacemos nada y dejamos la probabilidad normal
+		if (!ShittyInfectedsSettings.EnableCreatureAttacks) return;
 
-        SubsystemCreatureSpawn creatureSpawn = miner.Project.FindSubsystem<SubsystemCreatureSpawn>();
-        bool hasAllies = false;
+		ComponentPlayer player = miner.ComponentPlayer;
+		if (player == null)
+			return;
 
-        foreach (ComponentCreature creature in creatureSpawn.Creatures)
-        {
-            if (creature.ComponentHealth.Health <= 0f)
-                continue;
+		if (hitProbability <= 0f)
+			return;
 
-            ComponentNewHerdBehavior herdBehavior = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
-            if (herdBehavior != null && herdBehavior.HerdName == "player")
-            {
-                hasAllies = true;
-                break;
-            }
-        }
+		ComponentCreature targetCreature = targetBody.Entity.FindComponent<ComponentCreature>();
+		if (targetCreature == null)
+			return;
 
-        if (hasAllies)
-        {
-            hitProbability = 1f;
-            systemHitProbability = 1f;
-        }
-    }
+		SubsystemCreatureSpawn creatureSpawn = miner.Project.FindSubsystem<SubsystemCreatureSpawn>();
+		bool hasAllies = false;
 
-    public override void MenuPlayMusic(out string contentMusicPath)
-    {
-        int index = random.Int(ListaMusica.Count);
-        contentMusicPath = ListaMusica[index];
-    }
+		foreach (ComponentCreature creature in creatureSpawn.Creatures)
+		{
+			if (creature.ComponentHealth.Health <= 0f)
+				continue;
 
-    public override Color ChangeSkyColor(Color color, Vector3 direction, float timeOfDay, int temperature)
-    {
-        if (SubsystemGreenNightSky.Instance != null && SubsystemGreenNightSky.Instance.IsGreenNightActive)
-        {
-            return new Color(16, 81, 0);
-        }
-        return color;
-    }
+			ComponentNewHerdBehavior herdBehavior = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
+			if (herdBehavior != null && herdBehavior.HerdName == "player")
+			{
+				hasAllies = true;
+				break;
+			}
+		}
 
-    public override void OnMainMenuScreenCreated(MainMenuScreen mainMenuScreen, StackPanelWidget leftBottomBar, StackPanelWidget rightBottomBar)
-    {
+		if (hasAllies)
+		{
+			hitProbability = 1f;
+			systemHitProbability = 1f;
+		}
+	}
 
-        RectangleWidget logo = mainMenuScreen.Children.Find<RectangleWidget>("Logo", true);
-        if (logo != null)
-        {
-            logo.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/Logo");
-            logo.Size = new Vector2(320f, 136f);
-        }
+	public override void MenuPlayMusic(out string contentMusicPath)
+	{
+		int index = random.Int(ListaMusica.Count);
+		contentMusicPath = ListaMusica[index];
+	}
 
-        StackPanelWidget topArea = mainMenuScreen.Children.Find<StackPanelWidget>("TopArea", true);
-        if (topArea != null)
-        {
-            LabelWidget titleLabel = new LabelWidget
-            {
-                Text = "Shitty Infecteds v1.0",
-                Color = new Color(0, 255, 94),
-                HorizontalAlignment = WidgetAlignment.Center,
-                FontScale = 0.5f,
-                DropShadow = true,
-                Margin = new Vector2(0f, 0f)
-            };
-            topArea.Children.Add(titleLabel);
-        }
+	public override Color ChangeSkyColor(Color color, Vector3 direction, float timeOfDay, int temperature)
+	{
+		if (SubsystemGreenNightSky.Instance != null && SubsystemGreenNightSky.Instance.IsGreenNightActive)
+		{
+			return new Color(16, 81, 0);
+		}
+		return color;
+	}
 
-        if (rightBottomBar != null)
-        {
-            BevelledButtonWidget configButton = new BevelledButtonWidget
-            {
-                Size = new Vector2(60f, 60f),
-                Name = "ZombiConfigButton"
-            };
+	public override void AfterWidgetUpdate(Widget widget)
+	{
+		if (widget is BevelledButtonWidget button && button.Name == "ZombiConfigButton")
+		{
+			if (button.IsClicked)
+			{
+				ScreensManager.SwitchScreen("ShittyInfectedsSettingsScreen");
+			}
+		}
+	}
 
-            RectangleWidget icon = new RectangleWidget
-            {
-                Size = new Vector2(28f, 28f),
-                HorizontalAlignment = WidgetAlignment.Center,
-                VerticalAlignment = WidgetAlignment.Center,
-                Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/zombi configurador"),
-                FillColor = Color.White,
-                OutlineColor = new Color(0, 0, 0, 0)
-            };
+	public override void OnMainMenuScreenCreated(MainMenuScreen mainMenuScreen, StackPanelWidget leftBottomBar, StackPanelWidget rightBottomBar)
+	{
+		if (ScreensManager.FindScreen<Screen>("ShittyInfectedsSettingsScreen") == null)
+		{
+			ScreensManager.AddScreen("ShittyInfectedsSettingsScreen", new ShittyInfectedsSettingsScreen());
+		}
 
-            configButton.Children.Add(icon);
-            rightBottomBar.Children.Insert(0, configButton);
-        }
+		RectangleWidget logo = mainMenuScreen.Children.Find<RectangleWidget>("Logo", true);
+		if (logo != null)
+		{
+			logo.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/Logo");
+			logo.Size = new Vector2(320f, 136f);
+		}
 
-        StackPanelWidget bottomInfos = mainMenuScreen.Children.Find<StackPanelWidget>("BottomInfos", true);
-        if (bottomInfos != null)
-        {
-            StackPanelWidget tiktokRow = new StackPanelWidget
-            {
-                Direction = LayoutDirection.Horizontal,
-                HorizontalAlignment = WidgetAlignment.Center,
-                Margin = new Vector2(0f, 4f)
-            };
+		StackPanelWidget topArea = mainMenuScreen.Children.Find<StackPanelWidget>("TopArea", true);
+		if (topArea != null)
+		{
+			LabelWidget titleLabel = new LabelWidget
+			{
+				Text = "Shitty Infecteds v1.0",
+				Color = new Color(0, 255, 94),
+				HorizontalAlignment = WidgetAlignment.Center,
+				FontScale = 0.5f,
+				DropShadow = true,
+				Margin = new Vector2(0f, 0f)
+			};
+			topArea.Children.Add(titleLabel);
+		}
 
-            LinkWidget tiktokLink = new LinkWidget
-            {
-                Text = "Tiktok: @athormi",
-                Url = "https://www.tiktok.com/@athormi",
-                Color = Color.White,
-                FontScale = 0.7f,
-                DropShadow = true
-            };
+		if (rightBottomBar != null)
+		{
+			BevelledButtonWidget configButton = new BevelledButtonWidget
+			{
+				Size = new Vector2(60f, 60f),
+				Name = "ZombiConfigButton"
+			};
 
-            tiktokRow.Children.Add(tiktokLink);
-            bottomInfos.Children.Insert(0, tiktokRow);
-        }
-    }
+			RectangleWidget icon = new RectangleWidget
+			{
+				Size = new Vector2(28f, 28f),
+				HorizontalAlignment = WidgetAlignment.Center,
+				VerticalAlignment = WidgetAlignment.Center,
+				Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/zombi configurador"),
+				FillColor = Color.White,
+				OutlineColor = new Color(0, 0, 0, 0)
+			};
+
+			configButton.Children.Add(icon);
+			rightBottomBar.Children.Insert(0, configButton);
+		}
+
+		StackPanelWidget bottomInfos = mainMenuScreen.Children.Find<StackPanelWidget>("BottomInfos", true);
+		if (bottomInfos != null)
+		{
+			StackPanelWidget tiktokRow = new StackPanelWidget
+			{
+				Direction = LayoutDirection.Horizontal,
+				HorizontalAlignment = WidgetAlignment.Center,
+				Margin = new Vector2(0f, 4f)
+			};
+
+			LinkWidget tiktokLink = new LinkWidget
+			{
+				Text = "Tiktok: @athormi",
+				Url = "https://www.tiktok.com/@athormi",
+				Color = Color.White,
+				FontScale = 0.7f,
+				DropShadow = true
+			};
+
+			tiktokRow.Children.Add(tiktokLink);
+			bottomInfos.Children.Insert(0, tiktokRow);
+		}
+	}
+
+	public override void SaveSettings(XElement xElement)
+	{
+		// El juego llama a esto cuando guarda la configuración. 
+		// Llamamos a nuestro manager para actualizar el XML propio.
+		ShittyInfectedsSettingsManager.Save();
+	}
+
+	public override void LoadSettings(XElement xElement)
+	{
+		// El juego llama a esto al cargar los mods. 
+		// Llamamos a nuestro manager para leer nuestro XML propio.
+		ShittyInfectedsSettingsManager.Load();
+	}
 }
