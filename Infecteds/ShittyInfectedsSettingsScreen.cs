@@ -6,46 +6,94 @@ namespace Game
 {
 	public class ShittyInfectedsSettingsScreen : Screen
 	{
-		private ButtonWidget m_herdAttackOnPlayerHitButton;
-		private ButtonWidget m_herdAttackOnPlayerInjuryCreativeButton;
+		private StackPanelWidget m_settingsContainer;
+
+		private ButtonWidget m_enableCreatureAttacksButton;
+		private ButtonWidget m_attackOnHitCreativeButton;
 
 		public ShittyInfectedsSettingsScreen()
 		{
 			XElement node = ContentManager.Get<XElement>("Screens/ShittyInfectedsSettingsScreen");
-			this.LoadContents(this, node);
+			LoadContents(this, node);
 
-			m_herdAttackOnPlayerHitButton = this.Children.Find<ButtonWidget>("HerdAttackOnPlayerHit", true);
-			m_herdAttackOnPlayerInjuryCreativeButton = this.Children.Find<ButtonWidget>("HerdAttackOnPlayerInjuryCreative", true);
+			m_settingsContainer = Children.Find<StackPanelWidget>("SettingsContainer", true);
+
+			// Configuración 1: Solo descripción
+			m_enableCreatureAttacksButton = AddToggleButton(
+				"EnableCreatureAttacks",
+				"When hitting a creature, your herd allies will attack it"
+			);
+
+			// Configuración 2: Solo descripción
+			m_attackOnHitCreativeButton = AddToggleButton(
+				"AttackOnHitCreative",
+				"When a creature hits you in creative, your allies will attack it"
+			);
+		}
+
+		private ButtonWidget AddToggleButton(string name, string descriptionText)
+		{
+			UniformSpacingPanelWidget row = new UniformSpacingPanelWidget
+			{
+				Direction = LayoutDirection.Horizontal,
+				Margin = new Vector2(0, 3)
+			};
+
+			// Ya no creamos un StackPanel para título y descripción, solo la descripción
+			LabelWidget descriptionLabel = new LabelWidget
+			{
+				Text = descriptionText,
+				HorizontalAlignment = WidgetAlignment.Far,
+				VerticalAlignment = WidgetAlignment.Center,
+				Color = new Color(180, 180, 180),
+				Margin = new Vector2(20, 0)
+			};
+
+			BevelledButtonWidget button = new BevelledButtonWidget
+			{
+				Name = name,
+				Style = ContentManager.Get<XElement>("Styles/ButtonStyle_310x60"),
+				VerticalAlignment = WidgetAlignment.Center,
+				Margin = new Vector2(20, 0),
+				Text = LanguageControl.Off
+			};
+
+			row.Children.Add(descriptionLabel);
+			row.Children.Add(button);
+
+			m_settingsContainer.Children.Add(row);
+
+			return button;
 		}
 
 		public override void Update()
 		{
-			// Toggle Herd Attack on Player Hit
-			if (m_herdAttackOnPlayerHitButton.IsClicked)
+			// Toggle Enable Creature Attacks
+			if (m_enableCreatureAttacksButton.IsClicked)
 			{
-				ShittyInfectedsModLoader.HerdAttackOnPlayerHitEnabled = !ShittyInfectedsModLoader.HerdAttackOnPlayerHitEnabled;
+				ShittyInfectedsSettings.EnableCreatureAttacks = !ShittyInfectedsSettings.EnableCreatureAttacks;
 			}
-
-			// Toggle Herd Attack on Player Injury (Creative)
-			if (m_herdAttackOnPlayerInjuryCreativeButton.IsClicked)
-			{
-				ShittyInfectedsModLoader.HerdAttackOnPlayerInjuryCreativeEnabled = !ShittyInfectedsModLoader.HerdAttackOnPlayerInjuryCreativeEnabled;
-			}
-
-			// Update button texts with On/Off
-			m_herdAttackOnPlayerHitButton.Text = ShittyInfectedsModLoader.HerdAttackOnPlayerHitEnabled
+			m_enableCreatureAttacksButton.Text = ShittyInfectedsSettings.EnableCreatureAttacks
 				? LanguageControl.On
 				: LanguageControl.Off;
 
-			m_herdAttackOnPlayerInjuryCreativeButton.Text = ShittyInfectedsModLoader.HerdAttackOnPlayerInjuryCreativeEnabled
+			// Toggle Attack On Hit Creative
+			if (m_attackOnHitCreativeButton.IsClicked)
+			{
+				ShittyInfectedsSettings.AttackOnHitCreative = !ShittyInfectedsSettings.AttackOnHitCreative;
+			}
+			m_attackOnHitCreativeButton.Text = ShittyInfectedsSettings.AttackOnHitCreative
 				? LanguageControl.On
 				: LanguageControl.Off;
 
-			// Back navigation
-			if (base.Input.Back || base.Input.Cancel || this.Children.Find<ButtonWidget>("TopBar.Back", true).IsClicked)
+			// CORRECCIÓN: Usar GoBack() para volver exactamente al Menú Principal
+			// en lugar de forzar la pantalla de "Settings"
+			if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back", true).IsClicked)
 			{
-				ScreensManager.SwitchScreen("MainMenu");
+				ScreensManager.GoBack();
 			}
 		}
+
+		public const string fName = "ShittyInfectedsSettingsScreen";
 	}
 }
