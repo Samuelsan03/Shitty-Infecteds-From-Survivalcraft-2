@@ -165,6 +165,11 @@ namespace Game
 			}, null);
 		}
 
+		public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)
+		{
+			valuesDictionary.SetValue("HerdName", HerdName);
+		}
+
 		// Protección del jugador
 		private List<ComponentPlayer> m_subscribedPlayers = new List<ComponentPlayer>();
 
