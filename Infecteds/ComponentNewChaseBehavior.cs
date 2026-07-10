@@ -116,6 +116,31 @@ namespace Game
 						m_componentMiner.Hit(hitBody, hitPoint, m_componentCreature.ComponentBody.Matrix.Forward);
 						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
 
+						if (m_pushVictimOnHit && m_random.Float(0f, 1f) < 0.1f)
+						{
+							Vector3 directionFromAttackerToVictim = m_target.ComponentBody.Position - m_componentCreature.ComponentBody.Position;
+							float horizontalDistance = new Vector2(directionFromAttackerToVictim.X, directionFromAttackerToVictim.Z).Length();
+							Vector3 pushDirection;
+							if (horizontalDistance > 0.01f)
+							{
+								pushDirection = Vector3.Normalize(new Vector3(directionFromAttackerToVictim.X, 0f, directionFromAttackerToVictim.Z));
+							}
+							else
+							{
+								pushDirection = m_componentCreature.ComponentBody.Matrix.Forward;
+								pushDirection.Y = 0f;
+								if (pushDirection.LengthSquared() > 0.01f)
+								{
+									pushDirection = Vector3.Normalize(pushDirection);
+								}
+								else
+								{
+									pushDirection = Vector3.UnitZ;
+								}
+							}
+							hitBody.ApplyImpulse(Vector3.Normalize(pushDirection + Vector3.UnitY * 0.5f) * 1e+9f);
+						}
+
 						if (m_invokeLightningOnHit && m_target != null && m_random.Float(0f, 1f) < 0.5f)
 						{
 							m_subsystemSky.MakeLightningStrike(m_target.ComponentBody.Position, false);
@@ -140,7 +165,7 @@ namespace Game
 				}
 			}
 
-			if (m_destroyBlocksWhenStuck && m_componentPathfinding.IsStuck && !m_hasDestroyedBlocksWhileStuck)
+				if (m_destroyBlocksWhenStuck && m_componentPathfinding.IsStuck && !m_hasDestroyedBlocksWhileStuck)
 			{
 				DestroyBlocksInLookDirection();
 				m_hasDestroyedBlocksWhileStuck = true;
@@ -277,6 +302,7 @@ namespace Game
 			m_invokeLightningOnHit = valuesDictionary.GetValue<bool>("InvokeLightningOnHit", false);
 			m_explodeOnHit = valuesDictionary.GetValue<bool>("ExplodeOnHit", false);
 			m_destroyBlocksWhenStuck = valuesDictionary.GetValue<bool>("DestroyBlocksWhenStuck", false);
+			m_pushVictimOnHit = valuesDictionary.GetValue<bool>("PushVictimOnHit", false);
 
 			ComponentBody componentBody = m_componentCreature.ComponentBody;
 			componentBody.CollidedWithBody = (Action<ComponentBody>)Delegate.Combine(componentBody.CollidedWithBody, new Action<ComponentBody>(delegate (ComponentBody body)
@@ -663,6 +689,7 @@ namespace Game
 		public bool m_invokeLightningOnHit = false;
 		public bool m_explodeOnHit = false;
 		public bool m_destroyBlocksWhenStuck = false;
+		public bool m_pushVictimOnHit = false;
 
 		private bool m_hasDestroyedBlocksWhileStuck;
 	}
