@@ -8,6 +8,7 @@ namespace Game
 	public class ComponentZombieAI : Component, IUpdateable
 	{
 		private SubsystemTime m_subsystemTime;
+		private SubsystemProjectiles m_subsystemProjectiles;
 		private ComponentMiner m_componentMiner;
 		private ComponentCreature m_componentCreature;
 		private ComponentBody m_componentBody;
@@ -20,6 +21,9 @@ namespace Game
 		public float MusketCooldown = 0.01f;
 		public float MusketAimTime = 1.5f;
 
+		public float CrossbowCooldown = 0.01f;
+		public float CrossbowAimTime = 1.5f;
+
 		public float CooldownTimer;
 		public float AimTimeTimer;
 
@@ -31,12 +35,38 @@ namespace Game
 		{
 			base.Load(valuesDictionary, idToEntityMap);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
+			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentBody = Entity.FindComponent<ComponentBody>(true);
 			m_componentChaseBehavior = Entity.FindComponent<ComponentZombieChaseBehavior>(false);
 
 			CanUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
+
+			if (m_subsystemProjectiles != null)
+			{
+				m_subsystemProjectiles.ProjectileAdded += OnProjectileAdded;
+			}
+		}
+
+		private void OnProjectileAdded(Projectile projectile)
+		{
+			if (m_componentCreature == null || m_componentCreature.ComponentHealth == null || m_componentCreature.ComponentHealth.Health <= 0f)
+				return;
+
+			if (projectile == null || projectile.OwnerEntity == null)
+				return;
+
+			if (projectile.OwnerEntity != m_componentCreature.Entity)
+				return;
+
+			int contents = Terrain.ExtractContents(projectile.Value);
+			int arrowIndex = BlocksManager.GetBlockIndex<ArrowBlock>();
+
+			if (contents == arrowIndex)
+			{
+				projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+			}
 		}
 
 		public virtual void Update(float dt)
@@ -93,7 +123,7 @@ namespace Game
 
 			if (IsRangedWeapon(contents))
 			{
-				EnsureMusketLoaded(inventory);
+				EnsureRangedWeaponLoaded(inventory);
 				AimAndFire(m_componentChaseBehavior.Target);
 			}
 			else
@@ -121,19 +151,21 @@ namespace Game
 				return;
 			}
 
-			EnsureMusketLoaded(inventory);
+			EnsureRangedWeaponLoaded(inventory);
 			AimAndFire(target);
 		}
 
 		private bool IsRangedWeapon(int blockIndex)
 		{
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
-			return blockIndex == musketIndex;
+			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
+			return blockIndex == musketIndex || blockIndex == crossbowIndex;
 		}
 
 		private int FindRangedWeaponSlot(IInventory inventory)
 		{
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
+			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
 
 			for (int i = 0; i < inventory.SlotsCount; i++)
 			{
@@ -141,7 +173,8 @@ namespace Game
 					continue;
 
 				int value = inventory.GetSlotValue(i);
-				if (Terrain.ExtractContents(value) == musketIndex)
+				int contents = Terrain.ExtractContents(value);
+				if (contents == musketIndex || contents == crossbowIndex)
 					return i;
 			}
 			return -1;
@@ -175,23 +208,34 @@ namespace Game
 			return bestSlot;
 		}
 
-		private void EnsureMusketLoaded(IInventory inventory)
+		private void EnsureRangedWeaponLoaded(IInventory inventory)
 		{
 			int slot = inventory.ActiveSlotIndex;
 			int value = inventory.GetSlotValue(slot);
+			int contents = Terrain.ExtractContents(value);
 
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
+			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
 
-			if (Terrain.ExtractContents(value) != musketIndex)
-				return;
+			if (contents == musketIndex)
+			{
+				EnsureMusketLoaded(inventory, slot, value);
+			}
+			else if (contents == crossbowIndex)
+			{
+				EnsureCrossbowLoaded(inventory, slot, value);
+			}
+		}
 
+		private void EnsureMusketLoaded(IInventory inventory, int slot, int value)
+		{
+			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int data = Terrain.ExtractData(value);
 
 			if (MusketBlock.GetLoadState(data) != MusketBlock.LoadState.Loaded)
 			{
 				data = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
 
-				// Variación aleatoria de perdigones
 				BulletBlock.BulletType[] bulletTypes = new BulletBlock.BulletType[]
 				{
 					BulletBlock.BulletType.MusketBall,
@@ -203,6 +247,42 @@ namespace Game
 
 				int newValue = Terrain.MakeBlockValue(musketIndex, 0, data);
 
+				inventory.RemoveSlotItems(slot, 1);
+				inventory.AddSlotItems(slot, newValue, 1);
+			}
+		}
+
+		private void EnsureCrossbowLoaded(IInventory inventory, int slot, int value)
+		{
+			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
+			int data = Terrain.ExtractData(value);
+			int draw = CrossbowBlock.GetDraw(data);
+			ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
+
+			bool needsReload = false;
+
+			if (draw != 15)
+			{
+				data = CrossbowBlock.SetDraw(data, 15);
+				needsReload = true;
+			}
+
+			if (arrowType == null)
+			{
+				ArrowBlock.ArrowType[] supportedBolts = new ArrowBlock.ArrowType[]
+				{
+					ArrowBlock.ArrowType.IronBolt,
+					ArrowBlock.ArrowType.DiamondBolt,
+					ArrowBlock.ArrowType.ExplosiveBolt
+				};
+				ArrowBlock.ArrowType randomBolt = supportedBolts[m_random.Int(0, 2)];
+				data = CrossbowBlock.SetArrowType(data, randomBolt);
+				needsReload = true;
+			}
+
+			if (needsReload)
+			{
+				int newValue = Terrain.MakeBlockValue(crossbowIndex, 0, data);
 				inventory.RemoveSlotItems(slot, 1);
 				inventory.AddSlotItems(slot, newValue, 1);
 			}
@@ -231,16 +311,29 @@ namespace Game
 			}
 			else
 			{
-				// 5% de probabilidad para el triple disparo
-				if (m_random.Bool(0.05f))
+				int activeSlot = m_componentMiner.Inventory.ActiveSlotIndex;
+				int slotValue = m_componentMiner.Inventory.GetSlotValue(activeSlot);
+				int contents = Terrain.ExtractContents(slotValue);
+				int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
+
+				if (contents == musketIndex && m_random.Bool(0.05f))
 				{
 					TripleShot(aim);
 				}
 				else
 				{
 					m_componentMiner.Aim(aim, AimState.Completed);
+				}
+
+				if (contents == musketIndex)
+				{
 					CooldownTimer = MusketCooldown;
 					AimTimeTimer = MusketAimTime;
+				}
+				else
+				{
+					CooldownTimer = CrossbowCooldown;
+					AimTimeTimer = CrossbowAimTime;
 				}
 			}
 		}
@@ -251,8 +344,6 @@ namespace Game
 			{
 				m_componentMiner.Aim(aim, AimState.Completed);
 			}
-			CooldownTimer = MusketCooldown;
-			AimTimeTimer = MusketAimTime;
 		}
 
 		private void CancelAiming()
