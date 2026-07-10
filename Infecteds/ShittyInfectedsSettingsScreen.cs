@@ -19,18 +19,21 @@ namespace Game
 			XElement node = ContentManager.Get<XElement>("Screens/ShittyInfectedsSettingsScreen");
 			LoadContents(this, node);
 
+			// Forzar el título localizado desde C#
+			Children.Find<LabelWidget>("TopBar.Label", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 1);
+
 			m_settingsContainer = Children.Find<StackPanelWidget>("SettingsContainer", true);
 
 			// Configuración 1: Solo descripción
 			m_enableCreatureAttacksButton = AddToggleButton(
 				"EnableCreatureAttacks",
-				"When hitting a creature, your herd allies will attack it"
+				LanguageControl.Get("ShittyInfectedsSettingsScreen", 2)
 			);
 
 			// Configuración 2: Solo descripción
 			m_attackOnHitCreativeButton = AddToggleButton(
 				"AttackOnHitCreative",
-				"When a creature hits you in creative, your allies will attack it"
+				LanguageControl.Get("ShittyInfectedsSettingsScreen", 3)
 			);
 		}
 
@@ -49,7 +52,6 @@ namespace Game
 				VerticalAlignment = WidgetAlignment.Center,
 				Color = new Color(180, 180, 180),
 				Margin = new Vector2(20, 0),
-				// SOLUCIÓN: Activar el ajuste de línea automático del motor
 				WordWrap = true
 			};
 
