@@ -20,6 +20,7 @@ namespace Game
 
 		public Vector2 DistanceRange = new Vector2(5f, 100f);
 		public Vector2 DistanceRangeOfThrowable = new Vector2(5f, 15f);
+		public Vector2 SafeDistanceForExplosives = new Vector2(20f, 100f);
 
 		public float MusketCooldown = 0.01f;
 		public float MusketAimTime = 1.5f;
@@ -111,7 +112,7 @@ namespace Game
 				{
 					if (hasMelee)
 					{
-						HandleCloseRange(inventory);
+						HandleCloseRange(inventory, distance);
 					}
 					else
 					{
@@ -126,7 +127,7 @@ namespace Game
 				{
 					if (hasRanged)
 					{
-						HandleRangedAttack(inventory, target);
+						HandleRangedAttack(inventory, target, distance);
 					}
 					else
 					{
@@ -138,11 +139,11 @@ namespace Game
 			{
 				if (distance < DistanceRange.X)
 				{
-					HandleCloseRange(inventory);
+					HandleCloseRange(inventory, distance);
 				}
 				else if (distance <= DistanceRange.Y)
 				{
-					HandleRangedAttack(inventory, target);
+					HandleRangedAttack(inventory, target, distance);
 				}
 				else
 				{
@@ -288,7 +289,7 @@ namespace Game
 			}
 		}
 
-		private void HandleCloseRange(IInventory inventory)
+		private void HandleCloseRange(IInventory inventory, float distance)
 		{
 			int activeSlot = inventory.ActiveSlotIndex;
 			int slotValue = inventory.GetSlotValue(activeSlot);
@@ -307,7 +308,7 @@ namespace Game
 
 			if (IsRangedWeapon(contents))
 			{
-				EnsureRangedWeaponLoaded(inventory);
+				EnsureRangedWeaponLoaded(inventory, distance);
 				AimAndFire(m_componentChaseBehavior.Target);
 			}
 			else
@@ -316,7 +317,7 @@ namespace Game
 			}
 		}
 
-		private void HandleRangedAttack(IInventory inventory, ComponentCreature target)
+		private void HandleRangedAttack(IInventory inventory, ComponentCreature target, float distance)
 		{
 			int activeSlot = inventory.ActiveSlotIndex;
 			int slotValue = inventory.GetSlotValue(activeSlot);
@@ -335,7 +336,7 @@ namespace Game
 				return;
 			}
 
-			EnsureRangedWeaponLoaded(inventory);
+			EnsureRangedWeaponLoaded(inventory, distance);
 			AimAndFire(target);
 		}
 
@@ -394,7 +395,7 @@ namespace Game
 			return bestSlot;
 		}
 
-		private void EnsureRangedWeaponLoaded(IInventory inventory)
+		private void EnsureRangedWeaponLoaded(IInventory inventory, float distance)
 		{
 			int slot = inventory.ActiveSlotIndex;
 			int value = inventory.GetSlotValue(slot);
@@ -410,7 +411,7 @@ namespace Game
 			}
 			else if (contents == crossbowIndex)
 			{
-				EnsureCrossbowLoaded(inventory, slot, value);
+				EnsureCrossbowLoaded(inventory, slot, value, distance);
 			}
 			else if (contents == bowIndex)
 			{
@@ -443,7 +444,7 @@ namespace Game
 			}
 		}
 
-		private void EnsureCrossbowLoaded(IInventory inventory, int slot, int value)
+		private void EnsureCrossbowLoaded(IInventory inventory, int slot, int value, float distance)
 		{
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
 			int data = Terrain.ExtractData(value);
@@ -460,15 +461,46 @@ namespace Game
 
 			if (arrowType == null)
 			{
-				ArrowBlock.ArrowType[] supportedBolts = new ArrowBlock.ArrowType[]
+				bool canUseExplosive = distance >= SafeDistanceForExplosives.X && distance <= SafeDistanceForExplosives.Y;
+
+				ArrowBlock.ArrowType[] supportedBolts;
+				if (canUseExplosive)
 				{
-					ArrowBlock.ArrowType.IronBolt,
-					ArrowBlock.ArrowType.DiamondBolt,
-					ArrowBlock.ArrowType.ExplosiveBolt
-				};
-				ArrowBlock.ArrowType randomBolt = supportedBolts[m_random.Int(0, 2)];
+					supportedBolts = new ArrowBlock.ArrowType[]
+					{
+						ArrowBlock.ArrowType.IronBolt,
+						ArrowBlock.ArrowType.DiamondBolt,
+						ArrowBlock.ArrowType.ExplosiveBolt
+					};
+				}
+				else
+				{
+					supportedBolts = new ArrowBlock.ArrowType[]
+					{
+						ArrowBlock.ArrowType.IronBolt,
+						ArrowBlock.ArrowType.DiamondBolt
+					};
+				}
+
+				ArrowBlock.ArrowType randomBolt = supportedBolts[m_random.Int(0, supportedBolts.Length - 1)];
 				data = CrossbowBlock.SetArrowType(data, randomBolt);
 				needsReload = true;
+			}
+			else if (arrowType == ArrowBlock.ArrowType.ExplosiveBolt)
+			{
+				bool canUseExplosive = distance >= SafeDistanceForExplosives.X && distance <= SafeDistanceForExplosives.Y;
+
+				if (!canUseExplosive)
+				{
+					ArrowBlock.ArrowType[] safeBolts = new ArrowBlock.ArrowType[]
+					{
+						ArrowBlock.ArrowType.IronBolt,
+						ArrowBlock.ArrowType.DiamondBolt
+					};
+					ArrowBlock.ArrowType replacementBolt = safeBolts[m_random.Int(0, 1)];
+					data = CrossbowBlock.SetArrowType(data, replacementBolt);
+					needsReload = true;
+				}
 			}
 
 			if (needsReload)
