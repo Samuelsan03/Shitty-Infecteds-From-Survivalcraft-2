@@ -7,7 +7,6 @@ namespace Game
 {
 	public class ComponentZombieChaseBehavior : ComponentBehavior, IUpdateable
 	{
-		// PARÁMETROS
 		public float ChaseRangeDay { get; set; }
 		public float ChaseRangeNight { get; set; }
 		public float ChaseTimeDay { get; set; }
@@ -19,11 +18,8 @@ namespace Game
 		public bool AttacksNonPlayerCreature { get; set; }
 		public bool MoreAggressiveOnGreenNight { get; set; }
 		public CreatureCategory AutoChaseMask { get; set; }
-
-		// AGREGADO: Tiempo de reacción (Idle) antes de perseguir
 		public float TargetInRangeTimeToChase { get; set; } = 3f;
 
-		// CAMPOS PRIVADOS
 		private SubsystemGameInfo m_subsystemGameInfo;
 		private SubsystemPlayers m_subsystemPlayers;
 		private SubsystemSky m_subsystemSky;
@@ -42,7 +38,7 @@ namespace Game
 		private ComponentCreature m_target;
 		private float m_importanceLevel;
 		private float m_targetUnsuitableTime;
-		private float m_targetInRangeTime; // CORREGIDO: Falta agregar el contador de idle
+		private float m_targetInRangeTime;
 		private double m_nextUpdateTime;
 		private float m_dt;
 		private float m_range;
@@ -52,7 +48,6 @@ namespace Game
 		private string m_myHerdName;
 		private const float MaxAttackRange = 1.75f;
 
-		// Campos para la detección inmediata de la Noche Verde
 		private bool m_wasGreenNightActive = false;
 		private double m_lastGreenNightForcedSearch = 0.0;
 
@@ -60,13 +55,33 @@ namespace Game
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 		public override float ImportanceLevel => m_importanceLevel;
 
+		private bool IsTargetFriendlyZombie(ComponentCreature target)
+		{
+			if (target == null) return false;
+
+			ComponentZombieHerdBehavior targetHerd = target.Entity.FindComponent<ComponentZombieHerdBehavior>();
+
+			if (targetHerd != null && targetHerd.HerdName == "Zombie")
+			{
+				return true;
+			}
+
+			if (targetHerd != null && !string.IsNullOrEmpty(targetHerd.HerdName) && targetHerd.HerdName == m_myHerdName)
+			{
+				return true;
+			}
+
+			return false;
+		}
+
 		public void Attack(ComponentCreature target, float maxRange, float maxChaseTime, bool isPersistent)
 		{
 			if (target == null) return;
 
-			ComponentZombieHerdBehavior targetHerd = target.Entity.FindComponent<ComponentZombieHerdBehavior>();
-			if (targetHerd != null && !string.IsNullOrEmpty(targetHerd.HerdName) && targetHerd.HerdName == m_myHerdName)
+			if (IsTargetFriendlyZombie(target))
+			{
 				return;
+			}
 
 			m_target = target;
 			m_nextUpdateTime = 0.0;
@@ -75,7 +90,7 @@ namespace Game
 			m_isPersistent = isPersistent;
 			m_importanceLevel = m_isPersistent ? 100f : 50f;
 			m_targetUnsuitableTime = 0f;
-			m_targetInRangeTime = 0f; // CORREGIDO: Resetear al cambiar de objetivo
+			m_targetInRangeTime = 0f;
 			IsActive = true;
 		}
 
@@ -126,7 +141,9 @@ namespace Game
 				m_componentCreature.ComponentCreatureModel.LookAtOrder = new Vector3?(m_target.ComponentCreatureModel.EyePosition);
 
 				if (IsTargetInAttackRange(m_target.ComponentBody))
+				{
 					m_componentCreatureModel.AttackOrder = true;
+				}
 
 				if (m_componentCreatureModel.IsAttackHitMoment)
 				{
@@ -169,12 +186,15 @@ namespace Game
 			for (int i = 0; i < m_componentBodies.Count; i++)
 			{
 				ComponentCreature creature = m_componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
-				if (creature != null && m_subsystemPlayers.IsPlayer(creature.Entity) && creature.ComponentHealth.Health > 0f)
-				{
-					ComponentZombieHerdBehavior otherHerd = creature.Entity.FindComponent<ComponentZombieHerdBehavior>();
-					if (otherHerd != null && !string.IsNullOrEmpty(otherHerd.HerdName) && otherHerd.HerdName == m_myHerdName)
-						continue;
+				if (creature == null) continue;
 
+				if (IsTargetFriendlyZombie(creature))
+				{
+					continue;
+				}
+
+				if (m_subsystemPlayers.IsPlayer(creature.Entity) && creature.ComponentHealth.Health > 0f)
+				{
 					float distance = Vector3.Distance(position, creature.ComponentBody.Position);
 					if (distance < bestDistance)
 					{
@@ -190,7 +210,7 @@ namespace Game
 				m_range = range;
 				m_chaseTime = 100f;
 				m_isPersistent = true;
-				m_importanceLevel = 1000f; // MEJORA: También ponerle prioridad absoluta en Noche Verde
+				m_importanceLevel = 1000f;
 				m_autoChaseSuppressionTime = 0f;
 				m_targetUnsuitableTime = 0f;
 				m_targetInRangeTime = 0f;
@@ -226,7 +246,7 @@ namespace Game
 			AttacksNonPlayerCreature = valuesDictionary.GetValue<bool>("AttacksNonPlayerCreature");
 			MoreAggressiveOnGreenNight = valuesDictionary.GetValue<bool>("MoreAggressiveOnGreenNight", false);
 			AutoChaseMask = valuesDictionary.GetValue<CreatureCategory>("AutoChaseMask", (CreatureCategory)0);
-			TargetInRangeTimeToChase = valuesDictionary.GetValue<float>("TargetInRangeTimeToChase", 3f); // Cargar tiempo de idle
+			TargetInRangeTimeToChase = valuesDictionary.GetValue<float>("TargetInRangeTimeToChase", 3f);
 
 			ComponentZombieHerdBehavior herd = Entity.FindComponent<ComponentZombieHerdBehavior>();
 			m_myHerdName = (herd != null) ? herd.HerdName : null;
@@ -239,18 +259,20 @@ namespace Game
 					ComponentCreature creature = otherBody.Entity.FindComponent<ComponentCreature>();
 					if (creature != null)
 					{
-						bool isPlayer = m_subsystemPlayers.IsPlayer(otherBody.Entity);
-						ComponentZombieHerdBehavior otherHerd = creature.Entity.FindComponent<ComponentZombieHerdBehavior>();
-
-						if (otherHerd != null && otherHerd.HerdName == m_myHerdName)
+						if (IsTargetFriendlyZombie(creature))
+						{
 							return;
+						}
 
+						bool isPlayer = m_subsystemPlayers.IsPlayer(otherBody.Entity);
 						bool isInMask = (creature.Category & AutoChaseMask) > (CreatureCategory)0;
 						bool canChasePlayer = AttacksPlayer && isPlayer && m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
 						bool canChaseCreature = AttacksNonPlayerCreature && !isPlayer && isInMask;
 
 						if (canChasePlayer || canChaseCreature)
+						{
 							Attack(creature, 7f, 7f, false);
+						}
 					}
 				}
 			};
@@ -259,21 +281,20 @@ namespace Game
 			health.Injured += delegate (Injury injury)
 			{
 				ComponentCreature attacker = injury.Attacker;
+				if (attacker == null) return;
+
+				if (IsTargetFriendlyZombie(attacker))
+				{
+					return;
+				}
+
 				if (m_random.Float(0f, 1f) < ChaseWhenAttackedProbability)
 				{
-					if (attacker == null) return;
-
-					ComponentZombieHerdBehavior attackerHerd = attacker.Entity.FindComponent<ComponentZombieHerdBehavior>();
-					if (attackerHerd != null && attackerHerd.HerdName == m_myHerdName)
-						return;
-
 					float range = (ChaseWhenAttackedProbability >= 1f) ? 30f : 7f;
 					float time = (ChaseWhenAttackedProbability >= 1f) ? 60f : 7f;
 					bool persistent = ChaseWhenAttackedProbability >= 1f;
 
 					Attack(attacker, range, time, persistent);
-
-					// CORRECCIÓN CLAVE: Sobrescribir la importancia a 1000f para superar la manada (250)
 					m_importanceLevel = 1000f;
 					m_autoChaseSuppressionTime = 0f;
 				}
@@ -291,7 +312,6 @@ namespace Game
 					return;
 				}
 
-				// CORREGIDO: Lógica exacta del original con m_targetInRangeTime
 				if (m_autoChaseSuppressionTime <= 0f && (m_target == null || ScoreTarget(m_target) <= 0f))
 				{
 					m_range = ((m_subsystemSky.SkyLightIntensity < 0.2f) ? ChaseRangeNight : ChaseRangeDay);
@@ -300,14 +320,13 @@ namespace Game
 					ComponentCreature target = FindTarget();
 					if (target != null)
 					{
-						m_targetInRangeTime += m_dt; // Acumular tiempo de "reacción/Idle"
+						m_targetInRangeTime += m_dt;
 					}
 					else
 					{
-						m_targetInRangeTime = 0f; // Si se pierde de vista, reiniciar contador
+						m_targetInRangeTime = 0f;
 					}
 
-					// Solo iniciar la persecución si completó el tiempo de reacción
 					if (m_targetInRangeTime > TargetInRangeTimeToChase)
 					{
 						bool isDay = m_subsystemSky.SkyLightIntensity >= 0.1f;
@@ -347,9 +366,13 @@ namespace Game
 				else
 				{
 					if (ScoreTarget(m_target) <= 0f)
+					{
 						m_targetUnsuitableTime += m_dt;
+					}
 					else
+					{
 						m_targetUnsuitableTime = 0f;
+					}
 
 					if (!isGreenNightActive && m_targetUnsuitableTime > 3f)
 					{
@@ -364,7 +387,9 @@ namespace Game
 						m_componentPathfinding.SetDestination(new Vector3?(targetPos + slowDown * distance * m_target.ComponentBody.Velocity), 1f, 1.5f, maxPathfinding, true, false, true, m_target.ComponentBody);
 
 						if (m_random.Float(0f, 1f) < 0.33f * m_dt)
+						{
 							m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
+						}
 					}
 				}
 			}, null);
@@ -402,9 +427,10 @@ namespace Game
 		{
 			if (target == m_componentCreature) return 0f;
 
-			ComponentZombieHerdBehavior targetHerd = target.Entity.FindComponent<ComponentZombieHerdBehavior>();
-			if (targetHerd != null && !string.IsNullOrEmpty(targetHerd.HerdName) && targetHerd.HerdName == m_myHerdName)
+			if (IsTargetFriendlyZombie(target))
+			{
 				return 0f;
+			}
 
 			bool isPlayer = target.Entity.FindComponent<ComponentPlayer>() != null;
 			bool canAttackPlayer = AttacksPlayer && isPlayer && m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
@@ -422,7 +448,9 @@ namespace Game
 			{
 				float distance = Vector3.Distance(m_componentCreature.ComponentBody.Position, target.ComponentBody.Position);
 				if (distance < m_range)
+				{
 					return m_range - distance;
+				}
 			}
 
 			return 0f;
@@ -451,7 +479,9 @@ namespace Game
 			if (MathF.Abs(offset.Y) < heightSum * 0.99f)
 			{
 				if (distance < widthSum + 0.99f && Vector3.Dot(direction, m_componentCreature.ComponentBody.Matrix.Forward) > 0.25f)
+				{
 					return true;
+				}
 			}
 			else if (distance < heightSum + 0.3f && MathF.Abs(Vector3.Dot(direction, Vector3.UnitY)) > 0.8f)
 			{
