@@ -1,9 +1,25 @@
 <Infecteds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://gitee.com/THPRC/survivalcraft-api/raw/SCAPI1.8/Survivalcraft/Content/Assets/Database.xsd">
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
+
+    <ComponentTemplate Name="ZombieRunAwayBehavior" Description="Run away behavior for zombies. This component never activates fleeing." Guid="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Description="Class implementing this behavior." Guid="ddaf1ff9-897f-4e8f-88a9-9a63a658da12" Value="Game.ComponentZombieRunAway" Type="string" />
+  <Parameter Name="LowHealthToEscape" Description="Unused. Present only for compatibility with existing templates." Guid="7cf5f0b7-9302-4367-b5dc-a7ea13d84cdb" Value="0.33" Type="float" />
+</ComponentTemplate>
+
+<ComponentTemplate Name="DefensiveRunAwayBehavior" Description="Run away behavior for defensive creatures. This component never activates fleeing." Guid="d90c6369-cf38-475e-856f-a9a8e6498f5e" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Description="Class implementing this behavior." Guid="d04ee7c6-fc1b-4732-8ae3-dd0c0372f90b" Value="Game.ComponentDefensiveRunAway" Type="string" />
+  <Parameter Name="LowHealthToEscape" Description="Unused. Present only for compatibility with existing templates." Guid="076c0580-111d-4979-88b6-816d3dd4532f" Value="0.33" Type="float" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="AutoInteract" Description="Maneja la interaccion automatica con bloques cercanos como puertas y cofres" Guid="51b2e776-f7ff-4847-a1cf-74aeb77eef11" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
   <Parameter Name="AutoInteractRate" Description="Probabilidad de interactuar automaticamente con objetos cercanos" Guid="dbee6ff0-0ae7-4afe-b359-fa7f52628f34" Value="0" Type="float" />
   <Parameter Name="Class" Guid="e0d0942f-146b-4c42-a9f5-c8677fce5fd3" Value="Game.ComponentAutoInteract" Type="string" />
+</ComponentTemplate>
+
+<ComponentTemplate Name="ZombieAI" Description="Inteligencia artificial especial para zombies, permite el uso de armas a distancia desde el inventario" Guid="86e4d4b9-95b6-4513-b87d-c2180cb16289" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="679a1448-f272-4565-b774-6f5a62d0e41f" Value="Game.ComponentZombieAI" Type="string" />
+  <Parameter Name="CanUseInventory" Description="Permite al zombie acceder y usar armas de su inventario" Guid="4aafbac5-4b4a-4087-96ec-e2d81461f504" Value="false" Type="bool" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="DefensiveCreatureAI" Description="Inteligencia artificial defensiva para criaturas" Guid="4f686fb8-0650-4dd9-8281-1247d07a28a7" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
