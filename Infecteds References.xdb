@@ -2,6 +2,18 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="BlockBreakerBehavior" Description="Permite a la criatura romper bloques al golpear, con probabilidad configurable y lista de bloques rompibles (separados por comas)" Guid="27c2d1a4-776c-432b-81d0-88ef0d417b42" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="7cf54e1a-5d86-4eb6-acad-e7d4ceed95b6" Value="Game.ComponentBlockBreakerBehavior" Type="string" />
+  <Parameter Name="BreakBlockProbability" Description="Probabilidad (0-1) de romper un bloque al golpear" Guid="f64dcef3-9fb9-4e87-b596-10fb5b0a911f" Value="1" Type="float" />
+  <Parameter Name="BreakableBlocks" Description="Nombres de bloques separados por comas. Vacío = todos excepto la roca madre" Guid="dc2a8d58-3956-4180-9fdc-153f140261a6" Value="" Type="string" />
+</ComponentTemplate>
+
+    <ComponentTemplate Name="Gravity" Description="Makes the creature push its target away when hitting" Guid="e6f5442f-3e30-4192-9b1b-02c51108cc29" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="4b9de1ad-7a78-4c4d-8533-508b39d857c1" Value="Game.Gravity" Type="string" />
+  <Parameter Name="PushProbability" Description="Probability of pushing the target when hit (0-1)" Guid="a2c9b60d-7ee2-4600-a33f-49d76b9867d2" Value="0.1" Type="float" />
+  <Parameter Name="PushForce" Description="Push strength multiplier, higher numbers push further" Guid="e3d41f67-4588-4943-a5f4-2fafa4c7039c" Value="10" Type="float" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="ZombieRunAwayBehavior" Description="Run away behavior for zombies. This component never activates fleeing." Guid="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Description="Class implementing this behavior." Guid="ddaf1ff9-897f-4e8f-88a9-9a63a658da12" Value="Game.ComponentZombieRunAway" Type="string" />
   <Parameter Name="LowHealthToEscape" Description="Unused. Present only for compatibility with existing templates." Guid="7cf5f0b7-9302-4367-b5dc-a7ea13d84cdb" Value="0.33" Type="float" />
@@ -57,7 +69,6 @@
   <Parameter Name="NightChaseRange" Description="Rango cuando la criatura empieza a perseguir durante la noche" Guid="3473bace-e628-4028-be54-8123837f7d94" Value="1.5" Type="float" />
   <Parameter Name="AutoChaseMask" Description="Categorías de criaturas a perseguir" Guid="c74e40cf-1c82-4997-a230-2b8cea61eb91" Value="LandOther, Bird" Type="Game.CreatureCategory" />
   <Parameter Name="ChaseNonPlayerProbability" Description="Probabilidad de que la criatura persiga a un objetivo no jugador cuando está en rango, de 0 a 1" Guid="54db5623-3f54-4274-9b89-4d72d91acc9b" Value="0" Type="float" />
-  <Parameter Name="RangedAttackRange" Description="Rango mínimo y máximo para usar ataque a distancia (min,max)" Guid="e0f4d360-2932-4289-937a-2c6ffbdf1b38" Value="8,25" Type="Vector2" />
   <Parameter Name="InvokeLightningOnHit" Description="Si es verdadero, al golpear cuerpo a cuerpo invoca un rayo sobre la víctima" Guid="f4a0ddb7-336d-4468-998c-eab878df6130" Value="false" Type="bool" />
   <Parameter Name="ExplodeOnHit" Description="Si es verdadero, al golpear cuerpo a cuerpo crea una explosión normal en la víctima" Guid="cbbaa8e2-35e8-4e44-916e-4818b983f1f2" Value="false" Type="bool" />
   <Parameter Name="DestroyBlocksWhenStuck" Description="Si es verdadero, al estar atascado rompe 2 bloques en la dirección de la mirada" Guid="f05f7c35-29b8-42fa-9ee4-4c70600ab7df" Value="false" Type="bool" />
@@ -75,7 +86,6 @@
   <Parameter Name="Class" Guid="1317caed-e16e-4a82-8c2d-fbf482c81596" Value="Game.ComponentZombieHerdBehavior" Type="string"/>
   <Parameter Name="HerdName" Description="Nombre de la manada. Los zombis con el mismo nombre se consideran compañeros y no se atacan entre sí" Guid="eae47118-785d-4ce3-aea4-788abb74b106" Value="Zombie" Type="string"/>
   <Parameter Name="HerdingRange" Description="Rango en metros dentro del cual se considera que un compañero forma parte de la manada para calcular el centro del grupo" Guid="085f8a84-9fb8-470b-92dd-ca64c24433df" Value="16" Type="float"/>
-  <Parameter Name="ImportanceLevelForHerd" Description="Nivel de importancia asignado cuando el zombi está lejos de la manada. Valores más altos priorizan el comportamiento de rebaño" Guid="ee952c13-c070-4a73-b4ca-816e86342a14" Value="250" Type="float"/>
   <Parameter Name="MinDistanceToHerd" Description="Distancia mínima en metros al centro de la manada. Si la distancia es mayor, el zombi intentará acercarse al grupo" Guid="22423564-12df-4c26-88eb-bc44c2ca0254" Value="10" Type="float"/>
   <Parameter Name="AutoCallNearbyHelp" Description="Si es verdadero, el zombi llamará a otros compañeros de manada cuando sea atacado" Guid="82144d41-edae-46d6-831d-773d6e1f4a3a" Value="true" Type="bool"/>
   <Parameter Name="HelpCallRange" Description="Rango en metros en el que se buscarán compañeros de manada para pedir ayuda cuando el zombi es atacado" Guid="c7777080-5d39-4777-83bb-3efd41761b06" Value="20" Type="float"/>
