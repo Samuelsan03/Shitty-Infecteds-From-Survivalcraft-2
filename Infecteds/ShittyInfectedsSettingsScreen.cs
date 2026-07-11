@@ -10,7 +10,8 @@ namespace Game
 
 		private ButtonWidget m_enableCreatureAttacksButton;
 		private ButtonWidget m_attackOnHitCreativeButton;
-		private ButtonWidget m_showCoordinatesButton; // NUEVO BOTÓN
+		private ButtonWidget m_showCoordinatesButton;
+		private ButtonWidget m_showCreatureHealthBarsButton; // NUEVO BOTÓN
 
 		public ShittyInfectedsSettingsScreen()
 		{
@@ -33,10 +34,15 @@ namespace Game
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 3)
 			);
 
-			// NUEVO BOTÓN DE COORDENADAS
 			m_showCoordinatesButton = AddToggleButton(
 				"ShowCoordinates",
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 4)
+			);
+
+			// NUEVO BOTÓN DE BARRAS DE VIDA
+			m_showCreatureHealthBarsButton = AddToggleButton(
+				"ShowCreatureHealthBars",
+				LanguageControl.Get("ShittyInfectedsSettingsScreen", 5)
 			);
 		}
 
@@ -95,13 +101,22 @@ namespace Game
 				? LanguageControl.On
 				: LanguageControl.Off;
 
-			// NUEVA LÓGICA PARA COORDENADAS
 			if (m_showCoordinatesButton.IsClicked)
 			{
 				ShittyInfectedsSettings.ShowCoordinates = !ShittyInfectedsSettings.ShowCoordinates;
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_showCoordinatesButton.Text = ShittyInfectedsSettings.ShowCoordinates
+				? LanguageControl.On
+				: LanguageControl.Off;
+
+			// NUEVA LÓGICA PARA BARRAS DE VIDA
+			if (m_showCreatureHealthBarsButton.IsClicked)
+			{
+				ShittyInfectedsSettings.ShowCreatureHealthBars = !ShittyInfectedsSettings.ShowCreatureHealthBars;
+				ShittyInfectedsSettingsManager.Save();
+			}
+			m_showCreatureHealthBarsButton.Text = ShittyInfectedsSettings.ShowCreatureHealthBars
 				? LanguageControl.On
 				: LanguageControl.Off;
 
