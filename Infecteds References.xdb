@@ -86,10 +86,7 @@
   <Parameter Name="Class" Guid="1317caed-e16e-4a82-8c2d-fbf482c81596" Value="Game.ComponentZombieHerdBehavior" Type="string"/>
   <Parameter Name="HerdName" Description="Nombre de la manada. Los zombis con el mismo nombre se consideran compañeros y no se atacan entre sí" Guid="eae47118-785d-4ce3-aea4-788abb74b106" Value="Zombie" Type="string"/>
   <Parameter Name="HerdingRange" Description="Rango en metros dentro del cual se considera que un compañero forma parte de la manada para calcular el centro del grupo" Guid="085f8a84-9fb8-470b-92dd-ca64c24433df" Value="16" Type="float"/>
-  <Parameter Name="MinDistanceToHerd" Description="Distancia mínima en metros al centro de la manada. Si la distancia es mayor, el zombi intentará acercarse al grupo" Guid="22423564-12df-4c26-88eb-bc44c2ca0254" Value="10" Type="float"/>
-  <Parameter Name="AutoCallNearbyHelp" Description="Si es verdadero, el zombi llamará a otros compañeros de manada cuando sea atacado" Guid="82144d41-edae-46d6-831d-773d6e1f4a3a" Value="true" Type="bool"/>
-  <Parameter Name="HelpCallRange" Description="Rango en metros en el que se buscarán compañeros de manada para pedir ayuda cuando el zombi es atacado" Guid="c7777080-5d39-4777-83bb-3efd41761b06" Value="20" Type="float"/>
-  <Parameter Name="HelpChaseTime" Description="Duración en segundos que los compañeros de manada perseguirán al agresor cuando son llamados para ayudar" Guid="52648a41-91d5-4c78-935e-4431ae0cb337" Value="30" Type="float"/>
+  <Parameter Name="AutoNearbyCreaturesHelp" Description="Si es verdadero, el zombi llamará a otros compañeros de manada cuando sea atacado" Guid="82144d41-edae-46d6-831d-773d6e1f4a3a" Value="true" Type="bool"/>
 </ComponentTemplate>
 
 <ComponentTemplate Name="ZombieChaseBehavior" Description="Comportamiento de persecución para zombis. Persigue a cualquier criatura excepto a los miembros de su misma manada" Guid="67f04819-c0f2-47f4-bde2-436dcdb8132b" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
