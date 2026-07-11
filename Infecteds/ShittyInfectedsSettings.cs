@@ -4,7 +4,8 @@ namespace Game
 	{
 		public static bool EnableCreatureAttacks { get; set; } = true;
 		public static bool AttackOnHitCreative { get; set; } = true;
-		public static bool ShowCoordinates = true;
+		public static bool ShowCoordinates { get; set; } = true;
+		public static bool ShowCreatureHealthBars { get; set; } = true;
 
 		// Futuras configuraciones se agregarán aquí
 	}
