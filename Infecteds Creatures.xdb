@@ -19,6 +19,9 @@
   <Parameter Name="ChaseOnTouchProbability" Guid="2a49e196-ebc3-46ff-b725-feeba465d314" Value="1" Type="float" />
   <Parameter Name="AutoChaseMask" Guid="260a327f-eb16-463e-8224-3cbc9f8822cb" Value="LandPredator, WaterPredator" Type="Game.CreatureCategory" />
   <Parameter Name="ChaseNonPlayerProbability" Guid="b3cbc0a4-d1b7-4940-b22e-3c114b9d2337" Value="0" Type="float" />
+  <Parameter Name="InvokeLightningOnHit" Guid="1cdd47b2-f48d-4599-bd70-00563df24324" Value="true" Type="bool" />
+  <Parameter Name="ExplodeOnHit" Guid="6f3fb8b3-1f1e-47f0-8dc8-de37c55e92e2" Value="true" Type="bool" />
+  <Parameter Name="DestroyBlocksWhenStuck" Guid="89efb718-536f-45ae-9913-d2570b0ee587" Value="true" Type="bool" />
   <Parameter Name="PushVictimOnHit" Guid="e332f7da-5f13-402e-8f68-0eb2c5985dbe" Value="true" Type="bool" />
 </MemberComponentTemplate>
             <MemberComponentTemplate Name="Creature" Guid="02e5550f-65d4-4596-8171-87abd4643ce2">
@@ -72,8 +75,8 @@
               <Parameter Name="TextureOverride" Guid="e7af721f-7fd6-45fe-b4b1-df0e1832b4b3" Value="Textures/Creatures/aimep3" Type="string" />
               <Parameter Name="WalkAnimationSpeed" Guid="f7b5a22d-07bf-4347-b28e-ae2afe273d71" Value="0.65" Type="float" />
             </MemberComponentTemplate>
-            <MemberComponentTemplate Name="Miner" Guid="6183a02e-49e3-4f7d-a1ea-bf54744514c8" InheritanceParent="8acca888-ba39-464f-bcf5-6ae15e448c62">
-              <Parameter Name="AttackPower" Guid="08e6a00e-f693-4405-917b-03c453465b72" Value="666" Type="float" />
+            <MemberComponentTemplate Name="Miner" Guid="ccc97064-008b-4be2-a504-2f55074c1ab2" InheritanceParent="8acca888-ba39-464f-bcf5-6ae15e448c62">
+              <Parameter Name="AttackPower" Guid="e92a3d8d-7beb-4cda-8f28-6f3c6ac73dca" Value="666" Type="float" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="AutoJump" Guid="d7e9877e-0c2c-4e04-b1d1-25687b1a7b6a">
               <Parameter Name="JumpStrength" Guid="b2272315-3e19-4da2-ae8a-8d316187fb53" Value="1" Type="float" />
@@ -116,7 +119,6 @@
             <MemberComponentTemplate Name="ZombieHerdBehavior" Guid="fdca67a3-c02e-45e8-bbad-28c21db82041" InheritanceParent="5a8d1636-1ad9-4344-8c36-a39d9bb2524d">
   <Parameter Name="HerdName" Guid="6b560d7a-e7b6-4477-a1d7-61abe94ae158" Value="Zombie" Type="string"/>
   <Parameter Name="HerdingRange" Guid="1932c315-c10e-451a-9a3a-aa3289a0eefd" Value="30" Type="float"/>
-  <Parameter Name="ImportanceLevelForHerd" Guid="b7a36b2a-556a-46d2-a1fa-00684148e3f9" Value="250" Type="float"/>
   <Parameter Name="MinDistanceToHerd" Guid="4ebb4967-9caf-4331-adca-eb28fa5f951b" Value="10" Type="float"/>
   <Parameter Name="AutoCallNearbyHelp" Guid="8f2e586d-106e-4003-8364-f87dd0e26c79" Value="true" Type="bool"/>
   <Parameter Name="HelpCallRange" Guid="6281c8dd-87e7-46f1-97ad-58ee174a9e78" Value="20" Type="float"/>
@@ -159,6 +161,10 @@
     <Parameter Name="Weapons" Guid="16a68a13-9eb0-44ee-a6bf-0d0489626f52" Value="1" Type="float" />
     <Parameter Name="Tools" Guid="fd141f12-53cc-425b-b281-da77543d555e" Value="1" Type="float" />
     </ParameterSet>
+</MemberComponentTemplate>
+<MemberComponentTemplate Name="BlockBreakerBehavior" Guid="5950ddd2-5ffd-42dc-af25-754dfacbcdaa" InheritanceParent="27c2d1a4-776c-432b-81d0-88ef0d417b42">
+  <Parameter Name="BreakBlockProbability" Guid="345e8319-1862-462f-a19f-5eb702b6c8a0" Value="1" Type="float" />
+  <Parameter Name="BreakableBlocks" Guid="1b2a2d5e-1574-42aa-befc-3d8085c01046" Value="" Type="string" />
 </MemberComponentTemplate>
             <MemberComponentTemplate Name="GlowingEyes" Guid="8384575b-a45b-4509-8e88-b1aeea72642b" InheritanceParent="bb8701d3-3a4f-44f7-8a1f-3a455533f632">
               <Parameter Name="GlowingEyesColor" Guid="e7f1332b-0e2c-4b3d-acff-ae3510cf0a3d" Value="0,204,0" Type="Color" />
