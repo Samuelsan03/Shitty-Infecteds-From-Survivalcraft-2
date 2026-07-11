@@ -2,6 +2,7 @@ using System;
 using System.Xml.Linq;
 using Engine;
 using GameEntitySystem;
+using TemplatesDatabase;
 
 namespace Game
 {
@@ -13,20 +14,19 @@ namespace Game
 
 		private LabelWidget m_descriptionLabel;
 
+		private LabelWidget m_titleLabel;
+
 		private ButtonWidget m_okButton;
 
 		private ButtonWidget m_cancelButton;
 
 		private ButtonWidget m_configButton;
 
-		private const string DescriptionOff = "El mundo mantiene su equilibrio habitual\n con rangos de percepción limitados y\n persecuciones breves.";
-
-		private const string DescriptionOn = "El mundo entra en un estado de agresividad\n descontrolada. Las criaturas expanden\n drásticamente su campo de percepción, \ndesatan persecuciones inagotables que no\n ceden ante obstáculos ni pérdida de\n contacto visual,\n priorizando la caza de forma absoluta.";
-
 		public GreenNightActivationDialog(SubsystemGreenNightSky subsystemGreenNight)
 		{
 			XElement node = ContentManager.Get<XElement>("Dialogs/GreenNightActivationDialog");
 			this.LoadContents(this, node);
+			this.m_titleLabel = this.Children.Find<LabelWidget>("GreenNightActivationDialog.Title", true);
 			this.m_activateCheckbox = this.Children.Find<CheckboxWidget>("GreenNightActivationDialog.ActivateCheckbox", true);
 			this.m_descriptionLabel = this.Children.Find<LabelWidget>("GreenNightActivationDialog.Description", true);
 			this.m_okButton = this.Children.Find<ButtonWidget>("GreenNightActivationDialog.OkButton", true);
@@ -38,6 +38,12 @@ namespace Game
 			{
 				this.m_activateCheckbox.IsChecked = this.m_subsystemGreenNight.IsGreenNightEnabled;
 			}
+
+			this.m_titleLabel.Text = LanguageControl.Get("GreenNightActivationDialog", 1);
+			this.m_activateCheckbox.Text = LanguageControl.Get("GreenNightActivationDialog", 2);
+			this.m_configButton.Text = LanguageControl.Get("GreenNightActivationDialog", 5);
+			this.m_okButton.Text = LanguageControl.Get("GreenNightActivationDialog", 7);
+			this.m_cancelButton.Text = LanguageControl.Get("GreenNightActivationDialog", 6);
 			this.UpdateDescription();
 		}
 
@@ -49,22 +55,7 @@ namespace Game
 			}
 			if (this.m_configButton != null && this.m_configButton.IsClicked)
 			{
-				ComponentPlayer player = null;
-				if (m_subsystemGreenNight != null && m_subsystemGreenNight.Project != null)
-				{
-					foreach (Entity entity in m_subsystemGreenNight.Project.Entities)
-					{
-						if (entity != null)
-						{
-							ComponentPlayer p = entity.FindComponent<ComponentPlayer>();
-							if (p != null)
-							{
-								player = p;
-								break;
-							}
-						}
-					}
-				}
+				ComponentPlayer player = GetPlayer();
 				if (player != null)
 				{
 					DialogsManager.ShowDialog(null, new GreenNightConfigDialog(player, false));
@@ -80,6 +71,29 @@ namespace Game
 					if (newState != oldState)
 					{
 						this.m_subsystemGreenNight.SetGreenNightActive(newState);
+
+						ComponentPlayer player = GetPlayer();
+						if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
+						{
+							if (newState)
+							{
+								player.ComponentGui.DisplaySmallMessage(
+									LanguageControl.Get("GreenNightActivationDialog", 8),
+									new Color(0, 255, 94),
+									false,
+									true
+								);
+							}
+							else
+							{
+								player.ComponentGui.DisplaySmallMessage(
+									LanguageControl.Get("GreenNightActivationDialog", 9),
+									new Color(255, 200, 100),
+									false,
+									true
+								);
+							}
+						}
 					}
 				}
 				Dismiss();
@@ -97,7 +111,30 @@ namespace Game
 
 		private void UpdateDescription()
 		{
-			this.m_descriptionLabel.Text = this.m_activateCheckbox.IsChecked ? DescriptionOn : DescriptionOff;
+			if (this.m_activateCheckbox.IsChecked)
+			{
+				this.m_descriptionLabel.Text = LanguageControl.Get("GreenNightActivationDialog", 4);
+			}
+			else
+			{
+				this.m_descriptionLabel.Text = LanguageControl.Get("GreenNightActivationDialog", 3);
+			}
 		}
+
+		private ComponentPlayer GetPlayer()
+		{
+			if (m_subsystemGreenNight?.Project == null) return null;
+			foreach (Entity entity in m_subsystemGreenNight.Project.Entities)
+			{
+				if (entity != null)
+				{
+					ComponentPlayer p = entity.FindComponent<ComponentPlayer>();
+					if (p != null) return p;
+				}
+			}
+			return null;
+		}
+
+		public const string fName = "GreenNightActivationDialog";
 	}
 }
