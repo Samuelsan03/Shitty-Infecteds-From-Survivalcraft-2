@@ -10,6 +10,7 @@ namespace Game
 	public class SubsystemCreatureHealthBars : Subsystem, IDrawable
 	{
 		private SubsystemCreatureSpawn m_subsystemCreatureSpawn;
+		private SubsystemGameWidgets m_subsystemGameWidgets;
 		private PrimitivesRenderer3D m_primitivesRenderer = new PrimitivesRenderer3D();
 
 		public int[] DrawOrders => new int[] { 202 };
@@ -18,11 +19,28 @@ namespace Game
 		{
 			if (drawOrder != DrawOrders[0]) return;
 
-			// NUEVA LÍNEA: Cancelar el dibujado si está desactivado en los ajustes
+			// Cancelar el dibujado si está desactivado en los ajustes
 			if (!ShittyInfectedsSettings.ShowCreatureHealthBars) return;
 
 			var batch = m_primitivesRenderer.FlatBatch(0, DepthStencilState.None, RasterizerState.CullNoneScissor, BlendState.AlphaBlend);
 			var fontBatch = m_primitivesRenderer.FontBatch(LabelWidget.BitmapFont, 0, DepthStencilState.None, null, BlendState.AlphaBlend, SamplerState.LinearClamp);
+
+			// NUEVO: Determinar si estamos en primera persona y obtener la entidad del jugador local
+			bool isFirstPerson = false;
+			Entity localPlayerEntity = null;
+
+			if (m_subsystemGameWidgets != null)
+			{
+				foreach (var gameWidget in m_subsystemGameWidgets.GameWidgets)
+				{
+					if (gameWidget.ActiveCamera is FppCamera && gameWidget.Target != null)
+					{
+						isFirstPerson = true;
+						localPlayerEntity = gameWidget.Target.Entity; // Se compara la entidad, no el componente
+						break;
+					}
+				}
+			}
 
 			foreach (var creature in m_subsystemCreatureSpawn.Creatures)
 			{
@@ -31,6 +49,12 @@ namespace Game
 
 				var body = creature.ComponentBody;
 				if (body == null) continue;
+
+				// NUEVO: Omitir la barra de vida si es nuestra propia entidad y estamos en primera persona
+				if (isFirstPerson && creature.Entity == localPlayerEntity)
+				{
+					continue;
+				}
 
 				CreatureHealthState state = GetHealthState(health.Health);
 				Color color = GetColor(state);
@@ -112,6 +136,7 @@ namespace Game
 		public override void Load(ValuesDictionary valuesDictionary)
 		{
 			m_subsystemCreatureSpawn = Project.FindSubsystem<SubsystemCreatureSpawn>(true);
+			m_subsystemGameWidgets = Project.FindSubsystem<SubsystemGameWidgets>(true);
 		}
 
 		public enum CreatureHealthState
