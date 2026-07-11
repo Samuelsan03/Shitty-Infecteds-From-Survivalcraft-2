@@ -106,9 +106,13 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
-    <MemberSubsystemTemplate Name="GreenNightSky" Description="Maneja el evento periódico de la noche verde y su activación" Guid="80bd2261-f596-4cdc-91b8-56c50bcab8bd" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+    <MemberSubsystemTemplate Name="GreenNightSky" Guid="80bd2261-f596-4cdc-91b8-56c50bcab8bd" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Dependencies" Guid="60010386-31a3-45f2-ba9d-cff2d9c6b65f" Value="TimeOfDay, Time" Type="string" />
   <Parameter Name="Class" Guid="f4efa050-f526-47cd-9431-36e2a634debf" Value="Game.SubsystemGreenNightSky" Type="string" />
+  </MemberSubsystemTemplate>
+
+  <MemberSubsystemTemplate Name="CreatureHealthBars" Guid="65cf5765-71a7-4dda-9474-24bb62ddc118" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="77ec4e34-fb93-4e65-9b82-d057347c3b4d" Value="Game.SubsystemCreatureHealthBars" Type="string" />
   </MemberSubsystemTemplate>
   </ProjectTemplate>
 </Infecteds>
