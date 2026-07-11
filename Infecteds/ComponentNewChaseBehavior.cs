@@ -141,7 +141,7 @@ namespace Game
 							hitBody.ApplyImpulse(Vector3.Normalize(pushDirection + Vector3.UnitY * 0.5f) * 1e+9f);
 						}
 
-						if (m_invokeLightningOnHit && m_target != null && m_random.Float(0f, 1f) < 0.5f)
+						if (m_invokeLightningOnHit && m_target != null && m_random.Float(0f, 1f) < 0.1f)
 						{
 							m_subsystemSky.MakeLightningStrike(m_target.ComponentBody.Position, false);
 						}
@@ -181,46 +181,99 @@ namespace Game
 
 		private void DestroyBlocksInLookDirection()
 		{
-			if (!IsActive || m_stateMachine.CurrentState != "Chasing")
+			if (!IsActive || m_stateMachine.CurrentState != "Chasing" || m_target == null)
 				return;
 
-			Vector3 bodyPos = m_componentCreature.ComponentBody.Position;
-			Vector3 lookDir = Vector3.Normalize(m_componentCreature.ComponentCreatureModel.EyeRotation.GetForwardVector());
-			Vector3 bodyForward = m_componentCreature.ComponentBody.Matrix.Forward;
+			Vector3 myPos = m_componentCreature.ComponentBody.Position;
+			Vector3 targetPos = m_target.ComponentBody.Position;
+
+			// Dirección hacia el objetivo
+			Vector3 dirToTarget = targetPos - myPos;
+			float distToTarget = dirToTarget.Length();
+			if (distToTarget < 0.01f)
+				return;
+
+			// Normalizar componente vertical y horizontal para determinar dirección principal
+			float verticalRatio = MathF.Abs(dirToTarget.Y) / distToTarget;
+			float horizontalLength = new Vector2(dirToTarget.X, dirToTarget.Z).Length();
 
 			Point3 cell1, cell2;
-			if (lookDir.Y > 0.7f)
+			bool destroyBlocks = true;
+
+			if (verticalRatio > 0.6f)
 			{
-				int baseY = Terrain.ToCell(bodyPos.Y + m_componentCreature.ComponentBody.BoxSize.Y + 0.5f);
-				cell1 = new Point3(Terrain.ToCell(bodyPos.X), baseY, Terrain.ToCell(bodyPos.Z));
-				cell2 = new Point3(cell1.X, baseY + 1, cell1.Z);
-			}
-			else if (lookDir.Y < -0.7f)
-			{
-				int baseY = Terrain.ToCell(bodyPos.Y - 0.1f);
-				cell1 = new Point3(Terrain.ToCell(bodyPos.X), baseY, Terrain.ToCell(bodyPos.Z));
-				cell2 = new Point3(cell1.X, baseY - 1, cell1.Z);
+				// Objetivo PRINCIPALMENTE arriba o abajo
+				if (dirToTarget.Y > 0)
+				{
+					// Objetivo ARRIBA - romper bloques arriba
+					int baseY = Terrain.ToCell(myPos.Y + m_componentCreature.ComponentBody.BoxSize.Y + 0.5f);
+					cell1 = new Point3(Terrain.ToCell(myPos.X), baseY, Terrain.ToCell(myPos.Z));
+					cell2 = new Point3(cell1.X, baseY + 1, cell1.Z);
+				}
+				else
+				{
+					// Objetivo ABAJO - romper bloques abajo
+					int baseY = Terrain.ToCell(myPos.Y - 0.1f);
+					cell1 = new Point3(Terrain.ToCell(myPos.X), baseY, Terrain.ToCell(myPos.Z));
+					cell2 = new Point3(cell1.X, baseY - 1, cell1.Z);
+				}
 			}
 			else
 			{
-				Vector3 targetPos = bodyPos + bodyForward * 1.5f;
-				int baseY = Terrain.ToCell(bodyPos.Y + m_componentCreature.ComponentBody.BoxSize.Y * 0.5f);
-				cell1 = new Point3(Terrain.ToCell(targetPos.X), baseY, Terrain.ToCell(targetPos.Z));
+				// Objetivo ADELANTE (horizontal o ligeramente diagonal)
+				// Obtener dirección horizontal hacia el objetivo
+				Vector2 horizontalDir;
+				if (horizontalLength > 0.01f)
+				{
+					horizontalDir = new Vector2(dirToTarget.X, dirToTarget.Z) / horizontalLength;
+				}
+				else
+				{
+					// Fallback a dirección forward del cuerpo
+					Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
+					horizontalDir = new Vector2(forward.X, forward.Z);
+					float len = horizontalDir.Length();
+					if (len > 0.01f)
+						horizontalDir /= len;
+					else
+						horizontalDir = new Vector2(0f, 1f);
+				}
+
+				// Posición del bloque adelante
+				Vector3 targetBlockPos = myPos + new Vector3(horizontalDir.X, 0f, horizontalDir.Y) * 1.5f;
+				int baseY = Terrain.ToCell(myPos.Y + m_componentCreature.ComponentBody.BoxSize.Y * 0.5f);
+
+				// Si el objetivo está ligeramente arriba, apuntar más alto
+				if (dirToTarget.Y > 0.3f)
+				{
+					baseY += 1;
+				}
+				// Si el objetivo está ligeramente abajo, apuntar más bajo
+				else if (dirToTarget.Y < -0.3f)
+				{
+					baseY -= 1;
+				}
+
+				cell1 = new Point3(Terrain.ToCell(targetBlockPos.X), baseY, Terrain.ToCell(targetBlockPos.Z));
 				cell2 = new Point3(cell1.X, baseY + 1, cell1.Z);
 			}
 
-			int value1 = m_subsystemTerrain.Terrain.GetCellValue(cell1.X, cell1.Y, cell1.Z);
-			if (Terrain.ExtractContents(value1) != BedrockBlock.Index)
+			// Destruir los bloques calculados
+			if (destroyBlocks)
 			{
-				m_subsystemSoundMaterials.PlayImpactSound(value1, new Vector3(cell1.X + 0.5f, cell1.Y + 0.5f, cell1.Z + 0.5f), 1f);
-				m_subsystemTerrain.DestroyCell(4, cell1.X, cell1.Y, cell1.Z, 0, false, false, null);
-			}
+				int value1 = m_subsystemTerrain.Terrain.GetCellValue(cell1.X, cell1.Y, cell1.Z);
+				if (Terrain.ExtractContents(value1) != BedrockBlock.Index)
+				{
+					m_subsystemSoundMaterials.PlayImpactSound(value1, new Vector3(cell1.X + 0.5f, cell1.Y + 0.5f, cell1.Z + 0.5f), 1f);
+					m_subsystemTerrain.DestroyCell(4, cell1.X, cell1.Y, cell1.Z, 0, false, false, null);
+				}
 
-			int value2 = m_subsystemTerrain.Terrain.GetCellValue(cell2.X, cell2.Y, cell2.Z);
-			if (Terrain.ExtractContents(value2) != BedrockBlock.Index)
-			{
-				m_subsystemSoundMaterials.PlayImpactSound(value2, new Vector3(cell2.X + 0.5f, cell2.Y + 0.5f, cell2.Z + 0.5f), 1f);
-				m_subsystemTerrain.DestroyCell(4, cell2.X, cell2.Y, cell2.Z, 0, false, false, null);
+				int value2 = m_subsystemTerrain.Terrain.GetCellValue(cell2.X, cell2.Y, cell2.Z);
+				if (Terrain.ExtractContents(value2) != BedrockBlock.Index)
+				{
+					m_subsystemSoundMaterials.PlayImpactSound(value2, new Vector3(cell2.X + 0.5f, cell2.Y + 0.5f, cell2.Z + 0.5f), 1f);
+					m_subsystemTerrain.DestroyCell(4, cell2.X, cell2.Y, cell2.Z, 0, false, false, null);
+				}
 			}
 		}
 
