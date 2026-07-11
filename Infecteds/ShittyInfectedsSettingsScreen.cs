@@ -10,30 +10,33 @@ namespace Game
 
 		private ButtonWidget m_enableCreatureAttacksButton;
 		private ButtonWidget m_attackOnHitCreativeButton;
+		private ButtonWidget m_showCoordinatesButton; // NUEVO BOTÓN
 
 		public ShittyInfectedsSettingsScreen()
 		{
-			// Forzar la lectura del XML más reciente al construir la pantalla
 			ShittyInfectedsSettingsManager.Load();
 
 			XElement node = ContentManager.Get<XElement>("Screens/ShittyInfectedsSettingsScreen");
 			LoadContents(this, node);
 
-			// Forzar el título localizado desde C#
 			Children.Find<LabelWidget>("TopBar.Label", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 1);
 
 			m_settingsContainer = Children.Find<StackPanelWidget>("SettingsContainer", true);
 
-			// Configuración 1: Solo descripción
 			m_enableCreatureAttacksButton = AddToggleButton(
 				"EnableCreatureAttacks",
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 2)
 			);
 
-			// Configuración 2: Solo descripción
 			m_attackOnHitCreativeButton = AddToggleButton(
 				"AttackOnHitCreative",
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 3)
+			);
+
+			// NUEVO BOTÓN DE COORDENADAS
+			m_showCoordinatesButton = AddToggleButton(
+				"ShowCoordinates",
+				LanguageControl.Get("ShittyInfectedsSettingsScreen", 4)
 			);
 		}
 
@@ -74,31 +77,34 @@ namespace Game
 
 		public override void Update()
 		{
-			// Toggle Enable Creature Attacks
 			if (m_enableCreatureAttacksButton.IsClicked)
 			{
 				ShittyInfectedsSettings.EnableCreatureAttacks = !ShittyInfectedsSettings.EnableCreatureAttacks;
-
-				// GUARDAR INMEDIATAMENTE AL CAMBIAR
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_enableCreatureAttacksButton.Text = ShittyInfectedsSettings.EnableCreatureAttacks
 				? LanguageControl.On
 				: LanguageControl.Off;
 
-			// Toggle Attack On Hit Creative
 			if (m_attackOnHitCreativeButton.IsClicked)
 			{
 				ShittyInfectedsSettings.AttackOnHitCreative = !ShittyInfectedsSettings.AttackOnHitCreative;
-
-				// GUARDAR INMEDIATAMENTE AL CAMBIAR
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_attackOnHitCreativeButton.Text = ShittyInfectedsSettings.AttackOnHitCreative
 				? LanguageControl.On
 				: LanguageControl.Off;
 
-			// Botón de volver
+			// NUEVA LÓGICA PARA COORDENADAS
+			if (m_showCoordinatesButton.IsClicked)
+			{
+				ShittyInfectedsSettings.ShowCoordinates = !ShittyInfectedsSettings.ShowCoordinates;
+				ShittyInfectedsSettingsManager.Save();
+			}
+			m_showCoordinatesButton.Text = ShittyInfectedsSettings.ShowCoordinates
+				? LanguageControl.On
+				: LanguageControl.Off;
+
 			if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back", true).IsClicked)
 			{
 				ScreensManager.GoBack();
