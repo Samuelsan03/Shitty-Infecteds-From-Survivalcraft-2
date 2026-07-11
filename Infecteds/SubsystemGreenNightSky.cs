@@ -147,7 +147,14 @@ namespace Game
 				m_greenNightTriggeredThisCycle = false;
 			}
 
-			bool isScheduledDay = currentDay >= m_lastGreenNightDay && currentDay < m_lastGreenNightDay + 1.0;
+			// CORRECCIÓN: Ajustar el día actual considerando que el ciclo del día 
+			// empieza en el amanecer (DawnStart), no a la medianoche.
+			double dawnOffset = (double)m_subsystemTimeOfDay.DawnStart;
+			double effectiveDay = (currentDay - dawnOffset < 0)
+				? currentDay - dawnOffset + 1.0
+				: currentDay - dawnOffset;
+
+			bool isScheduledDay = effectiveDay >= m_lastGreenNightDay && effectiveDay < m_lastGreenNightDay + 1.0;
 
 			if (isScheduledDay && IsNightTime && !m_greenNightTriggeredThisCycle)
 			{
@@ -159,7 +166,7 @@ namespace Game
 			if (m_isGreenNightActive && !IsNightTime)
 			{
 				m_isGreenNightActive = false;
-				m_lastGreenNightDay = Math.Floor(currentDay) + m_greenNightIntervalDays;
+				m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
 				m_greenNightTriggeredThisCycle = false;
 				NotifyGreenNightNaturalEnd();
 			}
@@ -268,7 +275,12 @@ namespace Game
 			if (m_subsystemTimeOfDay != null)
 			{
 				double currentDay = m_subsystemTimeOfDay.Day;
-				m_lastGreenNightDay = Math.Floor(currentDay) + m_greenNightIntervalDays;
+				double dawnOffset = (double)m_subsystemTimeOfDay.DawnStart;
+				double effectiveDay = (currentDay - dawnOffset < 0)
+					? currentDay - dawnOffset + 1.0
+					: currentDay - dawnOffset;
+
+				m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
 			}
 			else
 			{
@@ -327,7 +339,13 @@ namespace Game
 			{
 				if (m_subsystemTimeOfDay != null && m_lastGreenNightDay < 0)
 				{
-					m_lastGreenNightDay = Math.Floor(m_subsystemTimeOfDay.Day) + m_greenNightIntervalDays;
+					double currentDay = m_subsystemTimeOfDay.Day;
+					double dawnOffset = (double)m_subsystemTimeOfDay.DawnStart;
+					double effectiveDay = (currentDay - dawnOffset < 0)
+						? currentDay - dawnOffset + 1.0
+						: currentDay - dawnOffset;
+
+					m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
 				}
 			}
 			else
@@ -337,7 +355,13 @@ namespace Game
 
 				if (m_subsystemTimeOfDay != null)
 				{
-					m_lastGreenNightDay = Math.Floor(m_subsystemTimeOfDay.Day) + m_greenNightIntervalDays;
+					double currentDay = m_subsystemTimeOfDay.Day;
+					double dawnOffset = (double)m_subsystemTimeOfDay.DawnStart;
+					double effectiveDay = (currentDay - dawnOffset < 0)
+						? currentDay - dawnOffset + 1.0
+						: currentDay - dawnOffset;
+
+					m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
 				}
 				else
 				{
