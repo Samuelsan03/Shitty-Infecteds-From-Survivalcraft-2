@@ -40,27 +40,44 @@ public class ShittyInfectedsModLoader : ModLoader
 		if (guiWidget == null)
 			return;
 
-		// Buscar o crear el label de coordenadas directamente en el GuiWidget (no en el panel de controles)
+		// Buscar o crear el label de coordenadas
 		LabelWidget coordLabel = guiWidget.Children.Find<LabelWidget>("ShittyCoordsLabel", false);
 		if (coordLabel == null)
 		{
 			coordLabel = new LabelWidget
 			{
 				Name = "ShittyCoordsLabel",
-				Text = "Coordenadas: X:0 Y:0 Z:0",
+				Text = "",
 				Color = new Color(255, 255, 255, 200),
-				HorizontalAlignment = WidgetAlignment.Near, // Izquierda
-				VerticalAlignment = WidgetAlignment.Near, // Arriba
+				HorizontalAlignment = WidgetAlignment.Near,
+				VerticalAlignment = WidgetAlignment.Near,
 				FontScale = 0.6f,
 				DropShadow = true,
-				Margin = new Vector2(80f, 20f) // Posición cerca del botón rosa (ajusta estos valores)
+				Margin = new Vector2(80f, 20f)
 			};
 			guiWidget.Children.Add(coordLabel);
 		}
 
-		// Actualizar coordenadas
-		Vector3 pos = componentGui.m_componentPlayer.ComponentBody.Position;
-		coordLabel.Text = $"Coordenadas: X:{pos.X:F0} Y:{pos.Y:F0} Z:{pos.Z:F0}";
+		// 1. Verificar si está desactivado en la configuración
+		if (!ShittyInfectedsSettings.ShowCoordinates)
+		{
+			coordLabel.IsVisible = false;
+			return;
+		}
+
+		// 2. Verificar si el jugador está vivo y jugando normalmente
+		bool isAlive = componentGui.m_componentPlayer.ComponentHealth.Health > 0f;
+		bool isReady = componentGui.m_componentPlayer.PlayerData.IsReadyForPlaying;
+
+		// Mostrar solo si está vivo y listo para jugar
+		coordLabel.IsVisible = isAlive && isReady;
+
+		// 3. Actualizar coordenadas con LanguageControl
+		if (coordLabel.IsVisible)
+		{
+			Vector3 pos = componentGui.m_componentPlayer.ComponentBody.Position;
+			coordLabel.Text = string.Format(LanguageControl.Get("ShittyInfectedsMod", "1"), pos.X, pos.Y, pos.Z);
+		}
 	}
 
 	public override void OnProjectileRaycastBody(ComponentBody body, Projectile projectile, float distance, out bool ignore)
