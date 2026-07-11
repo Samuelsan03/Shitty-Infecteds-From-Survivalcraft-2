@@ -1,7 +1,18 @@
 {
   "ShittyInfectedsSettingsScreen": {
-    "1": "Configuración de Shitty Infecteds",
-    "2": "Al golpear a una criatura, tus aliados de la manada la atacarán",
-    "3": "Cuando una criatura te ataque en modo creativo, tus aliados la atacarán"
-  }
+    "1": "Shitty Infecteds Settings",
+    "2": "When hitting a creature, your herd allies will attack it",
+    "3": "When a creature hits you in creative, your allies will attack it"
+  },
+  "GreenNightActivationDialog": {
+    "1": "Green Night Management",
+    "2": "Enable Green Night",
+    "3": "The world maintains its usual balance\nwith limited detection ranges and\nshort pursuits.",
+    "4": "The world enters a state of\nuncontrolled aggression. Creatures\ndrastically expand their detection\nrange, unleash relentless pursuits that\ndo not stop because of obstacles or\nloss of visual contact,\nprioritizing the hunt above all else.",
+    "5": "Days & Suffering Settings",
+    "6": "Cancel",
+    "7": "Accept",
+    "8": "Green Night enabled.",
+    "9": "Green Night disabled."
+}
 }
