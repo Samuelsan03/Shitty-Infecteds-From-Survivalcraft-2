@@ -59,7 +59,6 @@ namespace Game
 			if (m_subsystemTimeOfDay == null || m_lastGreenNightDay < 0)
 				return m_greenNightIntervalDays;
 
-			// Calcular usando días enteros para evitar que se quede atascado
 			int currentDayInt = (int)Math.Floor(m_subsystemTimeOfDay.Day);
 			int scheduledDayInt = (int)Math.Floor(m_lastGreenNightDay);
 
@@ -76,7 +75,12 @@ namespace Game
 				float eventStart = m_subsystemTimeOfDay.DuskStart;
 				float eventEnd = m_subsystemTimeOfDay.DawnStart;
 
-				return IntervalUtils.IsBetween(timeOfDay, eventStart, eventEnd);
+				if (eventStart > eventEnd)
+				{
+					return timeOfDay >= eventStart || timeOfDay < eventEnd;
+				}
+
+				return timeOfDay >= eventStart && timeOfDay < eventEnd;
 			}
 		}
 
@@ -157,7 +161,7 @@ namespace Game
 				m_isGreenNightActive = false;
 				m_lastGreenNightDay = Math.Floor(currentDay) + m_greenNightIntervalDays;
 				m_greenNightTriggeredThisCycle = false;
-				NotifyGreenNightEnd();
+				NotifyGreenNightNaturalEnd();
 			}
 
 			UpdateHudLabel();
@@ -288,7 +292,7 @@ namespace Game
 				if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
 				{
 					player.ComponentGui.DisplaySmallMessage(
-						"Noche Verde activada.",
+						"La noche verde ha comenzado.",
 						new Color(0, 255, 94),
 						false,
 						true
@@ -297,7 +301,7 @@ namespace Game
 			}
 		}
 
-		private void NotifyGreenNightEnd()
+		private void NotifyGreenNightNaturalEnd()
 		{
 			if (m_subsystemPlayers == null) return;
 
@@ -306,7 +310,7 @@ namespace Game
 				if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
 				{
 					player.ComponentGui.DisplaySmallMessage(
-						"Noche Verde desactivada.",
+						"La noche verde ha terminado.",
 						new Color(180, 255, 180),
 						false,
 						true
