@@ -1,8 +1,12 @@
 {
+  "ShittyInfectedsMod": {
+    "1": "Coordinates: X:{0:F0} Y:{1:F0} Z:{2:F0}"
+},
   "ShittyInfectedsSettingsScreen": {
     "1": "Shitty Infecteds Settings",
     "2": "When hitting a creature, your herd allies will attack it",
-    "3": "When a creature hits you in creative, your allies will attack it"
+    "3": "When a creature hits you in creative, your allies will attack it",
+    "4": "Show player coordinates on screen"
   },
   "GreenNightActivationDialog": {
     "1": "Green Night Management",
