@@ -1,8 +1,12 @@
 {
+  "ShittyInfectedsMod": {
+    "1": "坐标：X:{0:F0} Y:{1:F0} Z:{2:F0}"
+},
   "ShittyInfectedsSettingsScreen": {
     "1": "Shitty Infecteds 设置",
     "2": "当你攻击一个生物时，你的群体盟友会攻击它",
-    "3": "当一个生物在创造模式下攻击你时，你的盟友会攻击它"
+    "3": "当一个生物在创造模式下攻击你时，你的盟友会攻击它",
+    "4": "在屏幕上显示玩家坐标"
   },
   "GreenNightActivationDialog": {
     "1": "绿色之夜管理",
