@@ -8,14 +8,9 @@ namespace Game
 {
 	public static class ShittyInfectedsSettingsManager
 	{
-		// SOLUCIÓN: Al no poner ruta (ej: "app:/"), el engine usa la ruta de escritura 
-		// predeterminada segura del sistema, evitando errores de permisos de solo lectura.
 		private static readonly string SettingsFilePath = "ShittyInfectedsSettings.xml";
 		private const string RootElementName = "ShittyInfectedsSettings";
 
-		/// <summary>
-		/// Guarda la configuración actual en el archivo XML
-		/// </summary>
 		public static void Save()
 		{
 			try
@@ -32,6 +27,12 @@ namespace Game
 					new XAttribute("value", ShittyInfectedsSettings.AttackOnHitCreative.ToString().ToLower())
 				));
 
+				// NUEVA LÍNEA PARA GUARDAR COORDENADAS
+				root.Add(new XElement("ShowCoordinates",
+					new XAttribute("type", "bool"),
+					new XAttribute("value", ShittyInfectedsSettings.ShowCoordinates.ToString().ToLower())
+				));
+
 				using (Stream stream = Storage.OpenFile(SettingsFilePath, OpenFileMode.Create))
 				{
 					XmlUtils.SaveXmlToStream(root, stream, System.Text.Encoding.UTF8, true);
@@ -43,9 +44,6 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Carga la configuración desde el archivo XML si existe
-		/// </summary>
 		public static void Load()
 		{
 			try
@@ -61,18 +59,22 @@ namespace Game
 					if (elem1 != null)
 					{
 						if (bool.TryParse(elem1.Attribute("value")?.Value, out bool val1))
-						{
 							ShittyInfectedsSettings.EnableCreatureAttacks = val1;
-						}
 					}
 
 					XElement elem2 = root.Element("AttackOnHitCreative");
 					if (elem2 != null)
 					{
 						if (bool.TryParse(elem2.Attribute("value")?.Value, out bool val2))
-						{
 							ShittyInfectedsSettings.AttackOnHitCreative = val2;
-						}
+					}
+
+					// NUEVAS LÍNEAS PARA CARGAR COORDENADAS
+					XElement elem3 = root.Element("ShowCoordinates");
+					if (elem3 != null)
+					{
+						if (bool.TryParse(elem3.Attribute("value")?.Value, out bool val3))
+							ShittyInfectedsSettings.ShowCoordinates = val3;
 					}
 				}
 			}
