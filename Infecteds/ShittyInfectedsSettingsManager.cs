@@ -27,10 +27,15 @@ namespace Game
 					new XAttribute("value", ShittyInfectedsSettings.AttackOnHitCreative.ToString().ToLower())
 				));
 
-				// NUEVA LÍNEA PARA GUARDAR COORDENADAS
 				root.Add(new XElement("ShowCoordinates",
 					new XAttribute("type", "bool"),
 					new XAttribute("value", ShittyInfectedsSettings.ShowCoordinates.ToString().ToLower())
+				));
+
+				// NUEVA LÍNEA PARA GUARDAR BARRAS DE VIDA
+				root.Add(new XElement("ShowCreatureHealthBars",
+					new XAttribute("type", "bool"),
+					new XAttribute("value", ShittyInfectedsSettings.ShowCreatureHealthBars.ToString().ToLower())
 				));
 
 				using (Stream stream = Storage.OpenFile(SettingsFilePath, OpenFileMode.Create))
@@ -69,12 +74,19 @@ namespace Game
 							ShittyInfectedsSettings.AttackOnHitCreative = val2;
 					}
 
-					// NUEVAS LÍNEAS PARA CARGAR COORDENADAS
 					XElement elem3 = root.Element("ShowCoordinates");
 					if (elem3 != null)
 					{
 						if (bool.TryParse(elem3.Attribute("value")?.Value, out bool val3))
 							ShittyInfectedsSettings.ShowCoordinates = val3;
+					}
+
+					// NUEVAS LÍNEAS PARA CARGAR BARRAS DE VIDA
+					XElement elem4 = root.Element("ShowCreatureHealthBars");
+					if (elem4 != null)
+					{
+						if (bool.TryParse(elem4.Attribute("value")?.Value, out bool val4))
+							ShittyInfectedsSettings.ShowCreatureHealthBars = val4;
 					}
 				}
 			}
