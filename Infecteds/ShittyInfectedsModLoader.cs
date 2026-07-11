@@ -28,6 +28,39 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("OnPlayerInputInteract", this);
 		ModsManager.RegisterHook("OnProjectileRaycastBody", this);
 		ModsManager.RegisterHook("AfterWidgetUpdate", this);
+		ModsManager.RegisterHook("GuiUpdate", this);
+	}
+
+	public override void GuiUpdate(ComponentGui componentGui)
+	{
+		if (componentGui?.m_componentPlayer?.ComponentBody == null)
+			return;
+
+		ContainerWidget guiWidget = componentGui.m_componentPlayer.GuiWidget;
+		if (guiWidget == null)
+			return;
+
+		// Buscar o crear el label de coordenadas directamente en el GuiWidget (no en el panel de controles)
+		LabelWidget coordLabel = guiWidget.Children.Find<LabelWidget>("ShittyCoordsLabel", false);
+		if (coordLabel == null)
+		{
+			coordLabel = new LabelWidget
+			{
+				Name = "ShittyCoordsLabel",
+				Text = "Coordenadas: X:0 Y:0 Z:0",
+				Color = new Color(255, 255, 255, 200),
+				HorizontalAlignment = WidgetAlignment.Near, // Izquierda
+				VerticalAlignment = WidgetAlignment.Near, // Arriba
+				FontScale = 0.6f,
+				DropShadow = true,
+				Margin = new Vector2(80f, 20f) // Posición cerca del botón rosa (ajusta estos valores)
+			};
+			guiWidget.Children.Add(coordLabel);
+		}
+
+		// Actualizar coordenadas
+		Vector3 pos = componentGui.m_componentPlayer.ComponentBody.Position;
+		coordLabel.Text = $"Coordenadas: X:{pos.X:F0} Y:{pos.Y:F0} Z:{pos.Z:F0}";
 	}
 
 	public override void OnProjectileRaycastBody(ComponentBody body, Projectile projectile, float distance, out bool ignore)
