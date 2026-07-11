@@ -32,8 +32,9 @@
               <Parameter Name="KillVerbs" Guid="11f46681-63d2-4d5e-956f-3fef1039cc14" Value="massacred" Type="string" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="Body" Guid="a6a69442-1bbc-4dea-b0e4-81365189b8fa">
-              <Parameter Name="BoxSize" Guid="885d1a0e-1651-48cf-af88-af541c9c1ef3" Value="0.7,1.8,0.7" Type="Vector3" />
+              <Parameter Name="BoxSize" Guid="885d1a0e-1651-48cf-af88-af541c9c1ef3" Value="0.7,2.2,0.7" Type="Vector3" />
               <Parameter Name="Mass" Guid="fb74780b-e789-48b1-ae03-a1fa1f42930c" Value="666" Type="float" />
+              <Parameter Name="Density" Guid="9b2600d0-72b5-4922-bebf-f2b7b37b1804" Value="0.66" Type="float"/>
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="WalkAroundBehavior" Guid="1235640c-67bb-4c94-9248-b43627a9aeaf" InheritanceParent="aebb86ce-4ee6-4ca0-850d-cd60051e1d71" />
             <MemberComponentTemplate Name="CreatureSounds" Guid="85e09e00-f414-48f8-b994-68321ac2f4c7">
