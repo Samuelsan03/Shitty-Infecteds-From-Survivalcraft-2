@@ -1,4 +1,7 @@
 {
+  "SubsystemCreatureHealthBars": {
+    "1": "{0} PV: {1}"
+  },
   "ShittyInfectedsMod": {
     "1": "Coordenadas: X:{0:F0} Y:{1:F0} Z:{2:F0}"
 },
@@ -6,7 +9,8 @@
     "1": "Configuración de Shitty Infecteds",
     "2": "Al golpear a una criatura, tus aliados de la manada la atacarán",
     "3": "Cuando una criatura te ataque en modo creativo, tus aliados la atacarán",
-    "4": "Mostrar las coordenadas del jugador en pantalla"
+    "4": "Mostrar las coordenadas del jugador en pantalla",
+    "5": "Mostrar barras de salud de las criaturas"
   },
   "GreenNightActivationDialog": {
     "1": "Administración Noche Verde",
