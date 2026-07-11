@@ -304,7 +304,6 @@ namespace Game
 					CancelAiming();
 					return;
 				}
-				// Si no tiene melee, sigue con el arma a distancia
 				EnsureRangedWeaponLoaded(inventory, distance);
 				AimAndFire(m_componentChaseBehavior.Target);
 				return;
@@ -319,7 +318,6 @@ namespace Game
 					CancelAiming();
 					return;
 				}
-				// Si tiene lanzable pero no melee, cancelar (no es útil a corta distancia)
 				CancelAiming();
 				return;
 			}
@@ -579,6 +577,7 @@ namespace Game
 			if (AimTimeTimer > 0f)
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 				AimTimeTimer -= m_subsystemTime.GameTimeDelta;
 			}
 			else
@@ -595,6 +594,7 @@ namespace Game
 				else
 				{
 					m_componentMiner.Aim(aim, AimState.Completed);
+					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 				}
 
 				if (contents == musketIndex)
@@ -620,6 +620,7 @@ namespace Game
 			for (int i = 0; i < 3; i++)
 			{
 				m_componentMiner.Aim(aim, AimState.Completed);
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 			}
 		}
 
