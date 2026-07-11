@@ -11,6 +11,7 @@ public class ShittyInfectedsModLoader : ModLoader
 	{
 		"Music/Menu Music",
 		"Music/Menu Music 2",
+		"Music/Friday the 13th - Killer Puzzle - Theme Song"
 	};
 
 	private Game.Random random = new Game.Random();
