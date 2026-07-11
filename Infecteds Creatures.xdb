@@ -119,10 +119,7 @@
             <MemberComponentTemplate Name="ZombieHerdBehavior" Guid="fdca67a3-c02e-45e8-bbad-28c21db82041" InheritanceParent="5a8d1636-1ad9-4344-8c36-a39d9bb2524d">
   <Parameter Name="HerdName" Guid="6b560d7a-e7b6-4477-a1d7-61abe94ae158" Value="Zombie" Type="string"/>
   <Parameter Name="HerdingRange" Guid="1932c315-c10e-451a-9a3a-aa3289a0eefd" Value="30" Type="float"/>
-  <Parameter Name="MinDistanceToHerd" Guid="4ebb4967-9caf-4331-adca-eb28fa5f951b" Value="10" Type="float"/>
   <Parameter Name="AutoCallNearbyHelp" Guid="8f2e586d-106e-4003-8364-f87dd0e26c79" Value="true" Type="bool"/>
-  <Parameter Name="HelpCallRange" Guid="6281c8dd-87e7-46f1-97ad-58ee174a9e78" Value="20" Type="float"/>
-  <Parameter Name="HelpChaseTime" Guid="535f6c4f-3c4e-4361-abf4-98c9b73857b8" Value="30" Type="float"/>
 </MemberComponentTemplate>
 <MemberComponentTemplate Name="ZombieChaseBehavior" Guid="38adc96d-2a77-4888-b3f1-adf1e658c974" InheritanceParent="67f04819-c0f2-47f4-bde2-436dcdb8132b">
   <Parameter Name="ChaseRangeDay" Guid="8e21d4d9-c9d5-410a-a427-06c3d97ce15e" Value="999" Type="float"/>
