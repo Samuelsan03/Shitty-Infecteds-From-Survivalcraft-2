@@ -1,18 +1,22 @@
 {
+  "ShittyInfectedsMod": {
+    "1": "Coordenadas: X:{0:F0} Y:{1:F0} Z:{2:F0}"
+},
   "ShittyInfectedsSettingsScreen": {
-    "1": "Shitty Infecteds Settings",
-    "2": "When hitting a creature, your herd allies will attack it",
-    "3": "When a creature hits you in creative, your allies will attack it"
+    "1": "Configuración de Shitty Infecteds",
+    "2": "Al golpear a una criatura, tus aliados de la manada la atacarán",
+    "3": "Cuando una criatura te ataque en modo creativo, tus aliados la atacarán",
+    "4": "Mostrar las coordenadas del jugador en pantalla"
   },
   "GreenNightActivationDialog": {
-    "1": "Green Night Management",
-    "2": "Enable Green Night",
-    "3": "The world maintains its usual balance\nwith limited detection ranges and\nshort pursuits.",
-    "4": "The world enters a state of\nuncontrolled aggression. Creatures\ndrastically expand their detection\nrange, unleash relentless pursuits that\ndo not stop because of obstacles or\nloss of visual contact,\nprioritizing the hunt above all else.",
-    "5": "Days & Suffering Settings",
-    "6": "Cancel",
-    "7": "Accept",
-    "8": "Green Night enabled.",
-    "9": "Green Night disabled."
+    "1": "Administración Noche Verde",
+    "2": "Activar Noche Verde",
+    "3": "El mundo mantiene su equilibrio habitual\n con rangos de percepción limitados y\n persecuciones breves.",
+    "4": "El mundo entra en un estado de agresividad\n descontrolada. Las criaturas expanden\n drásticamente su campo de percepción, \ndesatan persecuciones inagotables que no\n ceden ante obstáculos ni pérdida de\n contacto visual,\n priorizando la caza de forma absoluta.",
+    "5": "Config. Días y Sufrimiento",
+    "6": "Cancelar",
+    "7": "Aceptar",
+    "8": "Noche Verde activada.",
+    "9": "Noche Verde desactivada."
 }
 }
