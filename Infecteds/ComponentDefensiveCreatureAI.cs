@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -45,6 +46,15 @@ namespace Game
 		public float ThrowableAimTime = 1.5f;
 		public float ThrowableCooldown = 0.01f;
 
+		// Lista de criaturas especiales que no mueven los brazos al apuntar armas a distancia
+		// (mosquete, arco, ballesta) - NO aplica para lanzables, ya que el modelo original
+		// tiene los brazos alzados y queremos evitar la animación adicional
+		private static readonly HashSet<string> m_noArmMovementCreatures = new HashSet<string>
+		{
+			"InfectedNormalTamed1"
+            // Agregar más criaturas aquí en el futuro
+        };
+
 		private bool m_canUseInventory;
 		private float m_aimTimer;
 		private float m_cooldownTimer;
@@ -60,6 +70,60 @@ namespace Game
 		private SubsystemBodies m_subsystemBodies;
 
 		private Random m_random;
+
+		/// <summary>
+		/// Verifica si la criatura actual está en la lista de criaturas especiales
+		/// que no deben mover los brazos al apuntar armas a distancia.
+		/// CORREGIDO: Usa Entity.ValuesDictionary en lugar de m_componentCreature.ValuesDictionary
+		/// para obtener el nombre de la ENTIDAD, no del componente.
+		/// </summary>
+		private bool ShouldSkipArmMovementForRanged()
+		{
+			// IMPORTANTE: this.Entity.ValuesDictionary.DatabaseObject.Name devuelve el nombre
+			// de la EntityTemplate (ej: "InfectedNormalTamed1")
+			// m_componentCreature.ValuesDictionary.DatabaseObject.Name devolvería el nombre
+			// del componente (ej: "ComponentCreature"), que NO es lo que queremos
+			if (Entity?.ValuesDictionary?.DatabaseObject != null)
+			{
+				return m_noArmMovementCreatures.Contains(Entity.ValuesDictionary.DatabaseObject.Name);
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Aplica la configuración de animación para criaturas especiales que no mueven los brazos
+		/// al apuntar armas a distancia. El arma se rota pero los brazos permanecen en su posición.
+		/// Adaptado de la lógica del ComponentZombieAI para mantener compatibilidad visual.
+		/// </summary>
+		private void ApplyNoArmMovementAimSettings(bool isBow, bool isCrossbow)
+		{
+			// Forzar que los brazos no se muevan (igual que cuando AimHandAngleOrder = 0f en el ZombieAI)
+			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+
+			if (isBow)
+			{
+				// Configuración del arco: rotación leve sin mover brazos
+				// Adaptado del OnAimBow del ZombieAI cuando AimHandAngleOrder = 0f
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(0f, 0f, 0f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(0f, -0.2f, 0f);
+			}
+			else if (isCrossbow)
+			{
+				// Configuración de la ballesta: rotación horizontal para apuntar sin mover brazos
+				// Adaptado del OnAimCrossBow del ZombieAI cuando AimHandAngleOrder = 0f
+				// La fórmula es: AimHandAngleOrder + (AimHandAngleOrder != 0f ? 0.1f : 0f) = 0f + 0f = 0f
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.1f, 0.07f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.55f, 0f, 0f);
+			}
+			else
+			{
+				// Configuración del mosquete: rotación horizontal para apuntar sin mover brazos
+				// Adaptado del OnAimMusket del ZombieAI cuando AimHandAngleOrder = 0f
+				// La fórmula es: AimHandAngleOrder + (AimHandAngleOrder != 0f ? 0.2f : 0f) = 0f + 0f = 0f
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
+			}
+		}
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
@@ -113,6 +177,7 @@ namespace Game
 					bool hasLOS = HasClearLineOfSight(eyePos, targetPos, target);
 
 					// Si no está atrás y hay línea de visión libre, apuntar y lanzar
+					// NOTA: Los lanzables SIEMPRE usan animación normal de brazos, sin importar la lista
 					if (!isBehind && hasLOS)
 					{
 						if (m_componentPathfinding != null)
@@ -327,16 +392,34 @@ namespace Game
 			Vector3 direction = Vector3.Normalize(targetPos - eyePos);
 			Ray3 aimRay = new Ray3(eyePos, direction);
 
+			// Verificar si esta criatura no debe mover los brazos para armas a distancia
+			bool skipArmMovement = ShouldSkipArmMovementForRanged();
+
 			if (!m_isAiming)
 			{
 				m_isAiming = true;
 				m_aimTimer = 0f;
 				m_componentMiner.Aim(aimRay, AimState.InProgress);
+
+				// Para criaturas especiales: sobreescribir la animación DESPUÉS del Aim
+				// para que no mueva brazos pero el arma sí rote correctamente
+				if (skipArmMovement)
+				{
+					ApplyNoArmMovementAimSettings(isBow, isCrossbow);
+				}
 			}
 			else
 			{
 				m_aimTimer += m_subsystemTime.GameTimeDelta;
 				m_componentMiner.Aim(aimRay, AimState.InProgress);
+
+				// Para criaturas especiales: mantener la configuración sin movimiento de brazos
+				// durante todo el apunte (se sobreescribe cada frame porque el SubsystemBlockBehavior
+				// lo establece de nuevo en cada llamada a Aim)
+				if (skipArmMovement)
+				{
+					ApplyNoArmMovementAimSettings(isBow, isCrossbow);
+				}
 
 				// Evaluar el AimTime dependiendo del arma que se está usando
 				float requiredAimTime = isBow ? BowAimTime : (isCrossbow ? CrossbowAimTime : MusketAimTime);
