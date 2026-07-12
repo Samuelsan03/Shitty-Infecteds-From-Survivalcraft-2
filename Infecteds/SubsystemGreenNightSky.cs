@@ -5,373 +5,360 @@ using TemplatesDatabase;
 
 namespace Game
 {
-	public class SubsystemGreenNightSky : Subsystem, IUpdateable, IDrawable
-	{
-		public static SubsystemGreenNightSky Instance { get; private set; }
+    public class SubsystemGreenNightSky : Subsystem, IUpdateable, IDrawable
+    {
+        public static SubsystemGreenNightSky Instance { get; private set; }
 
-		public bool IsGreenNightActive => m_isGreenNightEnabled && m_isGreenNightActive;
+        public bool IsGreenNightActive => m_isGreenNightEnabled && m_isGreenNightActive;
 
-		public bool IsGreenNightEnabled => m_isGreenNightEnabled;
+        public bool IsGreenNightEnabled => m_isGreenNightEnabled;
 
-		public DifficultyModes CurrentDifficulty => (DifficultyModes)m_difficultyModeValue;
+        public DifficultyModes CurrentDifficulty => (DifficultyModes)m_difficultyModeValue;
 
-		private bool m_isGreenNightEnabled = true;
-		private int m_greenNightIntervalDays = 4;
-		private bool m_isGreenNightActive = false;
-		private double m_lastGreenNightDay = -1;
-		private bool m_greenNightTriggeredThisCycle = false;
-		private int m_difficultyModeValue = 2;
+        private bool m_isGreenNightEnabled = true;
+        private int m_greenNightIntervalDays = 4;
+        private bool m_isGreenNightActive = false;
+        private double m_lastGreenNightDay = -1;
+        private bool m_greenNightTriggeredThisCycle = false;
+        private int m_difficultyModeValue = 2;
 
-		private string[] m_difficultyNames = new string[]
-		{
-			"Sobrevivirás... Quizás",
-			"La Muerte te Espera",
-			"Tu Tumba ya Está Lista",
-			"No Hay Esperanza",
-			"Suicidio Asegurado",
-			"Ni Dios Te Salva"
-		};
+        private string[] m_difficultyNames = new string[]
+        {
+            "Sobrevivirás... Quizás",
+            "La Muerte te Espera",
+            "Tu Tumba ya Está Lista",
+            "No Hay Esperanza",
+            "Suicidio Asegurado",
+            "Ni Dios Te Salva"
+        };
 
-		private SubsystemTimeOfDay m_subsystemTimeOfDay;
-		private SubsystemTime m_subsystemTime;
-		private SubsystemPlayers m_subsystemPlayers;
+        private SubsystemTimeOfDay m_subsystemTimeOfDay;
+        private SubsystemTime m_subsystemTime;
+        private SubsystemPlayers m_subsystemPlayers;
 
-		private LabelWidget m_hudLabel;
-		private StackPanelWidget m_hudContainer;
+        private LabelWidget m_hudLabel;
+        private StackPanelWidget m_hudContainer;
 
-		public UpdateOrder UpdateOrder => UpdateOrder.Default;
-		public int[] DrawOrders => new int[] { 10 };
+        public UpdateOrder UpdateOrder => UpdateOrder.Default;
+        public int[] DrawOrders => new int[] { 10 };
 
-		public bool IsGreenNightDay
-		{
-			get
-			{
-				if (m_subsystemTimeOfDay == null || m_lastGreenNightDay < 0)
-					return false;
+        private double GetEffectiveDay()
+        {
+            if (m_subsystemTimeOfDay == null)
+                return 0;
 
-				double currentDay = m_subsystemTimeOfDay.Day;
-				return currentDay >= m_lastGreenNightDay && currentDay < m_lastGreenNightDay + 1.0;
-			}
-		}
+            double currentDay = m_subsystemTimeOfDay.Day;
+            double dawnOffset = (double)m_subsystemTimeOfDay.DawnStart;
+            
+            return (currentDay - dawnOffset < 0)
+                ? currentDay - dawnOffset + 1.0
+                : currentDay - dawnOffset;
+        }
 
-		public int GetDaysRemaining()
-		{
-			if (m_subsystemTimeOfDay == null || m_lastGreenNightDay < 0)
-				return m_greenNightIntervalDays;
+        public bool IsGreenNightDay
+        {
+            get
+            {
+                if (m_subsystemTimeOfDay == null || m_lastGreenNightDay < 0)
+                    return false;
 
-			int currentDayInt = (int)Math.Floor(m_subsystemTimeOfDay.Day);
-			int scheduledDayInt = (int)Math.Floor(m_lastGreenNightDay);
+                double effectiveDay = GetEffectiveDay();
+                return effectiveDay >= m_lastGreenNightDay && effectiveDay < m_lastGreenNightDay + 1.0;
+            }
+        }
 
-			return Math.Max(0, scheduledDayInt - currentDayInt);
-		}
+        public int GetDaysRemaining()
+        {
+            if (m_subsystemTimeOfDay == null || m_lastGreenNightDay < 0)
+                return m_greenNightIntervalDays;
 
-		public bool IsNightTime
-		{
-			get
-			{
-				if (m_subsystemTimeOfDay == null) return false;
-				float timeOfDay = m_subsystemTimeOfDay.TimeOfDay;
+            double effectiveDay = GetEffectiveDay();
+            int currentDayInt = (int)Math.Floor(effectiveDay);
+            int scheduledDayInt = (int)Math.Floor(m_lastGreenNightDay);
 
-				float eventStart = m_subsystemTimeOfDay.DuskStart;
-				float eventEnd = m_subsystemTimeOfDay.DawnStart;
+            return Math.Max(0, scheduledDayInt - currentDayInt);
+        }
 
-				if (eventStart > eventEnd)
-				{
-					return timeOfDay >= eventStart || timeOfDay < eventEnd;
-				}
+        public bool IsNightTime
+        {
+            get
+            {
+                if (m_subsystemTimeOfDay == null) return false;
+                float timeOfDay = m_subsystemTimeOfDay.TimeOfDay;
 
-				return timeOfDay >= eventStart && timeOfDay < eventEnd;
-			}
-		}
+                float eventStart = m_subsystemTimeOfDay.DuskStart;
+                float eventEnd = m_subsystemTimeOfDay.DawnStart;
 
-		public float NightIntensity
-		{
-			get
-			{
-				if (m_subsystemTimeOfDay == null || !IsNightTime) return 0f;
-				return 1f;
-			}
-		}
+                if (eventStart > eventEnd)
+                {
+                    return timeOfDay >= eventStart || timeOfDay < eventEnd;
+                }
 
-		public override void Load(ValuesDictionary valuesDictionary)
-		{
-			Instance = this;
+                return timeOfDay >= eventStart && timeOfDay < eventEnd;
+            }
+        }
 
-			m_hudContainer = null;
-			m_hudLabel = null;
+        public float NightIntensity
+        {
+            get
+            {
+                if (m_subsystemTimeOfDay == null || !IsNightTime) return 0f;
+                return 1f;
+            }
+        }
 
-			m_subsystemTimeOfDay = Project.FindSubsystem<SubsystemTimeOfDay>(true);
-			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
-			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
+        public override void Load(ValuesDictionary valuesDictionary)
+        {
+            Instance = this;
 
-			m_greenNightIntervalDays = valuesDictionary.GetValue<int>("GreenNightIntervalDays", 4);
-			m_lastGreenNightDay = valuesDictionary.GetValue<double>("LastGreenNightDay", -1);
-			m_isGreenNightEnabled = valuesDictionary.GetValue<bool>("IsGreenNightEnabled", true);
-			m_isGreenNightActive = valuesDictionary.GetValue<bool>("IsGreenNightActive", false);
-			m_greenNightTriggeredThisCycle = valuesDictionary.GetValue<bool>("GreenNightTriggeredThisCycle", false);
-			m_difficultyModeValue = valuesDictionary.GetValue<int>("DifficultyMode", 2);
-		}
+            m_hudContainer = null;
+            m_hudLabel = null;
 
-		public override void Save(ValuesDictionary valuesDictionary)
-		{
-			valuesDictionary.SetValue<int>("GreenNightIntervalDays", m_greenNightIntervalDays);
-			valuesDictionary.SetValue<double>("LastGreenNightDay", m_lastGreenNightDay);
-			valuesDictionary.SetValue<bool>("IsGreenNightEnabled", m_isGreenNightEnabled);
-			valuesDictionary.SetValue<bool>("IsGreenNightActive", m_isGreenNightActive);
-			valuesDictionary.SetValue<bool>("GreenNightTriggeredThisCycle", m_greenNightTriggeredThisCycle);
-			valuesDictionary.SetValue<int>("DifficultyMode", m_difficultyModeValue);
-		}
+            m_subsystemTimeOfDay = Project.FindSubsystem<SubsystemTimeOfDay>(true);
+            m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
+            m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 
-		public override void Dispose()
-		{
-			DestroyHudLabel();
+            m_greenNightIntervalDays = valuesDictionary.GetValue<int>("GreenNightIntervalDays", 4);
+            m_lastGreenNightDay = valuesDictionary.GetValue<double>("LastGreenNightDay", -1);
+            m_isGreenNightEnabled = valuesDictionary.GetValue<bool>("IsGreenNightEnabled", true);
+            m_isGreenNightActive = valuesDictionary.GetValue<bool>("IsGreenNightActive", false);
+            m_greenNightTriggeredThisCycle = valuesDictionary.GetValue<bool>("GreenNightTriggeredThisCycle", false);
+            m_difficultyModeValue = valuesDictionary.GetValue<int>("DifficultyMode", 2);
+        }
 
-			if (Instance == this)
-				Instance = null;
-			base.Dispose();
-		}
+        public override void Save(ValuesDictionary valuesDictionary)
+        {
+            valuesDictionary.SetValue<int>("GreenNightIntervalDays", m_greenNightIntervalDays);
+            valuesDictionary.SetValue<double>("LastGreenNightDay", m_lastGreenNightDay);
+            valuesDictionary.SetValue<bool>("IsGreenNightEnabled", m_isGreenNightEnabled);
+            valuesDictionary.SetValue<bool>("IsGreenNightActive", m_isGreenNightActive);
+            valuesDictionary.SetValue<bool>("GreenNightTriggeredThisCycle", m_greenNightTriggeredThisCycle);
+            valuesDictionary.SetValue<int>("DifficultyMode", m_difficultyModeValue);
+        }
 
-		public void Update(float dt)
-		{
-			if (!m_isGreenNightEnabled || m_subsystemTimeOfDay == null)
-			{
-				DestroyHudLabel();
-				return;
-			}
+        public override void Dispose()
+        {
+            DestroyHudLabel();
 
-			double currentDay = m_subsystemTimeOfDay.Day;
+            if (Instance == this)
+                Instance = null;
+            base.Dispose();
+        }
 
-			if (m_lastGreenNightDay < 0)
-			{
-				m_lastGreenNightDay = Math.Floor(currentDay) + m_greenNightIntervalDays;
-				m_greenNightTriggeredThisCycle = false;
-			}
+        public void Update(float dt)
+        {
+            if (!m_isGreenNightEnabled || m_subsystemTimeOfDay == null)
+            {
+                DestroyHudLabel();
+                return;
+            }
 
-			// CORRECCIÓN: Ajustar el día actual considerando que el ciclo del día 
-			// empieza en el amanecer (DawnStart), no a la medianoche.
-			double dawnOffset = (double)m_subsystemTimeOfDay.DawnStart;
-			double effectiveDay = (currentDay - dawnOffset < 0)
-				? currentDay - dawnOffset + 1.0
-				: currentDay - dawnOffset;
+            double currentDay = m_subsystemTimeOfDay.Day;
 
-			bool isScheduledDay = effectiveDay >= m_lastGreenNightDay && effectiveDay < m_lastGreenNightDay + 1.0;
+            if (m_lastGreenNightDay < 0)
+            {
+                m_lastGreenNightDay = Math.Floor(GetEffectiveDay()) + m_greenNightIntervalDays;
+                m_greenNightTriggeredThisCycle = false;
+            }
 
-			if (isScheduledDay && IsNightTime && !m_greenNightTriggeredThisCycle)
-			{
-				m_greenNightTriggeredThisCycle = true;
-				m_isGreenNightActive = true;
-				NotifyGreenNightStart();
-			}
+            double effectiveDay = GetEffectiveDay();
+            bool isScheduledDay = effectiveDay >= m_lastGreenNightDay && effectiveDay < m_lastGreenNightDay + 1.0;
 
-			if (m_isGreenNightActive && !IsNightTime)
-			{
-				m_isGreenNightActive = false;
-				m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
-				m_greenNightTriggeredThisCycle = false;
-				NotifyGreenNightNaturalEnd();
-			}
+            if (isScheduledDay && IsNightTime && !m_greenNightTriggeredThisCycle)
+            {
+                m_greenNightTriggeredThisCycle = true;
+                m_isGreenNightActive = true;
+                NotifyGreenNightStart();
+            }
 
-			UpdateHudLabel();
-		}
+            if (m_isGreenNightActive && !IsNightTime)
+            {
+                m_isGreenNightActive = false;
+                m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
+                m_greenNightTriggeredThisCycle = false;
+                NotifyGreenNightNaturalEnd();
+            }
 
-		private void UpdateHudLabel()
-		{
-			if (m_subsystemPlayers == null) return;
+            UpdateHudLabel();
+        }
 
-			foreach (ComponentPlayer player in m_subsystemPlayers.ComponentPlayers)
-			{
-				if (player == null || player.GuiWidget == null) continue;
+        private void UpdateHudLabel()
+        {
+            if (m_subsystemPlayers == null) return;
 
-				if (m_hudContainer == null || m_hudContainer.ParentWidget != player.GuiWidget)
-				{
-					DestroyHudLabel();
-					CreateHudLabel(player);
-				}
+            foreach (ComponentPlayer player in m_subsystemPlayers.ComponentPlayers)
+            {
+                if (player == null || player.GuiWidget == null) continue;
 
-				if (m_hudLabel != null && m_hudContainer != null)
-				{
-					m_hudContainer.IsVisible = true;
+                if (m_hudContainer == null || m_hudContainer.ParentWidget != player.GuiWidget)
+                {
+                    DestroyHudLabel();
+                    CreateHudLabel(player);
+                }
 
-					int diffIndex = Math.Min(m_difficultyModeValue, m_difficultyNames.Length - 1);
-					string suffix = "\nNivel de sufrimiento: \n" + m_difficultyNames[diffIndex];
+                if (m_hudLabel != null && m_hudContainer != null)
+                {
+                    m_hudContainer.IsVisible = true;
 
-					if (IsGreenNightDay)
-					{
-						if (m_isGreenNightActive)
-						{
-							m_hudLabel.Text = "Ellos vendrán…" + suffix;
-							float pulse = 0.5f + 0.5f * MathF.Sin((float)Time.FrameStartTime * 3f);
-							int green = (int)(128 + 127 * pulse);
-							int greenLight = (int)(47 + 47 * pulse);
-							m_hudLabel.Color = new Color(0, green, greenLight);
-						}
-						else
-						{
-							m_hudLabel.Text = "Ellos vendrán…" + suffix;
-							m_hudLabel.Color = new Color(0, 255, 94);
-						}
-					}
-					else
-					{
-						int daysRemaining = GetDaysRemaining();
-						if (daysRemaining == 1)
-						{
-							m_hudLabel.Text = "Ellos vendrán en: 1 día" + suffix;
-						}
-						else
-						{
-							m_hudLabel.Text = "Ellos vendrán en: " + daysRemaining + " días" + suffix;
-						}
-						m_hudLabel.Color = new Color(0, 255, 94);
-					}
-				}
+                    int diffIndex = Math.Min(m_difficultyModeValue, m_difficultyNames.Length - 1);
+                    string suffix = "\nNivel de sufrimiento: \n" + m_difficultyNames[diffIndex];
 
-				break;
-			}
-		}
+                    if (m_isGreenNightActive)
+                    {
+                        m_hudLabel.Text = "Ellos vendrán…" + suffix;
+                        float pulse = 0.5f + 0.5f * MathF.Sin((float)Time.FrameStartTime * 3f);
+                        int green = (int)(128 + 127 * pulse);
+                        int greenLight = (int)(47 + 47 * pulse);
+                        m_hudLabel.Color = new Color(0, green, greenLight);
+                    }
+                    else if (IsGreenNightDay)
+                    {
+                        m_hudLabel.Text = "Ellos vendrán…" + suffix;
+                        m_hudLabel.Color = new Color(0, 255, 94);
+                    }
+                    else
+                    {
+                        int daysRemaining = GetDaysRemaining();
+                        if (daysRemaining == 1)
+                        {
+                            m_hudLabel.Text = "Ellos vendrán en: 1 día" + suffix;
+                        }
+                        else
+                        {
+                            m_hudLabel.Text = "Ellos vendrán en: " + daysRemaining + " días" + suffix;
+                        }
+                        m_hudLabel.Color = new Color(0, 255, 94);
+                    }
+                }
 
-		private void DestroyHudLabel()
-		{
-			if (m_hudContainer != null)
-			{
-				if (m_hudContainer.ParentWidget != null)
-				{
-					m_hudContainer.ParentWidget.Children.Remove(m_hudContainer);
-				}
-				m_hudContainer = null;
-				m_hudLabel = null;
-			}
-		}
+                break;
+            }
+        }
 
-		private void CreateHudLabel(ComponentPlayer player)
-		{
-			m_hudContainer = new StackPanelWidget
-			{
-				HorizontalAlignment = WidgetAlignment.Far,
-				VerticalAlignment = WidgetAlignment.Center,
-				Name = "GreenNightHudContainer"
-			};
+        private void DestroyHudLabel()
+        {
+            if (m_hudContainer != null)
+            {
+                if (m_hudContainer.ParentWidget != null)
+                {
+                    m_hudContainer.ParentWidget.Children.Remove(m_hudContainer);
+                }
+                m_hudContainer = null;
+                m_hudLabel = null;
+            }
+        }
 
-			m_hudLabel = new LabelWidget
-			{
-				Text = "",
-				Color = new Color(0, 255, 94),
-				FontScale = 0.8f,
-				DropShadow = true,
-				HorizontalAlignment = WidgetAlignment.Far,
-				VerticalAlignment = WidgetAlignment.Center,
-				MarginRight = 15f
-			};
+        private void CreateHudLabel(ComponentPlayer player)
+        {
+            m_hudContainer = new StackPanelWidget
+            {
+                HorizontalAlignment = WidgetAlignment.Far,
+                VerticalAlignment = WidgetAlignment.Center,
+                Name = "GreenNightHudContainer"
+            };
 
-			m_hudContainer.Children.Add(m_hudLabel);
-			player.GuiWidget.Children.Add(m_hudContainer);
-		}
+            m_hudLabel = new LabelWidget
+            {
+                Text = "",
+                Color = new Color(0, 255, 94),
+                FontScale = 0.8f,
+                DropShadow = true,
+                HorizontalAlignment = WidgetAlignment.Far,
+                VerticalAlignment = WidgetAlignment.Center,
+                MarginRight = 15f
+            };
 
-		public void Draw(Camera camera, int drawOrder) { }
+            m_hudContainer.Children.Add(m_hudLabel);
+            player.GuiWidget.Children.Add(m_hudContainer);
+        }
 
-		public void SetGreenNightInterval(int days)
-		{
-			m_greenNightIntervalDays = Math.Max(1, days);
-			if (m_subsystemTimeOfDay != null)
-			{
-				double currentDay = m_subsystemTimeOfDay.Day;
-				double dawnOffset = (double)m_subsystemTimeOfDay.DawnStart;
-				double effectiveDay = (currentDay - dawnOffset < 0)
-					? currentDay - dawnOffset + 1.0
-					: currentDay - dawnOffset;
+        public void Draw(Camera camera, int drawOrder) { }
 
-				m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
-			}
-			else
-			{
-				m_lastGreenNightDay = -1;
-			}
-			m_isGreenNightActive = false;
-			m_greenNightTriggeredThisCycle = false;
-		}
+        public void SetGreenNightInterval(int days)
+        {
+            m_greenNightIntervalDays = Math.Max(1, days);
+            if (m_subsystemTimeOfDay != null)
+            {
+                m_lastGreenNightDay = Math.Floor(GetEffectiveDay()) + m_greenNightIntervalDays;
+            }
+            else
+            {
+                m_lastGreenNightDay = -1;
+            }
+            m_isGreenNightActive = false;
+            m_greenNightTriggeredThisCycle = false;
+        }
 
-		public void SetDifficultyMode(DifficultyModes mode)
-		{
-			m_difficultyModeValue = (int)mode;
-		}
+        public void SetDifficultyMode(DifficultyModes mode)
+        {
+            m_difficultyModeValue = (int)mode;
+        }
 
-		private void NotifyGreenNightStart()
-		{
-			if (m_subsystemPlayers == null) return;
+        private void NotifyGreenNightStart()
+        {
+            if (m_subsystemPlayers == null) return;
 
-			foreach (ComponentPlayer player in m_subsystemPlayers.ComponentPlayers)
-			{
-				if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
-				{
-					player.ComponentGui.DisplaySmallMessage(
-						"La noche verde ha comenzado.",
-						new Color(0, 255, 94),
-						false,
-						true
-					);
-				}
-			}
-		}
+            foreach (ComponentPlayer player in m_subsystemPlayers.ComponentPlayers)
+            {
+                if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
+                {
+                    player.ComponentGui.DisplaySmallMessage(
+                        "La noche verde ha comenzado.",
+                        new Color(0, 255, 94),
+                        false,
+                        true
+                    );
+                }
+            }
+        }
 
-		private void NotifyGreenNightNaturalEnd()
-		{
-			if (m_subsystemPlayers == null) return;
+        private void NotifyGreenNightNaturalEnd()
+        {
+            if (m_subsystemPlayers == null) return;
 
-			foreach (ComponentPlayer player in m_subsystemPlayers.ComponentPlayers)
-			{
-				if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
-				{
-					player.ComponentGui.DisplaySmallMessage(
-						"La noche verde ha terminado.",
-						new Color(180, 255, 180),
-						false,
-						true
-					);
-				}
-			}
-		}
+            foreach (ComponentPlayer player in m_subsystemPlayers.ComponentPlayers)
+            {
+                if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
+                {
+                    player.ComponentGui.DisplaySmallMessage(
+                        "La noche verde ha terminado.",
+                        new Color(180, 255, 180),
+                        false,
+                        true
+                    );
+                }
+            }
+        }
 
-		public void SetGreenNightActive(bool isEnabled)
-		{
-			m_isGreenNightEnabled = isEnabled;
+        public void SetGreenNightActive(bool isEnabled)
+        {
+            m_isGreenNightEnabled = isEnabled;
 
-			if (isEnabled)
-			{
-				if (m_subsystemTimeOfDay != null && m_lastGreenNightDay < 0)
-				{
-					double currentDay = m_subsystemTimeOfDay.Day;
-					double dawnOffset = (double)m_subsystemTimeOfDay.DawnStart;
-					double effectiveDay = (currentDay - dawnOffset < 0)
-						? currentDay - dawnOffset + 1.0
-						: currentDay - dawnOffset;
+            if (isEnabled)
+            {
+                if (m_subsystemTimeOfDay != null && m_lastGreenNightDay < 0)
+                {
+                    m_lastGreenNightDay = Math.Floor(GetEffectiveDay()) + m_greenNightIntervalDays;
+                }
+            }
+            else
+            {
+                m_isGreenNightActive = false;
+                m_greenNightTriggeredThisCycle = false;
 
-					m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
-				}
-			}
-			else
-			{
-				m_isGreenNightActive = false;
-				m_greenNightTriggeredThisCycle = false;
+                if (m_subsystemTimeOfDay != null)
+                {
+                    m_lastGreenNightDay = Math.Floor(GetEffectiveDay()) + m_greenNightIntervalDays;
+                }
+                else
+                {
+                    m_lastGreenNightDay = -1;
+                }
 
-				if (m_subsystemTimeOfDay != null)
-				{
-					double currentDay = m_subsystemTimeOfDay.Day;
-					double dawnOffset = (double)m_subsystemTimeOfDay.DawnStart;
-					double effectiveDay = (currentDay - dawnOffset < 0)
-						? currentDay - dawnOffset + 1.0
-						: currentDay - dawnOffset;
+                DestroyHudLabel();
+            }
 
-					m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
-				}
-				else
-				{
-					m_lastGreenNightDay = -1;
-				}
-
-				DestroyHudLabel();
-			}
-
-			Project.Save();
-		}
-	}
+            Project.Save();
+        }
+    }
 }
