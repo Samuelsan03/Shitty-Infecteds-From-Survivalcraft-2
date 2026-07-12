@@ -103,9 +103,18 @@
   <Parameter Name="AttacksNonPlayerCreature" Description="Si es verdadero, el zombi atacará a otras criaturas no jugadores. Los zombis atacan a todas las criaturas excepto a los de su manada" Guid="508622b2-7a21-4951-91a7-6081177fa522" Value="true" Type="bool"/>
   <Parameter Name="MoreAggressiveOnGreenNight" Description="Si es verdadero, el zombi se vuelve extremadamente agresivo y persigue al jugador hasta la muerte durante la Noche Verde" Guid="50bfb787-bf96-4b66-9ae0-d44ceddd6ac0" Value="false" Type="bool"/>
 </ComponentTemplate>
+
+<ComponentTemplate Name="CreatureInventory" Description="Inventario de criatura" Guid="c2f022c9-399e-4e78-855e-bf0d14798f0a" InheritanceParent="81a44c6a-c30a-4f53-8d64-0c30aabab8f9">
+  <Parameter Name="SlotsCount" Guid="27114e84-2a73-4e7f-8020-3704c5382b69" Value="16" Type="int" />
+  <Parameter Name="Class" Guid="79a26fa1-a37b-420b-a569-c292381e6e0d" Value="Game.ComponentCreatureInventory" Type="string" />
+</ComponentTemplate>
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="SubsystemCollarBlockBehavior" Guid="6e0d909d-986e-4323-a6ca-b6c130432a69" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="f4210f21-187f-4892-9bdf-ec41948f4740" Value="Game.SubsystemCollarBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+
      <MemberSubsystemTemplate Name="CreatureBleeding" Guid="47fafffe-f2e2-492e-8d15-8610ed1849cd" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="39d6e276-7093-41fb-aa8c-f6977c947bdb" Value="Game.SubsystemCreatureBleeding" Type="string" />
   </MemberSubsystemTemplate>
