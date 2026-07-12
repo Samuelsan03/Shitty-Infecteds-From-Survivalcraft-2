@@ -32,10 +32,14 @@ namespace Game
 					new XAttribute("value", ShittyInfectedsSettings.ShowCoordinates.ToString().ToLower())
 				));
 
-				// NUEVA LÍNEA PARA GUARDAR BARRAS DE VIDA
 				root.Add(new XElement("ShowCreatureHealthBars",
 					new XAttribute("type", "bool"),
 					new XAttribute("value", ShittyInfectedsSettings.ShowCreatureHealthBars.ToString().ToLower())
+				));
+
+				root.Add(new XElement("EnableCreatureBleeding",
+					new XAttribute("type", "bool"),
+					new XAttribute("value", ShittyInfectedsSettings.EnableCreatureBleeding.ToString().ToLower())
 				));
 
 				using (Stream stream = Storage.OpenFile(SettingsFilePath, OpenFileMode.Create))
@@ -81,12 +85,18 @@ namespace Game
 							ShittyInfectedsSettings.ShowCoordinates = val3;
 					}
 
-					// NUEVAS LÍNEAS PARA CARGAR BARRAS DE VIDA
 					XElement elem4 = root.Element("ShowCreatureHealthBars");
 					if (elem4 != null)
 					{
 						if (bool.TryParse(elem4.Attribute("value")?.Value, out bool val4))
 							ShittyInfectedsSettings.ShowCreatureHealthBars = val4;
+					}
+
+					XElement elem5 = root.Element("EnableCreatureBleeding");
+					if (elem5 != null)
+					{
+						if (bool.TryParse(elem5.Attribute("value")?.Value, out bool val5))
+							ShittyInfectedsSettings.EnableCreatureBleeding = val5;
 					}
 				}
 			}
