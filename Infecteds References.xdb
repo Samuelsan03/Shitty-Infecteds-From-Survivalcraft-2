@@ -106,6 +106,10 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="CreatureBleeding" Guid="47fafffe-f2e2-492e-8d15-8610ed1849cd" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="39d6e276-7093-41fb-aa8c-f6977c947bdb" Value="Game.SubsystemCreatureBleeding" Type="string" />
+  </MemberSubsystemTemplate>
+
     <MemberSubsystemTemplate Name="GreenNightSky" Guid="80bd2261-f596-4cdc-91b8-56c50bcab8bd" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Dependencies" Guid="60010386-31a3-45f2-ba9d-cff2d9c6b65f" Value="TimeOfDay, Time" Type="string" />
   <Parameter Name="Class" Guid="f4efa050-f526-47cd-9431-36e2a634debf" Value="Game.SubsystemGreenNightSky" Type="string" />
