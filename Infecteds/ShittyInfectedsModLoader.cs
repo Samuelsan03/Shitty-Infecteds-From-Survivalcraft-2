@@ -5,6 +5,8 @@ using System.Xml.Linq;
 using Engine;
 using Game;
 
+namespace Game;
+
 public class ShittyInfectedsModLoader : ModLoader
 {
 	private static readonly List<string> ListaMusica = new List<string>
@@ -119,6 +121,41 @@ public class ShittyInfectedsModLoader : ModLoader
 	{
 		if (handled) return;
 
+		// --- NUEVA LÓGICA: INTERACCIÓN CON INVENTARIO DE CRIATURA ---
+		if (player.ComponentMiner != null && player.ComponentCreatureModel != null)
+		{
+			Vector3 eyePosition = player.ComponentCreatureModel.EyePosition;
+			Vector3 forwardVector = player.ComponentCreatureModel.EyeRotation.GetForwardVector();
+			Ray3 ray = new Ray3(eyePosition, forwardVector);
+
+			object raycastResult = player.ComponentMiner.Raycast(ray, RaycastMode.Interaction, false, true, false);
+
+			if (raycastResult is BodyRaycastResult bodyResult)
+			{
+				if (bodyResult.ComponentBody != null)
+				{
+					ComponentCreatureInventory creatureInv = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureInventory>();
+
+					if (creatureInv != null)
+					{
+						// 1. Ejecutamos la animación de "Poke"
+						player.ComponentMiner.Poke(false);
+
+						// 2. Asignamos el widget a la propiedad ModalPanelWidget (EXACTAMENTE igual que hace el cofre)
+						player.ComponentGui.ModalPanelWidget = new CreatureInventoryWidget(player.ComponentMiner.Inventory, creatureInv);
+
+						// 3. Sonido de interfaz
+						AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+
+						// 4. Marcamos como manejado
+						handled = true;
+						return;
+					}
+				}
+			}
+		}
+
+		// --- LÓGICA EXISTENTE: CONTROL REMOTO ---
 		int activeBlockValue = player.ComponentMiner.ActiveBlockValue;
 		int activeBlockIndex = Terrain.ExtractContents(activeBlockValue);
 
