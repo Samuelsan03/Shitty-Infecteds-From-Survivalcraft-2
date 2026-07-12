@@ -11,7 +11,8 @@ namespace Game
 		private ButtonWidget m_enableCreatureAttacksButton;
 		private ButtonWidget m_attackOnHitCreativeButton;
 		private ButtonWidget m_showCoordinatesButton;
-		private ButtonWidget m_showCreatureHealthBarsButton; // NUEVO BOTÓN
+		private ButtonWidget m_showCreatureHealthBarsButton;
+		private ButtonWidget m_enableCreatureBleedingButton;
 
 		public ShittyInfectedsSettingsScreen()
 		{
@@ -39,10 +40,14 @@ namespace Game
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 4)
 			);
 
-			// NUEVO BOTÓN DE BARRAS DE VIDA
 			m_showCreatureHealthBarsButton = AddToggleButton(
 				"ShowCreatureHealthBars",
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 5)
+			);
+
+			m_enableCreatureBleedingButton = AddToggleButton(
+				"EnableCreatureBleeding",
+				LanguageControl.Get("ShittyInfectedsSettingsScreen", 6)
 			);
 		}
 
@@ -110,13 +115,21 @@ namespace Game
 				? LanguageControl.On
 				: LanguageControl.Off;
 
-			// NUEVA LÓGICA PARA BARRAS DE VIDA
 			if (m_showCreatureHealthBarsButton.IsClicked)
 			{
 				ShittyInfectedsSettings.ShowCreatureHealthBars = !ShittyInfectedsSettings.ShowCreatureHealthBars;
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_showCreatureHealthBarsButton.Text = ShittyInfectedsSettings.ShowCreatureHealthBars
+				? LanguageControl.On
+				: LanguageControl.Off;
+
+			if (m_enableCreatureBleedingButton.IsClicked)
+			{
+				ShittyInfectedsSettings.EnableCreatureBleeding = !ShittyInfectedsSettings.EnableCreatureBleeding;
+				ShittyInfectedsSettingsManager.Save();
+			}
+			m_enableCreatureBleedingButton.Text = ShittyInfectedsSettings.EnableCreatureBleeding
 				? LanguageControl.On
 				: LanguageControl.Off;
 
