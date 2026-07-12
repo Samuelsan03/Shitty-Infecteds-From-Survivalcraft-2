@@ -47,6 +47,23 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
+			if (!ShittyInfectedsSettings.EnableCreatureBleeding)
+			{
+				if (m_bleedingData.Count > 0)
+				{
+					m_toRemove.Clear();
+					foreach (ComponentCreature creature in m_bleedingData.Keys.ToList())
+					{
+						m_toRemove.Add(creature);
+					}
+					foreach (ComponentCreature key in m_toRemove)
+					{
+						CleanupBleeding(key);
+					}
+				}
+				return;
+			}
+
 			this.m_toRemove.Clear();
 
 			foreach (ComponentCreature creature in this.m_subsystemCreatureSpawn.m_creatures.Keys)
