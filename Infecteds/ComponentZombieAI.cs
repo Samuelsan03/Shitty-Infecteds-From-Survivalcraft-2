@@ -2,6 +2,7 @@ using System;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using static Game.RepeatBoltBlock;
 
 namespace Game
 {
@@ -22,11 +23,19 @@ namespace Game
 		public Vector2 DistanceRangeOfThrowable = new Vector2(5f, 15f);
 		public Vector2 SafeDistanceForExplosives = new Vector2(20f, 100f);
 
+		// Tiempos del Mosquete Mejorado
+		public float ImprovedMusketCooldown = 0.01f;
+		public float ImprovedMusketAimTime = 1.5f;
+
 		public float MusketCooldown = 0.01f;
 		public float MusketAimTime = 1.5f;
 
 		public float CrossbowCooldown = 0.01f;
 		public float CrossbowAimTime = 1.5f;
+
+		// Tiempos de la Ballesta Repetidora
+		public float RepeatCrossbowCooldown = 0.01f;
+		public float RepeatCrossbowAimTime = 1.5f;
 
 		public float BowCooldown = 0.01f;
 		public float BowAimTime = 1.5f;
@@ -74,8 +83,10 @@ namespace Game
 
 			int contents = Terrain.ExtractContents(projectile.Value);
 			int arrowIndex = BlocksManager.GetBlockIndex<ArrowBlock>();
+			int repeatBoltIndex = BlocksManager.GetBlockIndex<RepeatBoltBlock>();
 
-			if (contents == arrowIndex)
+			// Forzar desaparición al tocar el suelo tanto para flechas como para virotes de ballesta repetidora
+			if (contents == arrowIndex || contents == repeatBoltIndex)
 			{
 				projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
 			}
@@ -350,29 +361,41 @@ namespace Game
 
 		private bool IsRangedWeapon(int blockIndex)
 		{
+			int improvedMusketIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>();
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
 			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
-			return blockIndex == musketIndex || blockIndex == crossbowIndex || blockIndex == bowIndex;
+			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
+
+			return blockIndex == improvedMusketIndex || blockIndex == musketIndex || blockIndex == crossbowIndex || blockIndex == bowIndex || blockIndex == repeatCrossbowIndex;
 		}
 
 		private int FindRangedWeaponSlot(IInventory inventory)
 		{
+			int improvedMusketIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>();
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
 			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
+			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
+
+			int bestSlot = -1;
 
 			for (int i = 0; i < inventory.SlotsCount; i++)
 			{
-				if (inventory.GetSlotCount(i) <= 0)
-					continue;
+				if (inventory.GetSlotCount(i) <= 0) continue;
 
 				int value = inventory.GetSlotValue(i);
 				int contents = Terrain.ExtractContents(value);
-				if (contents == musketIndex || contents == crossbowIndex || contents == bowIndex)
-					return i;
+
+				// Mayor prioridad para el mosquete mejorado
+				if (contents == improvedMusketIndex) return i;
+
+				if (contents == musketIndex || contents == crossbowIndex || contents == bowIndex || contents == repeatCrossbowIndex)
+				{
+					if (bestSlot == -1) bestSlot = i;
+				}
 			}
-			return -1;
+			return bestSlot;
 		}
 
 		private int FindMeleeWeaponSlot(IInventory inventory)
@@ -409,11 +432,17 @@ namespace Game
 			int value = inventory.GetSlotValue(slot);
 			int contents = Terrain.ExtractContents(value);
 
+			int improvedMusketIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>();
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
 			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
+			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
 
-			if (contents == musketIndex)
+			if (contents == improvedMusketIndex)
+			{
+				EnsureImprovedMusketLoaded(inventory, slot, value);
+			}
+			else if (contents == musketIndex)
 			{
 				EnsureMusketLoaded(inventory, slot, value);
 			}
@@ -424,6 +453,26 @@ namespace Game
 			else if (contents == bowIndex)
 			{
 				EnsureBowLoaded(inventory, slot, value);
+			}
+			else if (contents == repeatCrossbowIndex)
+			{
+				EnsureRepeatCrossbowLoaded(inventory, slot, value, distance);
+			}
+		}
+
+		private void EnsureImprovedMusketLoaded(IInventory inventory, int slot, int value)
+		{
+			int improvedMusketIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>();
+			int data = Terrain.ExtractData(value);
+			int ammoCount = ImprovedMusketBlock.GetAmmoCount(data);
+
+			if (ammoCount == 0)
+			{
+				data = ImprovedMusketBlock.SetAmmoCount(data, 2);
+				int newValue = Terrain.MakeBlockValue(improvedMusketIndex, 0, data);
+
+				inventory.RemoveSlotItems(slot, 1);
+				inventory.AddSlotItems(slot, newValue, 1);
 			}
 		}
 
@@ -519,6 +568,94 @@ namespace Game
 			}
 		}
 
+		private void EnsureRepeatCrossbowLoaded(IInventory inventory, int slot, int value, float distance)
+		{
+			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
+			int data = Terrain.ExtractData(value);
+			int draw = RepeatCrossbowBlock.GetDraw(data);
+			RepeatBoltType? boltType = RepeatCrossbowBlock.GetRepeatBoltType(data);
+			int count = RepeatCrossbowBlock.GetCount(data);
+
+			bool needsReload = false;
+
+			if (draw != 15)
+			{
+				data = RepeatCrossbowBlock.SetDraw(data, 15);
+				needsReload = true;
+			}
+
+			if (boltType == null || count == 0)
+			{
+				RepeatBoltType selectedBolt;
+
+				// Lógica de distancia de seguridad para virotes explosivos
+				if (distance <= SafeDistanceForExplosives.X)
+				{
+					// DISTANCIA MÍNIMA: No usar explosivo, usar los otros 6 virotes disponibles
+					RepeatBoltType[] normalBolts = new RepeatBoltType[]
+					{
+						RepeatBoltType.RepeatCopperBolt,
+						RepeatBoltType.RepeatIronBolt,
+						RepeatBoltType.RepeatDiamondBolt,
+						RepeatBoltType.RepeatFireBolt,
+						RepeatBoltType.RepeatPoisonBolt,
+						RepeatBoltType.RepeatSeverelyPoisonousBolt
+					};
+					selectedBolt = normalBolts[m_random.Int(0, normalBolts.Length - 1)];
+				}
+				else if (distance >= SafeDistanceForExplosives.Y)
+				{
+					// DISTANCIA MÁXIMA: Usar virote explosivo
+					selectedBolt = RepeatBoltType.RepeatExplosiveBolt;
+				}
+				else
+				{
+					// DISTANCIA INTERMEDIA: Puede usar CUALQUIERA de los 7 virotes
+					RepeatBoltType[] allBolts = new RepeatBoltType[]
+					{
+						RepeatBoltType.RepeatCopperBolt,
+						RepeatBoltType.RepeatIronBolt,
+						RepeatBoltType.RepeatDiamondBolt,
+						RepeatBoltType.RepeatExplosiveBolt,
+						RepeatBoltType.RepeatFireBolt,
+						RepeatBoltType.RepeatPoisonBolt,
+						RepeatBoltType.RepeatSeverelyPoisonousBolt
+					};
+					selectedBolt = allBolts[m_random.Int(0, allBolts.Length - 1)];
+				}
+
+				data = RepeatCrossbowBlock.SetRepeatBoltType(data, selectedBolt);
+				data = RepeatCrossbowBlock.SetCount(data, 1); // Cargar solo 1 para que dispare de 1 en 1 y varíe
+				needsReload = true;
+			}
+			else if (boltType == RepeatBoltType.RepeatExplosiveBolt)
+			{
+				// Si por alguna razón ya tiene uno cargado pero se acercó demasiado, cambiarlo
+				if (distance < SafeDistanceForExplosives.X)
+				{
+					RepeatBoltType[] safeBolts = new RepeatBoltType[]
+					{
+						RepeatBoltType.RepeatCopperBolt,
+						RepeatBoltType.RepeatIronBolt,
+						RepeatBoltType.RepeatDiamondBolt,
+						RepeatBoltType.RepeatFireBolt,
+						RepeatBoltType.RepeatPoisonBolt,
+						RepeatBoltType.RepeatSeverelyPoisonousBolt
+					};
+					RepeatBoltType replacementBolt = safeBolts[m_random.Int(0, safeBolts.Length - 1)];
+					data = RepeatCrossbowBlock.SetRepeatBoltType(data, replacementBolt);
+					needsReload = true;
+				}
+			}
+
+			if (needsReload)
+			{
+				int newValue = Terrain.MakeBlockValue(repeatCrossbowIndex, 0, data);
+				inventory.RemoveSlotItems(slot, 1);
+				inventory.AddSlotItems(slot, newValue, 1);
+			}
+		}
+
 		private void EnsureBowLoaded(IInventory inventory, int slot, int value)
 		{
 			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
@@ -597,7 +734,13 @@ namespace Game
 					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 				}
 
-				if (contents == musketIndex)
+				// Asignar los tiempos correspondientes según el arma usada
+				if (contents == BlocksManager.GetBlockIndex<ImprovedMusketBlock>())
+				{
+					CooldownTimer = ImprovedMusketCooldown;
+					AimTimeTimer = ImprovedMusketAimTime;
+				}
+				else if (contents == musketIndex)
 				{
 					CooldownTimer = MusketCooldown;
 					AimTimeTimer = MusketAimTime;
@@ -606,6 +749,11 @@ namespace Game
 				{
 					CooldownTimer = CrossbowCooldown;
 					AimTimeTimer = CrossbowAimTime;
+				}
+				else if (contents == BlocksManager.GetBlockIndex<RepeatCrossbowBlock>())
+				{
+					CooldownTimer = RepeatCrossbowCooldown;
+					AimTimeTimer = RepeatCrossbowAimTime;
 				}
 				else
 				{
