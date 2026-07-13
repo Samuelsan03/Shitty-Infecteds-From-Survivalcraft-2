@@ -53,10 +53,11 @@ namespace Game
 			int data = Terrain.ExtractData(value);
 			int draw = GetDraw(data);
 			RepeatBoltType? boltType = GetRepeatBoltType(data);
+			int count = GetCount(data);
 
 			BlocksManager.DrawMeshBlock(primitivesRenderer, m_standaloneBlockMeshes[draw], color, 2f * size, ref matrix, environmentData);
 
-			if (boltType != null)
+			if (boltType != null && count > 0)
 			{
 				Matrix boltMatrix = Matrix.CreateRotationX(-1.5707964f) * Matrix.CreateTranslation(0f, 0.2f * size, -0.09f * size) * matrix;
 				int boltValue = Terrain.MakeBlockValue(m_repeatBoltBlock.BlockIndex, 0, RepeatBoltBlock.SetRepeatBoltType(0, boltType.Value));
@@ -64,18 +65,8 @@ namespace Game
 			}
 		}
 
-		public override int GetDamage(int value)
-		{
-			return Terrain.ExtractData(value) >> 8 & 255;
-		}
-
-		public override int SetDamage(int value, int damage)
-		{
-			int data = Terrain.ExtractData(value);
-			data &= -65281;
-			data |= Math.Clamp(damage, 0, 255) << 8;
-			return Terrain.ReplaceData(value, data);
-		}
+		public override int GetDamage(int value) => 0; // Sin daño
+		public override int SetDamage(int value, int damage) => value;
 
 		public override bool IsSwapAnimationNeeded(int oldValue, int newValue)
 		{
@@ -88,9 +79,7 @@ namespace Game
 				RepeatBoltType? oldBolt = GetRepeatBoltType(oldData);
 				RepeatBoltType? newBolt = GetRepeatBoltType(newData);
 				if (oldBolt.GetValueOrDefault() == newBolt.GetValueOrDefault() && oldBolt != null == (newBolt != null))
-				{
 					return false;
-				}
 			}
 			return true;
 		}
@@ -105,13 +94,13 @@ namespace Game
 			return "Repeat Crossbow";
 		}
 
+		// --- Métodos estáticos para manejar los datos ---
+
 		public static RepeatBoltType? GetRepeatBoltType(int data)
 		{
 			int type = data >> 4 & 15;
 			if (type != 0)
-			{
 				return (RepeatBoltType)(type - 1);
-			}
 			return null;
 		}
 
@@ -121,14 +110,11 @@ namespace Game
 			return (data & -241) | (type & 15) << 4;
 		}
 
-		public static int GetDraw(int data)
-		{
-			return data & 15;
-		}
+		public static int GetDraw(int data) => data & 15;
+		public static int SetDraw(int data, int draw) => (data & -16) | (draw & 15);
 
-		public static int SetDraw(int data, int draw)
-		{
-			return (data & -16) | (draw & 15);
-		}
+		// Contador de munición (0..8) almacenado en los bits 8..15
+		public static int GetCount(int data) => (data >> 8) & 0xFF;
+		public static int SetCount(int data, int count) => (data & ~0xFF00) | ((Math.Clamp(count, 0, 8) & 0xFF) << 8);
 	}
 }
