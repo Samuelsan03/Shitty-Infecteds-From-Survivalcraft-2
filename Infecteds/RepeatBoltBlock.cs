@@ -84,7 +84,7 @@ namespace Game
             30f,    // RepeatIronBolt (original 28, ahora 30)
             40f,    // RepeatDiamondBolt (original 36, ahora 40)
             12f,    // RepeatExplosiveBolt (original 8, ahora 12)
-            8f,     // RepeatFireBolt (similar a FireArrow: 4, pero subimos a 8)
+            4f,     // RepeatFireBolt
         };
 
 		// Escala de icono (0.8 para todos, como tú pusiste)
@@ -103,7 +103,7 @@ namespace Game
 			0f,     // RepeatCopperBolt
             0f,     // RepeatIronBolt
             0f,     // RepeatDiamondBolt
-            40f,    // RepeatExplosiveBolt (igual que ExplosiveBolt vanilla)
+            60f,    // RepeatExplosiveBolt
             0f,     // RepeatFireBolt
         };
 
