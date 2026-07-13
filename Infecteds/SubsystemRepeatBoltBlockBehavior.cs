@@ -19,49 +19,77 @@ namespace Game
 		{
 			RepeatBoltType type = RepeatBoltBlock.GetRepeatBoltType(Terrain.ExtractData(projectile.Value));
 
-			// Efecto de fuego (igual que FireArrow)
 			if (type == RepeatBoltType.RepeatFireBolt)
 			{
 				m_subsystemProjectiles.AddTrail(projectile, Vector3.Zero, new SmokeTrailParticleSystem(20, 0.5f, float.MaxValue, Color.White));
 				projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
 				projectile.IsIncendiary = true;
 			}
-
-			// (Opcional) Efecto de brillo para diamante, etc.
 		}
 
 		public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem)
 		{
 			RepeatBoltType boltType = RepeatBoltBlock.GetRepeatBoltType(Terrain.ExtractData(worldItem.Value));
 
-			if (worldItem.Velocity.Length() > 10f)
+			bool destroy = false;
+			float velocity = worldItem.Velocity.Length();
+
+			if (velocity > 10f)
 			{
 				float chance = 0f;
 				switch (boltType)
 				{
-					case RepeatBoltType.RepeatCopperBolt:
-						chance = 0.1f;    // 10% (igual que CopperArrow)
-						break;
-					case RepeatBoltType.RepeatIronBolt:
-						chance = 0.05f;   // 5% (igual que IronBolt)
-						break;
-					case RepeatBoltType.RepeatDiamondBolt:
-						chance = 0f;      // 0% (como DiamondBolt)
-						break;
-					case RepeatBoltType.RepeatExplosiveBolt:
-						chance = 0.05f;   // 5% (como ExplosiveBolt)
-						break;
-					case RepeatBoltType.RepeatFireBolt:
-						chance = 0.5f;    // 50% (igual que FireArrow)
-						break;
+					case RepeatBoltType.RepeatCopperBolt: chance = 0.1f; break;
+					case RepeatBoltType.RepeatIronBolt: chance = 0.05f; break;
+					case RepeatBoltType.RepeatDiamondBolt: chance = 0f; break;
+					case RepeatBoltType.RepeatExplosiveBolt: chance = 0.05f; break;
+					case RepeatBoltType.RepeatFireBolt: chance = 0.5f; break;
+					case RepeatBoltType.RepeatPoisonBolt: chance = 0.8f; break;
+					case RepeatBoltType.RepeatSeverelyPoisonousBolt: chance = 1f; break;
 				}
 
 				if (m_random.Float(0f, 1f) < chance)
-				{
-					return true; // El virote se destruye
-				}
+					destroy = true;
 			}
-			return false;
+
+			if (componentBody != null && componentBody.Entity != null)
+			{
+				ApplyPoisonToTarget(componentBody, boltType);
+			}
+
+			return destroy;
+		}
+
+		private void ApplyPoisonToTarget(ComponentBody targetBody, RepeatBoltType boltType)
+		{
+			if (targetBody == null || targetBody.Entity == null)
+				return;
+
+			float intensity = 0f;
+			switch (boltType)
+			{
+				case RepeatBoltType.RepeatPoisonBolt:
+					intensity = 0.3f;
+					break;
+				case RepeatBoltType.RepeatSeverelyPoisonousBolt:
+					intensity = 0.7f;
+					break;
+				default:
+					return;
+			}
+
+			ComponentPlayer player = targetBody.Entity.FindComponent<ComponentPlayer>();
+			if (player != null && player.ComponentSickness != null)
+			{
+				player.ComponentSickness.StartSickness();
+				return;
+			}
+
+			ComponentInfectedWithPoison infection = targetBody.Entity.FindComponent<ComponentInfectedWithPoison>();
+			if (infection != null)
+			{
+				infection.TryInfect(intensity);
+			}
 		}
 
 		public override void Load(ValuesDictionary valuesDictionary)
