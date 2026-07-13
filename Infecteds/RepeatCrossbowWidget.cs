@@ -96,7 +96,7 @@ namespace Game
 					SetDraw(newDraw);
 					if (draw <= 9 && newDraw > 9)
 					{
-						AudioManager.PlaySound("Audio/CrossbowDraw", 1f, m_random.Float(-0.2f, 0.2f), 0f);
+						AudioManager.PlaySound("Audio/Crossbow Remake/Crossbow Loading Remake", 1f, m_random.Float(-0.2f, 0.2f), 0f);
 					}
 				}
 				else
@@ -109,9 +109,6 @@ namespace Game
 					}
 					else
 					{
-						// Si no llegó a tensarse, vuelve a 0
-						SetDraw(0);
-						AudioManager.PlaySound("Audio/CrossbowBoing", MathUtils.Saturate((float)(draw - 3) / 10f), m_random.Float(-0.1f, 0.1f), 0f);
 					}
 				}
 			}
