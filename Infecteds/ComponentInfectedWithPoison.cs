@@ -26,7 +26,7 @@ namespace Game
 		private double? m_lastMoanTime;
 
 		private bool m_firstVomitQueued;
-		private float m_firstVomitTimer = -1f; // Temporizador manual para evitar el crash
+		private float m_firstVomitTimer = -1f;
 
 		private float m_originalWalkSpeed;
 		private float m_originalFlySpeed;
@@ -59,7 +59,8 @@ namespace Game
 			if (m_random.Float(0f, 1f) < infectionChance)
 			{
 				bool wasAlreadyInfected = m_infectionDuration > 0f;
-				m_poisonIntensity = MathUtils.Max(m_poisonIntensity, attackerIntensity);
+				// Limitar la intensidad entre 0 y 1 para evitar daños instantáneos o bugs de velocidad extrema
+				m_poisonIntensity = MathUtils.Max(m_poisonIntensity, MathUtils.Clamp(attackerIntensity, 0f, 1f));
 				m_infectionDuration = m_durationOfPoison;
 
 				if (!m_speedsStored)
@@ -68,7 +69,6 @@ namespace Game
 				}
 				ApplySpeedPenalty();
 
-				// Programar el primer vómito usando un temporizador manual en vez de QueueGameTimeDelayedExecution
 				if (!wasAlreadyInfected)
 				{
 					m_firstVomitQueued = false;
@@ -115,14 +115,13 @@ namespace Game
 		private void NauseaEffect()
 		{
 			m_lastNauseaTime = m_subsystemTime.GameTime;
+			m_lastMoanTime = m_subsystemTime.GameTime; // Inicializamos el moan aquí también para que empiece a contar después del primer vómito
 
-			// SOLO sonido de dolor
 			if (m_componentCreature != null && m_componentCreature.ComponentCreatureSounds != null)
 			{
 				m_componentCreature.ComponentCreatureSounds.PlayPainSound();
 			}
 
-			// Daño progresivo exactamente igual al Sickness
 			float damageToApply = MathUtils.Min(HealthDamagePerVomit * m_poisonIntensity, m_componentHealth != null ? m_componentHealth.Health : 0f);
 			if (damageToApply > 0f && m_componentHealth != null && m_componentHealth.Health > 0f)
 			{
@@ -135,7 +134,6 @@ namespace Game
 				});
 			}
 
-			// Partículas de vómito SIN sonido
 			if (m_pukeParticleSystem == null && m_subsystemParticles != null && m_subsystemTerrain != null)
 			{
 				m_pukeParticleSystem = new PukeParticleSystem(m_subsystemTerrain);
@@ -227,7 +225,7 @@ namespace Game
 				ApplySpeedPenalty();
 			}
 
-			// Lógica del primer vómito a los 3 segundos (ahora seguro, sin crasheo)
+			// Temporizador del primer vómito a los 3 segundos
 			if (m_firstVomitTimer > 0f)
 			{
 				m_firstVomitTimer -= dt;
@@ -243,16 +241,16 @@ namespace Game
 
 			if (m_componentHealth != null && m_componentHealth.Health > 0f)
 			{
-				// Lógica de vómito constante idéntica al Sickness
+				// Lógica de vómito constante
 				if (m_subsystemTime.PeriodicGameTimeEvent(NauseaCheckInterval, -0.01f))
 				{
-					bool canNausea = true;
+					bool canNausea = false; // <-- CAMBIO AQUÍ: Inicia en false
 					if (m_lastNauseaTime != null)
 					{
 						double? timeSinceLastNausea = m_subsystemTime.GameTime - m_lastNauseaTime;
-						if (timeSinceLastNausea.HasValue && timeSinceLastNausea.Value <= NauseaCooldown)
+						if (timeSinceLastNausea.HasValue && timeSinceLastNausea.Value > NauseaCooldown)
 						{
-							canNausea = false;
+							canNausea = true; // Solo true si ya pasó el primer vómito y el cooldown
 						}
 					}
 
@@ -265,13 +263,13 @@ namespace Game
 				// Gemido de dolor constante por el veneno
 				if (m_subsystemTime.PeriodicGameTimeEvent(MoanCheckInterval, 0f))
 				{
-					bool canMoan = true;
+					bool canMoan = false; // <-- CAMBIO AQUÍ: Inicia en false
 					if (m_lastMoanTime != null)
 					{
 						double? timeSinceLastMoan = m_subsystemTime.GameTime - m_lastMoanTime;
-						if (timeSinceLastMoan.HasValue && timeSinceLastMoan.Value <= MoanCooldown)
+						if (timeSinceLastMoan.HasValue && timeSinceLastMoan.Value > MoanCooldown)
 						{
-							canMoan = false;
+							canMoan = true; // Solo true si ya pasó el primer vómito y el cooldown
 						}
 					}
 
