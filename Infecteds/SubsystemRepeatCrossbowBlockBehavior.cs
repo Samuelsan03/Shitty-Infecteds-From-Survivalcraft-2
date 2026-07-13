@@ -110,12 +110,12 @@ namespace Game
 									Vector3 direction = Vector3.Normalize(position + aim.Direction * 10f - position);
 
 									int boltValue = Terrain.MakeBlockValue(m_RepeatBoltBlockIndex, 0, RepeatBoltBlock.SetRepeatBoltType(0, boltType.Value));
-									float speed = 38f;
+									float speed = 55f;
 									Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + speed * direction;
 
 									if (m_subsystemProjectiles.FireProjectile(boltValue, position, velocity, Vector3.Zero, componentMiner.ComponentCreature) != null)
 									{
-										m_subsystemAudio.PlaySound("Audio/Bow", 1f, m_random.Float(-0.1f, 0.1f),
+										m_subsystemAudio.PlaySound("Audio/Crossbow Remake/Crossbow Shoot", 1f, m_random.Float(-0.1f, 0.1f),
 											componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, 0.05f);
 
 										// Reducir contador
