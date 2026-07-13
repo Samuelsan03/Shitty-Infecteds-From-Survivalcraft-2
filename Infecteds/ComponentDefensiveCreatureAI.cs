@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using static Game.RepeatBoltBlock;
 
 namespace Game
 {
@@ -38,6 +39,10 @@ namespace Game
 		public float CrossbowCooldown = 0.01f;
 		public float CrossbowAimTime = 1.5f;
 
+		// Tiempos de la Ballesta Repetidora
+		public float RepeatCrossbowCooldown = 0.01f;
+		public float RepeatCrossbowAimTime = 1.5f;
+
 		// Tiempos del Arco
 		public float BowCooldown = 0.01f;
 		public float BowAimTime = 1.5f;
@@ -47,8 +52,6 @@ namespace Game
 		public float ThrowableCooldown = 0.01f;
 
 		// Lista de criaturas especiales que no mueven los brazos al apuntar armas a distancia
-		// (mosquete, arco, ballesta) - NO aplica para lanzables, ya que el modelo original
-		// tiene los brazos alzados y queremos evitar la animación adicional
 		private static readonly HashSet<string> m_noArmMovementCreatures = new HashSet<string>
 		{
 			"InfectedNormalTamed1"
@@ -71,18 +74,8 @@ namespace Game
 
 		private Random m_random;
 
-		/// <summary>
-		/// Verifica si la criatura actual está en la lista de criaturas especiales
-		/// que no deben mover los brazos al apuntar armas a distancia.
-		/// CORREGIDO: Usa Entity.ValuesDictionary en lugar de m_componentCreature.ValuesDictionary
-		/// para obtener el nombre de la ENTIDAD, no del componente.
-		/// </summary>
 		private bool ShouldSkipArmMovementForRanged()
 		{
-			// IMPORTANTE: this.Entity.ValuesDictionary.DatabaseObject.Name devuelve el nombre
-			// de la EntityTemplate (ej: "InfectedNormalTamed1")
-			// m_componentCreature.ValuesDictionary.DatabaseObject.Name devolvería el nombre
-			// del componente (ej: "ComponentCreature"), que NO es lo que queremos
 			if (Entity?.ValuesDictionary?.DatabaseObject != null)
 			{
 				return m_noArmMovementCreatures.Contains(Entity.ValuesDictionary.DatabaseObject.Name);
@@ -90,36 +83,22 @@ namespace Game
 			return false;
 		}
 
-		/// <summary>
-		/// Aplica la configuración de animación para criaturas especiales que no mueven los brazos
-		/// al apuntar armas a distancia. El arma se rota pero los brazos permanecen en su posición.
-		/// Adaptado de la lógica del ComponentZombieAI para mantener compatibilidad visual.
-		/// </summary>
 		private void ApplyNoArmMovementAimSettings(bool isBow, bool isCrossbow)
 		{
-			// Forzar que los brazos no se muevan (igual que cuando AimHandAngleOrder = 0f en el ZombieAI)
 			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 
 			if (isBow)
 			{
-				// Configuración del arco: rotación leve sin mover brazos
-				// Adaptado del OnAimBow del ZombieAI cuando AimHandAngleOrder = 0f
 				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(0f, 0f, 0f);
 				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(0f, -0.2f, 0f);
 			}
 			else if (isCrossbow)
 			{
-				// Configuración de la ballesta: rotación horizontal para apuntar sin mover brazos
-				// Adaptado del OnAimCrossBow del ZombieAI cuando AimHandAngleOrder = 0f
-				// La fórmula es: AimHandAngleOrder + (AimHandAngleOrder != 0f ? 0.1f : 0f) = 0f + 0f = 0f
 				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.1f, 0.07f);
 				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.55f, 0f, 0f);
 			}
 			else
 			{
-				// Configuración del mosquete: rotación horizontal para apuntar sin mover brazos
-				// Adaptado del OnAimMusket del ZombieAI cuando AimHandAngleOrder = 0f
-				// La fórmula es: AimHandAngleOrder + (AimHandAngleOrder != 0f ? 0.2f : 0f) = 0f + 0f = 0f
 				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
 				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
 			}
@@ -146,8 +125,6 @@ namespace Game
 
 			ComponentNewChaseBehavior chaseBehavior = m_componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
 
-			// CORREGIDO: No depender de IsActive (de la clase base) porque puede no estar actualizado
-			// Verificar directamente si hay un target válido y chaseTime > 0
 			if (chaseBehavior == null || chaseBehavior.Target == null || chaseBehavior.m_chaseTime <= 0f) return;
 
 			ComponentCreature target = chaseBehavior.Target;
@@ -158,7 +135,6 @@ namespace Game
 			int throwableSlot = FindThrowableSlot();
 			if (throwableSlot >= 0 && distance >= ThrowableObjectThrowingDistance.X && distance <= ThrowableObjectThrowingDistance.Y)
 			{
-				// Si estamos atascados, no hacer nada con el objeto lanzable y dejar pasar a armas a distancia
 				if (m_componentPathfinding != null && m_componentPathfinding.IsStuck)
 				{
 					if (m_isThrowing)
@@ -176,8 +152,6 @@ namespace Game
 					bool isBehind = IsTargetBehind(target);
 					bool hasLOS = HasClearLineOfSight(eyePos, targetPos, target);
 
-					// Si no está atrás y hay línea de visión libre, apuntar y lanzar
-					// NOTA: Los lanzables SIEMPRE usan animación normal de brazos, sin importar la lista
 					if (!isBehind && hasLOS)
 					{
 						if (m_componentPathfinding != null)
@@ -189,7 +163,6 @@ namespace Game
 					}
 					else
 					{
-						// Si está atrás o no hay línea de visión, cancelar apunte y moverse a los lados
 						if (m_isThrowing)
 						{
 							CancelAim();
@@ -201,7 +174,6 @@ namespace Game
 				}
 			}
 
-			// Si estábamos lanzando pero ya no estamos en rango, cancelar, limpiar cooldown y continuar
 			if (m_isThrowing)
 			{
 				CancelAim();
@@ -209,7 +181,6 @@ namespace Game
 				m_cooldownTimer = 0f;
 			}
 
-			// Luego verificar armas a distancia
 			if (distance <= AttackDistanceRange.Y)
 			{
 				if (distance < AttackDistanceRange.X)
@@ -241,14 +212,12 @@ namespace Game
 			float dist = Vector3.Distance(from, to);
 			if (dist < 0.1f) return true;
 
-			// Verificar si un bloque nos tapa la visión
 			TerrainRaycastResult? terrainHit = m_subsystemTerrain.Raycast(from, to, false, true, null);
 			if (terrainHit != null && terrainHit.Value.Distance < dist - 0.1f)
 			{
 				return false;
 			}
 
-			// Verificar si un cuerpo que no es el objetivo nos tapa la visión
 			BodyRaycastResult? bodyHit = m_subsystemBodies.Raycast(from, to, 0.35f, delegate (ComponentBody b, float d)
 			{
 				return b.Entity != m_componentCreature.Entity &&
@@ -271,7 +240,6 @@ namespace Game
 			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
 			Vector3 toTarget = target.ComponentBody.Position - m_componentCreature.ComponentBody.Position;
 
-			// Ignorar la altura para el cálculo del ángulo en el plano horizontal
 			toTarget.Y = 0f;
 			forward.Y = 0f;
 
@@ -279,7 +247,6 @@ namespace Game
 
 			float dot = Vector3.Dot(Vector3.Normalize(forward), Vector3.Normalize(toTarget));
 
-			// Si el producto punto es negativo, el objetivo está atrás
 			return dot < 0f;
 		}
 
@@ -292,16 +259,13 @@ namespace Game
 			Vector3 dirToTarget = Vector3.Normalize(targetPos - myPos);
 			dirToTarget.Y = 0f;
 
-			// Calcular dirección perpendicular (lateral) para esquivar
 			Vector3 sideDir = new Vector3(-dirToTarget.Z, 0f, dirToTarget.X);
 
-			// Alternar aleatoriamente entre izquierda y derecha si se llama múltiples veces seguidas
 			if (m_random.Bool(0.5f))
 			{
 				sideDir = -sideDir;
 			}
 
-			// Moverse 3 bloques a un lado para intentar conseguir línea de visión
 			Vector3 moveDestination = myPos + sideDir * 3f;
 			moveDestination.Y = targetPos.Y;
 
@@ -348,7 +312,6 @@ namespace Game
 
 		private void FireThrowable(Ray3 aimRay)
 		{
-			// Ejecutamos el Aim Completed para que el SubsystemThrowableBlockBehavior lo lance de forma normal
 			m_componentMiner.Aim(aimRay, AimState.Completed);
 		}
 
@@ -360,21 +323,27 @@ namespace Game
 				return;
 			}
 
-			// Prioridad de armas: Mosquete > Ballesta > Arco
+			// Prioridad de armas: Mosquete > Ballesta Repetidora > Ballesta > Arco
 			int musketSlot = FindMusketSlot();
-			int crossbowSlot = musketSlot >= 0 ? -1 : FindCrossbowSlot();
-			int bowSlot = (musketSlot >= 0 || crossbowSlot >= 0) ? -1 : FindBowSlot();
+			int repeatCrossbowSlot = musketSlot >= 0 ? -1 : FindRepeatCrossbowSlot();
+			int crossbowSlot = (musketSlot >= 0 || repeatCrossbowSlot >= 0) ? -1 : FindCrossbowSlot();
+			int bowSlot = (musketSlot >= 0 || repeatCrossbowSlot >= 0 || crossbowSlot >= 0) ? -1 : FindBowSlot();
 
-			int activeSlot = musketSlot >= 0 ? musketSlot : (crossbowSlot >= 0 ? crossbowSlot : bowSlot);
+			int activeSlot = musketSlot >= 0 ? musketSlot : (repeatCrossbowSlot >= 0 ? repeatCrossbowSlot : (crossbowSlot >= 0 ? crossbowSlot : bowSlot));
 
 			if (activeSlot < 0) return;
 
 			m_componentMiner.Inventory.ActiveSlotIndex = activeSlot;
 
+			bool isRepeatCrossbow = repeatCrossbowSlot >= 0;
 			bool isCrossbow = crossbowSlot >= 0;
 			bool isBow = bowSlot >= 0;
 
-			if (isCrossbow)
+			if (isRepeatCrossbow)
+			{
+				EnsureRepeatCrossbowLoaded(repeatCrossbowSlot, distance);
+			}
+			else if (isCrossbow)
 			{
 				EnsureCrossbowLoaded(crossbowSlot, distance);
 			}
@@ -392,7 +361,6 @@ namespace Game
 			Vector3 direction = Vector3.Normalize(targetPos - eyePos);
 			Ray3 aimRay = new Ray3(eyePos, direction);
 
-			// Verificar si esta criatura no debe mover los brazos para armas a distancia
 			bool skipArmMovement = ShouldSkipArmMovementForRanged();
 
 			if (!m_isAiming)
@@ -401,11 +369,9 @@ namespace Game
 				m_aimTimer = 0f;
 				m_componentMiner.Aim(aimRay, AimState.InProgress);
 
-				// Para criaturas especiales: sobreescribir la animación DESPUÉS del Aim
-				// para que no mueva brazos pero el arma sí rote correctamente
 				if (skipArmMovement)
 				{
-					ApplyNoArmMovementAimSettings(isBow, isCrossbow);
+					ApplyNoArmMovementAimSettings(isBow, isCrossbow || isRepeatCrossbow);
 				}
 			}
 			else
@@ -413,20 +379,28 @@ namespace Game
 				m_aimTimer += m_subsystemTime.GameTimeDelta;
 				m_componentMiner.Aim(aimRay, AimState.InProgress);
 
-				// Para criaturas especiales: mantener la configuración sin movimiento de brazos
-				// durante todo el apunte (se sobreescribe cada frame porque el SubsystemBlockBehavior
-				// lo establece de nuevo en cada llamada a Aim)
 				if (skipArmMovement)
 				{
-					ApplyNoArmMovementAimSettings(isBow, isCrossbow);
+					ApplyNoArmMovementAimSettings(isBow, isCrossbow || isRepeatCrossbow);
 				}
 
-				// Evaluar el AimTime dependiendo del arma que se está usando
-				float requiredAimTime = isBow ? BowAimTime : (isCrossbow ? CrossbowAimTime : MusketAimTime);
+				float requiredAimTime;
+				if (isBow)
+					requiredAimTime = BowAimTime;
+				else if (isCrossbow)
+					requiredAimTime = CrossbowAimTime;
+				else if (isRepeatCrossbow)
+					requiredAimTime = RepeatCrossbowAimTime;
+				else
+					requiredAimTime = MusketAimTime;
 
 				if (m_aimTimer >= requiredAimTime)
 				{
-					if (isCrossbow)
+					if (isRepeatCrossbow)
+					{
+						FireRepeatCrossbow(aimRay);
+					}
+					else if (isCrossbow)
 					{
 						FireCrossbow(aimRay);
 					}
@@ -458,8 +432,14 @@ namespace Game
 
 					m_isAiming = false;
 
-					// Aplicar el Cooldown dependiendo del arma que se usó
-					m_cooldownTimer = isBow ? BowCooldown : (isCrossbow ? CrossbowCooldown : MusketCooldown);
+					if (isBow)
+						m_cooldownTimer = BowCooldown;
+					else if (isCrossbow)
+						m_cooldownTimer = CrossbowCooldown;
+					else if (isRepeatCrossbow)
+						m_cooldownTimer = RepeatCrossbowCooldown;
+					else
+						m_cooldownTimer = MusketCooldown;
 
 					m_aimTimer = 0f;
 				}
@@ -468,16 +448,13 @@ namespace Game
 
 		private void FireBow(Ray3 aimRay)
 		{
-			// 1. Ejecutamos el Aim Completed original para que el arco haga su cálculo de velocidad, sonidos y animaciones
 			m_componentMiner.Aim(aimRay, AimState.Completed);
 
-			// 2. Buscamos la flecha que acaba de ser disparada por esta criatura en la lista global
 			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
 			for (int i = projectiles.Count - 1; i >= 0; i--)
 			{
 				if (projectiles[i].Owner == m_componentCreature)
 				{
-					// 3. Forzamos a que la flecha DESAPAREZCA al tocar el piso
 					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
 					break;
 				}
@@ -486,16 +463,29 @@ namespace Game
 
 		private void FireCrossbow(Ray3 aimRay)
 		{
-			// 1. Ejecutamos el Aim Completed original para que la ballesta haga su lógica nativa, sonidos y animaciones
 			m_componentMiner.Aim(aimRay, AimState.Completed);
 
-			// 2. Buscamos el proyectil que acaba de ser disparado por esta criatura en la lista global
 			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
 			for (int i = projectiles.Count - 1; i >= 0; i--)
 			{
 				if (projectiles[i].Owner == m_componentCreature)
 				{
-					// 3. Forzamos a que el virote DESAPAREZCA al tocar el piso en lugar de convertirse en objeto
+					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+					break;
+				}
+			}
+		}
+
+		private void FireRepeatCrossbow(Ray3 aimRay)
+		{
+			m_componentMiner.Aim(aimRay, AimState.Completed);
+
+			// Forzar desaparición al tocar el suelo
+			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
+			for (int i = projectiles.Count - 1; i >= 0; i--)
+			{
+				if (projectiles[i].Owner == m_componentCreature)
+				{
 					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
 					break;
 				}
@@ -559,11 +549,10 @@ namespace Game
 					int value = m_componentMiner.Inventory.GetSlotValue(i);
 					int blockId = Terrain.ExtractContents(value);
 
-					// Excluir mosquete, arco y ballesta
-					if (blockId == MusketBlock.Index || blockId == BowBlock.Index || blockId == CrossbowBlock.Index)
+					// Excluir mosquete, arco, ballesta y ballesta repetidora
+					if (blockId == MusketBlock.Index || blockId == BowBlock.Index || blockId == CrossbowBlock.Index || blockId == RepeatCrossbowBlock.Index)
 						continue;
 
-					// Usar el SubsystemThrowableBlockBehavior para detectar si el bloque es lanzable
 					if (m_subsystemBlockBehaviors != null)
 					{
 						SubsystemBlockBehavior[] behaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(blockId);
@@ -588,6 +577,18 @@ namespace Game
 			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
 			{
 				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == MusketBlock.Index)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+
+		private int FindRepeatCrossbowSlot()
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == RepeatCrossbowBlock.Index)
 				{
 					return i;
 				}
@@ -633,6 +634,66 @@ namespace Game
 			}
 		}
 
+		private void EnsureRepeatCrossbowLoaded(int slotIndex, float distanceToTarget)
+		{
+			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
+			int data = Terrain.ExtractData(value);
+			int draw = RepeatCrossbowBlock.GetDraw(data);
+			RepeatBoltType? boltType = RepeatCrossbowBlock.GetRepeatBoltType(data);
+			int count = RepeatCrossbowBlock.GetCount(data);
+
+			// Si no está completamente tensado (draw 15) o no tiene tipo de virote asignado o no tiene virotes cargados
+			if (draw != 15 || boltType == null || count == 0)
+			{
+				RepeatBoltType selectedBolt;
+
+				// Lógica de distancia de seguridad para virotes explosivos
+				if (distanceToTarget <= SafetyDistanceUseOfExplosiveBolt.X)
+				{
+					// DISTANCIA MÍNIMA: No usar explosivo, usar los otros 6 virotes disponibles
+					RepeatBoltType[] normalBolts = new RepeatBoltType[]
+					{
+						RepeatBoltType.RepeatCopperBolt,
+						RepeatBoltType.RepeatIronBolt,
+						RepeatBoltType.RepeatDiamondBolt,
+						RepeatBoltType.RepeatFireBolt,
+						RepeatBoltType.RepeatPoisonBolt,
+						RepeatBoltType.RepeatSeverelyPoisonousBolt
+					};
+					selectedBolt = normalBolts[m_random.Int(0, normalBolts.Length - 1)];
+				}
+				else if (distanceToTarget >= SafetyDistanceUseOfExplosiveBolt.Y)
+				{
+					// DISTANCIA MÁXIMA: Usar virote explosivo
+					selectedBolt = RepeatBoltType.RepeatExplosiveBolt;
+				}
+				else
+				{
+					// DISTANCIA INTERMEDIA: Puede usar CUALQUIERA de los 7 virotes
+					RepeatBoltType[] allBolts = new RepeatBoltType[]
+					{
+						RepeatBoltType.RepeatCopperBolt,
+						RepeatBoltType.RepeatIronBolt,
+						RepeatBoltType.RepeatDiamondBolt,
+						RepeatBoltType.RepeatExplosiveBolt,
+						RepeatBoltType.RepeatFireBolt,
+						RepeatBoltType.RepeatPoisonBolt,
+						RepeatBoltType.RepeatSeverelyPoisonousBolt
+					};
+					selectedBolt = allBolts[m_random.Int(0, allBolts.Length - 1)];
+				}
+
+				data = RepeatCrossbowBlock.SetDraw(data, 15);
+				data = RepeatCrossbowBlock.SetRepeatBoltType(data, selectedBolt);
+
+				// CORRECCIÓN: Cargar solo 1 virote para que dispare de 1 en 1 y varíe
+				data = RepeatCrossbowBlock.SetCount(data, 1);
+
+				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
+				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(RepeatCrossbowBlock.Index, 0, data), 1);
+			}
+		}
+
 		private void EnsureCrossbowLoaded(int slotIndex, float distanceToTarget)
 		{
 			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
@@ -657,7 +718,7 @@ namespace Game
 				}
 				else if (distanceToTarget >= SafetyDistanceUseOfExplosiveBolt.Y)
 				{
-					// DISTANCIA MÁXIMA: Usar variación normal pero con virote explosivo
+					// DISTANCIA MÁXIMA: Usar virote explosivo
 					selectedBolt = ArrowBlock.ArrowType.ExplosiveBolt;
 				}
 				else
