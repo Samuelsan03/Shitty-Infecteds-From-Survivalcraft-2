@@ -313,10 +313,13 @@ namespace Game
 
 		public virtual bool ShouldCollectPickable(Pickable pickable)
 		{
-			if (pickable == null || pickable.StuckMatrix != null)
+			if (pickable == null)
 			{
 				return false;
 			}
+
+			// ELIMINADA la verificación de StuckMatrix != null
+			// Esto permite recoger proyectiles clavados en el suelo/paredes (flechas, etc.)
 
 			int contents = Terrain.ExtractContents(pickable.Value);
 			Block block = BlocksManager.Blocks[contents];
