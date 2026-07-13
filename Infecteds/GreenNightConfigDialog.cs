@@ -9,6 +9,10 @@ namespace Game
 		private ComponentPlayer m_player;
 		private SubsystemGreenNightSky m_greenNightSky;
 
+		// Variables estáticas para esperar a que el Activation Dialog de Aceptar
+		public static int? PendingDays = null;
+		public static DifficultyModes? PendingDifficulty = null;
+
 		private int[] m_dayOptions = new int[] { 4, 8, 12, 16 };
 		private string[] m_descriptions = new string[]
 		{
@@ -71,6 +75,13 @@ namespace Game
 			m_player = player;
 			m_greenNightSky = player?.Project?.FindSubsystem<SubsystemGreenNightSky>();
 			m_isFirstTimeSetup = isFirstTimeSetup;
+
+			// Si se abre desde el control remoto, limpiamos los pendientes por si acaso
+			if (!m_isFirstTimeSetup)
+			{
+				PendingDays = null;
+				PendingDifficulty = null;
+			}
 
 			XElement node = ContentManager.Get<XElement>("Dialogs/GreenNightConfigDialog");
 			this.LoadContents(this, node);
@@ -169,20 +180,30 @@ namespace Game
 
 		private void ApplySettings(int days, DifficultyModes difficulty)
 		{
-			if (m_greenNightSky != null)
+			if (m_isFirstTimeSetup)
 			{
-				m_greenNightSky.SetGreenNightInterval(days);
-				m_greenNightSky.SetDifficultyMode(difficulty);
-			}
+				// Comportamiento original para la primera vez
+				if (m_greenNightSky != null)
+				{
+					m_greenNightSky.SetGreenNightInterval(days);
+					m_greenNightSky.SetDifficultyMode(difficulty);
+				}
 
-			if (m_isFirstTimeSetup && m_player != null && m_player.ComponentGui != null)
+				if (m_player != null && m_player.ComponentGui != null)
+				{
+					m_player.ComponentGui.DisplaySmallMessage(
+						"La Noche Verde estará en " + m_difficultyNames[(int)difficulty] + " y ocurrirá en " + days + " días",
+						new Color(0, 255, 94),
+						false,
+						true
+					);
+				}
+			}
+			else
 			{
-				m_player.ComponentGui.DisplaySmallMessage(
-					"La Noche Verde estará en " + m_difficultyNames[(int)difficulty] + " y ocurrirá en " + days + " días",
-					new Color(0, 255, 94),
-					false,
-					true
-				);
+				// Si se abre desde el control remoto, solo guarda los valores temporalmente
+				PendingDays = days;
+				PendingDifficulty = difficulty;
 			}
 		}
 	}
