@@ -22,6 +22,16 @@ namespace Game
 
 		private ButtonWidget m_configButton;
 
+		private string[] m_difficultyNames = new string[]
+		{
+			"Sobrevivirás... Quizás",
+			"La Muerte te Espera",
+			"Tu Tumba ya Está Lista",
+			"No Hay Esperanza",
+			"Suicidio Asegurado",
+			"Ni Dios Te Salva"
+		};
+
 		public GreenNightActivationDialog(SubsystemGreenNightSky subsystemGreenNight)
 		{
 			XElement node = ContentManager.Get<XElement>("Dialogs/GreenNightActivationDialog");
@@ -71,28 +81,32 @@ namespace Game
 					if (newState != oldState)
 					{
 						this.m_subsystemGreenNight.SetGreenNightActive(newState);
+					}
 
-						ComponentPlayer player = GetPlayer();
-						if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
+					ComponentPlayer player = GetPlayer();
+					if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
+					{
+						if (newState)
 						{
-							if (newState)
-							{
-								player.ComponentGui.DisplaySmallMessage(
-									LanguageControl.Get("GreenNightActivationDialog", 8),
-									new Color(0, 255, 94),
-									false,
-									true
-								);
-							}
-							else
-							{
-								player.ComponentGui.DisplaySmallMessage(
-									LanguageControl.Get("GreenNightActivationDialog", 9),
-									new Color(255, 200, 100),
-									false,
-									true
-								);
-							}
+							int days = this.m_subsystemGreenNight.GreenNightIntervalDays;
+							int diffIndex = (int)this.m_subsystemGreenNight.CurrentDifficulty;
+							string diffName = m_difficultyNames[Math.Min(diffIndex, m_difficultyNames.Length - 1)];
+
+							player.ComponentGui.DisplaySmallMessage(
+								"La Noche Verde estará en " + diffName + " y ocurrirá en " + days + " días",
+								new Color(0, 255, 94),
+								false,
+								true
+							);
+						}
+						else
+						{
+							player.ComponentGui.DisplaySmallMessage(
+								LanguageControl.Get("GreenNightActivationDialog", 9),
+								new Color(255, 200, 100),
+								false,
+								true
+							);
 						}
 					}
 				}
