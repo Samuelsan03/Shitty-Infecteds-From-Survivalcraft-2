@@ -7,8 +7,11 @@ namespace Game
 {
 	public class ComponentInfectedWithPoison : Component, IUpdateable
 	{
-		private const float VomitInterval = 30f;
+		private const float NauseaCheckInterval = 3f;
+		private const float NauseaCooldown = 15f;
 		private const float HealthDamagePerVomit = 0.1f;
+		private const float MoanCheckInterval = 6f;
+		private const float MoanCooldown = 8f;
 
 		private float m_poisonResistance;
 		private float m_durationOfPoison;
@@ -20,6 +23,8 @@ namespace Game
 		private float m_greenoutDuration;
 		private float m_greenoutFactor;
 		private double? m_lastNauseaTime;
+		private double? m_lastMoanTime;
+		private bool m_firstVomitQueued;
 
 		private float m_originalWalkSpeed;
 		private float m_originalFlySpeed;
@@ -51,6 +56,7 @@ namespace Game
 			float infectionChance = 1f - m_poisonResistance;
 			if (m_random.Float(0f, 1f) < infectionChance)
 			{
+				bool wasAlreadyInfected = m_infectionDuration > 0f;
 				m_poisonIntensity = MathUtils.Max(m_poisonIntensity, attackerIntensity);
 				m_infectionDuration = m_durationOfPoison;
 
@@ -59,6 +65,18 @@ namespace Game
 					StoreOriginalSpeeds();
 				}
 				ApplySpeedPenalty();
+
+				if (!wasAlreadyInfected && !m_firstVomitQueued)
+				{
+					m_firstVomitQueued = true;
+					m_subsystemTime.QueueGameTimeDelayedExecution(m_subsystemTime.GameTime + 3.0, delegate
+					{
+						if (m_infectionDuration > 0f && m_componentHealth != null && m_componentHealth.Health > 0f)
+						{
+							NauseaEffect();
+						}
+					});
+				}
 			}
 		}
 
@@ -103,11 +121,10 @@ namespace Game
 
 			if (m_componentCreature != null && m_componentCreature.ComponentCreatureSounds != null)
 			{
-				m_componentCreature.ComponentCreatureSounds.PlayMoanSound();
+				m_componentCreature.ComponentCreatureSounds.PlayPainSound();
 			}
 
-			// Daño normal y directo sin condiciones de porcentaje de salud
-			float damageToApply = HealthDamagePerVomit * m_poisonIntensity;
+			float damageToApply = MathUtils.Min(HealthDamagePerVomit * m_poisonIntensity, m_componentHealth != null ? m_componentHealth.Health : 0f);
 			if (damageToApply > 0f && m_componentHealth != null && m_componentHealth.Health > 0f)
 			{
 				m_subsystemTime.QueueGameTimeDelayedExecution(m_subsystemTime.GameTime + 0.75, delegate
@@ -123,11 +140,6 @@ namespace Game
 			{
 				m_pukeParticleSystem = new PukeParticleSystem(m_subsystemTerrain);
 				m_subsystemParticles.AddParticleSystem(m_pukeParticleSystem, false);
-
-				if (m_componentCreature != null && m_componentCreature.ComponentCreatureSounds != null)
-				{
-					m_componentCreature.ComponentCreatureSounds.PlayPukeSound();
-				}
 
 				if (m_subsystemNoise != null && m_componentCreature != null && m_componentCreature.ComponentBody != null)
 				{
@@ -183,7 +195,9 @@ namespace Game
 			m_greenoutDuration = 0f;
 			m_greenoutFactor = 0f;
 			m_lastNauseaTime = null;
+			m_lastMoanTime = null;
 			m_poisonIntensity = 0f;
+			m_firstVomitQueued = false;
 			RestoreOriginalSpeeds();
 		}
 
@@ -207,25 +221,55 @@ namespace Game
 
 			m_infectionDuration = MathUtils.Max(m_infectionDuration - dt, 0f);
 
-			// Asegurar que la lentitud se mantenga activa durante el veneno
 			if (m_speedsStored && m_componentLocomotion != null)
 			{
 				ApplySpeedPenalty();
 			}
 
-			// Lógica de vómito cada 30 segundos normal
 			if (m_componentHealth != null && m_componentHealth.Health > 0f)
 			{
-				if (m_subsystemTime.PeriodicGameTimeEvent(VomitInterval, 0f))
+				if (m_subsystemTime.PeriodicGameTimeEvent(NauseaCheckInterval, -0.01f))
 				{
-					NauseaEffect();
+					bool canNausea = true;
+					if (m_lastNauseaTime != null)
+					{
+						double? timeSinceLastNausea = m_subsystemTime.GameTime - m_lastNauseaTime;
+						if (timeSinceLastNausea.HasValue && timeSinceLastNausea.Value <= NauseaCooldown)
+						{
+							canNausea = false;
+						}
+					}
+
+					if (canNausea)
+					{
+						NauseaEffect();
+					}
+				}
+
+				// Gemido de dolor constante por el veneno
+				if (m_subsystemTime.PeriodicGameTimeEvent(MoanCheckInterval, 0f))
+				{
+					bool canMoan = true;
+					if (m_lastMoanTime != null)
+					{
+						double? timeSinceLastMoan = m_subsystemTime.GameTime - m_lastMoanTime;
+						if (timeSinceLastMoan.HasValue && timeSinceLastMoan.Value <= MoanCooldown)
+						{
+							canMoan = false;
+						}
+					}
+
+					if (canMoan && m_componentCreature != null && m_componentCreature.ComponentCreatureSounds != null)
+					{
+						m_lastMoanTime = m_subsystemTime.GameTime;
+						m_componentCreature.ComponentCreatureSounds.PlayPainSound();
+					}
 				}
 			}
 
 			UpdatePukeParticles(dt);
 			UpdateGreenoutEffect(dt);
 
-			// Amortiguación extra mientras se mueve
 			if (m_componentLocomotion != null
 				&& m_componentCreature != null
 				&& m_componentCreature.ComponentBody != null
