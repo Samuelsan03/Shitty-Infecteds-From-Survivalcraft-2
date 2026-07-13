@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Engine;
 using Engine.Graphics;
 
 namespace Game
 {
-	public class AntiTankPelletBlock : BulletBlock
+	public class AntiTankPelletBlock : FlatBlock
 	{
 		// Cambia este índice al que le hayas asignado en tu proyecto/mod
 		public new static int Index = 514;
