@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Xml.Linq;
 using Engine;
 
@@ -49,11 +49,11 @@ namespace Game
 			int ammoCount = ImprovedMusketBlock.GetAmmoCount(Terrain.ExtractData(slotValue));
 			if (ammoCount == 0)
 			{
-				this.m_instructionsLabel.Text = "No ammo";
+				this.m_instructionsLabel.Text = LanguageControl.GetContentWidgets("ImprovedMusketWidget", 2);
 			}
 			else
 			{
-				this.m_instructionsLabel.Text = string.Format("Ammo: {0}/2", ammoCount);
+				this.m_instructionsLabel.Text = string.Format(LanguageControl.GetContentWidgets("ImprovedMusketWidget", 3), ammoCount);
 			}
 		}
 
