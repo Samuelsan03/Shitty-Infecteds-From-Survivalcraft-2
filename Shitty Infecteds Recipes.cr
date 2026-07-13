@@ -1,4 +1,39 @@
 <Recipes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="CraftingRecipes.xsd">
+<Recipe Result="RepeatCrossbowBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="rod" b="ironingot" c="string" d="crossbow" Description="[0]">
+  "aba"
+  "cdc"
+  "aba"
+</Recipe>
+<Recipe Result="RepeatBoltBlock:0" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot" b="rod" c="feather" Description="[0]">
+  "a"
+  "b"
+  "c"
+</Recipe>
+<Recipe Result="RepeatBoltBlock:1" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="rod" c="feather" Description="[1]">
+  "a"
+  "b"
+  "c"
+</Recipe>
+<Recipe Result="RepeatBoltBlock:2" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond" b="repeatbolt:1" Description="[2]">
+  "a"
+  "b"
+</Recipe>
+<Recipe Result="RepeatBoltBlock:3" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="gunpowder" b="repeatbolt:0" Description="[3]">
+  "a"
+  "b"
+</Recipe>
+<Recipe Result="RepeatBoltBlock:4" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="sulphurchunk" b="repeatbolt:0" Description="[4]">
+  "a"
+  "b"
+</Recipe>
+<Recipe Result="RepeatBoltBlock:5" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="toxin" b="repeatbolt:0" Description="[5]">
+  "a"
+  "b"
+</Recipe>
+<Recipe Result="RepeatBoltBlock:6" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="toxin" b="repeatbolt:5" Description="[6]">
+  "a"
+  "b"
+</Recipe>
     <Recipe Result="WoodenLongspearBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="planks" c="woodenspear" Description="[0]">
       " b"
       "bcb"
