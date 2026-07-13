@@ -27,9 +27,11 @@ namespace Game
 		public Vector2 ThrowableObjectThrowingDistance = new Vector2(5f, 15f);
 
 		// Distancia de seguridad para uso de virotes explosivos
-		// X = distancia mínima para usar virotes normales (si estamos al mínimo, NO usar explosivo)
-		// Y = distancia máxima para variación (si estamos al máximo, usar virote explosivo)
 		public Vector2 SafetyDistanceUseOfExplosiveBolt = new Vector2(20f, 100f);
+
+		// Tiempos del Mosquete Mejorado
+		public float ImprovedMusketCooldown = 0.01f;
+		public float ImprovedMusketAimTime = 1.5f;
 
 		// Tiempos del Mosquete
 		public float MusketCooldown = 0.01f;
@@ -51,12 +53,10 @@ namespace Game
 		public float ThrowableAimTime = 1.5f;
 		public float ThrowableCooldown = 0.01f;
 
-		// Lista de criaturas especiales que no mueven los brazos al apuntar armas a distancia
 		private static readonly HashSet<string> m_noArmMovementCreatures = new HashSet<string>
 		{
 			"InfectedNormalTamed1"
-            // Agregar más criaturas aquí en el futuro
-        };
+		};
 
 		private bool m_canUseInventory;
 		private float m_aimTimer;
@@ -323,23 +323,29 @@ namespace Game
 				return;
 			}
 
-			// Prioridad de armas: Mosquete > Ballesta Repetidora > Ballesta > Arco
-			int musketSlot = FindMusketSlot();
-			int repeatCrossbowSlot = musketSlot >= 0 ? -1 : FindRepeatCrossbowSlot();
-			int crossbowSlot = (musketSlot >= 0 || repeatCrossbowSlot >= 0) ? -1 : FindCrossbowSlot();
-			int bowSlot = (musketSlot >= 0 || repeatCrossbowSlot >= 0 || crossbowSlot >= 0) ? -1 : FindBowSlot();
+			// Prioridad: Mosquete Mejorado > Mosquete > Ballesta Repetidora > Ballesta > Arco
+			int improvedMusketSlot = FindImprovedMusketSlot();
+			int musketSlot = improvedMusketSlot >= 0 ? -1 : FindMusketSlot();
+			int repeatCrossbowSlot = (improvedMusketSlot >= 0 || musketSlot >= 0) ? -1 : FindRepeatCrossbowSlot();
+			int crossbowSlot = (improvedMusketSlot >= 0 || musketSlot >= 0 || repeatCrossbowSlot >= 0) ? -1 : FindCrossbowSlot();
+			int bowSlot = (improvedMusketSlot >= 0 || musketSlot >= 0 || repeatCrossbowSlot >= 0 || crossbowSlot >= 0) ? -1 : FindBowSlot();
 
-			int activeSlot = musketSlot >= 0 ? musketSlot : (repeatCrossbowSlot >= 0 ? repeatCrossbowSlot : (crossbowSlot >= 0 ? crossbowSlot : bowSlot));
+			int activeSlot = improvedMusketSlot >= 0 ? improvedMusketSlot : (musketSlot >= 0 ? musketSlot : (repeatCrossbowSlot >= 0 ? repeatCrossbowSlot : (crossbowSlot >= 0 ? crossbowSlot : bowSlot)));
 
 			if (activeSlot < 0) return;
 
 			m_componentMiner.Inventory.ActiveSlotIndex = activeSlot;
 
+			bool isImprovedMusket = improvedMusketSlot >= 0;
 			bool isRepeatCrossbow = repeatCrossbowSlot >= 0;
 			bool isCrossbow = crossbowSlot >= 0;
 			bool isBow = bowSlot >= 0;
 
-			if (isRepeatCrossbow)
+			if (isImprovedMusket)
+			{
+				EnsureImprovedMusketLoaded(improvedMusketSlot);
+			}
+			else if (isRepeatCrossbow)
 			{
 				EnsureRepeatCrossbowLoaded(repeatCrossbowSlot, distance);
 			}
@@ -371,7 +377,7 @@ namespace Game
 
 				if (skipArmMovement)
 				{
-					ApplyNoArmMovementAimSettings(isBow, isCrossbow || isRepeatCrossbow);
+					ApplyNoArmMovementAimSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket);
 				}
 			}
 			else
@@ -381,11 +387,13 @@ namespace Game
 
 				if (skipArmMovement)
 				{
-					ApplyNoArmMovementAimSettings(isBow, isCrossbow || isRepeatCrossbow);
+					ApplyNoArmMovementAimSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket);
 				}
 
 				float requiredAimTime;
-				if (isBow)
+				if (isImprovedMusket)
+					requiredAimTime = ImprovedMusketAimTime;
+				else if (isBow)
 					requiredAimTime = BowAimTime;
 				else if (isCrossbow)
 					requiredAimTime = CrossbowAimTime;
@@ -396,7 +404,11 @@ namespace Game
 
 				if (m_aimTimer >= requiredAimTime)
 				{
-					if (isRepeatCrossbow)
+					if (isImprovedMusket)
+					{
+						FireImprovedMusket(aimRay);
+					}
+					else if (isRepeatCrossbow)
 					{
 						FireRepeatCrossbow(aimRay);
 					}
@@ -432,7 +444,9 @@ namespace Game
 
 					m_isAiming = false;
 
-					if (isBow)
+					if (isImprovedMusket)
+						m_cooldownTimer = ImprovedMusketCooldown;
+					else if (isBow)
 						m_cooldownTimer = BowCooldown;
 					else if (isCrossbow)
 						m_cooldownTimer = CrossbowCooldown;
@@ -480,7 +494,21 @@ namespace Game
 		{
 			m_componentMiner.Aim(aimRay, AimState.Completed);
 
-			// Forzar desaparición al tocar el suelo
+			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
+			for (int i = projectiles.Count - 1; i >= 0; i--)
+			{
+				if (projectiles[i].Owner == m_componentCreature)
+				{
+					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+					break;
+				}
+			}
+		}
+
+		private void FireImprovedMusket(Ray3 aimRay)
+		{
+			m_componentMiner.Aim(aimRay, AimState.Completed);
+
 			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
 			for (int i = projectiles.Count - 1; i >= 0; i--)
 			{
@@ -549,8 +577,9 @@ namespace Game
 					int value = m_componentMiner.Inventory.GetSlotValue(i);
 					int blockId = Terrain.ExtractContents(value);
 
-					// Excluir mosquete, arco, ballesta y ballesta repetidora
-					if (blockId == MusketBlock.Index || blockId == BowBlock.Index || blockId == CrossbowBlock.Index || blockId == RepeatCrossbowBlock.Index)
+					if (blockId == MusketBlock.Index || blockId == ImprovedMusketBlock.Index ||
+						blockId == BowBlock.Index || blockId == CrossbowBlock.Index ||
+						blockId == RepeatCrossbowBlock.Index)
 						continue;
 
 					if (m_subsystemBlockBehaviors != null)
@@ -572,11 +601,25 @@ namespace Game
 			return -1;
 		}
 
+		private int FindImprovedMusketSlot()
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 &&
+					Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == ImprovedMusketBlock.Index)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+
 		private int FindMusketSlot()
 		{
 			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
 			{
-				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == MusketBlock.Index)
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 &&
+					Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == MusketBlock.Index)
 				{
 					return i;
 				}
@@ -588,7 +631,8 @@ namespace Game
 		{
 			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
 			{
-				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == RepeatCrossbowBlock.Index)
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 &&
+					Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == RepeatCrossbowBlock.Index)
 				{
 					return i;
 				}
@@ -600,7 +644,8 @@ namespace Game
 		{
 			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
 			{
-				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == CrossbowBlock.Index)
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 &&
+					Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == CrossbowBlock.Index)
 				{
 					return i;
 				}
@@ -612,7 +657,8 @@ namespace Game
 		{
 			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
 			{
-				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == BowBlock.Index)
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 &&
+					Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == BowBlock.Index)
 				{
 					return i;
 				}
@@ -634,6 +680,21 @@ namespace Game
 			}
 		}
 
+		private void EnsureImprovedMusketLoaded(int slotIndex)
+		{
+			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
+			int data = Terrain.ExtractData(value);
+			int ammoCount = ImprovedMusketBlock.GetAmmoCount(data);
+
+			if (ammoCount == 0)
+			{
+				data = ImprovedMusketBlock.SetAmmoCount(data, 2);
+
+				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
+				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(ImprovedMusketBlock.Index, 0, data), 1);
+			}
+		}
+
 		private void EnsureRepeatCrossbowLoaded(int slotIndex, float distanceToTarget)
 		{
 			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
@@ -642,15 +703,12 @@ namespace Game
 			RepeatBoltType? boltType = RepeatCrossbowBlock.GetRepeatBoltType(data);
 			int count = RepeatCrossbowBlock.GetCount(data);
 
-			// Si no está completamente tensado (draw 15) o no tiene tipo de virote asignado o no tiene virotes cargados
 			if (draw != 15 || boltType == null || count == 0)
 			{
 				RepeatBoltType selectedBolt;
 
-				// Lógica de distancia de seguridad para virotes explosivos
 				if (distanceToTarget <= SafetyDistanceUseOfExplosiveBolt.X)
 				{
-					// DISTANCIA MÍNIMA: No usar explosivo, usar los otros 6 virotes disponibles
 					RepeatBoltType[] normalBolts = new RepeatBoltType[]
 					{
 						RepeatBoltType.RepeatCopperBolt,
@@ -664,12 +722,10 @@ namespace Game
 				}
 				else if (distanceToTarget >= SafetyDistanceUseOfExplosiveBolt.Y)
 				{
-					// DISTANCIA MÁXIMA: Usar virote explosivo
 					selectedBolt = RepeatBoltType.RepeatExplosiveBolt;
 				}
 				else
 				{
-					// DISTANCIA INTERMEDIA: Puede usar CUALQUIERA de los 7 virotes
 					RepeatBoltType[] allBolts = new RepeatBoltType[]
 					{
 						RepeatBoltType.RepeatCopperBolt,
@@ -686,7 +742,6 @@ namespace Game
 				data = RepeatCrossbowBlock.SetDraw(data, 15);
 				data = RepeatCrossbowBlock.SetRepeatBoltType(data, selectedBolt);
 
-				// CORRECCIÓN: Cargar solo 1 virote para que dispare de 1 en 1 y varíe
 				data = RepeatCrossbowBlock.SetCount(data, 1);
 
 				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
@@ -705,10 +760,8 @@ namespace Game
 			{
 				ArrowBlock.ArrowType selectedBolt;
 
-				// Lógica de distancia de seguridad para virotes explosivos
 				if (distanceToTarget <= SafetyDistanceUseOfExplosiveBolt.X)
 				{
-					// DISTANCIA MÍNIMA: No usar explosivo, solo virotes normales
 					ArrowBlock.ArrowType[] normalBolts = new ArrowBlock.ArrowType[]
 					{
 						ArrowBlock.ArrowType.IronBolt,
@@ -718,12 +771,10 @@ namespace Game
 				}
 				else if (distanceToTarget >= SafetyDistanceUseOfExplosiveBolt.Y)
 				{
-					// DISTANCIA MÁXIMA: Usar virote explosivo
 					selectedBolt = ArrowBlock.ArrowType.ExplosiveBolt;
 				}
 				else
 				{
-					// DISTANCIA INTERMEDIA: Puede usar cualquier tipo de virote
 					ArrowBlock.ArrowType[] allBolts = new ArrowBlock.ArrowType[]
 					{
 						ArrowBlock.ArrowType.IronBolt,
@@ -748,10 +799,8 @@ namespace Game
 			int draw = BowBlock.GetDraw(data);
 			ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
 
-			// Si no está completamente tenso (draw 15) o no tiene flecha asignada
 			if (draw != 15 || arrowType == null)
 			{
-				// Tipos de flechas soportados según el SubsystemBowBlockBehavior original
 				ArrowBlock.ArrowType[] arrowTypes = new ArrowBlock.ArrowType[]
 				{
 					ArrowBlock.ArrowType.WoodenArrow,
@@ -762,10 +811,8 @@ namespace Game
 					ArrowBlock.ArrowType.FireArrow
 				};
 
-				// Variación aleatoria de flechas
 				ArrowBlock.ArrowType selectedArrow = arrowTypes[m_random.Int(0, arrowTypes.Length - 1)];
 
-				// Tensar completamente y asignar la flecha
 				data = BowBlock.SetDraw(data, 15);
 				data = BowBlock.SetArrowType(data, new ArrowBlock.ArrowType?(selectedArrow));
 
