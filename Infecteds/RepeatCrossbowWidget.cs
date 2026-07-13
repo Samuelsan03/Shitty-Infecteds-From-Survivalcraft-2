@@ -66,14 +66,19 @@ namespace Game
 				// Actualizar la etiqueta según el estado
 				if (draw < 15)
 				{
-					m_instructionsLabel.Text = "Draw the string";
+					m_instructionsLabel.Text = LanguageControl.Get("RepeatCrossbowWidget", "0");
 				}
 				else // draw == 15
 				{
 					if (count > 0)
-						m_instructionsLabel.Text = $"{count}/8 Bolts";
+					{
+						string format = LanguageControl.Get("RepeatCrossbowWidget", "1");
+						m_instructionsLabel.Text = string.Format(format, count);
+					}
 					else
-						m_instructionsLabel.Text = "Insert bolts"; // Nuestro mensaje personalizado
+					{
+						m_instructionsLabel.Text = LanguageControl.Get("RepeatCrossbowWidget", "2");
+					}
 				}
 
 				// Lógica de arrastre para tensar (solo si no está tensado o está vacío)
