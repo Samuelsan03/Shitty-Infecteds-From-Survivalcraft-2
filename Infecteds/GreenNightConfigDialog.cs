@@ -80,9 +80,30 @@ namespace Game
 			m_description = this.Children.Find<LabelWidget>("GreenNightConfig.Description", true);
 			m_warningText = this.Children.Find<LabelWidget>("GreenNightConfig.WarningText", true);
 
-			m_currentIndex = 0;
-			SelectedDays = m_dayOptions[m_currentIndex];
-			SelectedDifficulty = m_difficulties[m_currentDifficultyIndex];
+			// Cargar los valores actuales del subsistema
+			if (m_greenNightSky != null)
+			{
+				int currentDays = m_greenNightSky.GreenNightIntervalDays;
+				for (int i = 0; i < m_dayOptions.Length; i++)
+				{
+					if (m_dayOptions[i] == currentDays)
+					{
+						m_currentIndex = i;
+						break;
+					}
+				}
+
+				DifficultyModes currentDifficulty = m_greenNightSky.CurrentDifficulty;
+				for (int i = 0; i < m_difficulties.Length; i++)
+				{
+					if (m_difficulties[i] == currentDifficulty)
+					{
+						m_currentDifficultyIndex = i;
+						break;
+					}
+				}
+			}
+
 			UpdateDaysDisplay();
 			UpdateDifficultyDisplay();
 
