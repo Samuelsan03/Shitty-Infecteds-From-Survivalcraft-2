@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using TemplatesDatabase;
@@ -67,7 +67,7 @@ namespace Game
 									if (num4 > 0.5f && !ImprovedMusketBlock.GetHammerState(Terrain.ExtractData(num2)))
 									{
 										num2 = Terrain.MakeBlockValue(num, 0, ImprovedMusketBlock.SetHammerState(Terrain.ExtractData(num2), true));
-										this.m_subsystemAudio.PlaySound("Audio/HammerCock", 1f, this.m_random.Float(-0.1f, 0.1f), 0f, 0f);
+										this.m_subsystemAudio.PlaySound("Audio/Hammer Cock Remake", 1f, this.m_random.Float(-0.1f, 0.1f), 0f, 0f);
 									}
 									ComponentFirstPersonModel componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
 									if (componentFirstPersonModel != null)
@@ -89,7 +89,7 @@ namespace Game
 								if (ImprovedMusketBlock.GetHammerState(Terrain.ExtractData(num2)))
 								{
 									num2 = Terrain.MakeBlockValue(num, 0, ImprovedMusketBlock.SetHammerState(Terrain.ExtractData(num2), false));
-									this.m_subsystemAudio.PlaySound("Audio/HammerUncock", 1f, this.m_random.Float(-0.1f, 0.1f), 0f, 0f);
+									this.m_subsystemAudio.PlaySound("Audio/Hammer Uncock Remake", 1f, this.m_random.Float(-0.1f, 0.1f), 0f, 0f);
 								}
 								this.m_aimStartTimes.Remove(componentMiner);
 								break;
@@ -109,7 +109,7 @@ namespace Game
 											ComponentPlayer componentPlayer2 = componentMiner.ComponentPlayer;
 											if (componentPlayer2 != null)
 											{
-												componentPlayer2.ComponentGui.DisplaySmallMessage("Not loaded!", Color.White, true, false);
+												componentPlayer2.ComponentGui.DisplaySmallMessage(LanguageControl.Get("SubsystemImprovedMusketBlockBehavior", 0), Color.White, true, false);
 											}
 										}
 										else
@@ -139,7 +139,7 @@ namespace Game
 												projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
 											}
 										}
-										this.m_subsystemAudio.PlaySound("Audio/MusketFire", 1f, this.m_random.Float(-0.1f, 0.1f), componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 10f, true);
+										this.m_subsystemAudio.PlaySound("Audio/musket improved fire", 1f, this.m_random.Float(-0.1f, 0.1f), componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 10f, true);
 										this.m_subsystemParticles.AddParticleSystem(new GunSmokeParticleSystem(this.m_subsystemTerrain, vector + 0.3f * vector2, vector2), false);
 										this.m_subsystemNoise.MakeNoise(vector, 1f, 40f);
 										componentMiner.ComponentCreature.ComponentBody.ApplyImpulse(-4f * vector2);
@@ -153,7 +153,7 @@ namespace Game
 									if (ImprovedMusketBlock.GetHammerState(Terrain.ExtractData(num2)))
 									{
 										num2 = Terrain.MakeBlockValue(Terrain.ExtractContents(num2), 0, ImprovedMusketBlock.SetHammerState(Terrain.ExtractData(num2), false));
-										this.m_subsystemAudio.PlaySound("Audio/HammerRelease", 1f, this.m_random.Float(-0.1f, 0.1f), 0f, 0f);
+										this.m_subsystemAudio.PlaySound("Audio/Hammer Release Remake", 1f, this.m_random.Float(-0.1f, 0.1f), 0f, 0f);
 									}
 									this.m_aimStartTimes.Remove(componentMiner);
 									break;
