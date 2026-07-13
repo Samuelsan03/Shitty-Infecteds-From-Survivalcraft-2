@@ -16,10 +16,7 @@ namespace Game
 		public int m_RepeatCrossbowBlockIndex;
 		public int m_RepeatBoltBlockIndex;
 
-		public override int[] HandledBlocks
-		{
-			get { return new int[] { RepeatCrossbowBlock.Index }; }
-		}
+		public override int[] HandledBlocks => new int[] { RepeatCrossbowBlock.Index };
 
 		public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
 		{
@@ -43,6 +40,9 @@ namespace Game
 					if (slotCount > 0 && contents == m_RepeatCrossbowBlockIndex)
 					{
 						int draw = RepeatCrossbowBlock.GetDraw(data);
+						RepeatBoltType? boltType = RepeatCrossbowBlock.GetRepeatBoltType(data);
+						int count = RepeatCrossbowBlock.GetCount(data);
+
 						double gameTime;
 						if (!m_aimStartTimes.TryGetValue(componentMiner, out gameTime))
 						{
@@ -75,9 +75,7 @@ namespace Game
 								{
 									ComponentPlayer componentPlayer = componentMiner.ComponentPlayer;
 									if (componentPlayer != null)
-									{
 										componentPlayer.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
-									}
 									componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.22f, 0.15f, 0.1f);
 									componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
 								}
@@ -92,25 +90,19 @@ namespace Game
 								break;
 
 							case AimState.Completed:
-								RepeatBoltType? boltType = RepeatCrossbowBlock.GetRepeatBoltType(data);
-
 								if (draw != 15)
 								{
-									ComponentPlayer player1 = componentMiner.ComponentPlayer;
-									if (player1 != null)
-									{
-										player1.ComponentGui.DisplaySmallMessage("Not fully drawn!", Color.White, true, false);
-									}
+									componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("Not fully drawn!", Color.White, true, false);
+									// Destensar si no está completamente tensado (por si acaso)
+									data = RepeatCrossbowBlock.SetDraw(data, 0);
 								}
-								else if (boltType == null)
+								else if (count == 0)
 								{
-									ComponentPlayer player2 = componentMiner.ComponentPlayer;
-									if (player2 != null)
-									{
-										player2.ComponentGui.DisplaySmallMessage("No bolt loaded!", Color.White, true, false);
-									}
+									componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("No bolts loaded!", Color.White, true, false);
+									// Destensar porque no hay munición
+									data = RepeatCrossbowBlock.SetDraw(data, 0);
 								}
-								else
+								else if (boltType != null)
 								{
 									Vector3 position = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition +
 													   componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f -
@@ -123,22 +115,41 @@ namespace Game
 
 									if (m_subsystemProjectiles.FireProjectile(boltValue, position, velocity, Vector3.Zero, componentMiner.ComponentCreature) != null)
 									{
-										data = RepeatCrossbowBlock.SetRepeatBoltType(data, null);
 										m_subsystemAudio.PlaySound("Audio/Bow", 1f, m_random.Float(-0.1f, 0.1f),
 											componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, 0.05f);
+
+										// Reducir contador
+										int newCount = Math.Max(0, count - 1);
+										data = RepeatCrossbowBlock.SetCount(data, newCount);
+										if (newCount == 0)
+										{
+											// Se acabó la munición: limpiar tipo y destensar
+											data = RepeatCrossbowBlock.SetRepeatBoltType(data, null);
+											data = RepeatCrossbowBlock.SetDraw(data, 0);
+										}
+										else
+										{
+											// Aún quedan virotes: mantener tensado
+											data = RepeatCrossbowBlock.SetDraw(data, 15);
+										}
+									}
+									else
+									{
+										// Si falla el disparo (raro), destensar
+										data = RepeatCrossbowBlock.SetDraw(data, 0);
 									}
 								}
-
-								inventory.RemoveSlotItems(activeSlotIndex, 1);
-								int newValue = Terrain.MakeBlockValue(m_RepeatCrossbowBlockIndex, 0, RepeatCrossbowBlock.SetDraw(data, 0));
-								inventory.AddSlotItems(activeSlotIndex, newValue, 1);
-
-								if (draw > 0)
+								else
 								{
-									componentMiner.DamageActiveTool(1);
-									m_subsystemAudio.PlaySound("Audio/CrossbowBoing", 1f, m_random.Float(-0.1f, 0.1f),
-										componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, 0f);
+									// boltType == null pero count > 0, caso inconsistente: destensar y limpiar
+									data = RepeatCrossbowBlock.SetRepeatBoltType(data, null);
+									data = RepeatCrossbowBlock.SetDraw(data, 0);
 								}
+
+								// Actualizar el objeto en el inventario
+								inventory.RemoveSlotItems(activeSlotIndex, 1);
+								int newValue = Terrain.MakeBlockValue(m_RepeatCrossbowBlockIndex, 0, data);
+								inventory.AddSlotItems(activeSlotIndex, newValue, 1);
 
 								m_aimStartTimes.Remove(componentMiner);
 								break;
@@ -159,10 +170,13 @@ namespace Game
 				int data = Terrain.ExtractData(inventory.GetSlotValue(slotIndex));
 				RepeatBoltType? loadedBolt = RepeatCrossbowBlock.GetRepeatBoltType(data);
 				int draw = RepeatCrossbowBlock.GetDraw(data);
+				int count = RepeatCrossbowBlock.GetCount(data);
 
-				if (loadedBolt == null && draw == 15)
+				// Solo cargar si está tensado y hay espacio
+				if (draw == 15 && count < 8)
 				{
-					return 1;
+					if (loadedBolt == null || loadedBolt.Value == boltType)
+						return 1;
 				}
 			}
 			return 0;
@@ -170,51 +184,58 @@ namespace Game
 
 		public override void ProcessInventoryItem(IInventory inventory, int slotIndex, int value, int count, int processCount, out int processedValue, out int processedCount)
 		{
+			processedValue = value;
+			processedCount = count;
+
 			if (processCount == 1)
 			{
 				RepeatBoltType boltType = RepeatBoltBlock.GetRepeatBoltType(Terrain.ExtractData(value));
 				int data = Terrain.ExtractData(inventory.GetSlotValue(slotIndex));
+				RepeatBoltType? loadedBolt = RepeatCrossbowBlock.GetRepeatBoltType(data);
+				int draw = RepeatCrossbowBlock.GetDraw(data);
+				int currentCount = RepeatCrossbowBlock.GetCount(data);
 
-				processedValue = 0;
-				processedCount = 0;
+				if (draw == 15 && currentCount < 8)
+				{
+					if (loadedBolt == null || loadedBolt.Value == boltType)
+					{
+						int toLoad = Math.Min(8 - currentCount, count);
+						if (toLoad > 0)
+						{
+							// Actualizar contador y tipo (el draw se mantiene)
+							data = RepeatCrossbowBlock.SetCount(data, currentCount + toLoad);
+							data = RepeatCrossbowBlock.SetRepeatBoltType(data, boltType);
 
-				inventory.RemoveSlotItems(slotIndex, 1);
-				inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(m_RepeatCrossbowBlockIndex, 0,
-					RepeatCrossbowBlock.SetRepeatBoltType(data, new RepeatBoltType?(boltType))), 1);
-				return;
+							// Consumir los virotes cargados y actualizar la ballesta
+							inventory.RemoveSlotItems(slotIndex, 1);
+							int newValue = Terrain.MakeBlockValue(m_RepeatCrossbowBlockIndex, 0, data);
+							inventory.AddSlotItems(slotIndex, newValue, 1);
+
+							// Devolver el resto de virotes (los no cargados)
+							processedValue = value;
+							processedCount = count - toLoad;
+							return;
+						}
+					}
+				}
 			}
-
-			processedValue = value;
-			processedCount = count;
 		}
 
 		public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem)
 		{
 			RepeatBoltType boltType = RepeatBoltBlock.GetRepeatBoltType(Terrain.ExtractData(worldItem.Value));
-
 			if (worldItem.Velocity.Length() > 10f)
 			{
 				float chance = 0f;
 				switch (boltType)
 				{
-					case RepeatBoltType.RepeatIronBolt:
-						chance = 0.05f; // 5% de romperse
-						break;
-					case RepeatBoltType.RepeatDiamondBolt:
-						chance = 0f;    // No se rompe
-						break;
-					case RepeatBoltType.RepeatCopperBolt:
-						chance = 0.10f; // 10% de romperse (más frágil)
-						break;
-					case RepeatBoltType.RepeatExplosiveBolt:
-						chance = 0f;    // No se rompe (explota)
-						break;
+					case RepeatBoltType.RepeatIronBolt: chance = 0.05f; break;
+					case RepeatBoltType.RepeatDiamondBolt: chance = 0f; break;
+					case RepeatBoltType.RepeatCopperBolt: chance = 0.10f; break;
+					case RepeatBoltType.RepeatExplosiveBolt: chance = 0f; break;
 				}
-
 				if (m_random.Float(0f, 1f) < chance)
-				{
-					return true; // El virote se destruye
-				}
+					return true;
 			}
 			return false;
 		}
