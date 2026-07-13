@@ -2,6 +2,18 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="InfectedWithPoison" Description="Afecta a la criatura con veneno, reduce su velocidad y la hace vomitar periodicamente" Guid="5a97d777-b5aa-45fc-9442-9f47addf7988" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+  <Parameter Name="PoisonResistance" Description="Resistencia al veneno, numeros menores significa que es mas vulnerable" Guid="0b80399a-4a7a-45dc-a6cc-6e0bdb9c9662" Value="0.5" Type="float" />
+  <Parameter Name="DurationOfPoison" Description="Tiempo en segundos que dura el veneno en la criatura" Guid="2eb3bcf2-f3b5-4775-8d55-b3d81e6ff2c1" Value="300" Type="float" />
+  <Parameter Name="Class" Guid="873f1f09-8737-43aa-a370-fd198edb026c" Value="Game.ComponentInfectedWithPoison" Type="string" />
+</ComponentTemplate>
+
+<ComponentTemplate Name="PoisonInfectionBehavior" Description="Permite a la criatura infectar con veneno a sus presas al golpearlas" Guid="17886ac8-afa5-476b-8f57-fc88708dd78c" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="PoisonIntensity" Description="Intensidad del veneno inyectado a la victima" Guid="caf3ac61-94b9-47c3-9355-c1e5031480c0" Value="1" Type="float" />
+  <Parameter Name="ProbabilityOfPoisoning" Description="Probabilidad de infectar con veneno al golpear" Guid="dbf3aab1-39e2-41c5-af6b-8bac0b85c809" Value="0.5" Type="float" />
+  <Parameter Name="Class" Guid="00eaeffa-bee3-4dbe-bb52-7f444b37e7a5" Value="Game.ComponentPoisonInfectionBehavior" Type="string" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="BlockBreakerBehavior" Description="Permite a la criatura romper bloques al golpear, con probabilidad configurable y lista de bloques rompibles (separados por comas)" Guid="27c2d1a4-776c-432b-81d0-88ef0d417b42" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Guid="7cf54e1a-5d86-4eb6-acad-e7d4ceed95b6" Value="Game.ComponentBlockBreakerBehavior" Type="string" />
   <Parameter Name="BreakBlockProbability" Description="Probabilidad (0-1) de romper un bloque al golpear" Guid="f64dcef3-9fb9-4e87-b596-10fb5b0a911f" Value="1" Type="float" />
@@ -111,6 +123,14 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="SubsystemRepeatCrossbowBlockBehavior" Guid="345b12b9-9482-42e5-850b-552b1415c348" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="727dba8e-f6ea-49ee-b6d5-504f717fbc99" Value="Game.SubsystemRepeatCrossbowBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+
+     <MemberSubsystemTemplate Name="SubsystemRepeatBoltBlockBehavior" Guid="ae95efe0-1d48-44bd-8933-94d42107f694" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="1b3f86a3-ef24-44d4-929f-fc3c8a9ce57e" Value="Game.SubsystemRepeatBoltBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+
      <MemberSubsystemTemplate Name="SubsystemCollarBlockBehavior" Guid="6e0d909d-986e-4323-a6ca-b6c130432a69" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="f4210f21-187f-4892-9bdf-ec41948f4740" Value="Game.SubsystemCollarBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
