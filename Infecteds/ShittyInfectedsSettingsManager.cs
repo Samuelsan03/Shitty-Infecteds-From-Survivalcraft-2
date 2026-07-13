@@ -8,7 +8,7 @@ namespace Game
 {
 	public static class ShittyInfectedsSettingsManager
 	{
-		private static readonly string SettingsFilePath = "ShittyInfectedsSettings.xml";
+		private static readonly string SettingsFilePath = ModsManager.ExternalPath + "/ShittyInfectedsSettings.xml";
 		private const string RootElementName = "ShittyInfectedsSettings";
 
 		public static void Save()
