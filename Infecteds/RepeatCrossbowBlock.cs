@@ -89,13 +89,6 @@ namespace Game
 			yield return Terrain.MakeBlockValue(Index, 0, 0);
 		}
 
-		public override string GetDisplayName(SubsystemTerrain subsystemTerrain, int value)
-		{
-			return "Repeat Crossbow";
-		}
-
-		// --- Métodos estáticos para manejar los datos ---
-
 		public static RepeatBoltType? GetRepeatBoltType(int data)
 		{
 			int type = data >> 4 & 15;
