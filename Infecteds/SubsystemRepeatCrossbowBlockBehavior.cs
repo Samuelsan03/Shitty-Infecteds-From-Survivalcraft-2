@@ -93,13 +93,14 @@ namespace Game
 								if (draw != 15)
 								{
 									componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("Not fully drawn!", Color.White, true, false);
-									// Destensar si no está completamente tensado (por si acaso)
 									data = RepeatCrossbowBlock.SetDraw(data, 0);
 								}
 								else if (count == 0)
 								{
 									componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("No bolts loaded!", Color.White, true, false);
-									// Destensar porque no hay munición
+									// Reproducir sonido de disparo vacío
+									m_subsystemAudio.PlaySound("Audio/CrossbowBoing", 1f, m_random.Float(-0.1f, 0.1f),
+										componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, 0f);
 									data = RepeatCrossbowBlock.SetDraw(data, 0);
 								}
 								else if (boltType != null)
@@ -118,35 +119,29 @@ namespace Game
 										m_subsystemAudio.PlaySound("Audio/Crossbow Remake/Crossbow Shoot", 1f, m_random.Float(-0.1f, 0.1f),
 											componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, 0.05f);
 
-										// Reducir contador
 										int newCount = Math.Max(0, count - 1);
 										data = RepeatCrossbowBlock.SetCount(data, newCount);
 										if (newCount == 0)
 										{
-											// Se acabó la munición: limpiar tipo y destensar
 											data = RepeatCrossbowBlock.SetRepeatBoltType(data, null);
 											data = RepeatCrossbowBlock.SetDraw(data, 0);
 										}
 										else
 										{
-											// Aún quedan virotes: mantener tensado
 											data = RepeatCrossbowBlock.SetDraw(data, 15);
 										}
 									}
 									else
 									{
-										// Si falla el disparo (raro), destensar
 										data = RepeatCrossbowBlock.SetDraw(data, 0);
 									}
 								}
 								else
 								{
-									// boltType == null pero count > 0, caso inconsistente: destensar y limpiar
 									data = RepeatCrossbowBlock.SetRepeatBoltType(data, null);
 									data = RepeatCrossbowBlock.SetDraw(data, 0);
 								}
 
-								// Actualizar el objeto en el inventario
 								inventory.RemoveSlotItems(activeSlotIndex, 1);
 								int newValue = Terrain.MakeBlockValue(m_RepeatCrossbowBlockIndex, 0, data);
 								inventory.AddSlotItems(activeSlotIndex, newValue, 1);
@@ -172,7 +167,6 @@ namespace Game
 				int draw = RepeatCrossbowBlock.GetDraw(data);
 				int count = RepeatCrossbowBlock.GetCount(data);
 
-				// Solo cargar si está tensado y hay espacio
 				if (draw == 15 && count < 8)
 				{
 					if (loadedBolt == null || loadedBolt.Value == boltType)
@@ -202,16 +196,13 @@ namespace Game
 						int toLoad = Math.Min(8 - currentCount, count);
 						if (toLoad > 0)
 						{
-							// Actualizar contador y tipo (el draw se mantiene)
 							data = RepeatCrossbowBlock.SetCount(data, currentCount + toLoad);
 							data = RepeatCrossbowBlock.SetRepeatBoltType(data, boltType);
 
-							// Consumir los virotes cargados y actualizar la ballesta
 							inventory.RemoveSlotItems(slotIndex, 1);
 							int newValue = Terrain.MakeBlockValue(m_RepeatCrossbowBlockIndex, 0, data);
 							inventory.AddSlotItems(slotIndex, newValue, 1);
 
-							// Devolver el resto de virotes (los no cargados)
 							processedValue = value;
 							processedCount = count - toLoad;
 							return;
