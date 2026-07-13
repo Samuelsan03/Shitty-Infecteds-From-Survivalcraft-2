@@ -19,6 +19,12 @@ namespace Game
 		{
 			RepeatBoltType type = RepeatBoltBlock.GetRepeatBoltType(Terrain.ExtractData(projectile.Value));
 
+			// Virote de diamante: no se frena en el agua
+			if (type == RepeatBoltType.RepeatDiamondBolt)
+			{
+				projectile.DampingInFluid = 1f;
+			}
+
 			if (type == RepeatBoltType.RepeatFireBolt)
 			{
 				m_subsystemProjectiles.AddTrail(projectile, Vector3.Zero, new SmokeTrailParticleSystem(20, 0.5f, float.MaxValue, Color.White));
