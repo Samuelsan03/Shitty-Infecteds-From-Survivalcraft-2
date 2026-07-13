@@ -92,12 +92,16 @@ namespace Game
 							case AimState.Completed:
 								if (draw != 15)
 								{
-									componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("Not fully drawn!", Color.White, true, false);
+									componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+										LanguageControl.Get("SubsystemRepeatCrossbowBlockBehavior", "0"),
+										Color.White, true, false);
 									data = RepeatCrossbowBlock.SetDraw(data, 0);
 								}
 								else if (count == 0)
 								{
-									componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("No bolts loaded!", Color.White, true, false);
+									componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+										LanguageControl.Get("SubsystemRepeatCrossbowBlockBehavior", "1"),
+										Color.White, true, false);
 									// Reproducir sonido de disparo vacío
 									m_subsystemAudio.PlaySound("Audio/CrossbowBoing", 1f, m_random.Float(-0.1f, 0.1f),
 										componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, 0f);
