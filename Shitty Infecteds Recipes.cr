@@ -1,4 +1,14 @@
 <Recipes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="CraftingRecipes.xsd">
+    <Recipe Result="ImprovedMusketBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="rod" b="ironblock" c="musket" Description="[0]">
+      " ba"
+      "bcb"
+      " ba"
+    </Recipe>
+    <Recipe Result="AntiTankPelletBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironblock" b="feather" c="sulphurchunk" Description="[0]">
+      "aca"
+      "aba"
+      "aca"
+    </Recipe>
 <Recipe Result="RepeatCrossbowBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="rod" b="ironingot" c="string" d="crossbow" Description="[0]">
   "aba"
   "cdc"
