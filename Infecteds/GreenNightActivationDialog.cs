@@ -77,33 +77,70 @@ namespace Game
 				{
 					bool newState = this.m_activateCheckbox.IsChecked;
 					bool oldState = this.m_subsystemGreenNight.IsGreenNightEnabled;
+					bool configChanged = false;
+					int finalDays = this.m_subsystemGreenNight.GreenNightIntervalDays;
+					DifficultyModes finalDifficulty = this.m_subsystemGreenNight.CurrentDifficulty;
+
+					// Verificar si hay cambios pendientes desde el Config
+					if (GreenNightConfigDialog.PendingDays != null && GreenNightConfigDialog.PendingDifficulty != null)
+					{
+						finalDays = GreenNightConfigDialog.PendingDays.Value;
+						finalDifficulty = GreenNightConfigDialog.PendingDifficulty.Value;
+
+						if (finalDays != this.m_subsystemGreenNight.GreenNightIntervalDays || finalDifficulty != this.m_subsystemGreenNight.CurrentDifficulty)
+						{
+							configChanged = true;
+
+							// Aplicar los cambios silenciosamente para que se guarden
+							this.m_subsystemGreenNight.SetGreenNightInterval(finalDays);
+							this.m_subsystemGreenNight.SetDifficultyMode(finalDifficulty);
+						}
+
+						// Limpiar pendientes
+						GreenNightConfigDialog.PendingDays = null;
+						GreenNightConfigDialog.PendingDifficulty = null;
+					}
 
 					if (newState != oldState)
 					{
+						// Si cambió el ON/OFF
 						this.m_subsystemGreenNight.SetGreenNightActive(newState);
-					}
 
-					ComponentPlayer player = GetPlayer();
-					if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
-					{
-						if (newState)
+						ComponentPlayer player = GetPlayer();
+						if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
 						{
-							int days = this.m_subsystemGreenNight.GreenNightIntervalDays;
-							int diffIndex = (int)this.m_subsystemGreenNight.CurrentDifficulty;
-							string diffName = m_difficultyNames[Math.Min(diffIndex, m_difficultyNames.Length - 1)];
-
-							player.ComponentGui.DisplaySmallMessage(
-								"La Noche Verde estará en " + diffName + " y ocurrirá en " + days + " días",
-								new Color(0, 255, 94),
-								false,
-								true
-							);
+							if (newState)
+							{
+								player.ComponentGui.DisplaySmallMessage(
+									LanguageControl.Get("GreenNightActivationDialog", 8),
+									new Color(0, 255, 94),
+									false,
+									true
+								);
+							}
+							else
+							{
+								player.ComponentGui.DisplaySmallMessage(
+									LanguageControl.Get("GreenNightActivationDialog", 9),
+									new Color(255, 200, 100),
+									false,
+									true
+								);
+							}
 						}
-						else
+					}
+					else if (configChanged && newState)
+					{
+						// Si NO cambió el ON/OFF, pero SÍ cambió la difficulty/días, y está activado
+						ComponentPlayer player = GetPlayer();
+						if (player?.ComponentGui != null && player.ComponentHealth?.Health > 0)
 						{
+							int diffIndex = Math.Min((int)finalDifficulty, m_difficultyNames.Length - 1);
+							string diffName = m_difficultyNames[diffIndex];
+
 							player.ComponentGui.DisplaySmallMessage(
-								LanguageControl.Get("GreenNightActivationDialog", 9),
-								new Color(255, 200, 100),
+								"La Noche Verde estará en " + diffName + " y ocurrirá en " + finalDays + " días",
+								new Color(0, 255, 94),
 								false,
 								true
 							);
