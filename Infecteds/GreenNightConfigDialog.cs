@@ -50,6 +50,7 @@ namespace Game
 
 		private int m_currentIndex = 0;
 		private int m_currentDifficultyIndex = 2;
+		private bool m_isFirstTimeSetup;
 
 		public int SelectedDays { get; private set; }
 		public DifficultyModes SelectedDifficulty { get; private set; }
@@ -65,10 +66,11 @@ namespace Game
 		{
 		}
 
-		public GreenNightConfigDialog(ComponentPlayer player, bool showWarningText)
+		public GreenNightConfigDialog(ComponentPlayer player, bool isFirstTimeSetup)
 		{
 			m_player = player;
 			m_greenNightSky = player?.Project?.FindSubsystem<SubsystemGreenNightSky>();
+			m_isFirstTimeSetup = isFirstTimeSetup;
 
 			XElement node = ContentManager.Get<XElement>("Dialogs/GreenNightConfigDialog");
 			this.LoadContents(this, node);
@@ -80,7 +82,6 @@ namespace Game
 			m_description = this.Children.Find<LabelWidget>("GreenNightConfig.Description", true);
 			m_warningText = this.Children.Find<LabelWidget>("GreenNightConfig.WarningText", true);
 
-			// Cargar los valores actuales del subsistema
 			if (m_greenNightSky != null)
 			{
 				int currentDays = m_greenNightSky.GreenNightIntervalDays;
@@ -107,7 +108,7 @@ namespace Game
 			UpdateDaysDisplay();
 			UpdateDifficultyDisplay();
 
-			if (!showWarningText && m_warningText != null)
+			if (!m_isFirstTimeSetup && m_warningText != null)
 			{
 				m_warningText.IsVisible = false;
 			}
@@ -158,7 +159,10 @@ namespace Game
 			}
 			if (m_cancelButton.IsClicked || base.Input.Cancel)
 			{
-				ApplySettings(4, DifficultyModes.Normal);
+				if (m_isFirstTimeSetup)
+				{
+					ApplySettings(4, DifficultyModes.Normal);
+				}
 				DialogsManager.HideDialog(this);
 			}
 		}
@@ -171,7 +175,7 @@ namespace Game
 				m_greenNightSky.SetDifficultyMode(difficulty);
 			}
 
-			if (m_player != null && m_player.ComponentGui != null)
+			if (m_isFirstTimeSetup && m_player != null && m_player.ComponentGui != null)
 			{
 				m_player.ComponentGui.DisplaySmallMessage(
 					"La Noche Verde estará en " + m_difficultyNames[(int)difficulty] + " y ocurrirá en " + days + " días",
