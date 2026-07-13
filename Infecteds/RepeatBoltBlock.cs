@@ -121,17 +121,6 @@ namespace Game
 			0f,
 		};
 
-		private static string[] m_displayNames = new string[]
-		{
-			"Repeat Copper Bolt",
-			"Repeat Iron Bolt",
-			"Repeat Diamond Bolt",
-			"Repeat Explosive Bolt",
-			"Repeat Fire Bolt",
-			"Poison Bolt",
-			"Severely Poisonous Bolt",
-		};
-
 		private static Color[] m_tipColors = new Color[]
 		{
 			Color.White,
@@ -245,9 +234,7 @@ namespace Game
 		public override string GetDisplayName(SubsystemTerrain subsystemTerrain, int value)
 		{
 			int type = (int)GetRepeatBoltType(Terrain.ExtractData(value));
-			if (type >= 0 && type < m_displayNames.Length)
-				return m_displayNames[type];
-			return type.ToString();
+			return LanguageControl.GetBlock($"RepeatBoltBlock:{type}", "DisplayName");
 		}
 
 		public static RepeatBoltType GetRepeatBoltType(int data)
