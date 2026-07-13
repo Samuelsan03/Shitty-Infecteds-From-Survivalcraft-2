@@ -24,7 +24,9 @@ namespace Game
 		private float m_greenoutFactor;
 		private double? m_lastNauseaTime;
 		private double? m_lastMoanTime;
+
 		private bool m_firstVomitQueued;
+		private float m_firstVomitTimer = -1f; // Temporizador manual para evitar el crash
 
 		private float m_originalWalkSpeed;
 		private float m_originalFlySpeed;
@@ -66,16 +68,11 @@ namespace Game
 				}
 				ApplySpeedPenalty();
 
-				if (!wasAlreadyInfected && !m_firstVomitQueued)
+				// Programar el primer vómito usando un temporizador manual en vez de QueueGameTimeDelayedExecution
+				if (!wasAlreadyInfected)
 				{
-					m_firstVomitQueued = true;
-					m_subsystemTime.QueueGameTimeDelayedExecution(m_subsystemTime.GameTime + 3.0, delegate
-					{
-						if (m_infectionDuration > 0f && m_componentHealth != null && m_componentHealth.Health > 0f)
-						{
-							NauseaEffect();
-						}
-					});
+					m_firstVomitQueued = false;
+					m_firstVomitTimer = 3.0f;
 				}
 			}
 		}
@@ -119,11 +116,13 @@ namespace Game
 		{
 			m_lastNauseaTime = m_subsystemTime.GameTime;
 
+			// SOLO sonido de dolor
 			if (m_componentCreature != null && m_componentCreature.ComponentCreatureSounds != null)
 			{
 				m_componentCreature.ComponentCreatureSounds.PlayPainSound();
 			}
 
+			// Daño progresivo exactamente igual al Sickness
 			float damageToApply = MathUtils.Min(HealthDamagePerVomit * m_poisonIntensity, m_componentHealth != null ? m_componentHealth.Health : 0f);
 			if (damageToApply > 0f && m_componentHealth != null && m_componentHealth.Health > 0f)
 			{
@@ -136,6 +135,7 @@ namespace Game
 				});
 			}
 
+			// Partículas de vómito SIN sonido
 			if (m_pukeParticleSystem == null && m_subsystemParticles != null && m_subsystemTerrain != null)
 			{
 				m_pukeParticleSystem = new PukeParticleSystem(m_subsystemTerrain);
@@ -198,6 +198,7 @@ namespace Game
 			m_lastMoanTime = null;
 			m_poisonIntensity = 0f;
 			m_firstVomitQueued = false;
+			m_firstVomitTimer = -1f;
 			RestoreOriginalSpeeds();
 		}
 
@@ -226,8 +227,23 @@ namespace Game
 				ApplySpeedPenalty();
 			}
 
+			// Lógica del primer vómito a los 3 segundos (ahora seguro, sin crasheo)
+			if (m_firstVomitTimer > 0f)
+			{
+				m_firstVomitTimer -= dt;
+				if (m_firstVomitTimer <= 0f)
+				{
+					m_firstVomitQueued = true;
+					if (m_componentHealth != null && m_componentHealth.Health > 0f)
+					{
+						NauseaEffect();
+					}
+				}
+			}
+
 			if (m_componentHealth != null && m_componentHealth.Health > 0f)
 			{
+				// Lógica de vómito constante idéntica al Sickness
 				if (m_subsystemTime.PeriodicGameTimeEvent(NauseaCheckInterval, -0.01f))
 				{
 					bool canNausea = true;
