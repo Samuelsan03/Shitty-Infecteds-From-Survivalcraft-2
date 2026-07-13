@@ -11,103 +11,116 @@ namespace Game
 
 		public List<BlockMesh> m_standaloneBlockMeshes = new List<BlockMesh>();
 
-		// Nombres de mallas (todos usan el mismo modelo, solo cambian texturas)
 		private static string[] m_tipNames = new string[]
 		{
-			"ArrowTip",     // RepeatCopperBolt
-            "ArrowTip",     // RepeatIronBolt
-            "ArrowTip",     // RepeatDiamondBolt
-            "ArrowTip",     // RepeatExplosiveBolt
-            "ArrowTip",     // RepeatFireBolt
-        };
+			"ArrowTip",
+			"ArrowTip",
+			"ArrowTip",
+			"ArrowTip",
+			"ArrowTip",
+			"ArrowTip",
+			"ArrowTip",
+		};
 
 		private static string[] m_shaftNames = new string[]
 		{
-			"ArrowShaft",   // RepeatCopperBolt
-            "ArrowShaft",   // RepeatIronBolt
-            "ArrowShaft",   // RepeatDiamondBolt
-            "ArrowShaft",   // RepeatExplosiveBolt
-            "ArrowShaft",   // RepeatFireBolt
-        };
+			"ArrowShaft",
+			"ArrowShaft",
+			"ArrowShaft",
+			"ArrowShaft",
+			"ArrowShaft",
+			"ArrowShaft",
+			"ArrowShaft",
+		};
 
 		private static string[] m_stabilizerNames = new string[]
 		{
-			"ArrowStabilizer", // RepeatCopperBolt
-            "ArrowStabilizer", // RepeatIronBolt
-            "ArrowStabilizer", // RepeatDiamondBolt
-            "ArrowStabilizer", // RepeatExplosiveBolt
-            "ArrowStabilizer", // RepeatFireBolt
-        };
+			"ArrowStabilizer",
+			"ArrowStabilizer",
+			"ArrowStabilizer",
+			"ArrowStabilizer",
+			"ArrowStabilizer",
+			"ArrowStabilizer",
+			"ArrowStabilizer",
+		};
 
-		// Slots de textura (la punta de fuego usa 62, igual que FireArrow)
 		private static int[] m_tipTextureSlots = new int[]
 		{
-			79,    // RepeatCopperBolt (igual que CopperArrow)
-            63,    // RepeatIronBolt (igual que IronBolt)
-            182,   // RepeatDiamondBolt (igual que DiamondBolt)
-            225,   // RepeatExplosiveBolt (según tu indicación)
-            62,    // RepeatFireBolt (igual que FireArrow)
-        };
+			79,
+			63,
+			182,
+			225,
+			62,
+			100,
+			100,
+		};
 
 		private static int[] m_shaftTextureSlots = new int[]
 		{
-			63,     // RepeatCopperBolt (igual que CopperArrow)
-            63,    // RepeatIronBolt
-            63,    // RepeatDiamondBolt
-            63,    // RepeatExplosiveBolt
-            63,    // RepeatFireBolt (puedes poner 4 si quieres estilo flecha, pero lo dejo 63)
-        };
+			63,
+			63,
+			63,
+			63,
+			63,
+			63,
+			63,
+		};
 
 		private static int[] m_stabilizerTextureSlots = new int[]
 		{
-			15,    // RepeatCopperBolt (igual que CopperArrow)
-            63,    // RepeatIronBolt
-            63,    // RepeatDiamondBolt
-            63,    // RepeatExplosiveBolt
-            63,    // RepeatFireBolt
-        };
+			15,
+			63,
+			63,
+			63,
+			63,
+			63,
+			63,
+		};
 
-		// Offsets de posición (todos -0.45 como tú configuraste)
 		private static float[] m_offsets = new float[]
 		{
-			-0.45f, // RepeatCopperBolt
-            -0.45f, // RepeatIronBolt
-            -0.45f, // RepeatDiamondBolt
-            -0.45f, // RepeatExplosiveBolt
-            -0.45f, // RepeatFireBolt
-        };
+			-0.45f,
+			-0.45f,
+			-0.45f,
+			-0.45f,
+			-0.45f,
+			-0.45f,
+			-0.45f,
+		};
 
-		// Potencia de proyectil (valores ajustados para diferenciarse de los originales)
 		private static float[] m_weaponPowers = new float[]
 		{
-			12f,    // RepeatCopperBolt (original 10, ahora 12)
-            30f,    // RepeatIronBolt (original 28, ahora 30)
-            40f,    // RepeatDiamondBolt (original 36, ahora 40)
-            12f,    // RepeatExplosiveBolt (original 8, ahora 12)
-            4f,     // RepeatFireBolt
-        };
+			12f,
+			30f,
+			40f,
+			12f,
+			4f,
+			2f,
+			3f,
+		};
 
-		// Escala de icono (0.8 para todos, como tú pusiste)
 		private static float[] m_iconViewScales = new float[]
 		{
-			0.8f,   // RepeatCopperBolt
-            0.8f,   // RepeatIronBolt
-            0.8f,   // RepeatDiamondBolt
-            0.8f,   // RepeatExplosiveBolt
-            0.8f,   // RepeatFireBolt
-        };
+			0.8f,
+			0.8f,
+			0.8f,
+			0.8f,
+			0.8f,
+			0.8f,
+			0.8f,
+		};
 
-		// Presión explosiva (solo para el explosivo)
 		private static float[] m_explosionPressures = new float[]
 		{
-			0f,     // RepeatCopperBolt
-            0f,     // RepeatIronBolt
-            0f,     // RepeatDiamondBolt
-            60f,    // RepeatExplosiveBolt
-            0f,     // RepeatFireBolt
-        };
+			0f,
+			0f,
+			0f,
+			60f,
+			0f,
+			0f,
+			0f,
+		};
 
-		// Nombres para mostrar (sin LanguageControl)
 		private static string[] m_displayNames = new string[]
 		{
 			"Repeat Copper Bolt",
@@ -115,6 +128,19 @@ namespace Game
 			"Repeat Diamond Bolt",
 			"Repeat Explosive Bolt",
 			"Repeat Fire Bolt",
+			"Poison Bolt",
+			"Severely Poisonous Bolt",
+		};
+
+		private static Color[] m_tipColors = new Color[]
+		{
+			Color.White,
+			Color.White,
+			Color.White,
+			Color.White,
+			Color.White,
+			Color.White,
+			new Color(0, 128, 13),
 		};
 
 		public override void Initialize()
@@ -129,21 +155,20 @@ namespace Game
 				string tipName = m_tipNames[typeIndex];
 				string shaftName = m_shaftNames[typeIndex];
 				string stabilizerName = m_stabilizerNames[typeIndex];
+				Color tipColor = m_tipColors[typeIndex];
 
 				Matrix tipTransform = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh(tipName, true).ParentBone);
 				Matrix shaftTransform = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh(shaftName, true).ParentBone);
 				Matrix stabilizerTransform = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh(stabilizerName, true).ParentBone);
 
-				// Punta
 				BlockMesh tipMesh = new BlockMesh();
 				tipMesh.AppendModelMeshPart(model.FindMesh(tipName, true).MeshParts[0],
 					tipTransform * Matrix.CreateTranslation(0f, m_offsets[typeIndex], 0f),
-					false, false, false, false, Color.White);
+					false, false, false, false, tipColor);
 				tipMesh.TransformTextureCoordinates(
 					Matrix.CreateTranslation((float)(m_tipTextureSlots[typeIndex] % 16) / 16f,
 					(float)(m_tipTextureSlots[typeIndex] / 16) / 16f, 0f), -1);
 
-				// Asta
 				BlockMesh shaftMesh = new BlockMesh();
 				shaftMesh.AppendModelMeshPart(model.FindMesh(shaftName, true).MeshParts[0],
 					shaftTransform * Matrix.CreateTranslation(0f, m_offsets[typeIndex], 0f),
@@ -152,7 +177,6 @@ namespace Game
 					Matrix.CreateTranslation((float)(m_shaftTextureSlots[typeIndex] % 16) / 16f,
 					(float)(m_shaftTextureSlots[typeIndex] / 16) / 16f, 0f), -1);
 
-				// Estabilizador
 				BlockMesh stabilizerMesh = new BlockMesh();
 				stabilizerMesh.AppendModelMeshPart(model.FindMesh(stabilizerName, true).MeshParts[0],
 					stabilizerTransform * Matrix.CreateTranslation(0f, m_offsets[typeIndex], 0f),
@@ -243,6 +267,8 @@ namespace Game
 			RepeatDiamondBolt,
 			RepeatExplosiveBolt,
 			RepeatFireBolt,
+			RepeatPoisonBolt,
+			RepeatSeverelyPoisonousBolt,
 		}
 	}
 }
