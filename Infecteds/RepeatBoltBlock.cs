@@ -45,7 +45,7 @@ namespace Game
 			79,    // RepeatCopperBolt (igual que CopperArrow)
             63,    // RepeatIronBolt (igual que IronBolt)
             182,   // RepeatDiamondBolt (igual que DiamondBolt)
-            229,   // RepeatExplosiveBolt (según tu indicación)
+            225,   // RepeatExplosiveBolt (según tu indicación)
             62,    // RepeatFireBolt (igual que FireArrow)
         };
 
