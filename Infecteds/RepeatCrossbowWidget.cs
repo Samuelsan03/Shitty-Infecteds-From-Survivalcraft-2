@@ -66,18 +66,18 @@ namespace Game
 				// Actualizar la etiqueta según el estado
 				if (draw < 15)
 				{
-					m_instructionsLabel.Text = LanguageControl.Get("RepeatCrossbowWidget", "0");
+					m_instructionsLabel.Text = LanguageControl.GetContentWidgets("RepeatCrossbowWidget", "0");
 				}
 				else // draw == 15
 				{
 					if (count > 0)
 					{
-						string format = LanguageControl.Get("RepeatCrossbowWidget", "1");
+						string format = LanguageControl.GetContentWidgets("RepeatCrossbowWidget", "1");
 						m_instructionsLabel.Text = string.Format(format, count);
 					}
 					else
 					{
-						m_instructionsLabel.Text = LanguageControl.Get("RepeatCrossbowWidget", "2");
+						m_instructionsLabel.Text = LanguageControl.GetContentWidgets("RepeatCrossbowWidget", "2");
 					}
 				}
 
