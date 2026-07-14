@@ -48,6 +48,7 @@ namespace Game
 			m_hasDestroyedBlocksWhileStuck = false;
 			m_targetInRangeTime = TargetInRangeTimeToChase + 1f;
 			m_targetUnsuitableTime = 0f;
+			m_wasForcedByGreenNight = false;
 			IsActive = true;
 
 			if (m_componentNewHerdBehavior != null)
@@ -79,40 +80,33 @@ namespace Game
 			m_hasDestroyedBlocksWhileStuck = false;
 			m_targetInRangeTime = 0f;
 			m_targetUnsuitableTime = 0f;
+			m_wasForcedByGreenNight = false;
 		}
 
-		/// <summary>
-		/// Llamado externamente (ej. por el ModLoader) para forzar a la criatura aliada a proteger al jugador.
-		/// Ignora supresiones y otorga prioridad máxima para no ser sobrescrito por la Protección Extrema.
-		/// </summary>
 		public void CallRangeHelp(ComponentCreature attacker)
 		{
 			if (attacker == null || attacker.ComponentHealth == null || attacker.ComponentHealth.Health <= 0f)
 				return;
 
 			Suppressed = false;
-
 			m_target = attacker;
 			m_nextUpdateTime = 0.0;
 			m_range = 999999f;
 			m_chaseTime = 60f;
 			m_isPersistent = true;
-			m_importanceLevel = 600f; // Prioridad máxima
+			m_importanceLevel = 600f;
 			m_autoChaseSuppressionTime = 0f;
 			m_hasDestroyedBlocksWhileStuck = false;
 			m_targetInRangeTime = 0f;
 			m_targetUnsuitableTime = 0f;
+			m_wasForcedByGreenNight = false;
 			IsActive = true;
 
 			if (m_componentNewHerdBehavior != null)
-			{
 				m_componentNewHerdBehavior.m_importanceLevel = 0f;
-			}
 
 			if (m_stateMachine.CurrentState != "Chasing")
-			{
 				m_stateMachine.TransitionTo("Chasing");
-			}
 		}
 
 		private void UpdateExtremeProtection(float dt)
@@ -122,20 +116,27 @@ namespace Game
 			if (m_isExtremeProtectionActive && !isGreenNightActive)
 			{
 				m_isExtremeProtectionActive = false;
-				if (m_target != null && m_target.ComponentHealth != null && m_target.ComponentHealth.Health > 0f)
+
+				if (m_wasForcedByGreenNight && m_target != null && m_target.ComponentHealth != null && m_target.ComponentHealth.Health > 0f)
 				{
-					ComponentZombieHerdBehavior targetZombieHerd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
+					bool isDay = m_subsystemSky.SkyLightIntensity >= 0.1f;
+					m_chaseTime = isDay ? (m_dayChaseTime * m_random.Float(0.75f, 1f)) : (m_nightChaseTime * m_random.Float(0.75f, 1f));
+					m_isPersistent = !isDay;
+					m_importanceLevel = m_isPersistent ? ImportanceLevelPersistent : ImportanceLevelNonPersistent;
+					m_range = isDay ? (m_dayChaseRange + 6f) : (m_nightChaseRange + 6f);
+					m_wasForcedByGreenNight = false;
+				}
+				else
+				{
+					ComponentZombieHerdBehavior targetZombieHerd = m_target?.Entity.FindComponent<ComponentZombieHerdBehavior>();
 					if (targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie" && !m_wasChasingBeforeProtection)
-					{
 						StopAttack();
-					}
 				}
 				m_wasChasingBeforeProtection = false;
 				return;
 			}
 
-			if (!isGreenNightActive)
-				return;
+			if (!isGreenNightActive) return;
 
 			m_isExtremeProtectionActive = true;
 
@@ -145,11 +146,10 @@ namespace Game
 			if (m_target != null && m_target.ComponentHealth != null && m_target.ComponentHealth.Health > 0f)
 			{
 				ComponentZombieHerdBehavior targetZombieHerd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
-				if (targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie")
+				if (targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie" || (m_importanceLevel >= 600f && m_isPersistent))
 				{
 					m_chaseTime = MathUtils.Max(m_chaseTime, 10f);
-					if (m_importanceLevel < 600f)
-						m_importanceLevel = 600f;
+					if (m_importanceLevel < 600f) m_importanceLevel = 600f;
 					m_autoChaseSuppressionTime = 0f;
 					m_targetUnsuitableTime = 0f;
 
@@ -160,29 +160,7 @@ namespace Game
 						float distance = Vector3.Distance(myPos, targetPos);
 						float predict = (distance < 4f) ? 0.3f : 0f;
 						int maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
-						m_componentPathfinding.SetDestination(
-							targetPos + predict * distance * m_target.ComponentBody.Velocity,
-							1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
-					}
-					return;
-				}
-				// CORRECCIÓN: Si fue una orden forzada con CallRangeHelp (Importancia 600), NO lo sobrescribimos
-				else if (m_importanceLevel >= 600f && m_isPersistent)
-				{
-					m_chaseTime = MathUtils.Max(m_chaseTime, 10f);
-					m_autoChaseSuppressionTime = 0f;
-					m_targetUnsuitableTime = 0f;
-
-					if (m_componentPathfinding != null && m_target.ComponentBody != null)
-					{
-						Vector3 targetPos = m_target.ComponentBody.BoundingBox.Center();
-						Vector3 myPos = m_componentCreature.ComponentBody.BoundingBox.Center();
-						float distance = Vector3.Distance(myPos, targetPos);
-						float predict = (distance < 4f) ? 0.3f : 0f;
-						int maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
-						m_componentPathfinding.SetDestination(
-							targetPos + predict * distance * m_target.ComponentBody.Velocity,
-							1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
+						m_componentPathfinding.SetDestination(targetPos + predict * distance * m_target.ComponentBody.Velocity, 1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
 					}
 					return;
 				}
@@ -190,7 +168,6 @@ namespace Game
 
 			float protectionRange = 35f;
 			Vector3 position = m_componentCreature.ComponentBody.Position;
-
 			m_componentBodies.Clear();
 			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), protectionRange, m_componentBodies);
 
@@ -200,9 +177,7 @@ namespace Game
 			for (int i = 0; i < m_componentBodies.Count; i++)
 			{
 				ComponentCreature creature = m_componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
-				if (creature == null) continue;
-				if (creature == m_componentCreature) continue;
-				if (!creature.Entity.IsAddedToProject) continue;
+				if (creature == null || creature == m_componentCreature || !creature.Entity.IsAddedToProject) continue;
 				if (creature.ComponentHealth == null || creature.ComponentHealth.Health <= 0f) continue;
 
 				ComponentZombieHerdBehavior zombieHerd = creature.Entity.FindComponent<ComponentZombieHerdBehavior>();
@@ -220,7 +195,6 @@ namespace Game
 			if (closestZombie != null)
 			{
 				m_wasChasingBeforeProtection = (m_target != null && m_target != closestZombie);
-
 				m_target = closestZombie;
 				m_range = protectionRange;
 				m_chaseTime = 999f;
@@ -229,40 +203,31 @@ namespace Game
 				m_autoChaseSuppressionTime = 0f;
 				m_targetUnsuitableTime = 0f;
 				m_targetInRangeTime = 0f;
+				m_wasForcedByGreenNight = true;
 				IsActive = true;
 				m_nextUpdateTime = 0.0;
 
 				if (m_componentNewHerdBehavior != null)
-				{
 					m_componentNewHerdBehavior.m_importanceLevel = 0f;
-				}
 
 				if (m_stateMachine.CurrentState != "Chasing")
-				{
 					m_stateMachine.TransitionTo("Chasing");
-				}
 
 				if (m_componentPathfinding != null && closestZombie.ComponentBody != null)
 				{
 					Vector3 targetPos = closestZombie.ComponentBody.BoundingBox.Center();
 					int maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
-					m_componentPathfinding.SetDestination(
-						targetPos, 1f, 1.5f, maxPos, true, false, true, closestZombie.ComponentBody);
+					m_componentPathfinding.SetDestination(targetPos, 1f, 1.5f, maxPos, true, false, true, closestZombie.ComponentBody);
 				}
 			}
 		}
 
 		private bool IsPrioritizedTargetDuringGreenNight()
 		{
-			if (!m_isExtremeProtectionActive) return false;
-			if (m_target == null) return false;
-
+			if (!m_isExtremeProtectionActive || m_target == null) return false;
 			ComponentZombieHerdBehavior targetZombieHerd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
 			if (targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie") return true;
-
-			// Reconoce la orden forzada por CallRangeHelp
 			if (m_importanceLevel >= 600f && m_isPersistent) return true;
-
 			return false;
 		}
 
@@ -275,19 +240,17 @@ namespace Game
 
 			m_autoChaseSuppressionTime -= dt;
 
-			if (m_target != null && m_chaseTime > 0f)
+			// CORRECCIÓN: Usar IsActive && m_target != null como el original
+			if (IsActive && m_target != null)
 			{
 				m_chaseTime -= dt;
 
-				if (m_isExtremeProtectionActive && IsPrioritizedTargetDuringGreenNight() && m_chaseTime < 5f)
-				{
+				if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsPrioritizedTargetDuringGreenNight() && m_chaseTime < 5f)
 					m_chaseTime = 10f;
-				}
 
 				m_componentCreature.ComponentCreatureModel.LookAtOrder = m_target.ComponentCreatureModel.EyePosition;
 
 				bool targetVisible = IsTargetVisible(m_target);
-
 				if (IsTargetInAttackRange(m_target.ComponentBody) && targetVisible)
 					m_componentCreatureModel.AttackOrder = true;
 
@@ -298,58 +261,37 @@ namespace Game
 					if (hitBody != null)
 					{
 						float x = m_isPersistent ? m_random.Float(8f, 10f) : 2f;
-						if (m_isExtremeProtectionActive && IsPrioritizedTargetDuringGreenNight())
-						{
+						if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsPrioritizedTargetDuringGreenNight())
 							x = MathUtils.Max(x, 10f);
-						}
+
 						m_chaseTime = MathUtils.Max(m_chaseTime, x);
 						m_componentMiner.Hit(hitBody, hitPoint, m_componentCreature.ComponentBody.Matrix.Forward);
 						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
 
 						if (m_pushVictimOnHit && m_random.Float(0f, 1f) < 0.1f)
 						{
-							Vector3 directionFromAttackerToVictim = m_target.ComponentBody.Position - m_componentCreature.ComponentBody.Position;
-							float horizontalDistance = new Vector2(directionFromAttackerToVictim.X, directionFromAttackerToVictim.Z).Length();
-							Vector3 pushDirection;
-							if (horizontalDistance > 0.01f)
-							{
-								pushDirection = Vector3.Normalize(new Vector3(directionFromAttackerToVictim.X, 0f, directionFromAttackerToVictim.Z));
-							}
+							Vector3 dir = m_target.ComponentBody.Position - m_componentCreature.ComponentBody.Position;
+							float hDist = new Vector2(dir.X, dir.Z).Length();
+							Vector3 pushDir;
+							if (hDist > 0.01f)
+								pushDir = Vector3.Normalize(new Vector3(dir.X, 0f, dir.Z));
 							else
 							{
-								pushDirection = m_componentCreature.ComponentBody.Matrix.Forward;
-								pushDirection.Y = 0f;
-								if (pushDirection.LengthSquared() > 0.01f)
-								{
-									pushDirection = Vector3.Normalize(pushDirection);
-								}
-								else
-								{
-									pushDirection = Vector3.UnitZ;
-								}
+								pushDir = m_componentCreature.ComponentBody.Matrix.Forward;
+								pushDir.Y = 0f;
+								if (pushDir.LengthSquared() > 0.01f) pushDir = Vector3.Normalize(pushDir);
+								else pushDir = Vector3.UnitZ;
 							}
-							hitBody.ApplyImpulse(Vector3.Normalize(pushDirection + Vector3.UnitY * 0.5f) * 1e+9f);
+							hitBody.ApplyImpulse(Vector3.Normalize(pushDir + Vector3.UnitY * 0.5f) * 1e+9f);
 						}
 
 						if (m_invokeLightningOnHit && m_target != null && m_random.Float(0f, 1f) < 0.1f)
-						{
 							m_subsystemSky.MakeLightningStrike(m_target.ComponentBody.Position, false);
-						}
 
 						if (m_explodeOnHit && m_target != null && m_random.Float(0f, 1f) < 0.1f)
 						{
 							Vector3 pos = m_target.ComponentBody.Position;
-							int cellX = Terrain.ToCell(pos.X);
-							int cellY = Terrain.ToCell(pos.Y);
-							int cellZ = Terrain.ToCell(pos.Z);
-							m_subsystemExplosions.AddExplosion(
-								x: cellX,
-								y: cellY,
-								z: cellZ,
-								pressure: 555f,
-								isIncendiary: false,
-								noExplosionSound: false
-							);
+							m_subsystemExplosions.AddExplosion(Terrain.ToCell(pos.X), Terrain.ToCell(pos.Y), Terrain.ToCell(pos.Z), 555f, false, false);
 						}
 					}
 				}
@@ -371,22 +313,16 @@ namespace Game
 
 		private void DestroyBlocksInLookDirection()
 		{
-			if (!IsActive || m_stateMachine.CurrentState != "Chasing" || m_target == null)
-				return;
+			if (!IsActive || m_stateMachine.CurrentState != "Chasing" || m_target == null) return;
 
 			Vector3 myPos = m_componentCreature.ComponentBody.Position;
 			Vector3 targetPos = m_target.ComponentBody.Position;
-
 			Vector3 dirToTarget = targetPos - myPos;
 			float distToTarget = dirToTarget.Length();
-			if (distToTarget < 0.01f)
-				return;
+			if (distToTarget < 0.01f) return;
 
-			float verticalRatio = MathF.Abs(dirToTarget.Y) / distToTarget;
-
-			if (verticalRatio > 0.6f)
+			if (MathF.Abs(dirToTarget.Y) / distToTarget > 0.6f)
 			{
-				// --- CASO VERTICAL (arriba/abajo) - SIN CAMBIOS ---
 				Point3 cell1, cell2;
 				if (dirToTarget.Y > 0)
 				{
@@ -400,59 +336,39 @@ namespace Game
 					cell1 = new Point3(Terrain.ToCell(myPos.X), baseY, Terrain.ToCell(myPos.Z));
 					cell2 = new Point3(cell1.X, baseY - 1, cell1.Z);
 				}
-
-				int value1 = m_subsystemTerrain.Terrain.GetCellValue(cell1.X, cell1.Y, cell1.Z);
-				if (Terrain.ExtractContents(value1) != BedrockBlock.Index)
+				for (int i = 0; i < 2; i++)
 				{
-					m_subsystemSoundMaterials.PlayImpactSound(value1, new Vector3(cell1.X + 0.5f, cell1.Y + 0.5f, cell1.Z + 0.5f), 1f);
-					m_subsystemTerrain.DestroyCell(4, cell1.X, cell1.Y, cell1.Z, 0, false, false, null);
-				}
-
-				int value2 = m_subsystemTerrain.Terrain.GetCellValue(cell2.X, cell2.Y, cell2.Z);
-				if (Terrain.ExtractContents(value2) != BedrockBlock.Index)
-				{
-					m_subsystemSoundMaterials.PlayImpactSound(value2, new Vector3(cell2.X + 0.5f, cell2.Y + 0.5f, cell2.Z + 0.5f), 1f);
-					m_subsystemTerrain.DestroyCell(4, cell2.X, cell2.Y, cell2.Z, 0, false, false, null);
+					Point3 cell = (i == 0) ? cell1 : cell2;
+					int val = m_subsystemTerrain.Terrain.GetCellValue(cell.X, cell.Y, cell.Z);
+					if (Terrain.ExtractContents(val) != BedrockBlock.Index)
+					{
+						m_subsystemSoundMaterials.PlayImpactSound(val, new Vector3(cell.X + 0.5f, cell.Y + 0.5f, cell.Z + 0.5f), 1f);
+						m_subsystemTerrain.DestroyCell(4, cell.X, cell.Y, cell.Z, 0, false, false, null);
+					}
 				}
 			}
 			else
 			{
-				// --- CASO HORIZONTAL (adelante) - CORREGIDO ---
 				Vector3 fromPos = m_componentCreature.ComponentBody.BoundingBox.Center();
 				Vector3 toPos = m_target.ComponentBody.BoundingBox.Center();
 				Vector3 dir = toPos - fromPos;
 				float dist = dir.Length();
-				if (dist < 0.01f)
-					return;
+				if (dist < 0.01f) return;
 				dir /= dist;
-
-				// Limitar a 3 bloques de distancia
 				Vector3 rayEnd = fromPos + dir * MathUtils.Min(dist, 3f);
-
-				// Verificamos si REALMENTE hay una pared frente a él que obstruya el camino
 				TerrainRaycastResult? terrainResult = m_subsystemTerrain.Raycast(fromPos, rayEnd, false, true, null);
 
 				if (terrainResult.HasValue)
 				{
 					CellFace hitFace = terrainResult.Value.CellFace;
-					int hitX = hitFace.X;
-					int hitY = hitFace.Y;
-					int hitZ = hitFace.Z;
-
-					// Bloque 1: El que impactó el raycast (la pared real)
-					int value1 = m_subsystemTerrain.Terrain.GetCellValue(hitX, hitY, hitZ);
-					if (Terrain.ExtractContents(value1) != BedrockBlock.Index)
+					for (int dy = 0; dy <= 1; dy++)
 					{
-						m_subsystemSoundMaterials.PlayImpactSound(value1, new Vector3(hitX + 0.5f, hitY + 0.5f, hitZ + 0.5f), 1f);
-						m_subsystemTerrain.DestroyCell(4, hitX, hitY, hitZ, 0, false, false, null);
-					}
-
-					// Bloque 2: El de arriba para abrir hueco suficiente para que pase la criatura
-					int value2 = m_subsystemTerrain.Terrain.GetCellValue(hitX, hitY + 1, hitZ);
-					if (Terrain.ExtractContents(value2) != BedrockBlock.Index)
-					{
-						m_subsystemSoundMaterials.PlayImpactSound(value2, new Vector3(hitX + 0.5f, (hitY + 1) + 0.5f, hitZ + 0.5f), 1f);
-						m_subsystemTerrain.DestroyCell(4, hitX, hitY + 1, hitZ, 0, false, false, null);
+						int val = m_subsystemTerrain.Terrain.GetCellValue(hitFace.X, hitFace.Y + dy, hitFace.Z);
+						if (Terrain.ExtractContents(val) != BedrockBlock.Index)
+						{
+							m_subsystemSoundMaterials.PlayImpactSound(val, new Vector3(hitFace.X + 0.5f, (hitFace.Y + dy) + 0.5f, hitFace.Z + 0.5f), 1f);
+							m_subsystemTerrain.DestroyCell(4, hitFace.X, hitFace.Y + dy, hitFace.Z, 0, false, false, null);
+						}
 					}
 				}
 			}
@@ -461,7 +377,6 @@ namespace Game
 		private bool IsTargetVisible(ComponentCreature target)
 		{
 			if (target == null) return false;
-
 			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
 			Vector3 targetEyePos = target.ComponentCreatureModel.EyePosition;
 			Vector3 dirToTarget = targetEyePos - eyePos;
@@ -472,36 +387,24 @@ namespace Game
 			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
 			float flatForwardLen = new Vector2(forward.X, forward.Z).Length();
 			if (flatForwardLen < 0.001f) return false;
-
 			Vector2 flatDir = new Vector2(dirToTarget.X, dirToTarget.Z);
 			float flatDist = flatDir.Length();
 			if (flatDist < 0.001f) return true;
 
-			float dot = Vector2.Dot(
-				new Vector2(forward.X, forward.Z) / flatForwardLen,
-				flatDir / flatDist);
-			if (dot < MathF.Cos(0.785398f))
+			if (Vector2.Dot(new Vector2(forward.X, forward.Z) / flatForwardLen, flatDir / flatDist) < MathF.Cos(0.785398f))
 				return false;
 
 			TerrainRaycastResult? terrainResult = m_subsystemTerrain.Raycast(eyePos, targetEyePos, false, true, null);
-			if (terrainResult != null && terrainResult.Value.Distance < dist - 0.01f)
-			{
-				return false;
-			}
+			if (terrainResult != null && terrainResult.Value.Distance < dist - 0.01f) return false;
 
 			Ray3 ray = new Ray3(eyePos, dirToTarget / dist);
 			BodyRaycastResult? bodyResult = m_componentMiner.Raycast<BodyRaycastResult>(ray, RaycastMode.Interaction, true, true, true, null);
 			if (bodyResult != null && bodyResult.Value.Distance < dist - 0.01f)
 			{
 				ComponentBody hitBody = bodyResult.Value.ComponentBody;
-				if (hitBody != target.ComponentBody &&
-					!hitBody.IsChildOfBody(target.ComponentBody) &&
-					!target.ComponentBody.IsChildOfBody(hitBody))
-				{
+				if (hitBody != target.ComponentBody && !hitBody.IsChildOfBody(target.ComponentBody) && !target.ComponentBody.IsChildOfBody(hitBody))
 					return false;
-				}
 			}
-
 			return true;
 		}
 
@@ -549,19 +452,12 @@ namespace Game
 					{
 						bool isPlayer = m_subsystemPlayers.IsPlayer(body.Entity);
 						bool flag2 = (componentCreature.Category & m_autoChaseMask) > (CreatureCategory)0;
-
-						if ((AttacksPlayer && isPlayer && m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless) ||
-							(AttacksNonPlayerCreature && !isPlayer && flag2))
-						{
+						if ((AttacksPlayer && isPlayer && m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless) || (AttacksNonPlayerCreature && !isPlayer && flag2))
 							Attack(componentCreature, ChaseRangeOnTouch, ChaseTimeOnTouch, false);
-						}
 					}
 				}
-
 				if (m_target != null && JumpWhenTargetStanding && body == m_target.ComponentBody && body.StandingOnBody == m_componentCreature.ComponentBody)
-				{
 					m_componentCreature.ComponentLocomotion.JumpOrder = 1f;
-				}
 			}));
 
 			ComponentHealth componentHealth = m_componentCreature.ComponentHealth;
@@ -593,31 +489,18 @@ namespace Game
 			m_stateMachine.AddState("LookingForTarget", delegate
 			{
 				if (!IsActive && m_target == null)
-				{
 					m_importanceLevel = 0f;
-				}
 			}, delegate
 			{
-				if (m_isExtremeProtectionActive)
-				{
-					return;
-				}
+				if (m_isExtremeProtectionActive) return;
 
-				if (m_target != null && m_chaseTime > 0f)
+				if (IsActive)
 				{
 					m_stateMachine.TransitionTo("Chasing");
 					return;
 				}
 
-				if (IsActive && m_target != null)
-				{
-					m_stateMachine.TransitionTo("Chasing");
-					return;
-				}
-
-				if (!Suppressed && m_autoChaseSuppressionTime <= 0f &&
-					(m_target == null || ScoreTarget(m_target) <= 0f) &&
-					m_componentCreature.ComponentHealth.Health > MinHealthToAttackActively)
+				if (!Suppressed && m_autoChaseSuppressionTime <= 0f && (m_target == null || ScoreTarget(m_target) <= 0f) && m_componentCreature.ComponentHealth.Health > MinHealthToAttackActively)
 				{
 					m_range = (m_subsystemSky.SkyLightIntensity < 0.2f) ? m_nightChaseRange : m_dayChaseRange;
 					m_range *= m_componentFactors.GetOtherFactorResult("ChaseRange", false, false);
@@ -640,9 +523,7 @@ namespace Game
 
 			m_stateMachine.AddState("RandomMoving", delegate
 			{
-				m_componentPathfinding.SetDestination(
-					m_componentCreature.ComponentBody.Position + new Vector3(6f * m_random.Float(-1f, 1f), 0f, 6f * m_random.Float(-1f, 1f)),
-					1f, 1f, 0, false, true, false, null);
+				m_componentPathfinding.SetDestination(m_componentCreature.ComponentBody.Position + new Vector3(6f * m_random.Float(-1f, 1f), 0f, 6f * m_random.Float(-1f, 1f)), 1f, 1f, 0, false, true, false, null);
 			}, delegate
 			{
 				if (m_componentPathfinding.IsStuck || m_componentPathfinding.Destination == null)
@@ -662,53 +543,46 @@ namespace Game
 				m_nextUpdateTime = 0.0;
 			}, delegate
 			{
-				if (m_isExtremeProtectionActive && IsPrioritizedTargetDuringGreenNight())
+				if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsPrioritizedTargetDuringGreenNight())
 				{
 					if (m_target == null || m_target.ComponentHealth == null || m_target.ComponentHealth.Health <= 0f)
 					{
 						m_importanceLevel = 0f;
 						m_target = null;
 						IsActive = false;
+						m_wasForcedByGreenNight = false;
 						m_stateMachine.TransitionTo("LookingForTarget");
 						return;
 					}
 
 					if (m_componentPathfinding != null && m_target.ComponentBody != null)
 					{
-						BoundingBox bb1 = m_componentCreature.ComponentBody.BoundingBox;
-						BoundingBox bb2 = m_target.ComponentBody.BoundingBox;
-						Vector3 center1 = 0.5f * (bb1.Min + bb1.Max);
-						Vector3 center2 = 0.5f * (bb2.Min + bb2.Max);
-						float dist = Vector3.Distance(center1, center2);
+						Vector3 c1 = 0.5f * (m_componentCreature.ComponentBody.BoundingBox.Min + m_componentCreature.ComponentBody.BoundingBox.Max);
+						Vector3 c2 = 0.5f * (m_target.ComponentBody.BoundingBox.Min + m_target.ComponentBody.BoundingBox.Max);
+						float dist = Vector3.Distance(c1, c2);
 						float predict = (dist < 4f) ? 0.3f : 0f;
 						int maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
-
-						m_componentPathfinding.SetDestination(
-							center2 + predict * dist * m_target.ComponentBody.Velocity,
-							1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
+						m_componentPathfinding.SetDestination(c2 + predict * dist * m_target.ComponentBody.Velocity, 1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
 					}
-
 					if (PlayAngrySoundWhenChasing && m_random.Float(0f, 1f) < 0.5f * m_dt)
 						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
-
 					return;
 				}
 
-				if (!IsActive && m_target == null)
+				// CORRECCIÓN PRINCIPAL: Comportamiento EXACTO del original.
+				if (!IsActive)
 				{
 					m_stateMachine.TransitionTo("LookingForTarget");
 					return;
 				}
-
-				if (m_target == null || m_chaseTime <= 0f)
+				else if (m_chaseTime <= 0f)
 				{
-					if (m_chaseTime <= 0f && m_target != null)
-					{
-						m_autoChaseSuppressionTime = m_random.Float(10f, 60f);
-					}
+					m_autoChaseSuppressionTime = m_random.Float(10f, 60f);
 					m_importanceLevel = 0f;
-					m_target = null;
-					IsActive = false;
+				}
+				else if (m_target == null)
+				{
+					m_importanceLevel = 0f;
 				}
 				else if (m_target.ComponentHealth.Health <= 0f)
 				{
@@ -722,14 +596,10 @@ namespace Game
 						});
 					}
 					m_importanceLevel = 0f;
-					m_target = null;
-					IsActive = false;
 				}
 				else if (!m_isPersistent && m_componentPathfinding.IsStuck)
 				{
 					m_importanceLevel = 0f;
-					m_target = null;
-					IsActive = false;
 				}
 				else if (m_isPersistent && m_componentPathfinding.IsStuck)
 				{
@@ -745,8 +615,6 @@ namespace Game
 					if (m_targetUnsuitableTime > 3f)
 					{
 						m_importanceLevel = 0f;
-						m_target = null;
-						IsActive = false;
 					}
 					else
 					{
@@ -754,16 +622,12 @@ namespace Game
 						if (m_isPersistent)
 							maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
 
-						BoundingBox bb1 = m_componentCreature.ComponentBody.BoundingBox;
-						BoundingBox bb2 = m_target.ComponentBody.BoundingBox;
-						Vector3 center1 = 0.5f * (bb1.Min + bb1.Max);
-						Vector3 center2 = 0.5f * (bb2.Min + bb2.Max);
-						float dist = Vector3.Distance(center1, center2);
+						Vector3 c1 = 0.5f * (m_componentCreature.ComponentBody.BoundingBox.Min + m_componentCreature.ComponentBody.BoundingBox.Max);
+						Vector3 c2 = 0.5f * (m_target.ComponentBody.BoundingBox.Min + m_target.ComponentBody.BoundingBox.Max);
+						float dist = Vector3.Distance(c1, c2);
 						float predict = (dist < 4f) ? 0.2f : 0f;
 
-						m_componentPathfinding.SetDestination(
-							center2 + predict * dist * m_target.ComponentBody.Velocity,
-							1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
+						m_componentPathfinding.SetDestination(c2 + predict * dist * m_target.ComponentBody.Velocity, 1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
 
 						if (PlayAngrySoundWhenChasing && m_random.Float(0f, 1f) < 0.33f * m_dt)
 							m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
@@ -779,7 +643,6 @@ namespace Game
 			Vector3 pos = m_componentCreature.ComponentBody.Position;
 			ComponentCreature result = null;
 			float bestScore = 0f;
-
 			m_componentBodies.Clear();
 			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(pos.X, pos.Z), m_range, m_componentBodies);
 
@@ -816,12 +679,8 @@ namespace Game
 			bool randomPass = componentCreature == Target || (matchesMask && MathUtils.Remainder(0.004999999888241291 * m_subsystemTime.GameTime + (double)((float)(GetHashCode() % 1000) / 1000f) + (double)((float)(componentCreature.GetHashCode() % 1000) / 1000f), 1.0) < (double)m_chaseNonPlayerProbability);
 
 			if (m_componentNewHerdBehavior != null && m_componentNewHerdBehavior.HerdName == "player" && isPlayer)
-			{
 				score = 0f;
-			}
-			else if (componentCreature != m_componentCreature && ((!isPlayer && randomPass) || (isPlayer && isTargetOrGameMode)) &&
-					 componentCreature.Entity.IsAddedToProject && componentCreature.ComponentHealth.Health > 0f &&
-					 (notWater || IsTargetInWater(componentCreature.ComponentBody)))
+			else if (componentCreature != m_componentCreature && ((!isPlayer && randomPass) || (isPlayer && isTargetOrGameMode)) && componentCreature.Entity.IsAddedToProject && componentCreature.ComponentHealth.Health > 0f && (notWater || IsTargetInWater(componentCreature.ComponentBody)))
 			{
 				float dist = Vector3.Distance(m_componentCreature.ComponentBody.Position, componentCreature.ComponentBody.Position);
 				if (dist < m_range)
@@ -832,14 +691,12 @@ namespace Game
 
 		public virtual bool IsTargetInWater(ComponentBody target)
 		{
-			return target.ImmersionDepth > 0f || (target.ParentBody != null && IsTargetInWater(target.ParentBody)) ||
-				   (target.StandingOnBody != null && target.StandingOnBody.Position.Y < target.Position.Y && IsTargetInWater(target.StandingOnBody));
+			return target.ImmersionDepth > 0f || (target.ParentBody != null && IsTargetInWater(target.ParentBody)) || (target.StandingOnBody != null && target.StandingOnBody.Position.Y < target.Position.Y && IsTargetInWater(target.StandingOnBody));
 		}
 
 		public virtual bool IsTargetInAttackRange(ComponentBody target)
 		{
-			if (IsBodyInAttackRange(target))
-				return true;
+			if (IsBodyInAttackRange(target)) return true;
 			BoundingBox bb1 = m_componentCreature.ComponentBody.BoundingBox;
 			BoundingBox bb2 = target.BoundingBox;
 			Vector3 c1 = 0.5f * (bb1.Min + bb1.Max);
@@ -851,14 +708,11 @@ namespace Game
 
 			if (MathF.Abs(c2.Y) < height * 0.99f)
 			{
-				if (len < width + 0.99f && Vector3.Dot(dir, m_componentCreature.ComponentBody.Matrix.Forward) > 0.25f)
-					return true;
+				if (len < width + 0.99f && Vector3.Dot(dir, m_componentCreature.ComponentBody.Matrix.Forward) > 0.25f) return true;
 			}
-			else if (len < height + 0.3f && MathF.Abs(Vector3.Dot(dir, Vector3.UnitY)) > 0.8f)
-				return true;
+			else if (len < height + 0.3f && MathF.Abs(Vector3.Dot(dir, Vector3.UnitY)) > 0.8f) return true;
 
-			return (target.ParentBody != null && IsTargetInAttackRange(target.ParentBody)) ||
-				   (AllowAttackingStandingOnBody && target.StandingOnBody != null && target.StandingOnBody.Position.Y < target.Position.Y && IsTargetInAttackRange(target.StandingOnBody));
+			return (target.ParentBody != null && IsTargetInAttackRange(target.ParentBody)) || (AllowAttackingStandingOnBody && target.StandingOnBody != null && target.StandingOnBody.Position.Y < target.Position.Y && IsTargetInAttackRange(target.StandingOnBody));
 		}
 
 		public virtual bool IsBodyInAttackRange(ComponentBody target)
@@ -874,12 +728,9 @@ namespace Game
 
 			if (MathF.Abs(c2.Y) < height * 0.99f)
 			{
-				if (len < width + 0.99f && Vector3.Dot(dir, m_componentCreature.ComponentBody.Matrix.Forward) > 0.25f)
-					return true;
+				if (len < width + 0.99f && Vector3.Dot(dir, m_componentCreature.ComponentBody.Matrix.Forward) > 0.25f) return true;
 			}
-			else if (len < height + 0.3f && MathF.Abs(Vector3.Dot(dir, Vector3.UnitY)) > 0.8f)
-				return true;
-
+			else if (len < height + 0.3f && MathF.Abs(Vector3.Dot(dir, Vector3.UnitY)) > 0.8f) return true;
 			return false;
 		}
 
@@ -890,15 +741,11 @@ namespace Game
 			Ray3 ray = new Ray3(eye, Vector3.Normalize(targetCenter - eye));
 			BodyRaycastResult? raycast = m_componentMiner.Raycast<BodyRaycastResult>(ray, RaycastMode.Interaction, true, true, true, null);
 
-			if (raycast != null && raycast.Value.Distance < MaxAttackRange &&
-				(raycast.Value.ComponentBody == target || raycast.Value.ComponentBody.IsChildOfBody(target) ||
-				 target.IsChildOfBody(raycast.Value.ComponentBody) ||
-				 (target.StandingOnBody == raycast.Value.ComponentBody && AllowAttackingStandingOnBody)))
+			if (raycast != null && raycast.Value.Distance < MaxAttackRange && (raycast.Value.ComponentBody == target || raycast.Value.ComponentBody.IsChildOfBody(target) || target.IsChildOfBody(raycast.Value.ComponentBody) || (target.StandingOnBody == raycast.Value.ComponentBody && AllowAttackingStandingOnBody)))
 			{
 				hitPoint = raycast.Value.HitPoint();
 				return raycast.Value.ComponentBody;
 			}
-
 			hitPoint = default(Vector3);
 			return null;
 		}
@@ -965,8 +812,8 @@ namespace Game
 		public bool m_pushVictimOnHit = false;
 
 		private bool m_hasDestroyedBlocksWhileStuck;
-
 		private bool m_isExtremeProtectionActive = false;
 		private bool m_wasChasingBeforeProtection = false;
+		private bool m_wasForcedByGreenNight = false;
 	}
 }
