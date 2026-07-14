@@ -50,6 +50,7 @@ namespace Game
 
 		private bool m_wasGreenNightActive = false;
 		private double m_lastGreenNightForcedSearch = 0.0;
+		private bool m_isChasingGreenNightAttacker = false;
 
 		public ComponentCreature Target => m_target;
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -118,6 +119,10 @@ namespace Game
 			{
 				m_lastGreenNightForcedSearch = 0.0;
 			}
+			if (!isGreenNightActiveNow && m_wasGreenNightActive)
+			{
+				m_isChasingGreenNightAttacker = false;
+			}
 			m_wasGreenNightActive = isGreenNightActiveNow;
 
 			if (isGreenNightActiveNow)
@@ -169,6 +174,11 @@ namespace Game
 
 		private void ForceChasePlayerOnGreenNight()
 		{
+			if (m_isChasingGreenNightAttacker && m_target != null && m_target.ComponentHealth.Health > 0f)
+			{
+				return;
+			}
+
 			if (m_subsystemTime.GameTime - m_lastGreenNightForcedSearch < 1.0) return;
 			m_lastGreenNightForcedSearch = m_subsystemTime.GameTime;
 
@@ -215,6 +225,7 @@ namespace Game
 				m_targetUnsuitableTime = 0f;
 				m_targetInRangeTime = 0f;
 				m_nextUpdateTime = 0.0;
+				m_isChasingGreenNightAttacker = false;
 				IsActive = true;
 				m_stateMachine.TransitionTo("Chasing");
 			}
@@ -294,6 +305,16 @@ namespace Game
 					float time = (ChaseWhenAttackedProbability >= 1f) ? 60f : 7f;
 					bool persistent = ChaseWhenAttackedProbability >= 1f;
 
+					bool isGreenNightActive = MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive;
+					if (isGreenNightActive && !m_subsystemPlayers.IsPlayer(attacker.Entity))
+					{
+						m_isChasingGreenNightAttacker = true;
+					}
+					else
+					{
+						m_isChasingGreenNightAttacker = false;
+					}
+
 					Attack(attacker, range, time, persistent);
 					m_importanceLevel = 1000f;
 					m_autoChaseSuppressionTime = 0f;
@@ -344,22 +365,30 @@ namespace Game
 				m_nextUpdateTime = 0.0;
 			}, delegate
 			{
-				bool isGreenNightActive = MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive && m_target != null && m_subsystemPlayers.IsPlayer(m_target.Entity);
+				bool isGreenNightActiveNow = MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive;
+				bool isChasingPlayerOnGreenNight = isGreenNightActiveNow && m_target != null && m_subsystemPlayers.IsPlayer(m_target.Entity);
+				bool isChasingGreenNightAttackerValid = isGreenNightActiveNow && m_isChasingGreenNightAttacker;
 
 				if (!IsActive)
 				{
 					m_stateMachine.TransitionTo("LookingForTarget");
 				}
-				else if (!isGreenNightActive && m_chaseTime <= 0f)
+				else if (m_target == null || m_target.ComponentHealth.Health <= 0f)
+				{
+					m_isChasingGreenNightAttacker = false;
+					m_importanceLevel = 0f;
+				}
+				else if (isChasingGreenNightAttackerValid && m_chaseTime <= 0f)
+				{
+					m_isChasingGreenNightAttacker = false;
+					m_importanceLevel = 0f;
+				}
+				else if (!isChasingPlayerOnGreenNight && !isChasingGreenNightAttackerValid && m_chaseTime <= 0f)
 				{
 					m_autoChaseSuppressionTime = m_random.Float(10f, 60f);
 					m_importanceLevel = 0f;
 				}
-				else if (m_target == null || m_target.ComponentHealth.Health <= 0f)
-				{
-					m_importanceLevel = 0f;
-				}
-				else if (!isGreenNightActive && !m_isPersistent && m_componentPathfinding.IsStuck)
+				else if (!isChasingPlayerOnGreenNight && !isChasingGreenNightAttackerValid && !m_isPersistent && m_componentPathfinding.IsStuck)
 				{
 					m_importanceLevel = 0f;
 				}
@@ -374,13 +403,21 @@ namespace Game
 						m_targetUnsuitableTime = 0f;
 					}
 
-					if (!isGreenNightActive && m_targetUnsuitableTime > 3f)
+					if (m_targetUnsuitableTime > 3f)
 					{
-						m_importanceLevel = 0f;
+						if (isChasingGreenNightAttackerValid)
+						{
+							m_isChasingGreenNightAttacker = false;
+							m_importanceLevel = 0f;
+						}
+						else if (!isChasingPlayerOnGreenNight)
+						{
+							m_importanceLevel = 0f;
+						}
 					}
 					else
 					{
-						int maxPathfinding = (m_isPersistent || isGreenNightActive) ? ((m_subsystemTime.FixedTimeStep != null) ? 2000 : 500) : 0;
+						int maxPathfinding = (m_isPersistent || isGreenNightActiveNow) ? ((m_subsystemTime.FixedTimeStep != null) ? 2000 : 500) : 0;
 						Vector3 targetPos = m_target.ComponentBody.BoundingBox.Center();
 						float distance = Vector3.Distance(m_componentCreature.ComponentBody.BoundingBox.Center(), targetPos);
 						float slowDown = (distance < 4f) ? 0.2f : 0f;
