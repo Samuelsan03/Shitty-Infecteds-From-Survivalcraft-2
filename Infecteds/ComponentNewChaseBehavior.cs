@@ -383,13 +383,11 @@ namespace Game
 				return;
 
 			float verticalRatio = MathF.Abs(dirToTarget.Y) / distToTarget;
-			float horizontalLength = new Vector2(dirToTarget.X, dirToTarget.Z).Length();
-
-			Point3 cell1, cell2;
-			bool destroyBlocks = true;
 
 			if (verticalRatio > 0.6f)
 			{
+				// --- CASO VERTICAL (arriba/abajo) - SIN CAMBIOS ---
+				Point3 cell1, cell2;
 				if (dirToTarget.Y > 0)
 				{
 					int baseY = Terrain.ToCell(myPos.Y + m_componentCreature.ComponentBody.BoxSize.Y + 0.5f);
@@ -402,43 +400,7 @@ namespace Game
 					cell1 = new Point3(Terrain.ToCell(myPos.X), baseY, Terrain.ToCell(myPos.Z));
 					cell2 = new Point3(cell1.X, baseY - 1, cell1.Z);
 				}
-			}
-			else
-			{
-				Vector2 horizontalDir;
-				if (horizontalLength > 0.01f)
-				{
-					horizontalDir = new Vector2(dirToTarget.X, dirToTarget.Z) / horizontalLength;
-				}
-				else
-				{
-					Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
-					horizontalDir = new Vector2(forward.X, forward.Z);
-					float len = horizontalDir.Length();
-					if (len > 0.01f)
-						horizontalDir /= len;
-					else
-						horizontalDir = new Vector2(0f, 1f);
-				}
 
-				Vector3 targetBlockPos = myPos + new Vector3(horizontalDir.X, 0f, horizontalDir.Y) * 1.5f;
-				int baseY = Terrain.ToCell(myPos.Y + m_componentCreature.ComponentBody.BoxSize.Y * 0.5f);
-
-				if (dirToTarget.Y > 0.3f)
-				{
-					baseY += 1;
-				}
-				else if (dirToTarget.Y < -0.3f)
-				{
-					baseY -= 1;
-				}
-
-				cell1 = new Point3(Terrain.ToCell(targetBlockPos.X), baseY, Terrain.ToCell(targetBlockPos.Z));
-				cell2 = new Point3(cell1.X, baseY + 1, cell1.Z);
-			}
-
-			if (destroyBlocks)
-			{
 				int value1 = m_subsystemTerrain.Terrain.GetCellValue(cell1.X, cell1.Y, cell1.Z);
 				if (Terrain.ExtractContents(value1) != BedrockBlock.Index)
 				{
@@ -451,6 +413,47 @@ namespace Game
 				{
 					m_subsystemSoundMaterials.PlayImpactSound(value2, new Vector3(cell2.X + 0.5f, cell2.Y + 0.5f, cell2.Z + 0.5f), 1f);
 					m_subsystemTerrain.DestroyCell(4, cell2.X, cell2.Y, cell2.Z, 0, false, false, null);
+				}
+			}
+			else
+			{
+				// --- CASO HORIZONTAL (adelante) - CORREGIDO ---
+				Vector3 fromPos = m_componentCreature.ComponentBody.BoundingBox.Center();
+				Vector3 toPos = m_target.ComponentBody.BoundingBox.Center();
+				Vector3 dir = toPos - fromPos;
+				float dist = dir.Length();
+				if (dist < 0.01f)
+					return;
+				dir /= dist;
+
+				// Limitar a 3 bloques de distancia
+				Vector3 rayEnd = fromPos + dir * MathUtils.Min(dist, 3f);
+
+				// Verificamos si REALMENTE hay una pared frente a él que obstruya el camino
+				TerrainRaycastResult? terrainResult = m_subsystemTerrain.Raycast(fromPos, rayEnd, false, true, null);
+
+				if (terrainResult.HasValue)
+				{
+					CellFace hitFace = terrainResult.Value.CellFace;
+					int hitX = hitFace.X;
+					int hitY = hitFace.Y;
+					int hitZ = hitFace.Z;
+
+					// Bloque 1: El que impactó el raycast (la pared real)
+					int value1 = m_subsystemTerrain.Terrain.GetCellValue(hitX, hitY, hitZ);
+					if (Terrain.ExtractContents(value1) != BedrockBlock.Index)
+					{
+						m_subsystemSoundMaterials.PlayImpactSound(value1, new Vector3(hitX + 0.5f, hitY + 0.5f, hitZ + 0.5f), 1f);
+						m_subsystemTerrain.DestroyCell(4, hitX, hitY, hitZ, 0, false, false, null);
+					}
+
+					// Bloque 2: El de arriba para abrir hueco suficiente para que pase la criatura
+					int value2 = m_subsystemTerrain.Terrain.GetCellValue(hitX, hitY + 1, hitZ);
+					if (Terrain.ExtractContents(value2) != BedrockBlock.Index)
+					{
+						m_subsystemSoundMaterials.PlayImpactSound(value2, new Vector3(hitX + 0.5f, (hitY + 1) + 0.5f, hitZ + 0.5f), 1f);
+						m_subsystemTerrain.DestroyCell(4, hitX, hitY + 1, hitZ, 0, false, false, null);
+					}
 				}
 			}
 		}
