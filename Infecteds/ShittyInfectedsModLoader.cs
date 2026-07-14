@@ -212,17 +212,13 @@ public class ShittyInfectedsModLoader : ModLoader
 		// CASO 1: El jugador ataca a una criatura
 		if (attacker is ComponentPlayer)
 		{
-			// Verificamos la configuración: "When hitting a creature, your herd allies will attack it"
 			if (!ShittyInfectedsSettings.EnableCreatureAttacks) return;
-
 			enemy = victim;
 		}
 		// CASO 2: Una criatura ataca al jugador
 		else if (victim is ComponentPlayer)
 		{
-			// Verificamos la configuración: "When a creature hits you in creative, your allies will attack it"
 			if (!ShittyInfectedsSettings.AttackOnHitCreative) return;
-
 			enemy = attacker;
 		}
 		else
@@ -234,6 +230,7 @@ public class ShittyInfectedsModLoader : ModLoader
 			return;
 
 		SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
+
 		foreach (ComponentCreature creature in creatureSpawn.Creatures)
 		{
 			if (creature.ComponentHealth.Health <= 0f)
@@ -242,8 +239,15 @@ public class ShittyInfectedsModLoader : ModLoader
 			ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
 			if (herd != null && herd.HerdName == "player")
 			{
-				herd.CallNearbyCreaturesHelp(enemy, 20f, 30f, false);
-				break;
+				if (creature.Entity == enemy.Entity)
+					continue;
+
+				ComponentNewChaseBehavior chaseBehavior = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
+				if (chaseBehavior != null)
+				{
+					// Llamada limpia al nuevo método en NewChase
+					chaseBehavior.CallRangeHelp(enemy);
+				}
 			}
 		}
 	}
