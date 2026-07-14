@@ -50,14 +50,11 @@ namespace Game
 			m_targetUnsuitableTime = 0f;
 			IsActive = true;
 
-			// CORREGIDO: Forzar que el comportamiento de manada se desactive inmediatamente
-			// para evitar conflictos de pathfinding
 			if (m_componentNewHerdBehavior != null)
 			{
 				m_componentNewHerdBehavior.m_importanceLevel = 0f;
 			}
 
-			// FORZAR transición inmediata al estado Chasing
 			if (m_stateMachine.CurrentState != "Chasing")
 			{
 				m_stateMachine.TransitionTo("Chasing");
@@ -85,19 +82,46 @@ namespace Game
 		}
 
 		/// <summary>
-		/// Lógica de Protección Extrema durante la Noche Verde.
-		/// Durante este evento, la criatura buscará activamente zombies y los atacará
-		/// sin demora ni dependencia de que el jugador sea golpeado.
+		/// Llamado externamente (ej. por el ModLoader) para forzar a la criatura aliada a proteger al jugador.
+		/// Ignora supresiones y otorga prioridad máxima para no ser sobrescrito por la Protección Extrema.
 		/// </summary>
+		public void CallRangeHelp(ComponentCreature attacker)
+		{
+			if (attacker == null || attacker.ComponentHealth == null || attacker.ComponentHealth.Health <= 0f)
+				return;
+
+			Suppressed = false;
+
+			m_target = attacker;
+			m_nextUpdateTime = 0.0;
+			m_range = 999999f;
+			m_chaseTime = 60f;
+			m_isPersistent = true;
+			m_importanceLevel = 600f; // Prioridad máxima
+			m_autoChaseSuppressionTime = 0f;
+			m_hasDestroyedBlocksWhileStuck = false;
+			m_targetInRangeTime = 0f;
+			m_targetUnsuitableTime = 0f;
+			IsActive = true;
+
+			if (m_componentNewHerdBehavior != null)
+			{
+				m_componentNewHerdBehavior.m_importanceLevel = 0f;
+			}
+
+			if (m_stateMachine.CurrentState != "Chasing")
+			{
+				m_stateMachine.TransitionTo("Chasing");
+			}
+		}
+
 		private void UpdateExtremeProtection(float dt)
 		{
 			bool isGreenNightActive = m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive;
 
-			// Si la protección estaba activa pero la noche verde terminó
 			if (m_isExtremeProtectionActive && !isGreenNightActive)
 			{
 				m_isExtremeProtectionActive = false;
-				// Si estábamos persiguiendo un zombie solo por protección, detener
 				if (m_target != null && m_target.ComponentHealth != null && m_target.ComponentHealth.Health > 0f)
 				{
 					ComponentZombieHerdBehavior targetZombieHerd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
@@ -115,24 +139,40 @@ namespace Game
 
 			m_isExtremeProtectionActive = true;
 
-			// No proteger si la criatura está muerta
 			if (m_componentCreature == null || m_componentCreature.ComponentHealth == null || m_componentCreature.ComponentHealth.Health <= 0f)
 				return;
 
-			// Si ya estamos persiguiendo un zombie, mantener la persecución con alta prioridad
 			if (m_target != null && m_target.ComponentHealth != null && m_target.ComponentHealth.Health > 0f)
 			{
 				ComponentZombieHerdBehavior targetZombieHerd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
 				if (targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie")
 				{
-					// Extender tiempo de persecución y mantener alta importancia
 					m_chaseTime = MathUtils.Max(m_chaseTime, 10f);
 					if (m_importanceLevel < 600f)
 						m_importanceLevel = 600f;
 					m_autoChaseSuppressionTime = 0f;
 					m_targetUnsuitableTime = 0f;
 
-					// Asegurar que el pathfinding sea agresivo
+					if (m_componentPathfinding != null && m_target.ComponentBody != null)
+					{
+						Vector3 targetPos = m_target.ComponentBody.BoundingBox.Center();
+						Vector3 myPos = m_componentCreature.ComponentBody.BoundingBox.Center();
+						float distance = Vector3.Distance(myPos, targetPos);
+						float predict = (distance < 4f) ? 0.3f : 0f;
+						int maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
+						m_componentPathfinding.SetDestination(
+							targetPos + predict * distance * m_target.ComponentBody.Velocity,
+							1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
+					}
+					return;
+				}
+				// CORRECCIÓN: Si fue una orden forzada con CallRangeHelp (Importancia 600), NO lo sobrescribimos
+				else if (m_importanceLevel >= 600f && m_isPersistent)
+				{
+					m_chaseTime = MathUtils.Max(m_chaseTime, 10f);
+					m_autoChaseSuppressionTime = 0f;
+					m_targetUnsuitableTime = 0f;
+
 					if (m_componentPathfinding != null && m_target.ComponentBody != null)
 					{
 						Vector3 targetPos = m_target.ComponentBody.BoundingBox.Center();
@@ -148,7 +188,6 @@ namespace Game
 				}
 			}
 
-			// Buscar zombies en el rango de protección
 			float protectionRange = 35f;
 			Vector3 position = m_componentCreature.ComponentBody.Position;
 
@@ -166,7 +205,6 @@ namespace Game
 				if (!creature.Entity.IsAddedToProject) continue;
 				if (creature.ComponentHealth == null || creature.ComponentHealth.Health <= 0f) continue;
 
-				// Verificar si es un zombie usando ComponentZombieHerdBehavior
 				ComponentZombieHerdBehavior zombieHerd = creature.Entity.FindComponent<ComponentZombieHerdBehavior>();
 				if (zombieHerd != null && zombieHerd.HerdName == "Zombie")
 				{
@@ -179,10 +217,8 @@ namespace Game
 				}
 			}
 
-			// Si encontramos un zombie, atacar inmediatamente sin demora
 			if (closestZombie != null)
 			{
-				// Guardar estado previo para restaurar al terminar la noche verde
 				m_wasChasingBeforeProtection = (m_target != null && m_target != closestZombie);
 
 				m_target = closestZombie;
@@ -196,19 +232,16 @@ namespace Game
 				IsActive = true;
 				m_nextUpdateTime = 0.0;
 
-				// Desactivar comportamiento de manada durante protección
 				if (m_componentNewHerdBehavior != null)
 				{
 					m_componentNewHerdBehavior.m_importanceLevel = 0f;
 				}
 
-				// Transición inmediata a persecución
 				if (m_stateMachine.CurrentState != "Chasing")
 				{
 					m_stateMachine.TransitionTo("Chasing");
 				}
 
-				// Iniciar pathfinding agresivo inmediatamente
 				if (m_componentPathfinding != null && closestZombie.ComponentBody != null)
 				{
 					Vector3 targetPos = closestZombie.ComponentBody.BoundingBox.Center();
@@ -219,39 +252,34 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Verifica si el target actual es un zombie y estamos en modo protección extrema
-		/// </summary>
-		private bool IsChasingZombieInProtectionMode()
+		private bool IsPrioritizedTargetDuringGreenNight()
 		{
 			if (!m_isExtremeProtectionActive) return false;
 			if (m_target == null) return false;
 
 			ComponentZombieHerdBehavior targetZombieHerd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
-			return targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie";
+			if (targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie") return true;
+
+			// Reconoce la orden forzada por CallRangeHelp
+			if (m_importanceLevel >= 600f && m_isPersistent) return true;
+
+			return false;
 		}
 
 		public virtual void Update(float dt)
 		{
-			// PROTECCIÓN EXTREMA: Máxima prioridad durante la Noche Verde
 			UpdateExtremeProtection(dt);
 
-			// Durante protección extrema, no aplicar Suppressed
 			if (Suppressed && !m_isExtremeProtectionActive)
 				StopAttack();
 
 			m_autoChaseSuppressionTime -= dt;
 
-			// CORREGIDO: Ejecutar lógica de persecución si tenemos target y chaseTime > 0,
-			// independientemente de si IsActive (de la clase base) se ha actualizado o no
-			// Esto soluciona la demora cuando el sistema de comportamientos no ha reconocido
-			// este comportamiento como activo aún
 			if (m_target != null && m_chaseTime > 0f)
 			{
 				m_chaseTime -= dt;
 
-				// Durante protección extrema, no dejar que el chaseTime llegue a cero si perseguimos zombie
-				if (m_isExtremeProtectionActive && IsChasingZombieInProtectionMode() && m_chaseTime < 5f)
+				if (m_isExtremeProtectionActive && IsPrioritizedTargetDuringGreenNight() && m_chaseTime < 5f)
 				{
 					m_chaseTime = 10f;
 				}
@@ -270,8 +298,7 @@ namespace Game
 					if (hitBody != null)
 					{
 						float x = m_isPersistent ? m_random.Float(8f, 10f) : 2f;
-						// En protección extrema contra zombies, tiempo extendido
-						if (m_isExtremeProtectionActive && IsChasingZombieInProtectionMode())
+						if (m_isExtremeProtectionActive && IsPrioritizedTargetDuringGreenNight())
 						{
 							x = MathUtils.Max(x, 10f);
 						}
@@ -350,13 +377,11 @@ namespace Game
 			Vector3 myPos = m_componentCreature.ComponentBody.Position;
 			Vector3 targetPos = m_target.ComponentBody.Position;
 
-			// Dirección hacia el objetivo
 			Vector3 dirToTarget = targetPos - myPos;
 			float distToTarget = dirToTarget.Length();
 			if (distToTarget < 0.01f)
 				return;
 
-			// Normalizar componente vertical y horizontal para determinar dirección principal
 			float verticalRatio = MathF.Abs(dirToTarget.Y) / distToTarget;
 			float horizontalLength = new Vector2(dirToTarget.X, dirToTarget.Z).Length();
 
@@ -365,17 +390,14 @@ namespace Game
 
 			if (verticalRatio > 0.6f)
 			{
-				// Objetivo PRINCIPALMENTE arriba o abajo
 				if (dirToTarget.Y > 0)
 				{
-					// Objetivo ARRIBA - romper bloques arriba
 					int baseY = Terrain.ToCell(myPos.Y + m_componentCreature.ComponentBody.BoxSize.Y + 0.5f);
 					cell1 = new Point3(Terrain.ToCell(myPos.X), baseY, Terrain.ToCell(myPos.Z));
 					cell2 = new Point3(cell1.X, baseY + 1, cell1.Z);
 				}
 				else
 				{
-					// Objetivo ABAJO - romper bloques abajo
 					int baseY = Terrain.ToCell(myPos.Y - 0.1f);
 					cell1 = new Point3(Terrain.ToCell(myPos.X), baseY, Terrain.ToCell(myPos.Z));
 					cell2 = new Point3(cell1.X, baseY - 1, cell1.Z);
@@ -383,8 +405,6 @@ namespace Game
 			}
 			else
 			{
-				// Objetivo ADELANTE (horizontal o ligeramente diagonal)
-				// Obtener dirección horizontal hacia el objetivo
 				Vector2 horizontalDir;
 				if (horizontalLength > 0.01f)
 				{
@@ -392,7 +412,6 @@ namespace Game
 				}
 				else
 				{
-					// Fallback a dirección forward del cuerpo
 					Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
 					horizontalDir = new Vector2(forward.X, forward.Z);
 					float len = horizontalDir.Length();
@@ -402,16 +421,13 @@ namespace Game
 						horizontalDir = new Vector2(0f, 1f);
 				}
 
-				// Posición del bloque adelante
 				Vector3 targetBlockPos = myPos + new Vector3(horizontalDir.X, 0f, horizontalDir.Y) * 1.5f;
 				int baseY = Terrain.ToCell(myPos.Y + m_componentCreature.ComponentBody.BoxSize.Y * 0.5f);
 
-				// Si el objetivo está ligeramente arriba, apuntar más alto
 				if (dirToTarget.Y > 0.3f)
 				{
 					baseY += 1;
 				}
-				// Si el objetivo está ligeramente abajo, apuntar más bajo
 				else if (dirToTarget.Y < -0.3f)
 				{
 					baseY -= 1;
@@ -421,7 +437,6 @@ namespace Game
 				cell2 = new Point3(cell1.X, baseY + 1, cell1.Z);
 			}
 
-			// Destruir los bloques calculados
 			if (destroyBlocks)
 			{
 				int value1 = m_subsystemTerrain.Terrain.GetCellValue(cell1.X, cell1.Y, cell1.Z);
@@ -580,7 +595,6 @@ namespace Game
 				}
 			}, delegate
 			{
-				// Durante protección extrema, no buscar otros targets, la lógica de protección ya maneja esto
 				if (m_isExtremeProtectionActive)
 				{
 					return;
@@ -645,10 +659,8 @@ namespace Game
 				m_nextUpdateTime = 0.0;
 			}, delegate
 			{
-				// Durante protección extrema persiguiendo zombie, no cancelar por las razones normales
-				if (m_isExtremeProtectionActive && IsChasingZombieInProtectionMode())
+				if (m_isExtremeProtectionActive && IsPrioritizedTargetDuringGreenNight())
 				{
-					// Solo cancelar si el zombie murió
 					if (m_target == null || m_target.ComponentHealth == null || m_target.ComponentHealth.Health <= 0f)
 					{
 						m_importanceLevel = 0f;
@@ -658,7 +670,6 @@ namespace Game
 						return;
 					}
 
-					// Continuar pathfinding agresivo
 					if (m_componentPathfinding != null && m_target.ComponentBody != null)
 					{
 						BoundingBox bb1 = m_componentCreature.ComponentBody.BoundingBox;
@@ -674,7 +685,6 @@ namespace Game
 							1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
 					}
 
-					// Sonidos de ataque más frecuentes durante protección
 					if (PlayAngrySoundWhenChasing && m_random.Float(0f, 1f) < 0.5f * m_dt)
 						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
 
@@ -953,7 +963,6 @@ namespace Game
 
 		private bool m_hasDestroyedBlocksWhileStuck;
 
-		// Variables para Protección Extrema durante Noche Verde
 		private bool m_isExtremeProtectionActive = false;
 		private bool m_wasChasingBeforeProtection = false;
 	}
