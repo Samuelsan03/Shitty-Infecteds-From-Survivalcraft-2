@@ -51,7 +51,9 @@ namespace Game
 			int type = (int)GetBulletType(Terrain.ExtractData(value));
 			if (type < 0 || type >= Enum.GetValues<FlameBulletType>().Length)
 				return string.Empty;
-			return type == 0 ? "Flame Bullet" : "Poison Bullet";
+			// Usar LanguageControl.GetBlock con la clave "FlameBulletBlock:0" o ":1"
+			string key = "FlameBulletBlock:" + type;
+			return LanguageControl.GetBlock(key, "DisplayName");
 		}
 
 		public override int GetFaceTextureSlot(int face, int value)
