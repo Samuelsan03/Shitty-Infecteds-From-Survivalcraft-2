@@ -22,7 +22,15 @@ namespace Game
 		private Dictionary<ComponentMiner, int> m_shotsFired = new Dictionary<ComponentMiner, int>();
 		private Dictionary<ComponentMiner, bool> m_emptyMessageShown = new Dictionary<ComponentMiner, bool>();
 		private Dictionary<ComponentMiner, FireFlameThrowerParticleSystem> m_fireParticleSystems = new Dictionary<ComponentMiner, FireFlameThrowerParticleSystem>();
+		private Dictionary<ComponentMiner, PoisonFlameThrowerParticleSystem> m_poisonParticleSystems = new Dictionary<ComponentMiner, PoisonFlameThrowerParticleSystem>();
 		private int m_flameBulletBlockIndex;
+
+		// Bits para tipo de bala (bits 8-9)
+		private const int BulletTypeMask = 0x300;
+		private const int BulletTypeShift = 8;
+
+		private int GetBulletType(int data) => (data >> BulletTypeShift) & 3;
+		private int SetBulletType(int data, int type) => (data & ~BulletTypeMask) | ((type & 3) << BulletTypeShift);
 
 		public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
 		{
@@ -55,6 +63,7 @@ namespace Game
 
 			int newData = data;
 			bool changed = false;
+			int bulletType = GetBulletType(newData);
 
 			if (!m_aimStartTimes.ContainsKey(componentMiner))
 			{
@@ -85,23 +94,61 @@ namespace Game
 
 					if (ammo > 0 && switchOn)
 					{
-						if (!m_fireParticleSystems.ContainsKey(componentMiner))
+						if (bulletType == 0) // Fuego
 						{
-							var particleSystem = new FireFlameThrowerParticleSystem(
-								muzzlePos,
-								fireDir,
-								0.2f,
-								20f
-							);
-							particleSystem.IsStopped = false;
-							m_subsystemParticles.AddParticleSystem(particleSystem, false);
-							m_fireParticleSystems[componentMiner] = particleSystem;
+							if (!m_fireParticleSystems.ContainsKey(componentMiner))
+							{
+								var particleSystem = new FireFlameThrowerParticleSystem(
+									muzzlePos,
+									fireDir,
+									0.2f,
+									20f
+								);
+								particleSystem.IsStopped = false;
+								m_subsystemParticles.AddParticleSystem(particleSystem, false);
+								m_fireParticleSystems[componentMiner] = particleSystem;
+							}
+							else
+							{
+								var ps = m_fireParticleSystems[componentMiner];
+								ps.Position = muzzlePos;
+								ps.Direction = fireDir;
+							}
+
+							// Detener sistema de veneno si existe
+							if (m_poisonParticleSystems.TryGetValue(componentMiner, out var psPoisonStop))
+							{
+								psPoisonStop.IsStopped = true;
+								m_poisonParticleSystems.Remove(componentMiner);
+							}
 						}
-						else
+						else // Veneno
 						{
-							var ps = m_fireParticleSystems[componentMiner];
-							ps.Position = muzzlePos;
-							ps.Direction = fireDir;
+							if (!m_poisonParticleSystems.ContainsKey(componentMiner))
+							{
+								var particleSystem = new PoisonFlameThrowerParticleSystem(
+									muzzlePos,
+									fireDir,
+									0.2f,
+									20f
+								);
+								particleSystem.IsStopped = false;
+								m_subsystemParticles.AddParticleSystem(particleSystem, false);
+								m_poisonParticleSystems[componentMiner] = particleSystem;
+							}
+							else
+							{
+								var ps = m_poisonParticleSystems[componentMiner];
+								ps.Position = muzzlePos;
+								ps.Direction = fireDir;
+							}
+
+							// Detener sistema de fuego si existe
+							if (m_fireParticleSystems.TryGetValue(componentMiner, out var psFireStop))
+							{
+								psFireStop.IsStopped = true;
+								m_fireParticleSystems.Remove(componentMiner);
+							}
 						}
 					}
 					else
@@ -111,12 +158,17 @@ namespace Game
 							psToStop.IsStopped = true;
 							m_fireParticleSystems.Remove(componentMiner);
 						}
+						if (m_poisonParticleSystems.TryGetValue(componentMiner, out var psToStop2))
+						{
+							psToStop2.IsStopped = true;
+							m_poisonParticleSystems.Remove(componentMiner);
+						}
 					}
 
 					if (aimDuration > 0.5f && !FlameThrowerBlock.GetSwitchState(newData))
 					{
 						newData = FlameThrowerBlock.SetSwitchState(newData, true);
-						m_subsystemAudio.PlaySound("Audio/HammerCock", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+						m_subsystemAudio.PlaySound("Audio/Hammer Cock Remake", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 						changed = true;
 					}
 
@@ -130,7 +182,7 @@ namespace Game
 						float fireInterval = 0.2f;
 						if (m_subsystemTime.GameTime - lastFireTime >= fireInterval)
 						{
-							if (TryFire(componentMiner, aim))
+							if (TryFire(componentMiner, aim, bulletType))
 							{
 								m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
 								m_shotsFired[componentMiner] = m_shotsFired[componentMiner] + 1;
@@ -156,10 +208,15 @@ namespace Game
 
 				case AimState.Cancelled:
 				case AimState.Completed:
-					if (m_fireParticleSystems.TryGetValue(componentMiner, out var psToStop2))
+					if (m_fireParticleSystems.TryGetValue(componentMiner, out var psToStop3))
 					{
-						psToStop2.IsStopped = true;
+						psToStop3.IsStopped = true;
 						m_fireParticleSystems.Remove(componentMiner);
+					}
+					if (m_poisonParticleSystems.TryGetValue(componentMiner, out var psToStop4))
+					{
+						psToStop4.IsStopped = true;
+						m_poisonParticleSystems.Remove(componentMiner);
 					}
 
 					int shots = m_shotsFired.ContainsKey(componentMiner) ? m_shotsFired[componentMiner] : 0;
@@ -178,11 +235,11 @@ namespace Game
 					{
 						if (state == AimState.Completed)
 						{
-							m_subsystemAudio.PlaySound("Audio/HammerRelease", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+							m_subsystemAudio.PlaySound("Audio/Hammer Release Remake", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 						}
 						else
 						{
-							m_subsystemAudio.PlaySound("Audio/HammerUncock", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+							m_subsystemAudio.PlaySound("Audio/Hammer Uncock Remake", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 						}
 
 						if (shots > 0 && currentAmmo > 0)
@@ -217,14 +274,14 @@ namespace Game
 			return false;
 		}
 
-		private bool TryFire(ComponentMiner componentMiner, Ray3 aim)
+		private bool TryFire(ComponentMiner componentMiner, Ray3 aim, int bulletType)
 		{
 			Vector3 eyePos = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
 			Vector3 fireDir = Vector3.Normalize(aim.Direction);
 			Vector3 right = Vector3.Normalize(Vector3.Cross(fireDir, Vector3.UnitY));
 			Vector3 up = Vector3.Normalize(Vector3.Cross(fireDir, right));
 
-			int bulletValue = Terrain.MakeBlockValue(m_flameBulletBlockIndex, 0, 0);
+			int bulletValue = Terrain.MakeBlockValue(m_flameBulletBlockIndex, 0, FlameBulletBlock.SetBulletType(0, (FlameBulletBlock.FlameBulletType)bulletType));
 			float speed = 120f;
 			Vector3 spread = new Vector3(0.06f, 0.06f, 0f);
 
@@ -243,10 +300,13 @@ namespace Game
 			if (projectile != null)
 			{
 				projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-				projectile.AttackPower = 0f;
+				// Establecer el poder de ataque según el tipo de bala
+				projectile.AttackPower = BlocksManager.Blocks[m_flameBulletBlockIndex].GetProjectilePower(bulletValue);
 			}
 
-			m_subsystemAudio.PlaySound("Audio/Fire", 1f, m_random.Float(-0.1f, 0.1f), eyePos, 10f, true);
+			// Sonido según tipo de bala
+			string sound = bulletType == 0 ? "Audio/Fire" : "Audio/Flamethrower/PoisonSmoke";
+			m_subsystemAudio.PlaySound(sound, 1f, m_random.Float(-0.1f, 0.1f), eyePos, 10f, true);
 			m_subsystemNoise.MakeNoise(eyePos, 1f, 40f);
 
 			componentMiner.DamageActiveTool(1);
@@ -263,7 +323,6 @@ namespace Game
 			int data = Terrain.ExtractData(slotValue);
 			int ammo = FlameThrowerBlock.GetAmmoCount(data);
 
-			// Permitir recargar si no está lleno (ammo < 15) y se tiene una bala
 			if (ammo < 15 && Terrain.ExtractContents(value) == m_flameBulletBlockIndex)
 				return 1;
 
@@ -281,12 +340,13 @@ namespace Game
 				int data = Terrain.ExtractData(slotValue);
 				int ammo = FlameThrowerBlock.GetAmmoCount(data);
 
-				// Si el objeto a procesar es una bala y el lanzallamas no está lleno
 				if (ammo < 15 && Terrain.ExtractContents(value) == m_flameBulletBlockIndex)
 				{
-					// Cargar completamente (15) y poner estado Loaded
-					int newData = FlameThrowerBlock.SetLoadState(data, FlameThrowerBlock.LoadState.Loaded);
+					int bulletType = (int)FlameBulletBlock.GetBulletType(Terrain.ExtractData(value));
+					int newData = data;
+					newData = FlameThrowerBlock.SetLoadState(newData, FlameThrowerBlock.LoadState.Loaded);
 					newData = FlameThrowerBlock.SetAmmoCount(newData, 15);
+					newData = SetBulletType(newData, bulletType);
 
 					inventory.RemoveSlotItems(slotIndex, 1);
 					inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(FlameThrowerBlock.Index, 0, newData), 1);
