@@ -310,11 +310,17 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override void AfterWidgetUpdate(Widget widget)
 	{
-		if (widget is BevelledButtonWidget button && button.Name == "ZombiConfigButton")
+		if (widget is BevelledButtonWidget button)
 		{
-			if (button.IsClicked)
+			if (button.Name == "ZombiConfigButton" && button.IsClicked)
 			{
 				ScreensManager.SwitchScreen("ShittyInfectedsSettingsScreen");
+			}
+
+			// Manejar el clic del botón de salir
+			if (button.Name == "ShittyExitButton" && button.IsClicked)
+			{
+				Window.Close();
 			}
 		}
 	}
@@ -346,6 +352,31 @@ public class ShittyInfectedsModLoader : ModLoader
 				Margin = new Vector2(0f, 0f)
 			};
 			topArea.Children.Add(titleLabel);
+		}
+
+		// Buscar el panel donde están los botones de Jugar, Contenido, etc.
+		StackPanelWidget centerButtons = mainMenuScreen.Children.Find<StackPanelWidget>("CenterButtons", true);
+		if (centerButtons != null)
+		{
+			// Buscar la última fila de botones (donde están los botones invisibles o solitarios)
+			// Generalmente es el tercer StackPanelWidget hijo
+			if (centerButtons.Children.Count >= 3)
+			{
+				StackPanelWidget lastRow = centerButtons.Children[centerButtons.Children.Count - 1] as StackPanelWidget;
+				if (lastRow != null)
+				{
+					// Crear el botón de Salir igual que los demás (310x60)
+					BevelledButtonWidget exitButton = new BevelledButtonWidget
+					{
+						Name = "ShittyExitButton",
+						Size = new Vector2(310f, 60f),
+						HorizontalAlignment = WidgetAlignment.Center,
+						VerticalAlignment = WidgetAlignment.Center,
+						Text = LanguageControl.Get("ShittyInfectedsMod", "exitGame"),
+						Color = Color.White					};
+					lastRow.Children.Add(exitButton);
+				}
+			}
 		}
 
 		if (rightBottomBar != null)
