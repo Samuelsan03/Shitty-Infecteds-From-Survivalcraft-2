@@ -261,9 +261,10 @@ namespace Game
 				return 0;
 
 			int data = Terrain.ExtractData(slotValue);
-			FlameThrowerBlock.LoadState loadState = FlameThrowerBlock.GetLoadState(data);
+			int ammo = FlameThrowerBlock.GetAmmoCount(data);
 
-			if (loadState == FlameThrowerBlock.LoadState.Empty && Terrain.ExtractContents(value) == m_flameBulletBlockIndex)
+			// Permitir recargar si no está lleno (ammo < 15) y se tiene una bala
+			if (ammo < 15 && Terrain.ExtractContents(value) == m_flameBulletBlockIndex)
 				return 1;
 
 			return 0;
@@ -278,10 +279,12 @@ namespace Game
 			{
 				int slotValue = inventory.GetSlotValue(slotIndex);
 				int data = Terrain.ExtractData(slotValue);
-				FlameThrowerBlock.LoadState loadState = FlameThrowerBlock.GetLoadState(data);
+				int ammo = FlameThrowerBlock.GetAmmoCount(data);
 
-				if (loadState == FlameThrowerBlock.LoadState.Empty && Terrain.ExtractContents(value) == m_flameBulletBlockIndex)
+				// Si el objeto a procesar es una bala y el lanzallamas no está lleno
+				if (ammo < 15 && Terrain.ExtractContents(value) == m_flameBulletBlockIndex)
 				{
+					// Cargar completamente (15) y poner estado Loaded
 					int newData = FlameThrowerBlock.SetLoadState(data, FlameThrowerBlock.LoadState.Loaded);
 					newData = FlameThrowerBlock.SetAmmoCount(newData, 15);
 
