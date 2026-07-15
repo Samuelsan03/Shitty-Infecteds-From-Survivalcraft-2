@@ -41,16 +41,17 @@ namespace Game
 			int newData = data;
 			bool changed = false;
 
-			double gameTime;
-			if (!m_aimStartTimes.TryGetValue(componentMiner, out gameTime))
+			// Inicializar tiempos de apuntado
+			if (!m_aimStartTimes.ContainsKey(componentMiner))
 			{
-				gameTime = m_subsystemTime.GameTime;
-				m_aimStartTimes[componentMiner] = gameTime;
+				m_aimStartTimes[componentMiner] = m_subsystemTime.GameTime;
+				// Reiniciar contador de disparos para esta sesión
+				m_shotsFired[componentMiner] = 0;
 			}
+			double aimStartTime = m_aimStartTimes[componentMiner];
+			float aimDuration = (float)(m_subsystemTime.GameTime - aimStartTime);
 
-			float aimDuration = (float)(m_subsystemTime.GameTime - gameTime);
-
-			// Temblor al apuntar
+			// Temblor al apuntar (igual que el mosquete)
 			float num5 = (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0);
 			Vector3 v = ((componentMiner.ComponentCreature.ComponentBody.IsCrouching ? 0.01f : 0.03f) + 0.2f * MathUtils.Saturate((aimDuration - 2.5f) / 6f)) * new Vector3
 			{
@@ -63,18 +64,50 @@ namespace Game
 			switch (state)
 			{
 				case AimState.InProgress:
-					if (aimDuration >= 10f)
+					// Verificar munición al inicio del apuntado
+					int ammo = FlameThrowerBlock.GetAmmoCount(newData);
+					if (ammo <= 0)
 					{
-						componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
-						return true;
+						// Mostrar mensaje una sola vez al intentar apuntar sin munición
+						if (!m_emptyMessageShown.ContainsKey(componentMiner) || !m_emptyMessageShown[componentMiner])
+						{
+							componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("FlameThrower is empty", Color.White, true, false);
+							m_emptyMessageShown[componentMiner] = true;
+						}
+						// No activar el switch ni disparar
+						break;
 					}
 
+					// Activar el switch si no está activado y ha pasado suficiente tiempo
 					if (aimDuration > 0.5f && !FlameThrowerBlock.GetSwitchState(newData))
 					{
 						newData = FlameThrowerBlock.SetSwitchState(newData, true);
 						m_subsystemAudio.PlaySound("Audio/HammerCock", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+						changed = true;
 					}
 
+					// Disparo continuo mientras el switch está activado
+					if (FlameThrowerBlock.GetSwitchState(newData))
+					{
+						if (!m_lastFireTimes.ContainsKey(componentMiner))
+						{
+							m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
+						}
+						double lastFireTime = m_lastFireTimes[componentMiner];
+						float fireInterval = 0.2f; // 5 disparos/segundo
+						if (m_subsystemTime.GameTime - lastFireTime >= fireInterval)
+						{
+							// Disparar sin consumir munición
+							if (TryFire(componentMiner, aim))
+							{
+								m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
+								// Incrementar contador de disparos de esta sesión
+								m_shotsFired[componentMiner] = m_shotsFired[componentMiner] + 1;
+							}
+						}
+					}
+
+					// Actualizar postura y vista (igual que el mosquete)
 					ComponentFirstPersonModel firstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
 					if (firstPersonModel != null)
 					{
@@ -89,107 +122,51 @@ namespace Game
 					componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.4f;
 					componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
 					componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
-
-					changed = true;
 					break;
 
 				case AimState.Cancelled:
-					if (FlameThrowerBlock.GetSwitchState(newData))
-					{
-						newData = FlameThrowerBlock.SetSwitchState(newData, false);
-						m_subsystemAudio.PlaySound("Audio/HammerUncock", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
-					}
-					m_aimStartTimes.Remove(componentMiner);
-					changed = true;
-					break;
-
 				case AimState.Completed:
-					bool shouldFire = false;
-					int bulletValue = 0;
-					int bulletCount = 0;
-					Vector3 spread = Vector3.Zero;
-					float speed = 0f;
-
-					FlameThrowerBlock.LoadState loadState = FlameThrowerBlock.GetLoadState(newData);
-					BulletBlock.BulletType? bulletType = FlameThrowerBlock.GetBulletType(newData);
-
+					// Al soltar, desactivar el switch y consumir munición si se disparó al menos una vez
+					int shots = m_shotsFired.ContainsKey(componentMiner) ? m_shotsFired[componentMiner] : 0;
+					int currentAmmo = FlameThrowerBlock.GetAmmoCount(newData);
 					if (FlameThrowerBlock.GetSwitchState(newData))
 					{
-						if (loadState == FlameThrowerBlock.LoadState.Empty)
+						// Sonido de release (como el mosquete)
+						if (state == AimState.Completed)
 						{
-							componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("FlameThrower is empty", Color.White, true, false);
+							m_subsystemAudio.PlaySound("Audio/HammerRelease", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 						}
-						else if (loadState == FlameThrowerBlock.LoadState.Loaded)
+						else // Cancelled
 						{
-							shouldFire = true;
-							if (bulletType.HasValue)
+							m_subsystemAudio.PlaySound("Audio/HammerUncock", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+						}
+
+						// Consumir una bala si se disparó y hay munición
+						if (shots > 0 && currentAmmo > 0)
+						{
+							currentAmmo--;
+							newData = FlameThrowerBlock.SetAmmoCount(newData, currentAmmo);
+							if (currentAmmo == 0)
 							{
-								bulletValue = Terrain.MakeBlockValue(m_bulletBlockIndex, 0, BulletBlock.SetBulletType(0, bulletType.Value));
-								bulletCount = 1;
-								speed = 120f;
+								newData = FlameThrowerBlock.SetLoadState(newData, FlameThrowerBlock.LoadState.Empty);
 							}
-							else
-							{
-								bulletValue = Terrain.MakeBlockValue(m_bulletBlockIndex, 0, 0);
-								bulletCount = 1;
-								speed = 120f;
-							}
-							spread = new Vector3(0.06f, 0.06f, 0f);
-						}
-					}
-
-					if (shouldFire)
-					{
-						if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor > 0.4f)
-						{
-							m_subsystemAudio.PlaySound("Audio/MusketMisfire", 1f, m_random.Float(-0.1f, 0.1f), componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 3f, true);
-						}
-						else
-						{
-							Vector3 eyePos = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
-							Vector3 fireDir = Vector3.Normalize(aim.Direction);
-							Vector3 right = Vector3.Normalize(Vector3.Cross(fireDir, Vector3.UnitY));
-							Vector3 up = Vector3.Normalize(Vector3.Cross(fireDir, right));
-
-							for (int i = 0; i < bulletCount; i++)
-							{
-								Vector3 randomOffset = m_random.Float(-spread.X, spread.X) * right
-													 + m_random.Float(-spread.Y, spread.Y) * up
-													 + m_random.Float(-spread.Z, spread.Z) * fireDir;
-								Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + speed * (fireDir + randomOffset);
-								Projectile projectile = m_subsystemProjectiles.FireProjectile(
-									bulletValue,
-									eyePos,
-									velocity,
-									Vector3.Zero,
-									componentMiner.ComponentCreature);
-								if (projectile != null)
-									projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-							}
-
-							m_subsystemAudio.PlaySound("Audio/MusketFire", 1f, m_random.Float(-0.1f, 0.1f), eyePos, 10f, true);
-							m_subsystemParticles.AddParticleSystem(new GunSmokeParticleSystem(m_subsystemTerrain, eyePos + 0.3f * fireDir, fireDir), false);
-							m_subsystemNoise.MakeNoise(eyePos, 1f, 40f);
-							componentMiner.ComponentCreature.ComponentBody.ApplyImpulse(-4f * fireDir);
+							changed = true;
 						}
 
-						// Vaciar el lanzallamas después de disparar
-						newData = FlameThrowerBlock.SetLoadState(newData, FlameThrowerBlock.LoadState.Empty);
-						newData = FlameThrowerBlock.SetBulletType(newData, null);
-						componentMiner.DamageActiveTool(1);
-					}
-
-					if (FlameThrowerBlock.GetSwitchState(newData))
-					{
+						// Desactivar switch
 						newData = FlameThrowerBlock.SetSwitchState(newData, false);
-						m_subsystemAudio.PlaySound("Audio/HammerRelease", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+						changed = true;
 					}
 
+					// Limpiar datos de la sesión
 					m_aimStartTimes.Remove(componentMiner);
-					changed = true;
+					m_lastFireTimes.Remove(componentMiner);
+					m_shotsFired.Remove(componentMiner);
+					m_emptyMessageShown.Remove(componentMiner);
 					break;
 			}
 
+			// Actualizar el inventario si hubo cambios
 			if (changed && newData != data)
 			{
 				int newValue = Terrain.MakeBlockValue(contents, 0, newData);
@@ -198,6 +175,45 @@ namespace Game
 			}
 
 			return false;
+		}
+
+		private bool TryFire(ComponentMiner componentMiner, Ray3 aim)
+		{
+			// Disparar sin consumir munición (solo crear el proyectil)
+			Vector3 eyePos = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 fireDir = Vector3.Normalize(aim.Direction);
+			Vector3 right = Vector3.Normalize(Vector3.Cross(fireDir, Vector3.UnitY));
+			Vector3 up = Vector3.Normalize(Vector3.Cross(fireDir, right));
+
+			int bulletValue = Terrain.MakeBlockValue(m_flameBulletBlockIndex, 0, 0);
+			float speed = 120f;
+			Vector3 spread = new Vector3(0.06f, 0.06f, 0f);
+
+			Vector3 randomOffset = m_random.Float(-spread.X, spread.X) * right
+								 + m_random.Float(-spread.Y, spread.Y) * up
+								 + m_random.Float(-spread.Z, spread.Z) * fireDir;
+			Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + speed * (fireDir + randomOffset);
+
+			Projectile projectile = m_subsystemProjectiles.FireProjectile(
+				bulletValue,
+				eyePos,
+				velocity,
+				Vector3.Zero,
+				componentMiner.ComponentCreature);
+
+			if (projectile != null)
+			{
+				projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+				projectile.AttackPower = 0f;
+			}
+
+			m_subsystemAudio.PlaySound("Audio/Fire", 1f, m_random.Float(-0.1f, 0.1f), eyePos, 10f, true);
+			m_subsystemNoise.MakeNoise(eyePos, 1f, 40f);
+
+			// Dañar la herramienta (1 de durabilidad por disparo, pero no consume munición)
+			componentMiner.DamageActiveTool(1);
+
+			return true;
 		}
 
 		public override int GetProcessInventoryItemCapacity(IInventory inventory, int slotIndex, int value)
@@ -210,8 +226,7 @@ namespace Game
 			int data = Terrain.ExtractData(slotValue);
 			FlameThrowerBlock.LoadState loadState = FlameThrowerBlock.GetLoadState(data);
 
-			// Solo acepta balas si está vacío
-			if (loadState == FlameThrowerBlock.LoadState.Empty && Terrain.ExtractContents(value) == m_bulletBlockIndex)
+			if (loadState == FlameThrowerBlock.LoadState.Empty && Terrain.ExtractContents(value) == m_flameBulletBlockIndex)
 				return 1;
 
 			return 0;
@@ -228,12 +243,10 @@ namespace Game
 				int data = Terrain.ExtractData(slotValue);
 				FlameThrowerBlock.LoadState loadState = FlameThrowerBlock.GetLoadState(data);
 
-				if (loadState == FlameThrowerBlock.LoadState.Empty && Terrain.ExtractContents(value) == m_bulletBlockIndex)
+				if (loadState == FlameThrowerBlock.LoadState.Empty && Terrain.ExtractContents(value) == m_flameBulletBlockIndex)
 				{
-					// Cargar directamente con la bala
-					BulletBlock.BulletType? bulletType = BulletBlock.GetBulletType(Terrain.ExtractData(value));
 					int newData = FlameThrowerBlock.SetLoadState(data, FlameThrowerBlock.LoadState.Loaded);
-					newData = FlameThrowerBlock.SetBulletType(newData, bulletType);
+					newData = FlameThrowerBlock.SetAmmoCount(newData, 15);
 
 					inventory.RemoveSlotItems(slotIndex, 1);
 					inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(FlameThrowerBlock.Index, 0, newData), 1);
@@ -252,7 +265,7 @@ namespace Game
 			m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
 			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
-			m_bulletBlockIndex = BlocksManager.GetBlockIndex<BulletBlock>(false, false);
+			m_flameBulletBlockIndex = BlocksManager.GetBlockIndex<FlameBulletBlock>(false, false);
 			base.Load(valuesDictionary);
 		}
 
@@ -263,7 +276,11 @@ namespace Game
 		private SubsystemAudio m_subsystemAudio;
 		private SubsystemNoise m_subsystemNoise;
 		private Random m_random = new Random();
+
 		private Dictionary<ComponentMiner, double> m_aimStartTimes = new Dictionary<ComponentMiner, double>();
-		private int m_bulletBlockIndex;
+		private Dictionary<ComponentMiner, double> m_lastFireTimes = new Dictionary<ComponentMiner, double>();
+		private Dictionary<ComponentMiner, int> m_shotsFired = new Dictionary<ComponentMiner, int>();
+		private Dictionary<ComponentMiner, bool> m_emptyMessageShown = new Dictionary<ComponentMiner, bool>();
+		private int m_flameBulletBlockIndex;
 	}
 }

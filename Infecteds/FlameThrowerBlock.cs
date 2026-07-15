@@ -16,22 +16,18 @@ namespace Game
 		{
 			Model model = ContentManager.Get<Model>("Models/FlameThrower");
 
-			// Cargar textura del modelo
 			m_texture = ContentManager.Get<Texture2D>("Textures/FlameThrower");
 
-			// Obtener transformaciones de los huesos
 			Matrix bodyTransform = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("Body", true).ParentBone);
 			Matrix switchTransform = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("Switch", true).ParentBone);
 
-			// Crear BlockMesh para switch apagado (OFF)
 			m_standaloneBlockMeshSwitchOff = new BlockMesh();
 			m_standaloneBlockMeshSwitchOff.AppendModelMeshPart(model.FindMesh("Body", true).MeshParts[0], bodyTransform, false, false, false, false, Color.White);
 			m_standaloneBlockMeshSwitchOff.AppendModelMeshPart(model.FindMesh("Switch", true).MeshParts[0], switchTransform, false, false, false, false, Color.White);
 
-			// Crear BlockMesh para switch encendido (ON) - rotado en Z (como el martillo del mosquete se rota en X)
 			m_standaloneBlockMeshSwitchOn = new BlockMesh();
 			m_standaloneBlockMeshSwitchOn.AppendModelMeshPart(model.FindMesh("Body", true).MeshParts[0], bodyTransform, false, false, false, false, Color.White);
-			m_standaloneBlockMeshSwitchOn.AppendModelMeshPart(model.FindMesh("Switch", true).MeshParts[0], Matrix.CreateRotationZ(1f) * switchTransform, false, false, false, false, Color.White);
+			m_standaloneBlockMeshSwitchOn.AppendModelMeshPart(model.FindMesh("Switch", true).MeshParts[0], Matrix.CreateRotationZ(1.55f) * switchTransform, false, false, false, false, Color.White);
 
 			base.Initialize();
 		}
@@ -40,7 +36,6 @@ namespace Game
 
 		public override void DrawBlock(PrimitivesRenderer3D primitivesRenderer, int value, Color color, float size, ref Matrix matrix, DrawBlockEnvironmentData environmentData)
 		{
-			// Usar la misma lógica que el mosquete: dibujar según estado del switch
 			if (GetSwitchState(Terrain.ExtractData(value)))
 			{
 				DrawMeshBlockWithTexture(primitivesRenderer, m_standaloneBlockMeshSwitchOn, m_texture, color, 2f * size, ref matrix, environmentData);
@@ -120,23 +115,35 @@ namespace Game
 			return Terrain.ReplaceData(value, data);
 		}
 
-		// AÑADIDO: Método para evitar animación de cambio de slot cuando solo cambia el switch
+		// Método modificado para que la animación de cambio de slot solo ocurra
+		// cuando cambia el estado de carga (Empty/Loaded) o cuando la munición
+		// pasa de 0 a >0 (recarga) o de >0 a 0 (se vacía). Ignora el estado del switch.
 		public override bool IsSwapAnimationNeeded(int oldValue, int newValue)
 		{
-			// Si el contenido es diferente (otro bloque), se necesita animación
 			if (Terrain.ExtractContents(oldValue) != Index)
 				return true;
 
 			int oldData = Terrain.ExtractData(oldValue);
 			int newData = Terrain.ExtractData(newValue);
 
-			// Solo se necesita animación si el estado del switch cambia
-			return GetSwitchState(oldData) != GetSwitchState(newData);
+			int oldLoadState = (int)GetLoadState(oldData);
+			int newLoadState = (int)GetLoadState(newData);
+			int oldAmmo = GetAmmoCount(oldData);
+			int newAmmo = GetAmmoCount(newData);
+
+			// Cambio de estado de carga
+			if (oldLoadState != newLoadState)
+				return true;
+
+			// Cambio de munición: de 0 a >0 (recarga) o de >0 a 0 (se vacía)
+			if ((oldAmmo == 0 && newAmmo > 0) || (oldAmmo > 0 && newAmmo == 0))
+				return true;
+
+			return false;
 		}
 
-		// Estado del switch (como el hammer del mosquete)
+		// Estado del switch
 		public static bool GetSwitchState(int data) => (data & 4) != 0;
-
 		public static int SetSwitchState(int data, bool state)
 		{
 			if (state)
@@ -145,20 +152,13 @@ namespace Game
 				return data & -5;
 		}
 
+		// LoadState (bits 0-1)
 		public static LoadState GetLoadState(int data) => (LoadState)(data & 3);
 		public static int SetLoadState(int data, LoadState state) => (data & -4) | (int)(state);
 
-		public static BulletBlock.BulletType? GetBulletType(int data)
-		{
-			int val = (data >> 4) & 15;
-			return val == 0 ? null : (BulletBlock.BulletType?)(val - 1);
-		}
-
-		public static int SetBulletType(int data, BulletBlock.BulletType? type)
-		{
-			int val = type.HasValue ? (int)(type.Value + 1) : 0;
-			return (data & -241) | ((val & 15) << 4);
-		}
+		// Munición (bits 4-7) - almacena cantidad restante (0-15)
+		public static int GetAmmoCount(int data) => (data >> 4) & 15;
+		public static int SetAmmoCount(int data, int count) => (data & -241) | ((Math.Clamp(count, 0, 15) & 15) << 4);
 
 		public enum LoadState
 		{

@@ -24,7 +24,6 @@ namespace Game
 			m_inventorySlotWidget = Children.Find<InventorySlotWidget>("InventorySlot", true);
 			m_instructionsLabel = Children.Find<LabelWidget>("InstructionsLabel", true);
 
-			// Rellenar la cuadrícula con slots de inventario
 			int slot = 10;
 			for (int r = 0; r < m_inventoryGrid.RowsCount; r++)
 			{
@@ -37,7 +36,6 @@ namespace Game
 				}
 			}
 
-			// Slot principal que muestra el arma
 			m_inventorySlotWidget.AssignInventorySlot(inventory, slotIndex);
 			m_inventorySlotWidget.CustomViewMatrix = Matrix.CreateLookAt(new Vector3(1f, 0f, 0f), Vector3.Zero, -Vector3.UnitZ);
 		}
@@ -53,10 +51,18 @@ namespace Game
 				return;
 			}
 
-			var state = FlameThrowerBlock.GetLoadState(Terrain.ExtractData(value));
-			m_instructionsLabel.Text = state == FlameThrowerBlock.LoadState.Empty
-				? "Coloca una bala para cargar"
-				: "Listo para disparar";
+			int data = Terrain.ExtractData(value);
+			var state = FlameThrowerBlock.GetLoadState(data);
+			int ammo = FlameThrowerBlock.GetAmmoCount(data);
+
+			if (state == FlameThrowerBlock.LoadState.Empty || ammo == 0)
+			{
+				m_instructionsLabel.Text = "Coloca una bala para cargar";
+			}
+			else
+			{
+				m_instructionsLabel.Text = $"{ammo}/15 Fuego";
+			}
 		}
 	}
 }
