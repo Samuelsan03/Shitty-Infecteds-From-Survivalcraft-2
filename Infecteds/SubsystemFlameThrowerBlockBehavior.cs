@@ -9,6 +9,21 @@ namespace Game
 	{
 		public override int[] HandledBlocks => new int[] { FlameThrowerBlock.Index };
 
+		private SubsystemTerrain m_subsystemTerrain;
+		private SubsystemTime m_subsystemTime;
+		private SubsystemProjectiles m_subsystemProjectiles;
+		private SubsystemParticles m_subsystemParticles;
+		private SubsystemAudio m_subsystemAudio;
+		private SubsystemNoise m_subsystemNoise;
+		private Random m_random = new Random();
+
+		private Dictionary<ComponentMiner, double> m_aimStartTimes = new Dictionary<ComponentMiner, double>();
+		private Dictionary<ComponentMiner, double> m_lastFireTimes = new Dictionary<ComponentMiner, double>();
+		private Dictionary<ComponentMiner, int> m_shotsFired = new Dictionary<ComponentMiner, int>();
+		private Dictionary<ComponentMiner, bool> m_emptyMessageShown = new Dictionary<ComponentMiner, bool>();
+		private Dictionary<ComponentMiner, FireFlameThrowerParticleSystem> m_fireParticleSystems = new Dictionary<ComponentMiner, FireFlameThrowerParticleSystem>();
+		private int m_flameBulletBlockIndex;
+
 		public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
 		{
 			if (componentPlayer.ComponentGui.ModalPanelWidget == null)
@@ -41,7 +56,6 @@ namespace Game
 			int newData = data;
 			bool changed = false;
 
-			// Inicializar tiempos de apuntado
 			if (!m_aimStartTimes.ContainsKey(componentMiner))
 			{
 				m_aimStartTimes[componentMiner] = m_subsystemTime.GameTime;
@@ -50,7 +64,6 @@ namespace Game
 			double aimStartTime = m_aimStartTimes[componentMiner];
 			float aimDuration = (float)(m_subsystemTime.GameTime - aimStartTime);
 
-			// Temblor al apuntar (igual que el mosquete)
 			float num5 = (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0);
 			Vector3 v = ((componentMiner.ComponentCreature.ComponentBody.IsCrouching ? 0.01f : 0.03f) + 0.2f * MathUtils.Saturate((aimDuration - 2.5f) / 6f)) * new Vector3
 			{
@@ -60,10 +73,46 @@ namespace Game
 			};
 			aim.Direction = Vector3.Normalize(aim.Direction + v);
 
+			Vector3 eyePos = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 fireDir = Vector3.Normalize(aim.Direction);
+			Vector3 muzzlePos = eyePos + fireDir * 0.5f;
+
 			switch (state)
 			{
 				case AimState.InProgress:
-					// Activar el switch siempre, independientemente de la munición
+					int ammo = FlameThrowerBlock.GetAmmoCount(newData);
+					bool switchOn = FlameThrowerBlock.GetSwitchState(newData);
+
+					if (ammo > 0 && switchOn)
+					{
+						if (!m_fireParticleSystems.ContainsKey(componentMiner))
+						{
+							var particleSystem = new FireFlameThrowerParticleSystem(
+								muzzlePos,
+								fireDir,
+								0.2f,
+								20f
+							);
+							particleSystem.IsStopped = false;
+							m_subsystemParticles.AddParticleSystem(particleSystem, false);
+							m_fireParticleSystems[componentMiner] = particleSystem;
+						}
+						else
+						{
+							var ps = m_fireParticleSystems[componentMiner];
+							ps.Position = muzzlePos;
+							ps.Direction = fireDir;
+						}
+					}
+					else
+					{
+						if (m_fireParticleSystems.TryGetValue(componentMiner, out var psToStop))
+						{
+							psToStop.IsStopped = true;
+							m_fireParticleSystems.Remove(componentMiner);
+						}
+					}
+
 					if (aimDuration > 0.5f && !FlameThrowerBlock.GetSwitchState(newData))
 					{
 						newData = FlameThrowerBlock.SetSwitchState(newData, true);
@@ -71,8 +120,6 @@ namespace Game
 						changed = true;
 					}
 
-					// Si hay munición, intentar disparar continuamente
-					int ammo = FlameThrowerBlock.GetAmmoCount(newData);
 					if (ammo > 0 && FlameThrowerBlock.GetSwitchState(newData))
 					{
 						if (!m_lastFireTimes.ContainsKey(componentMiner))
@@ -91,7 +138,6 @@ namespace Game
 						}
 					}
 
-					// Actualizar postura y vista (igual que el mosquete)
 					ComponentFirstPersonModel firstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
 					if (firstPersonModel != null)
 					{
@@ -110,11 +156,15 @@ namespace Game
 
 				case AimState.Cancelled:
 				case AimState.Completed:
-					// Al soltar, desactivar el switch y consumir munición si se disparó al menos una vez
+					if (m_fireParticleSystems.TryGetValue(componentMiner, out var psToStop2))
+					{
+						psToStop2.IsStopped = true;
+						m_fireParticleSystems.Remove(componentMiner);
+					}
+
 					int shots = m_shotsFired.ContainsKey(componentMiner) ? m_shotsFired[componentMiner] : 0;
 					int currentAmmo = FlameThrowerBlock.GetAmmoCount(newData);
 
-					// Si no se disparó nada y no hay munición, mostrar mensaje una vez
 					if (shots == 0 && currentAmmo == 0)
 					{
 						if (!m_emptyMessageShown.ContainsKey(componentMiner) || !m_emptyMessageShown[componentMiner])
@@ -126,17 +176,15 @@ namespace Game
 
 					if (FlameThrowerBlock.GetSwitchState(newData))
 					{
-						// Sonido de release (como el mosquete)
 						if (state == AimState.Completed)
 						{
 							m_subsystemAudio.PlaySound("Audio/HammerRelease", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 						}
-						else // Cancelled
+						else
 						{
 							m_subsystemAudio.PlaySound("Audio/HammerUncock", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 						}
 
-						// Consumir una bala si se disparó y hay munición
 						if (shots > 0 && currentAmmo > 0)
 						{
 							currentAmmo--;
@@ -148,12 +196,10 @@ namespace Game
 							changed = true;
 						}
 
-						// Desactivar switch
 						newData = FlameThrowerBlock.SetSwitchState(newData, false);
 						changed = true;
 					}
 
-					// Limpiar datos de la sesión
 					m_aimStartTimes.Remove(componentMiner);
 					m_lastFireTimes.Remove(componentMiner);
 					m_shotsFired.Remove(componentMiner);
@@ -161,7 +207,6 @@ namespace Game
 					break;
 			}
 
-			// Actualizar el inventario si hubo cambios
 			if (changed && newData != data)
 			{
 				int newValue = Terrain.MakeBlockValue(contents, 0, newData);
@@ -174,7 +219,6 @@ namespace Game
 
 		private bool TryFire(ComponentMiner componentMiner, Ray3 aim)
 		{
-			// Disparar sin consumir munición (solo crear el proyectil)
 			Vector3 eyePos = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
 			Vector3 fireDir = Vector3.Normalize(aim.Direction);
 			Vector3 right = Vector3.Normalize(Vector3.Cross(fireDir, Vector3.UnitY));
@@ -261,19 +305,5 @@ namespace Game
 			m_flameBulletBlockIndex = BlocksManager.GetBlockIndex<FlameBulletBlock>(false, false);
 			base.Load(valuesDictionary);
 		}
-
-		private SubsystemTerrain m_subsystemTerrain;
-		private SubsystemTime m_subsystemTime;
-		private SubsystemProjectiles m_subsystemProjectiles;
-		private SubsystemParticles m_subsystemParticles;
-		private SubsystemAudio m_subsystemAudio;
-		private SubsystemNoise m_subsystemNoise;
-		private Random m_random = new Random();
-
-		private Dictionary<ComponentMiner, double> m_aimStartTimes = new Dictionary<ComponentMiner, double>();
-		private Dictionary<ComponentMiner, double> m_lastFireTimes = new Dictionary<ComponentMiner, double>();
-		private Dictionary<ComponentMiner, int> m_shotsFired = new Dictionary<ComponentMiner, int>();
-		private Dictionary<ComponentMiner, bool> m_emptyMessageShown = new Dictionary<ComponentMiner, bool>();
-		private int m_flameBulletBlockIndex;
 	}
 }
