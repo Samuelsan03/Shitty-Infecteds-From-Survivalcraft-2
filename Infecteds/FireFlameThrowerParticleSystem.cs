@@ -84,8 +84,8 @@ namespace Game
 							m_random.Float(-1f, 1f)
 						);
 						particle.Color = new Color(255, 128, 0);
-						particle.Size = new Vector2(m_size * m_random.Float(1.5f, 2.5f));
-						particle.Speed = m_random.Float(15f, 25f); // Mayor velocidad
+						particle.Size = new Vector2(m_size * m_random.Float(1.8f, 1.8f));
+						particle.Speed = m_random.Float(15f, 35f); // Mayor velocidad
 						particle.Time = 0f;
 						particle.TimeToLive = m_random.Float(0.8f, 1.8f); // Mayor tiempo de vida
 						particle.FlipX = (m_random.Int(0, 1) == 0);
