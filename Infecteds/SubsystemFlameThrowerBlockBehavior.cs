@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using TemplatesDatabase;
@@ -45,7 +45,6 @@ namespace Game
 			if (!m_aimStartTimes.ContainsKey(componentMiner))
 			{
 				m_aimStartTimes[componentMiner] = m_subsystemTime.GameTime;
-				// Reiniciar contador de disparos para esta sesión
 				m_shotsFired[componentMiner] = 0;
 			}
 			double aimStartTime = m_aimStartTimes[componentMiner];
@@ -64,21 +63,7 @@ namespace Game
 			switch (state)
 			{
 				case AimState.InProgress:
-					// Verificar munición al inicio del apuntado
-					int ammo = FlameThrowerBlock.GetAmmoCount(newData);
-					if (ammo <= 0)
-					{
-						// Mostrar mensaje una sola vez al intentar apuntar sin munición
-						if (!m_emptyMessageShown.ContainsKey(componentMiner) || !m_emptyMessageShown[componentMiner])
-						{
-							componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("FlameThrower is empty", Color.White, true, false);
-							m_emptyMessageShown[componentMiner] = true;
-						}
-						// No activar el switch ni disparar
-						break;
-					}
-
-					// Activar el switch si no está activado y ha pasado suficiente tiempo
+					// Activar el switch siempre, independientemente de la munición
 					if (aimDuration > 0.5f && !FlameThrowerBlock.GetSwitchState(newData))
 					{
 						newData = FlameThrowerBlock.SetSwitchState(newData, true);
@@ -86,22 +71,21 @@ namespace Game
 						changed = true;
 					}
 
-					// Disparo continuo mientras el switch está activado
-					if (FlameThrowerBlock.GetSwitchState(newData))
+					// Si hay munición, intentar disparar continuamente
+					int ammo = FlameThrowerBlock.GetAmmoCount(newData);
+					if (ammo > 0 && FlameThrowerBlock.GetSwitchState(newData))
 					{
 						if (!m_lastFireTimes.ContainsKey(componentMiner))
 						{
 							m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
 						}
 						double lastFireTime = m_lastFireTimes[componentMiner];
-						float fireInterval = 0.2f; // 5 disparos/segundo
+						float fireInterval = 0.2f;
 						if (m_subsystemTime.GameTime - lastFireTime >= fireInterval)
 						{
-							// Disparar sin consumir munición
 							if (TryFire(componentMiner, aim))
 							{
 								m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
-								// Incrementar contador de disparos de esta sesión
 								m_shotsFired[componentMiner] = m_shotsFired[componentMiner] + 1;
 							}
 						}
@@ -129,6 +113,17 @@ namespace Game
 					// Al soltar, desactivar el switch y consumir munición si se disparó al menos una vez
 					int shots = m_shotsFired.ContainsKey(componentMiner) ? m_shotsFired[componentMiner] : 0;
 					int currentAmmo = FlameThrowerBlock.GetAmmoCount(newData);
+
+					// Si no se disparó nada y no hay munición, mostrar mensaje una vez
+					if (shots == 0 && currentAmmo == 0)
+					{
+						if (!m_emptyMessageShown.ContainsKey(componentMiner) || !m_emptyMessageShown[componentMiner])
+						{
+							componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("FlameThrower is empty", Color.White, true, false);
+							m_emptyMessageShown[componentMiner] = true;
+						}
+					}
+
 					if (FlameThrowerBlock.GetSwitchState(newData))
 					{
 						// Sonido de release (como el mosquete)
@@ -210,9 +205,7 @@ namespace Game
 			m_subsystemAudio.PlaySound("Audio/Fire", 1f, m_random.Float(-0.1f, 0.1f), eyePos, 10f, true);
 			m_subsystemNoise.MakeNoise(eyePos, 1f, 40f);
 
-			// Dañar la herramienta (1 de durabilidad por disparo, pero no consume munición)
 			componentMiner.DamageActiveTool(1);
-
 			return true;
 		}
 
