@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Xml.Linq;
 using Engine;
 
@@ -55,13 +55,17 @@ namespace Game
 			var state = FlameThrowerBlock.GetLoadState(data);
 			int ammo = FlameThrowerBlock.GetAmmoCount(data);
 
+			// Obtener tipo de bala (bits 8-9)
+			int bulletType = (data >> 8) & 3;
+			string ammoType = bulletType == 0 ? "Fuego" : "Veneno";
+
 			if (state == FlameThrowerBlock.LoadState.Empty || ammo == 0)
 			{
 				m_instructionsLabel.Text = "Coloca una bala para cargar";
 			}
 			else
 			{
-				m_instructionsLabel.Text = $"{ammo}/15 Fuego";
+				m_instructionsLabel.Text = $"{ammo}/15 {ammoType}";
 			}
 		}
 	}
