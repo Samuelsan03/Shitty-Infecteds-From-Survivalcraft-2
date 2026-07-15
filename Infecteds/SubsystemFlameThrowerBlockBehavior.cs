@@ -226,7 +226,9 @@ namespace Game
 					{
 						if (!m_emptyMessageShown.ContainsKey(componentMiner) || !m_emptyMessageShown[componentMiner])
 						{
-							componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage("FlameThrower is empty", Color.White, true, false);
+							componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+								LanguageControl.Get("SubsystemFlameThrowerBlockBehavior", 0),
+								Color.White, true, false);
 							m_emptyMessageShown[componentMiner] = true;
 						}
 					}
