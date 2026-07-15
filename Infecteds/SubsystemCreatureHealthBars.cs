@@ -2,6 +2,7 @@ using System;
 using Engine;
 using Engine.Graphics;
 using Engine.Media;
+using Game;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -87,13 +88,13 @@ namespace Game
 				Vector3 hp_p4 = positionView + new Vector3(-halfMaxWidth, thickness, 0.001f);
 				batch.QueueQuad(hp_p1, hp_p2, hp_p3, hp_p4, color);
 
-				float textScale = 0.003f;
+				float textScale = 0.002f;
 
 				string creatureName = !string.IsNullOrEmpty(creature.DisplayName) ? creature.DisplayName : "NPC";
-				int healthValue = (int)Math.Round(health.Health * health.AttackResilience);
+				float healthValue = health.Health * health.AttackResilience;
 
 				string format = LanguageControl.Get("SubsystemCreatureHealthBars", 1);
-				string healthText = string.Format(format, creatureName, healthValue);
+				string healthText = string.Format(format, creatureName, healthValue.ToString("F2"));
 
 				Vector3 textPositionView = positionView + new Vector3(0f, thickness + 0.005f, 0.002f);
 
