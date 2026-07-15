@@ -20,7 +20,7 @@ namespace Game
 		private Random m_random = new Random();
 
 		public PoisonFlameThrowerParticleSystem(Vector3 position, Vector3 direction, float size, float maxVisibilityDistance)
-			: base(20)
+			: base(150) // AUMENTADO
 		{
 			m_position = position;
 			m_direction = Vector3.Normalize(direction);
@@ -37,7 +37,10 @@ namespace Game
 
 			if (m_visible || m_age < 2f)
 			{
-				m_toGenerate += (IsStopped ? 0f : (20f * dt));
+				m_toGenerate += (IsStopped ? 0f : (80f * dt)); // AUMENTADO
+
+				float s = MathF.Pow(0.15f, dt); // REDUCIDO
+				Vector3 v = new Vector3(0f, -1f, 0f); // El veneno tiene una ligera caída hacia abajo al perder velocidad
 
 				for (int i = 0; i < Particles.Length; i++)
 				{
@@ -47,17 +50,13 @@ namespace Game
 					{
 						flag = true;
 						particle.Time += dt;
-						particle.TimeToLive -= dt;
 
-						if (particle.TimeToLive > 0f)
+						if (particle.Time <= particle.Duration)
 						{
-							particle.Position += m_direction * particle.Speed * dt;
-							particle.Position += 0.15f * m_size * new Vector3(
-								m_random.Float(-0.5f, 0.5f),
-								m_random.Float(-0.5f, 0.5f),
-								m_random.Float(-0.5f, 0.5f)
-							) * dt;
-							particle.TextureSlot = (int)MathUtils.Min(9f * particle.Time / 1.25f, 8f);
+							particle.Position += particle.Velocity * dt;
+							particle.Velocity *= s;
+							particle.Velocity += v * dt;
+							particle.TextureSlot = (int)MathUtils.Min(9f * particle.Time / particle.Duration, 8f);
 						}
 						else
 						{
@@ -67,16 +66,18 @@ namespace Game
 					else if (m_toGenerate >= 1f)
 					{
 						particle.IsActive = true;
-						particle.Position = m_position + 0.1f * m_size * new Vector3(
-							m_random.Float(-1f, 1f),
-							m_random.Float(-1f, 1f),
-							m_random.Float(-1f, 1f)
-						);
-						particle.Color = new Color (0,255,0);
-						particle.Size = new Vector2(m_size * m_random.Float(1.8f, 1.8f));
-						particle.Speed = m_random.Float(15f, 35f);
+
+						Vector3 v2 = new Vector3(m_random.Float(-1f, 1f), m_random.Float(-1f, 1f), m_random.Float(-1f, 1f));
+						particle.Position = m_position + 0.3f * v2 * m_size;
+
+						particle.Color = new Color(0, 255, 0);
+
+						// Velocidad ligeramente menor para que se sienta más pesado
+						particle.Velocity = m_random.Float(90f, 130f) * (m_direction + 0.15f * v2);
+
 						particle.Time = 0f;
-						particle.TimeToLive = m_random.Float(0.8f, 1.8f);
+						particle.Duration = m_random.Float(0.3f, 0.7f);
+						particle.Size = new Vector2(m_size * m_random.Float(2.5f, 4f)); // AUMENTADO
 						particle.FlipX = (m_random.Int(0, 1) == 0);
 						particle.FlipY = (m_random.Int(0, 1) == 0);
 						m_toGenerate -= 1f;
@@ -103,9 +104,9 @@ namespace Game
 
 		public class Particle : Game.Particle
 		{
+			public Vector3 Velocity;
 			public float Time;
-			public float TimeToLive;
-			public float Speed;
+			public float Duration;
 		}
 	}
 }
