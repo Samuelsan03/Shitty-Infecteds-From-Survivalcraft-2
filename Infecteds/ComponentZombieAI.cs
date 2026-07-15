@@ -30,6 +30,10 @@ namespace Game
 		public float MusketCooldown = 0.01f;
 		public float MusketAimTime = 1.5f;
 
+		// Tiempos del Lanzallamas
+		public float FlameThrowerCooldown = 0.01f;
+		public float FlameThrowerAimTime = 1.5f;
+
 		public float CrossbowCooldown = 0.01f;
 		public float CrossbowAimTime = 1.5f;
 
@@ -84,9 +88,10 @@ namespace Game
 			int contents = Terrain.ExtractContents(projectile.Value);
 			int arrowIndex = BlocksManager.GetBlockIndex<ArrowBlock>();
 			int repeatBoltIndex = BlocksManager.GetBlockIndex<RepeatBoltBlock>();
+			int flameBulletIndex = BlocksManager.GetBlockIndex<FlameBulletBlock>();
 
-			// Forzar desaparición al tocar el suelo tanto para flechas como para virotes de ballesta repetidora
-			if (contents == arrowIndex || contents == repeatBoltIndex)
+			// Forzar desaparición al tocar el suelo para flechas, virotes repetidores y balas de lanzallamas
+			if (contents == arrowIndex || contents == repeatBoltIndex || contents == flameBulletIndex)
 			{
 				projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
 			}
@@ -366,8 +371,9 @@ namespace Game
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
 			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
 			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
+			int flameThrowerIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>();
 
-			return blockIndex == improvedMusketIndex || blockIndex == musketIndex || blockIndex == crossbowIndex || blockIndex == bowIndex || blockIndex == repeatCrossbowIndex;
+			return blockIndex == improvedMusketIndex || blockIndex == musketIndex || blockIndex == crossbowIndex || blockIndex == bowIndex || blockIndex == repeatCrossbowIndex || blockIndex == flameThrowerIndex;
 		}
 
 		private int FindRangedWeaponSlot(IInventory inventory)
@@ -377,6 +383,7 @@ namespace Game
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
 			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
 			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
+			int flameThrowerIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>();
 
 			int bestSlot = -1;
 
@@ -390,7 +397,7 @@ namespace Game
 				// Mayor prioridad para el mosquete mejorado
 				if (contents == improvedMusketIndex) return i;
 
-				if (contents == musketIndex || contents == crossbowIndex || contents == bowIndex || contents == repeatCrossbowIndex)
+				if (contents == musketIndex || contents == crossbowIndex || contents == bowIndex || contents == repeatCrossbowIndex || contents == flameThrowerIndex)
 				{
 					if (bestSlot == -1) bestSlot = i;
 				}
@@ -437,6 +444,7 @@ namespace Game
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
 			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
 			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
+			int flameThrowerIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>();
 
 			if (contents == improvedMusketIndex)
 			{
@@ -445,6 +453,10 @@ namespace Game
 			else if (contents == musketIndex)
 			{
 				EnsureMusketLoaded(inventory, slot, value);
+			}
+			else if (contents == flameThrowerIndex)
+			{
+				EnsureFlameThrowerLoaded(inventory, slot, value);
 			}
 			else if (contents == crossbowIndex)
 			{
@@ -496,6 +508,28 @@ namespace Game
 
 				int newValue = Terrain.MakeBlockValue(musketIndex, 0, data);
 
+				inventory.RemoveSlotItems(slot, 1);
+				inventory.AddSlotItems(slot, newValue, 1);
+			}
+		}
+
+		private void EnsureFlameThrowerLoaded(IInventory inventory, int slot, int value)
+		{
+			int flameThrowerIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>();
+			int data = Terrain.ExtractData(value);
+			var state = FlameThrowerBlock.GetLoadState(data);
+			int ammo = FlameThrowerBlock.GetAmmoCount(data);
+
+			// Si está vacío o sin munición, recarga seleccionando un tipo aleatorio (Fuego o Veneno)
+			if (state != FlameThrowerBlock.LoadState.Loaded || ammo == 0)
+			{
+				int selectedBulletType = m_random.Int(0, 1);
+				int newData = data;
+				newData = FlameThrowerBlock.SetLoadState(newData, FlameThrowerBlock.LoadState.Loaded);
+				newData = FlameThrowerBlock.SetAmmoCount(newData, 15);
+				newData = (newData & ~0x300) | ((selectedBulletType & 3) << 8);
+
+				int newValue = Terrain.MakeBlockValue(flameThrowerIndex, 0, newData);
 				inventory.RemoveSlotItems(slot, 1);
 				inventory.AddSlotItems(slot, newValue, 1);
 			}
@@ -744,6 +778,11 @@ namespace Game
 				{
 					CooldownTimer = MusketCooldown;
 					AimTimeTimer = MusketAimTime;
+				}
+				else if (contents == BlocksManager.GetBlockIndex<FlameThrowerBlock>())
+				{
+					CooldownTimer = FlameThrowerCooldown;
+					AimTimeTimer = FlameThrowerAimTime;
 				}
 				else if (contents == BlocksManager.GetBlockIndex<CrossbowBlock>())
 				{
