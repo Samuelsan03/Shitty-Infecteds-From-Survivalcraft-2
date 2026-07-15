@@ -109,6 +109,16 @@ namespace Game
 				m_stateMachine.TransitionTo("Chasing");
 		}
 
+		private bool IsTargetLiveZombie()
+		{
+			if (m_target == null || m_target.ComponentHealth == null || m_target.ComponentHealth.Health <= 0f)
+				return false;
+			if (m_target.Entity == null)
+				return false;
+			ComponentZombieHerdBehavior herd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
+			return herd != null && herd.HerdName == "Zombie";
+		}
+
 		private void UpdateExtremeProtection(float dt)
 		{
 			bool isGreenNightActive = m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive;
@@ -128,7 +138,7 @@ namespace Game
 				}
 				else
 				{
-					ComponentZombieHerdBehavior targetZombieHerd = m_target?.Entity.FindComponent<ComponentZombieHerdBehavior>();
+					ComponentZombieHerdBehavior targetZombieHerd = m_target?.Entity?.FindComponent<ComponentZombieHerdBehavior>();
 					if (targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie" && !m_wasChasingBeforeProtection)
 						StopAttack();
 				}
@@ -143,30 +153,24 @@ namespace Game
 			if (m_componentCreature == null || m_componentCreature.ComponentHealth == null || m_componentCreature.ComponentHealth.Health <= 0f)
 				return;
 
-			if (m_target != null && m_target.ComponentHealth != null && m_target.ComponentHealth.Health > 0f)
-			{
-				ComponentZombieHerdBehavior targetZombieHerd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
-				if (targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie" || (m_importanceLevel >= 600f && m_isPersistent))
-				{
-					m_chaseTime = MathUtils.Max(m_chaseTime, 10f);
-					if (m_importanceLevel < 600f) m_importanceLevel = 600f;
-					m_autoChaseSuppressionTime = 0f;
-					m_targetUnsuitableTime = 0f;
+			float protectionRange = 35f;
 
-					if (m_componentPathfinding != null && m_target.ComponentBody != null)
-					{
-						Vector3 targetPos = m_target.ComponentBody.BoundingBox.Center();
-						Vector3 myPos = m_componentCreature.ComponentBody.BoundingBox.Center();
-						float distance = Vector3.Distance(myPos, targetPos);
-						float predict = (distance < 4f) ? 0.3f : 0f;
-						int maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
-						m_componentPathfinding.SetDestination(targetPos + predict * distance * m_target.ComponentBody.Velocity, 1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
-					}
-					return;
-				}
+			// Si el target actual es un zombie vivo, simplemente forzar los valores correctos
+			// SIN hacer return, SIN hacer pathfinding aquí. Dejar que el estado "Chasing" normal lo haga.
+			if (IsTargetLiveZombie())
+			{
+				m_wasForcedByGreenNight = true;
+				m_chaseTime = MathUtils.Max(m_chaseTime, 10f);
+				m_isPersistent = true;
+				if (m_importanceLevel < 600f) m_importanceLevel = 600f;
+				m_autoChaseSuppressionTime = 0f;
+				m_targetUnsuitableTime = 0f;
+				m_range = MathUtils.Max(m_range, protectionRange);
+				IsActive = true;
+				return;
 			}
 
-			float protectionRange = 35f;
+			// Si no hay target o el target no es zombie, buscar zombie más cercano
 			Vector3 position = m_componentCreature.ComponentBody.Position;
 			m_componentBodies.Clear();
 			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), protectionRange, m_componentBodies);
@@ -205,30 +209,23 @@ namespace Game
 				m_targetInRangeTime = 0f;
 				m_wasForcedByGreenNight = true;
 				IsActive = true;
-				m_nextUpdateTime = 0.0;
 
 				if (m_componentNewHerdBehavior != null)
 					m_componentNewHerdBehavior.m_importanceLevel = 0f;
 
 				if (m_stateMachine.CurrentState != "Chasing")
 					m_stateMachine.TransitionTo("Chasing");
-
-				if (m_componentPathfinding != null && closestZombie.ComponentBody != null)
+			}
+			else
+			{
+				if (m_wasForcedByGreenNight && m_target != null)
 				{
-					Vector3 targetPos = closestZombie.ComponentBody.BoundingBox.Center();
-					int maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
-					m_componentPathfinding.SetDestination(targetPos, 1f, 1.5f, maxPos, true, false, true, closestZombie.ComponentBody);
+					m_target = null;
+					IsActive = false;
+					m_wasForcedByGreenNight = false;
+					m_importanceLevel = 0f;
 				}
 			}
-		}
-
-		private bool IsPrioritizedTargetDuringGreenNight()
-		{
-			if (!m_isExtremeProtectionActive || m_target == null) return false;
-			ComponentZombieHerdBehavior targetZombieHerd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
-			if (targetZombieHerd != null && targetZombieHerd.HerdName == "Zombie") return true;
-			if (m_importanceLevel >= 600f && m_isPersistent) return true;
-			return false;
 		}
 
 		public virtual void Update(float dt)
@@ -240,15 +237,16 @@ namespace Game
 
 			m_autoChaseSuppressionTime -= dt;
 
-			// CORRECCIÓN: Usar IsActive && m_target != null como el original
 			if (IsActive && m_target != null)
 			{
 				m_chaseTime -= dt;
 
-				if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsPrioritizedTargetDuringGreenNight() && m_chaseTime < 5f)
+				// Mantener chaseTime alto durante Noche Verde si el target es zombie
+				if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsTargetLiveZombie() && m_chaseTime < 5f)
 					m_chaseTime = 10f;
 
-				m_componentCreature.ComponentCreatureModel.LookAtOrder = m_target.ComponentCreatureModel.EyePosition;
+				if (m_target.ComponentCreatureModel != null)
+					m_componentCreature.ComponentCreatureModel.LookAtOrder = m_target.ComponentCreatureModel.EyePosition;
 
 				bool targetVisible = IsTargetVisible(m_target);
 				if (IsTargetInAttackRange(m_target.ComponentBody) && targetVisible)
@@ -261,7 +259,7 @@ namespace Game
 					if (hitBody != null)
 					{
 						float x = m_isPersistent ? m_random.Float(8f, 10f) : 2f;
-						if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsPrioritizedTargetDuringGreenNight())
+						if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsTargetLiveZombie())
 							x = MathUtils.Max(x, 10f);
 
 						m_chaseTime = MathUtils.Max(m_chaseTime, x);
@@ -377,6 +375,8 @@ namespace Game
 		private bool IsTargetVisible(ComponentCreature target)
 		{
 			if (target == null) return false;
+			if (m_componentCreature.ComponentCreatureModel == null || target.ComponentCreatureModel == null) return false;
+
 			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
 			Vector3 targetEyePos = target.ComponentCreatureModel.EyePosition;
 			Vector3 dirToTarget = targetEyePos - eyePos;
@@ -464,6 +464,16 @@ namespace Game
 			componentHealth.Injured = (Action<Injury>)Delegate.Combine(componentHealth.Injured, new Action<Injury>(delegate (Injury injury)
 			{
 				ComponentCreature attacker = injury.Attacker;
+
+				// CORRECCIÓN PRINCIPAL: Si es Noche Verde y ya estamos persiguiendo un zombie forzado,
+				// NO dejar que Attack() corrompa los valores (m_wasForcedByGreenNight, m_isPersistent, m_range)
+				if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsTargetLiveZombie() && attacker != null)
+				{
+					ComponentZombieHerdBehavior attackerHerd = attacker.Entity?.FindComponent<ComponentZombieHerdBehavior>();
+					if (attackerHerd != null && attackerHerd.HerdName == "Zombie" && attacker == m_target)
+						return;
+				}
+
 				if (m_random.Float(0f, 1f) < m_chaseWhenAttackedProbability)
 				{
 					bool persistent = false;
@@ -492,7 +502,10 @@ namespace Game
 					m_importanceLevel = 0f;
 			}, delegate
 			{
-				if (m_isExtremeProtectionActive) return;
+				if (m_isExtremeProtectionActive && m_target == null)
+				{
+					return;
+				}
 
 				if (IsActive)
 				{
@@ -543,33 +556,10 @@ namespace Game
 				m_nextUpdateTime = 0.0;
 			}, delegate
 			{
-				if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsPrioritizedTargetDuringGreenNight())
-				{
-					if (m_target == null || m_target.ComponentHealth == null || m_target.ComponentHealth.Health <= 0f)
-					{
-						m_importanceLevel = 0f;
-						m_target = null;
-						IsActive = false;
-						m_wasForcedByGreenNight = false;
-						m_stateMachine.TransitionTo("LookingForTarget");
-						return;
-					}
+				// CORRECCIÓN PRINCIPAL: Eliminado el bloque especial de Noche Verde con "return".
+				// Ahora el flujo normal SIEMPRE se ejecuta. UpdateExtremeProtection se encarga
+				// de mantener m_chaseTime, m_importanceLevel, m_isPersistent y m_range correctos.
 
-					if (m_componentPathfinding != null && m_target.ComponentBody != null)
-					{
-						Vector3 c1 = 0.5f * (m_componentCreature.ComponentBody.BoundingBox.Min + m_componentCreature.ComponentBody.BoundingBox.Max);
-						Vector3 c2 = 0.5f * (m_target.ComponentBody.BoundingBox.Min + m_target.ComponentBody.BoundingBox.Max);
-						float dist = Vector3.Distance(c1, c2);
-						float predict = (dist < 4f) ? 0.3f : 0f;
-						int maxPos = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
-						m_componentPathfinding.SetDestination(c2 + predict * dist * m_target.ComponentBody.Velocity, 1f, 1.5f, maxPos, true, false, true, m_target.ComponentBody);
-					}
-					if (PlayAngrySoundWhenChasing && m_random.Float(0f, 1f) < 0.5f * m_dt)
-						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
-					return;
-				}
-
-				// CORRECCIÓN PRINCIPAL: Comportamiento EXACTO del original.
 				if (!IsActive)
 				{
 					m_stateMachine.TransitionTo("LookingForTarget");
@@ -577,6 +567,8 @@ namespace Game
 				}
 				else if (m_chaseTime <= 0f)
 				{
+					// Durante Noche Verde persiguiendo zombie, UpdateExtremeProtection mantiene m_chaseTime alto
+					// Así que esto solo se ejecuta si NO es Noche Verde o el target no es zombie
 					m_autoChaseSuppressionTime = m_random.Float(10f, 60f);
 					m_importanceLevel = 0f;
 				}
@@ -603,6 +595,9 @@ namespace Game
 				}
 				else if (m_isPersistent && m_componentPathfinding.IsStuck)
 				{
+					// Durante Noche Verde, m_isPersistent es true (mantenido por UpdateExtremeProtection)
+					// Así que si se atasca, va a RandomMoving y vuelve. Esto es el comportamiento NORMAL
+					// para criaturas persistentes y funciona correctamente.
 					m_stateMachine.TransitionTo("RandomMoving");
 				}
 				else
@@ -702,6 +697,7 @@ namespace Game
 			Vector3 c1 = 0.5f * (bb1.Min + bb1.Max);
 			Vector3 c2 = 0.5f * (bb2.Min + bb2.Max) - c1;
 			float len = c2.Length();
+			if (len < 0.001f) return false;
 			Vector3 dir = c2 / len;
 			float width = 0.5f * (bb1.Max.X - bb1.Min.X + bb2.Max.X - bb2.Min.X);
 			float height = 0.5f * (bb1.Max.Y - bb1.Min.Y + bb2.Max.Y - bb2.Min.Y);
@@ -722,6 +718,7 @@ namespace Game
 			Vector3 c1 = 0.5f * (bb1.Min + bb1.Max);
 			Vector3 c2 = 0.5f * (bb2.Min + bb2.Max) - c1;
 			float len = c2.Length();
+			if (len < 0.001f) return false;
 			Vector3 dir = c2 / len;
 			float width = 0.5f * (bb1.Max.X - bb1.Min.X + bb2.Max.X - bb2.Min.X);
 			float height = 0.5f * (bb1.Max.Y - bb1.Min.Y + bb2.Max.Y - bb2.Min.Y);
@@ -738,7 +735,14 @@ namespace Game
 		{
 			Vector3 eye = m_componentCreature.ComponentBody.BoundingBox.Center();
 			Vector3 targetCenter = target.BoundingBox.Center();
-			Ray3 ray = new Ray3(eye, Vector3.Normalize(targetCenter - eye));
+			Vector3 dir = targetCenter - eye;
+			float dirLen = dir.Length();
+			if (dirLen < 0.001f)
+			{
+				hitPoint = default(Vector3);
+				return null;
+			}
+			Ray3 ray = new Ray3(eye, dir / dirLen);
 			BodyRaycastResult? raycast = m_componentMiner.Raycast<BodyRaycastResult>(ray, RaycastMode.Interaction, true, true, true, null);
 
 			if (raycast != null && raycast.Value.Distance < MaxAttackRange && (raycast.Value.ComponentBody == target || raycast.Value.ComponentBody.IsChildOfBody(target) || target.IsChildOfBody(raycast.Value.ComponentBody) || (target.StandingOnBody == raycast.Value.ComponentBody && AllowAttackingStandingOnBody)))
