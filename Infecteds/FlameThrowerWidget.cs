@@ -54,18 +54,17 @@ namespace Game
 			int data = Terrain.ExtractData(value);
 			var state = FlameThrowerBlock.GetLoadState(data);
 			int ammo = FlameThrowerBlock.GetAmmoCount(data);
-
-			// Obtener tipo de bala (bits 8-9)
 			int bulletType = (data >> 8) & 3;
-			string ammoType = bulletType == 0 ? "Fuego" : "Veneno";
 
 			if (state == FlameThrowerBlock.LoadState.Empty || ammo == 0)
 			{
-				m_instructionsLabel.Text = "Coloca una bala para cargar";
+				m_instructionsLabel.Text = LanguageControl.GetContentWidgets("FlameThrowerWidget", 2);
 			}
 			else
 			{
-				m_instructionsLabel.Text = $"{ammo}/15 {ammoType}";
+				string ammoType = LanguageControl.GetContentWidgets("FlameThrowerWidget", bulletType == 0 ? 4 : 5);
+				string format = LanguageControl.GetContentWidgets("FlameThrowerWidget", 3); // "{ammo}/15 {type}"
+				m_instructionsLabel.Text = format.Replace("{ammo}", ammo.ToString()).Replace("{type}", ammoType);
 			}
 		}
 	}
