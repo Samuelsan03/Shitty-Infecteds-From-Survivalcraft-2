@@ -30,7 +30,7 @@ namespace Game
 		private Random m_random = new Random();
 
 		public FireFlameThrowerParticleSystem(Vector3 position, Vector3 direction, float size, float maxVisibilityDistance)
-			: base(120) // Más partículas para un chorro más denso
+			: base(150) // AUMENTADO: Más partículas para un chorro denso y continuo
 		{
 			m_position = position;
 			m_direction = Vector3.Normalize(direction);
@@ -47,7 +47,14 @@ namespace Game
 
 			if (m_visible || m_age < 2f)
 			{
-				m_toGenerate += (IsStopped ? 0f : (20f * dt));
+				// AUMENTADO: Generamos muchas más partículas por segundo
+				m_toGenerate += (IsStopped ? 0f : (80f * dt));
+
+				// REDUCIDO: Fricción mucho menor para que el fuego viaje lejos y no se pare en seco
+				float s = MathF.Pow(0.15f, dt);
+
+				// CORREGIDO: Sin fuerza loca hacia arriba. Solo un leve flotamiento al final
+				Vector3 v = new Vector3(0f, 2f, 0f);
 
 				for (int i = 0; i < Particles.Length; i++)
 				{
@@ -57,18 +64,14 @@ namespace Game
 					{
 						flag = true;
 						particle.Time += dt;
-						particle.TimeToLive -= dt;
 
-						if (particle.TimeToLive > 0f)
+						if (particle.Time <= particle.Duration)
 						{
-							particle.Position += m_direction * particle.Speed * dt;
-							// Dispersión lateral para efecto de llama
-							particle.Position += 0.15f * m_size * new Vector3(
-								m_random.Float(-0.5f, 0.5f),
-								m_random.Float(-0.5f, 0.5f),
-								m_random.Float(-0.5f, 0.5f)
-							) * dt;
-							particle.TextureSlot = (int)MathUtils.Min(9f * particle.Time / 1.25f, 8f);
+							particle.Position += particle.Velocity * dt;
+							particle.Velocity *= s;
+							particle.Velocity += v * dt;
+							particle.TextureSlot = (int)MathUtils.Min(9f * particle.Time / particle.Duration, 8f);
+							// El tamaño ya no se actualiza aquí para evitar parpadeos
 						}
 						else
 						{
@@ -78,16 +81,21 @@ namespace Game
 					else if (m_toGenerate >= 1f)
 					{
 						particle.IsActive = true;
-						particle.Position = m_position + 0.1f * m_size * new Vector3(
-							m_random.Float(-1f, 1f),
-							m_random.Float(-1f, 1f),
-							m_random.Float(-1f, 1f)
-						);
+
+						Vector3 v2 = new Vector3(m_random.Float(-1f, 1f), m_random.Float(-1f, 1f), m_random.Float(-1f, 1f));
+						particle.Position = m_position + 0.3f * v2 * m_size;
+
 						particle.Color = new Color(255, 128, 0);
-						particle.Size = new Vector2(m_size * m_random.Float(1.8f, 1.8f));
-						particle.Speed = m_random.Float(15f, 35f); // Mayor velocidad
+
+						// AUMENTADO: Velocidad de 100 a 150 para que acompañe a la bala (que va a 120f)
+						particle.Velocity = m_random.Float(100f, 150f) * (m_direction + 0.15f * v2);
+
 						particle.Time = 0f;
-						particle.TimeToLive = m_random.Float(0.8f, 1.8f); // Mayor tiempo de vida
+						particle.Duration = m_random.Float(0.2f, 0.6f); // Vida corta para que se renueve rápido en el chorro
+
+						// AUMENTADO: Tamaño grande definido al nacer para no tapar como una mancha densa
+						particle.Size = new Vector2(m_size * m_random.Float(2.5f, 4f));
+
 						particle.FlipX = (m_random.Int(0, 1) == 0);
 						particle.FlipY = (m_random.Int(0, 1) == 0);
 						m_toGenerate -= 1f;
@@ -114,9 +122,9 @@ namespace Game
 
 		public class Particle : Game.Particle
 		{
+			public Vector3 Velocity;
 			public float Time;
-			public float TimeToLive;
-			public float Speed;
+			public float Duration;
 		}
 	}
 }
