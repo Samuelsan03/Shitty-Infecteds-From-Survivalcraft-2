@@ -2,6 +2,14 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="Teleport" Description="Permite a la criatura teletransportarse cerca de su objetivo" Guid="6ff6930a-6379-43e1-bac2-1dcca9a87627" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+      <Parameter Name="Class" Guid="bf59c513-ea90-45c5-87fd-6fd89472a88a" Value="Game.Teleport" Type="string" />
+      <Parameter Name="TeleportationRange" Description="Distancia a la que si el objetivo se aleja mas de esto, la criatura podra teletransportarse" Guid="df52b802-9b31-43a6-9157-449903b5abed" Value="10" Type="float" />
+      <Parameter Name="ProbabilityOfTeleporting" Description="Probabilidad de teletransportarse al estar en el rango valido" Guid="78b507ad-2e6a-4909-94d7-ba2aed62c071" Value="0.5" Type="float" />
+      <Parameter Name="TimeToTeleportAgain" Description="Tiempo necesario para poder volver a teletransportarse" Guid="b380bae6-5888-4f84-934c-52563afb7f89" Value="10" Type="float" />
+      <Parameter Name="TimeMissingBeforeReappearing" Description="Tiempo que tarda en volver a aparecer despues de desaparecer" Guid="765b5711-668d-469c-8a28-e2ea18ebf0a2" Value="1" Type="float" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="InfectedWithPoison" Description="Afecta a la criatura con veneno, reduce su velocidad y la hace vomitar periodicamente" Guid="5a97d777-b5aa-45fc-9442-9f47addf7988" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
   <Parameter Name="PoisonResistance" Description="Resistencia al veneno, numeros menores significa que es mas vulnerable" Guid="0b80399a-4a7a-45dc-a6cc-6e0bdb9c9662" Value="0.5" Type="float" />
   <Parameter Name="DurationOfPoison" Description="Tiempo en segundos que dura el veneno en la criatura" Guid="2eb3bcf2-f3b5-4775-8d55-b3d81e6ff2c1" Value="300" Type="float" />
@@ -123,6 +131,27 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+
+     <MemberSubsystemTemplate Name="SubsystemInfectedEggBlockBehavior" Guid="53790490-f256-4ea2-a871-a322e59a26df" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="85736a9d-838e-4b6a-9e55-9419e466a98b" Value="Game.SubsystemInfectedEggBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+
+     <MemberSubsystemTemplate Name="SubsystemFlameBulletBlockBehavior" Guid="0b0b68f9-7248-4cd3-abcf-7e863f39b6c4" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="07952798-8917-49da-9c5f-61a7a902e4ef" Value="Game.SubsystemFlameBulletBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+
+     <MemberSubsystemTemplate Name="SubsystemFlameThrowerBlockBehavior" Guid="cbdfef10-ede5-4754-a54e-94a38f78d710" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="3ec0bbf5-7208-4c8a-ae31-43e22f89e24e" Value="Game.SubsystemFlameThrowerBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+
+     <MemberSubsystemTemplate Name="SubsystemAntiTankPelletBlockBehavior" Guid="a17715c8-5f6d-4d26-bea1-7d026e23eff0" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="ee20921c-74f6-41a0-9ed9-d33ab009b01e" Value="Game.SubsystemAntiTankPelletBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+
+     <MemberSubsystemTemplate Name="SubsystemImprovedMusketBlockBehavior" Guid="efadb2f5-097a-40a8-bca7-305875c9ade3" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="2e8c417c-5c23-4bdf-b097-1aebaa65977e" Value="Game.SubsystemImprovedMusketBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+
      <MemberSubsystemTemplate Name="SubsystemRepeatCrossbowBlockBehavior" Guid="345b12b9-9482-42e5-850b-552b1415c348" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="727dba8e-f6ea-49ee-b6d5-504f717fbc99" Value="Game.SubsystemRepeatCrossbowBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
