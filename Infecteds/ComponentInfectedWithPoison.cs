@@ -31,6 +31,8 @@ namespace Game
 		private float m_originalWalkSpeed;
 		private float m_originalFlySpeed;
 		private float m_originalSwimSpeed;
+		private float m_originalJumpSpeed;
+		private float m_originalLadderSpeed;
 		private bool m_speedsStored;
 
 		private SubsystemTime m_subsystemTime;
@@ -59,15 +61,8 @@ namespace Game
 			if (m_random.Float(0f, 1f) < infectionChance)
 			{
 				bool wasAlreadyInfected = m_infectionDuration > 0f;
-				// Limitar la intensidad entre 0 y 1 para evitar daños instantáneos o bugs de velocidad extrema
 				m_poisonIntensity = MathUtils.Max(m_poisonIntensity, MathUtils.Clamp(attackerIntensity, 0f, 1f));
 				m_infectionDuration = m_durationOfPoison;
-
-				if (!m_speedsStored)
-				{
-					StoreOriginalSpeeds();
-				}
-				ApplySpeedPenalty();
 
 				if (!wasAlreadyInfected)
 				{
@@ -84,6 +79,8 @@ namespace Game
 				m_originalWalkSpeed = m_componentLocomotion.WalkSpeed;
 				m_originalFlySpeed = m_componentLocomotion.FlySpeed;
 				m_originalSwimSpeed = m_componentLocomotion.SwimSpeed;
+				m_originalJumpSpeed = m_componentLocomotion.JumpSpeed;
+				m_originalLadderSpeed = m_componentLocomotion.LadderSpeed;
 				m_speedsStored = true;
 			}
 		}
@@ -99,6 +96,8 @@ namespace Game
 			m_componentLocomotion.WalkSpeed = m_originalWalkSpeed * penalty;
 			m_componentLocomotion.FlySpeed = m_originalFlySpeed * penalty;
 			m_componentLocomotion.SwimSpeed = m_originalSwimSpeed * penalty;
+			m_componentLocomotion.JumpSpeed = m_originalJumpSpeed * penalty;
+			m_componentLocomotion.LadderSpeed = m_originalLadderSpeed * penalty;
 		}
 
 		private void RestoreOriginalSpeeds()
@@ -108,6 +107,8 @@ namespace Game
 				m_componentLocomotion.WalkSpeed = m_originalWalkSpeed;
 				m_componentLocomotion.FlySpeed = m_originalFlySpeed;
 				m_componentLocomotion.SwimSpeed = m_originalSwimSpeed;
+				m_componentLocomotion.JumpSpeed = m_originalJumpSpeed;
+				m_componentLocomotion.LadderSpeed = m_originalLadderSpeed;
 				m_speedsStored = false;
 			}
 		}
@@ -115,7 +116,7 @@ namespace Game
 		private void NauseaEffect()
 		{
 			m_lastNauseaTime = m_subsystemTime.GameTime;
-			m_lastMoanTime = m_subsystemTime.GameTime; // Inicializamos el moan aquí también para que empiece a contar después del primer vómito
+			m_lastMoanTime = m_subsystemTime.GameTime;
 
 			if (m_componentCreature != null && m_componentCreature.ComponentCreatureSounds != null)
 			{
@@ -211,6 +212,12 @@ namespace Game
 				return;
 			}
 
+			if (!m_speedsStored && m_componentLocomotion != null)
+			{
+				StoreOriginalSpeeds();
+				ApplySpeedPenalty();
+			}
+
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 			{
 				m_infectionDuration = 0f;
@@ -220,12 +227,6 @@ namespace Game
 
 			m_infectionDuration = MathUtils.Max(m_infectionDuration - dt, 0f);
 
-			if (m_speedsStored && m_componentLocomotion != null)
-			{
-				ApplySpeedPenalty();
-			}
-
-			// Temporizador del primer vómito a los 3 segundos
 			if (m_firstVomitTimer > 0f)
 			{
 				m_firstVomitTimer -= dt;
@@ -241,16 +242,15 @@ namespace Game
 
 			if (m_componentHealth != null && m_componentHealth.Health > 0f)
 			{
-				// Lógica de vómito constante
 				if (m_subsystemTime.PeriodicGameTimeEvent(NauseaCheckInterval, -0.01f))
 				{
-					bool canNausea = false; // <-- CAMBIO AQUÍ: Inicia en false
+					bool canNausea = false;
 					if (m_lastNauseaTime != null)
 					{
 						double? timeSinceLastNausea = m_subsystemTime.GameTime - m_lastNauseaTime;
 						if (timeSinceLastNausea.HasValue && timeSinceLastNausea.Value > NauseaCooldown)
 						{
-							canNausea = true; // Solo true si ya pasó el primer vómito y el cooldown
+							canNausea = true;
 						}
 					}
 
@@ -260,16 +260,15 @@ namespace Game
 					}
 				}
 
-				// Gemido de dolor constante por el veneno
 				if (m_subsystemTime.PeriodicGameTimeEvent(MoanCheckInterval, 0f))
 				{
-					bool canMoan = false; // <-- CAMBIO AQUÍ: Inicia en false
+					bool canMoan = false;
 					if (m_lastMoanTime != null)
 					{
 						double? timeSinceLastMoan = m_subsystemTime.GameTime - m_lastMoanTime;
 						if (timeSinceLastMoan.HasValue && timeSinceLastMoan.Value > MoanCooldown)
 						{
-							canMoan = true; // Solo true si ya pasó el primer vómito y el cooldown
+							canMoan = true;
 						}
 					}
 
