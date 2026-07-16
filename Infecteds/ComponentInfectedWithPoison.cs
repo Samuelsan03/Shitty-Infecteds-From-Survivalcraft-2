@@ -85,21 +85,6 @@ namespace Game
 			}
 		}
 
-		private void ApplySpeedPenalty()
-		{
-			if (m_componentLocomotion == null || !m_speedsStored)
-				return;
-
-			float penalty = 1f - 0.4f * m_poisonIntensity;
-			penalty = MathUtils.Max(penalty, 0.4f);
-
-			m_componentLocomotion.WalkSpeed = m_originalWalkSpeed * penalty;
-			m_componentLocomotion.FlySpeed = m_originalFlySpeed * penalty;
-			m_componentLocomotion.SwimSpeed = m_originalSwimSpeed * penalty;
-			m_componentLocomotion.JumpSpeed = m_originalJumpSpeed * penalty;
-			m_componentLocomotion.LadderSpeed = m_originalLadderSpeed * penalty;
-		}
-
 		private void RestoreOriginalSpeeds()
 		{
 			if (m_componentLocomotion != null && m_speedsStored)
@@ -188,124 +173,126 @@ namespace Game
 			}
 		}
 
-		private void CleanupEffects()
-		{
-			m_pukeParticleSystem = null;
-			m_greenoutDuration = 0f;
-			m_greenoutFactor = 0f;
-			m_lastNauseaTime = null;
-			m_lastMoanTime = null;
-			m_poisonIntensity = 0f;
-			m_firstVomitQueued = false;
-			m_firstVomitTimer = -1f;
-			RestoreOriginalSpeeds();
-		}
-
 		public virtual void Update(float dt)
 		{
-			if (m_infectionDuration <= 0f)
-			{
-				if (m_speedsStored)
-				{
-					CleanupEffects();
-				}
-				return;
-			}
-
-			if (!m_speedsStored && m_componentLocomotion != null)
-			{
-				StoreOriginalSpeeds();
-				ApplySpeedPenalty();
-			}
-
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 			{
 				m_infectionDuration = 0f;
-				CleanupEffects();
-				return;
 			}
 
-			m_infectionDuration = MathUtils.Max(m_infectionDuration - dt, 0f);
-
-			if (m_firstVomitTimer > 0f)
+			if (m_infectionDuration > 0f)
 			{
-				m_firstVomitTimer -= dt;
-				if (m_firstVomitTimer <= 0f)
+				m_infectionDuration = MathUtils.Max(m_infectionDuration - dt, 0f);
+
+				if (m_firstVomitTimer > 0f)
 				{
-					m_firstVomitQueued = true;
-					if (m_componentHealth != null && m_componentHealth.Health > 0f)
+					m_firstVomitTimer -= dt;
+					if (m_firstVomitTimer <= 0f)
 					{
-						NauseaEffect();
+						m_firstVomitQueued = true;
+						if (m_componentHealth != null && m_componentHealth.Health > 0f)
+						{
+							NauseaEffect();
+						}
 					}
 				}
-			}
 
-			if (m_componentHealth != null && m_componentHealth.Health > 0f)
-			{
-				if (m_subsystemTime.PeriodicGameTimeEvent(NauseaCheckInterval, -0.01f))
+				if (m_componentHealth != null && m_componentHealth.Health > 0f)
 				{
-					bool canNausea = false;
-					if (m_lastNauseaTime != null)
+					if (m_subsystemTime.PeriodicGameTimeEvent(NauseaCheckInterval, -0.01f))
 					{
-						double? timeSinceLastNausea = m_subsystemTime.GameTime - m_lastNauseaTime;
-						if (timeSinceLastNausea.HasValue && timeSinceLastNausea.Value > NauseaCooldown)
+						bool canNausea = false;
+						if (m_lastNauseaTime != null)
 						{
-							canNausea = true;
+							double? timeSinceLastNausea = m_subsystemTime.GameTime - m_lastNauseaTime;
+							if (timeSinceLastNausea.HasValue && timeSinceLastNausea.Value > NauseaCooldown)
+							{
+								canNausea = true;
+							}
+						}
+
+						if (canNausea)
+						{
+							NauseaEffect();
 						}
 					}
 
-					if (canNausea)
+					if (m_subsystemTime.PeriodicGameTimeEvent(MoanCheckInterval, 0f))
 					{
-						NauseaEffect();
-					}
-				}
-
-				if (m_subsystemTime.PeriodicGameTimeEvent(MoanCheckInterval, 0f))
-				{
-					bool canMoan = false;
-					if (m_lastMoanTime != null)
-					{
-						double? timeSinceLastMoan = m_subsystemTime.GameTime - m_lastMoanTime;
-						if (timeSinceLastMoan.HasValue && timeSinceLastMoan.Value > MoanCooldown)
+						bool canMoan = false;
+						if (m_lastMoanTime != null)
 						{
-							canMoan = true;
+							double? timeSinceLastMoan = m_subsystemTime.GameTime - m_lastMoanTime;
+							if (timeSinceLastMoan.HasValue && timeSinceLastMoan.Value > MoanCooldown)
+							{
+								canMoan = true;
+							}
+						}
+
+						if (canMoan && m_componentCreature != null && m_componentCreature.ComponentCreatureSounds != null)
+						{
+							m_lastMoanTime = m_subsystemTime.GameTime;
+							m_componentCreature.ComponentCreatureSounds.PlayPainSound();
 						}
 					}
+				}
 
-					if (canMoan && m_componentCreature != null && m_componentCreature.ComponentCreatureSounds != null)
+				UpdatePukeParticles(dt);
+				UpdateGreenoutEffect(dt);
+
+				if (m_componentLocomotion != null
+					&& m_componentCreature != null
+					&& m_componentCreature.ComponentBody != null
+					&& m_subsystemTime.PeriodicGameTimeEvent(0.5f, 0.25f))
+				{
+					Vector3 velocity = m_componentCreature.ComponentBody.Velocity;
+					float horizontalSpeed = new Vector2(velocity.X, velocity.Z).Length();
+
+					if (horizontalSpeed > 0.1f)
 					{
-						m_lastMoanTime = m_subsystemTime.GameTime;
-						m_componentCreature.ComponentCreatureSounds.PlayPainSound();
+						float dampening = 1f - 0.05f * m_poisonIntensity;
+						dampening = MathUtils.Max(dampening, 0.9f);
+
+						m_componentCreature.ComponentBody.Velocity = new Vector3(
+							velocity.X * dampening,
+							velocity.Y,
+							velocity.Z * dampening);
 					}
 				}
 			}
-
-			UpdatePukeParticles(dt);
-			UpdateGreenoutEffect(dt);
-
-			if (m_componentLocomotion != null
-				&& m_componentCreature != null
-				&& m_componentCreature.ComponentBody != null
-				&& m_subsystemTime.PeriodicGameTimeEvent(0.5f, 0.25f))
+			else
 			{
-				Vector3 velocity = m_componentCreature.ComponentBody.Velocity;
-				float horizontalSpeed = new Vector2(velocity.X, velocity.Z).Length();
-
-				if (horizontalSpeed > 0.1f)
-				{
-					float dampening = 1f - 0.05f * m_poisonIntensity;
-					dampening = MathUtils.Max(dampening, 0.9f);
-
-					m_componentCreature.ComponentBody.Velocity = new Vector3(
-						velocity.X * dampening,
-						velocity.Y,
-						velocity.Z * dampening);
-				}
+				UpdateGreenoutEffect(dt);
 			}
 
-			if (m_infectionDuration <= 0f)
+			// LÓGICA DE VELOCIDAD ADAPTADA DE WONDERFULERA
+			// Se ejecuta SIEMPRE al final del Update para asegurar que nada lo sobreescriba
+			if (m_infectionDuration > 0f)
 			{
-				CleanupEffects();
+				if (!m_speedsStored)
+				{
+					StoreOriginalSpeeds();
+				}
+
+				float penalty = 1f - 0.4f * m_poisonIntensity;
+				penalty = MathUtils.Max(penalty, 0.4f);
+
+				m_componentLocomotion.WalkSpeed = m_originalWalkSpeed * penalty;
+				m_componentLocomotion.FlySpeed = m_originalFlySpeed * penalty;
+				m_componentLocomotion.SwimSpeed = m_originalSwimSpeed * penalty;
+				m_componentLocomotion.JumpSpeed = m_originalJumpSpeed * penalty;
+				m_componentLocomotion.LadderSpeed = m_originalLadderSpeed * penalty;
+			}
+			else if (m_speedsStored)
+			{
+				RestoreOriginalSpeeds();
+				m_greenoutDuration = 0f;
+				m_greenoutFactor = 0f;
+				m_lastNauseaTime = null;
+				m_lastMoanTime = null;
+				m_poisonIntensity = 0f;
+				m_firstVomitQueued = false;
+				m_firstVomitTimer = -1f;
 			}
 		}
 
