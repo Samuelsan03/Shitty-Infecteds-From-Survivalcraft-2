@@ -1,4 +1,17 @@
 <Recipes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="CraftingRecipes.xsd">
+<Recipe Result="FlameThrowerBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="copperblock" c="rod" d="planks" Description="[0]">
+  " a "
+  "bcb"
+  " d "
+</Recipe>
+<Recipe Result="FlameBulletBlock:0" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="ironingot" b="gunpowder" Description="[0]">
+  "a"
+  "b"
+</Recipe>
+<Recipe Result="FlameBulletBlock:1" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="toxin" b="flamebullet:0" Description="[1]">
+  "a"
+  "b"
+</Recipe>
     <Recipe Result="ImprovedMusketBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="rod" b="ironblock" c="musket" Description="[0]">
       " ba"
       "bcb"
