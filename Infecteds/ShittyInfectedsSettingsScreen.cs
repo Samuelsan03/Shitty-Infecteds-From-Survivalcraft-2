@@ -13,6 +13,7 @@ namespace Game
 		private ButtonWidget m_showCoordinatesButton;
 		private ButtonWidget m_showCreatureHealthBarsButton;
 		private ButtonWidget m_enableCreatureBleedingButton;
+		private ButtonWidget m_enableFreeCameraButton; // NUEVO BOTÓN
 
 		public ShittyInfectedsSettingsScreen()
 		{
@@ -48,6 +49,12 @@ namespace Game
 			m_enableCreatureBleedingButton = AddToggleButton(
 				"EnableCreatureBleeding",
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 6)
+			);
+
+			// NUEVO BOTÓN
+			m_enableFreeCameraButton = AddToggleButton(
+				"EnableFreeCamera",
+				LanguageControl.Get("ShittyInfectedsSettingsScreen", 7)
 			);
 		}
 
@@ -130,6 +137,16 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_enableCreatureBleedingButton.Text = ShittyInfectedsSettings.EnableCreatureBleeding
+				? LanguageControl.On
+				: LanguageControl.Off;
+
+			// NUEVA LÓGICA DEL BOTÓN
+			if (m_enableFreeCameraButton.IsClicked)
+			{
+				ShittyInfectedsSettings.EnableFreeCamera = !ShittyInfectedsSettings.EnableFreeCamera;
+				ShittyInfectedsSettingsManager.Save();
+			}
+			m_enableFreeCameraButton.Text = ShittyInfectedsSettings.EnableFreeCamera
 				? LanguageControl.On
 				: LanguageControl.Off;
 
