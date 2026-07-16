@@ -42,6 +42,12 @@ namespace Game
 					new XAttribute("value", ShittyInfectedsSettings.EnableCreatureBleeding.ToString().ToLower())
 				));
 
+				// NUEVO BLOQUE
+				root.Add(new XElement("EnableFreeCamera",
+					new XAttribute("type", "bool"),
+					new XAttribute("value", ShittyInfectedsSettings.EnableFreeCamera.ToString().ToLower())
+				));
+
 				using (Stream stream = Storage.OpenFile(SettingsFilePath, OpenFileMode.Create))
 				{
 					XmlUtils.SaveXmlToStream(root, stream, System.Text.Encoding.UTF8, true);
@@ -97,6 +103,13 @@ namespace Game
 					{
 						if (bool.TryParse(elem5.Attribute("value")?.Value, out bool val5))
 							ShittyInfectedsSettings.EnableCreatureBleeding = val5;
+					}
+
+					XElement elem6 = root.Element("EnableFreeCamera");
+					if (elem6 != null)
+					{
+						if (bool.TryParse(elem6.Attribute("value")?.Value, out bool val6))
+							ShittyInfectedsSettings.EnableFreeCamera = val6;
 					}
 				}
 			}
