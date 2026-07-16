@@ -31,6 +31,33 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("OnProjectileRaycastBody", this);
 		ModsManager.RegisterHook("AfterWidgetUpdate", this);
 		ModsManager.RegisterHook("GuiUpdate", this);
+		ModsManager.RegisterHook("ManageCameras", this);
+	}
+
+	public override IEnumerable<KeyValuePair<string, int>> GetCameraList()
+	{
+		yield return new KeyValuePair<string, int>("Game.FreeCamera", 4);
+	}
+
+	public override void ManageCameras(GameWidget gameWidget)
+	{
+		gameWidget.AddCamera(new FreeCamera(gameWidget), (gw) =>
+		{
+			// 1. Verificamos si está activado en la configuración (ON/OFF)
+			if (!ShittyInfectedsSettings.EnableFreeCamera) return false;
+
+			// 2. Verificamos si NO es modo creativo
+			ComponentPlayer player = gw.PlayerData?.ComponentPlayer;
+			if (player != null)
+			{
+				SubsystemGameInfo gameInfo = player.Project.FindSubsystem<SubsystemGameInfo>();
+				if (gameInfo != null)
+				{
+					return gameInfo.WorldSettings.GameMode != GameMode.Creative;
+				}
+			}
+			return false;
+		});
 	}
 
 	public override void GuiUpdate(ComponentGui componentGui)
@@ -42,7 +69,6 @@ public class ShittyInfectedsModLoader : ModLoader
 		if (guiWidget == null)
 			return;
 
-		// Buscar o crear el label de coordenadas
 		LabelWidget coordLabel = guiWidget.Children.Find<LabelWidget>("ShittyCoordsLabel", false);
 		if (coordLabel == null)
 		{
@@ -60,21 +86,17 @@ public class ShittyInfectedsModLoader : ModLoader
 			guiWidget.Children.Add(coordLabel);
 		}
 
-		// 1. Verificar si está desactivado en la configuración
 		if (!ShittyInfectedsSettings.ShowCoordinates)
 		{
 			coordLabel.IsVisible = false;
 			return;
 		}
 
-		// 2. Verificar si el jugador está vivo y jugando normalmente
 		bool isAlive = componentGui.m_componentPlayer.ComponentHealth.Health > 0f;
 		bool isReady = componentGui.m_componentPlayer.PlayerData.IsReadyForPlaying;
 
-		// Mostrar solo si está vivo y listo para jugar
 		coordLabel.IsVisible = isAlive && isReady;
 
-		// 3. Actualizar coordenadas con LanguageControl
 		if (coordLabel.IsVisible)
 		{
 			Vector3 pos = componentGui.m_componentPlayer.ComponentBody.Position;
@@ -121,7 +143,6 @@ public class ShittyInfectedsModLoader : ModLoader
 	{
 		if (handled) return;
 
-		// --- NUEVA LÓGICA: INTERACCIÓN CON INVENTARIO DE CRIATURA ---
 		if (player.ComponentMiner != null && player.ComponentCreatureModel != null)
 		{
 			Vector3 eyePosition = player.ComponentCreatureModel.EyePosition;
@@ -138,16 +159,9 @@ public class ShittyInfectedsModLoader : ModLoader
 
 					if (creatureInv != null)
 					{
-						// 1. Ejecutamos la animación de "Poke"
 						player.ComponentMiner.Poke(false);
-
-						// 2. Asignamos el widget a la propiedad ModalPanelWidget (EXACTAMENTE igual que hace el cofre)
 						player.ComponentGui.ModalPanelWidget = new CreatureInventoryWidget(player.ComponentMiner.Inventory, creatureInv);
-
-						// 3. Sonido de interfaz
 						AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-
-						// 4. Marcamos como manejado
 						handled = true;
 						return;
 					}
@@ -155,7 +169,6 @@ public class ShittyInfectedsModLoader : ModLoader
 			}
 		}
 
-		// --- LÓGICA EXISTENTE: CONTROL REMOTO ---
 		int activeBlockValue = player.ComponentMiner.ActiveBlockValue;
 		int activeBlockIndex = Terrain.ExtractContents(activeBlockValue);
 
@@ -209,13 +222,11 @@ public class ShittyInfectedsModLoader : ModLoader
 
 		ComponentCreature enemy = null;
 
-		// CASO 1: El jugador ataca a una criatura
 		if (attacker is ComponentPlayer)
 		{
 			if (!ShittyInfectedsSettings.EnableCreatureAttacks) return;
 			enemy = victim;
 		}
-		// CASO 2: Una criatura ataca al jugador
 		else if (victim is ComponentPlayer)
 		{
 			if (!ShittyInfectedsSettings.AttackOnHitCreative) return;
@@ -245,7 +256,6 @@ public class ShittyInfectedsModLoader : ModLoader
 				ComponentNewChaseBehavior chaseBehavior = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
 				if (chaseBehavior != null)
 				{
-					// Llamada limpia al nuevo método en NewChase
 					chaseBehavior.CallRangeHelp(enemy);
 				}
 			}
@@ -256,7 +266,6 @@ public class ShittyInfectedsModLoader : ModLoader
 	{
 		skip = false;
 
-		// Verificamos la configuración: Si está desactivado, no hacemos nada y dejamos la probabilidad normal
 		if (!ShittyInfectedsSettings.EnableCreatureAttacks) return;
 
 		ComponentPlayer player = miner.ComponentPlayer;
@@ -317,7 +326,6 @@ public class ShittyInfectedsModLoader : ModLoader
 				ScreensManager.SwitchScreen("ShittyInfectedsSettingsScreen");
 			}
 
-			// Manejar el clic del botón de salir
 			if (button.Name == "ShittyExitButton" && button.IsClicked)
 			{
 				Window.Close();
@@ -354,18 +362,14 @@ public class ShittyInfectedsModLoader : ModLoader
 			topArea.Children.Add(titleLabel);
 		}
 
-		// Buscar el panel donde están los botones de Jugar, Contenido, etc.
 		StackPanelWidget centerButtons = mainMenuScreen.Children.Find<StackPanelWidget>("CenterButtons", true);
 		if (centerButtons != null)
 		{
-			// Buscar la última fila de botones (donde están los botones invisibles o solitarios)
-			// Generalmente es el tercer StackPanelWidget hijo
 			if (centerButtons.Children.Count >= 3)
 			{
 				StackPanelWidget lastRow = centerButtons.Children[centerButtons.Children.Count - 1] as StackPanelWidget;
 				if (lastRow != null)
 				{
-					// Crear el botón de Salir igual que los demás (310x60)
 					BevelledButtonWidget exitButton = new BevelledButtonWidget
 					{
 						Name = "ShittyExitButton",
@@ -373,7 +377,8 @@ public class ShittyInfectedsModLoader : ModLoader
 						HorizontalAlignment = WidgetAlignment.Center,
 						VerticalAlignment = WidgetAlignment.Center,
 						Text = LanguageControl.Get("ShittyInfectedsMod", "exitGame"),
-						Color = Color.White					};
+						Color = Color.White
+					};
 					lastRow.Children.Add(exitButton);
 				}
 			}
@@ -427,15 +432,11 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override void SaveSettings(XElement xElement)
 	{
-		// El juego llama a esto cuando guarda la configuración. 
-		// Llamamos a nuestro manager para actualizar el XML propio.
 		ShittyInfectedsSettingsManager.Save();
 	}
 
 	public override void LoadSettings(XElement xElement)
 	{
-		// El juego llama a esto al cargar los mods. 
-		// Llamamos a nuestro manager para leer nuestro XML propio.
 		ShittyInfectedsSettingsManager.Load();
 	}
 }
