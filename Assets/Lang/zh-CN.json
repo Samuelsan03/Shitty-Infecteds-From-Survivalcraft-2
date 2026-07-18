@@ -1,16 +1,214 @@
 {
+  "Database": {
+    "DisplayName": {
+      "Aimep3": "Aimep3",
+      "InfectedNormal1": "普通感染者 I",
+      "InfectedNormal2": "普通感染者 II",
+      "InfectedNormalTamed1": "已驯服的普通感染者 I",
+      "InfectedNormalTamed2": "已驯服的普通感染者 II",
+      "InfectedFast1": "快速感染者 I",
+      "InfectedFastTamed1": "驯服快速感染者 I",
+      "InfectedFast2": "快速感染者 II",
+      "InfectedFastTamed2": "驯服快速感染者 II"
+  },
+  "Description": {
+    "InfectedNormal1": "自第1波开始出现。这种感染者是瘟疫中最常见的威胁之一，但绝不能低估它。它会不断游荡寻找猎物，能够侦测、追逐并攻击幸存者以及其他生物。它可以长途跋涉追击目标，与附近的感染者协同行动，并在同伴进入战斗时响应求援。它还能拾取沿途发现的武器、工具和衣物，并利用它们提高自己的生存能力。如果障碍物挡住去路，它会尝试将其摧毁并继续前进。它那双发着绿色光芒的眼睛即使在完全黑暗中也清晰可见。在绿色之夜期间，它会变得更加凶残：彻底放弃撤退的念头，将全部注意力集中在幸存者身上，并以毫不松懈的决心持续追杀目标。即使遭到攻击，它也会记住攻击者，并在很长一段时间内持续追击。可以使用项圈将其驯服，使其成为忠诚的守护者，与主人并肩作战。死亡后，它的堕落灵魂有极小概率会以新的形态继续留存在这个世界。",
+  "InfectedFast1": "自第2波开始出现。这种高速变种以惊人的机动性和攻击性著称。它能够在极短时间内跨越很远的距离，轻松跳过障碍物，并在追逐猎物时迅速改变方向。与其他瘟疫感染生物一样，它能够侦测、追逐并攻击幸存者及其他生物，同时还能与附近的感染者协同作战，并响应它们的求援。如果障碍物挡住去路，它会尝试将其摧毁，以继续追击。它那双散发着绿色光芒的眼睛，往往是试图逃跑者最后看到的景象。在绿色之夜期间，它会成为极其危险的威胁，彻底放弃一切谨慎，将全部精力投入猎杀幸存者。凭借更快的速度，它能够迅速拉近距离，并长时间持续追击目标。虽然它拥有极强的身体韧性，但比大多数感染者更容易受到毒素的影响。可以使用项圈将其驯服，使其成为行动迅捷的守护者，与主人并肩作战。死亡后，它的堕落灵魂有极小概率会以新的形态继续留存在这个世界。"
+  } 
+},
+  "Blocks": {
+    "ImprovedMusketBlock:0": {
+  "DisplayName": "改良火枪",
+  "Description": "一种重新设计的火枪，省去了分别装填火药和填塞物的繁琐步骤。它允许你直接向枪膛装入最多2颗弹丸。与原版火枪不同，即使浸入水中也不会哑火，其坚固的机械结构还能防止每次射击时损失耐久度。",
+  "CRDescription:0": "使用铁块和铁杆强化一把标准火枪。"
+},
+"AntiTankPelletBlock:0": {
+  "DisplayName": "反Tank弹丸",
+  "Description": "改良火枪的专用弹药。它能够穿过水面而不损失速度，命中目标时会瞬间碎裂，不会发生跳弹。这是一种神秘的弹丸，之后会派上大用场……",
+  "CRDescription:0": "使用铁块、羽毛和硫磺制作神秘弹丸。"
+},
+    "RepeatCrossbowBlock:0": {
+    "DisplayName": "连发弩",
+    "Description": "一种配有弹匣的连发弩，可容纳最多8支弩箭。拉开弓弦、装填弩箭，并连续快速射击。",
+    "CRDescription:0": "使用木杆、铁锭、绳子和标准弩制作"
+  },
+  "RepeatBoltBlock:0": {
+    "DisplayName": "连发铜弩箭",
+    "Description": "连发弩使用的基础铜制弩箭。威力较低，但制作成本便宜。",
+    "CRDescription:0": "使用铜锭、木杆和羽毛制作"
+  },
+  "RepeatBoltBlock:1": {
+    "DisplayName": "连发铁弩箭",
+    "Description": "坚固的铁制弩箭，具有良好的护甲穿透能力和伤害。",
+    "CRDescription:1": "使用铁锭、木杆和羽毛制作"
+  },
+  "RepeatBoltBlock:2": {
+    "DisplayName": "连发钻石弩箭",
+    "Description": "镶有钻石箭头的弩箭，能够轻松穿透最坚固的护甲。其流线型设计使其能在水中穿行而不减速。",
+    "CRDescription:2": "使用钻石强化铁弩箭"
+},
+  "RepeatBoltBlock:3": {
+    "DisplayName": "连发爆炸弩箭",
+    "Description": "装填火药的弩箭，命中后会爆炸，对附近的生物和地形造成伤害。",
+    "CRDescription:3": "将火药与铜弩箭组合"
+  },
+  "RepeatBoltBlock:4": {
+    "DisplayName": "连发火焰弩箭",
+    "Description": "能够点燃目标并留下火焰轨迹的弩箭。对易燃敌人特别有效。",
+    "CRDescription:4": "将硫磺块与铜弩箭组合"
+  },
+  "RepeatBoltBlock:5": {
+    "DisplayName": "连发毒弩箭",
+    "Description": "涂覆了轻度毒素的弩箭，会随着时间持续使目标中毒。",
+    "CRDescription:5": "将毒素涂覆在铜弩箭上"
+  },
+  "RepeatBoltBlock:6": {
+    "DisplayName": "连发剧毒弩箭",
+    "Description": "涂覆了高浓度毒素的弩箭，能够迅速造成致命中毒。",
+    "CRDescription:6": "使用额外剂量的毒素强化毒弩箭"
+  },
+    "CopperSharpHammerBlock:0": {
+      "DisplayName": "铜制尖锤",
+      "Description": "尖锤是一种沉重的钝击武器，在近战中能够造成毁灭性的打击。使用时，锤子的耐久度会逐渐降低，最终损坏。由更优质材料打造的尖锤拥有更高的耐久度，并能造成更大的伤害。",
+      "CRDescription:0": "制作一把铜制重锤"
+    },
+    "IronSharpHammerBlock:0": {
+      "DisplayName": "铁制尖锤",
+      "Description": "尖锤是一种沉重的钝击武器，在近战中能够造成毁灭性的打击。使用时，锤子的耐久度会逐渐降低，最终损坏。由更优质材料打造的尖锤拥有更高的耐久度，并能造成更大的伤害。",
+      "CRDescription:0": "制作一把铁制重锤"
+    },
+    "DiamondSharpHammerBlock:0": {
+      "DisplayName": "钻石尖锤",
+      "Description": "尖锤是一种沉重的钝击武器，在近战中能够造成毁灭性的打击。使用时，锤子的耐久度会逐渐降低，最终损坏。由更优质材料打造的尖锤拥有更高的耐久度，并能造成更大的伤害。",
+      "CRDescription:0": "加入钻石，锻造一把威力惊人的尖锤"
+    },
+    "LavaSharpHammerBlock:0": {
+      "DisplayName": "熔岩尖锤",
+      "Description": "尖锤是一种沉重的钝击武器，在近战中能够造成毁灭性的打击。这把尖锤在炽热的岩浆中锻造而成，拥有无与伦比的耐久度和灾难性的破坏力。",
+      "CRDescription:0": "将钻石尖锤与岩浆熔炼，释放它的全部潜能"
+    },
+    "WoodenLongspearBlock:0": {
+  "DisplayName": "木制长矛",
+  "Description": "一种更长的长矛，能够让敌人保持在更安全的距离之外。可投掷，也可用于近战，但随着使用次数增加，最终会失去锋利度。投出的长矛会插入柔软的材料中。",
+  "CRDescription:0": "制作一把木制长柄武器"
+},
+"StoneLongspearBlock:0": {
+  "DisplayName": "石制长矛",
+  "Description": "一种更长的长矛，能够让敌人保持在更安全的距离之外。可投掷，也可用于近战，但随着使用次数增加，最终会失去锋利度。投出的长矛会插入柔软的材料中。",
+  "CRDescription:0": "用圆石制作一把石制长柄武器",
+  "CRDescription:1": "用石块制作一把石制长柄武器"
+},
+"CopperLongspearBlock:0": {
+  "DisplayName": "铜制长矛",
+  "Description": "一把配有铜制矛尖的坚固长矛，比木制长矛拥有更高的耐久性和更远的攻击距离。无论投掷还是近战都十分有效，但最终仍会变钝。",
+  "CRDescription:0": "制作一把铜制长柄武器"
+},
+"IronLongspearBlock:0": {
+  "DisplayName": "铁制长矛",
+  "Description": "一把沉重而可靠的长矛，配有铁制矛头。优质材料使其能够造成更高的伤害，并在近战或投掷时拥有更长的使用寿命。",
+  "CRDescription:0": "制作一把铁制长柄武器"
+},
+"DiamondLongspearBlock:0": {
+  "DisplayName": "钻石尖长矛",
+  "Description": "一把装有钻石矛尖的致命长矛，拥有无与伦比的耐久性和穿透力，无论近战还是远距离投掷都极具毁灭性。",
+  "CRDescription:0": "为长柄武器的刃口镶嵌钻石"
+},
+"LavaLongspearBlock:0": {
+  "DisplayName": "熔岩长矛",
+  "Description": "一把以炽热熔岩锻造而成的可怕长矛。它拥有极远的攻击距离和毁灭性的燃烧力量，无论投掷还是近战挥舞，都能轻易穿透敌人的防御。",
+  "CRDescription:0": "将岩浆的炽热之力注入长柄武器"
+},
+"FlameThrowerBlock:0": {
+  "DisplayName": "火焰喷射器",
+  "Description": "一种火焰喷射器，可根据装填的弹药发射燃烧或剧毒弹。使用特殊弹药进行装填。",
+  "CRDescription:0": "使用铁锭、铜锭、金属杆和木板制作火焰喷射器。"
+},
+"FlameBulletBlock:0": {
+  "DisplayName": "燃烧弹",
+  "Description": "火焰喷射器使用的燃烧弹药。命中后会点燃敌人及周围环境。",
+  "CRDescription:0": "使用铁锭和火药制作燃烧弹。"
+},
+"FlameBulletBlock:1": {
+  "DisplayName": "毒弹",
+  "Description": "火焰喷射器使用的剧毒弹药。命中后使敌人中毒，并持续造成伤害。",
+  "CRDescription:1": "使用毒素和燃烧弹制作毒弹。"
+}
+  },
+  "ContentWidgets": {
+    "CreatureInventoryWidget": {
+      "1": "生物背包",
+      "2": "背包"
+    },
+    "RepeatCrossbowWidget": {
+    "0": "拉开弓弦",
+    "1": "{0}/8 支弩箭",
+    "2": "装填弩箭",
+    "3": "连发弩",
+    "4": "物品栏"
+  },
+  "ImprovedMusketWidget": {
+  "0": "改良火枪",
+  "1": "物品栏",
+  "2": "没有弹药",
+  "3": "弹药：{0}/2"
+},
+"FlameThrowerWidget": {
+  "0": "火焰喷射器",
+  "1": "物品栏",
+  "2": "插入子弹以装填",
+  "3": "{ammo}/15 {type}",
+  "4": "火焰",
+  "5": "毒液"
+},
+"BestiaryInfectedScreen": {
+  "1": "感染体图鉴"
+}
+  },
+  "BestiaryInfectedDescriptionScreen": {
+  "1": "感染体详情",
+  "2": "掉落物：",
+  "resilience": "韧性",
+  "attack": "攻击",
+  "herding": "群居性",
+  "mount": "坐骑",
+  "speed": "速度",
+  "jump": "跳跃",
+  "weight": "重量",
+  "egg": "蛋",
+  "speed_unit": "公里/小时",
+  "length_unit": "米",
+  "weight_unit": "千克",
+  "range": "{0}-{1}",
+  "probability": "（{0}%）"
+},
+  "CameraManage": {
+  "Game.FreeCamera": "自由视角"
+},
+  "SubsystemFlameThrowerBlockBehavior": {
+  "0": "火焰喷射器已空"
+},
+  "SubsystemImprovedMusketBlockBehavior": {
+  "0": "未加载！"
+},
+  "SubsystemRepeatCrossbowBlockBehavior": {
+    "0": "弓弦未完全拉开！",
+    "1": "未装填弩箭！"
+  },
   "SubsystemCreatureHealthBars": {
     "1": "{0} 生命值：{1}"
   },
   "ShittyInfectedsMod": {
-    "1": "坐标：X:{0:F0} Y:{1:F0} Z:{2:F0}"
+    "1": "坐标：X:{0:F0} Y:{1:F0} Z:{2:F0}",
+    "exitGame": "退出"
 },
   "ShittyInfectedsSettingsScreen": {
     "1": "Shitty Infecteds 设置",
     "2": "当你攻击一个生物时，你的群体盟友会攻击它",
     "3": "当一个生物在创造模式下攻击你时，你的盟友会攻击它",
     "4": "在屏幕上显示玩家坐标",
-    "5": "显示生物生命值条"
+    "5": "显示生物生命值条",
+    "6": "启用生物流血",
+    "7": "在非创造模式下启用自由视角"
   },
   "GreenNightActivationDialog": {
     "1": "绿色之夜管理",
