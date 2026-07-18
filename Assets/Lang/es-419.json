@@ -1,16 +1,214 @@
 {
+  "Database": {
+    "DisplayName": {
+      "Aimep3": "Aimep3",
+      "InfectedNormal1": "Infectado Normal I",
+      "InfectedNormal2": "Infectado Normal II",
+      "InfectedNormalTamed1": "Infectado Normal Domesticado I",
+      "InfectedNormalTamed2": "Infectado Normal Domesticado II",
+      "InfectedFast1": "Infectado Rápido I",
+      "InfectedFastTamed1": "Infectado Rápido Domesticado I",
+      "InfectedFast2": "Infectado Rápido II",
+      "InfectedFastTamed2": "Infectado Rápido Domesticado II"
+    },
+  "Description": {
+    "InfectedNormal1": "Aparece a partir de la Oleada 1. Este infectado es una de las amenazas más comunes de la plaga, pero nunca debe subestimarse. Deambula constantemente en busca de presas y es capaz de detectar, perseguir y atacar tanto a los supervivientes como a otras criaturas. Puede recorrer grandes distancias para alcanzar a su objetivo, cooperar con los infectados cercanos y responder a sus llamadas de ayuda cuando uno de ellos entra en combate. Puede recoger armas, herramientas y ropa que encuentre a su paso, utilizándolas para mejorar sus posibilidades de supervivencia. Si un obstáculo bloquea su camino, intentará destruirlo y continuar avanzando. Sus característicos ojos verdes brillantes permanecen visibles incluso en la oscuridad absoluta. Durante la Noche Verde, su comportamiento se vuelve mucho más agresivo: abandona cualquier intención de retirarse, se concentra por completo en los supervivientes y los persigue con una determinación implacable. Incluso después de ser atacado, puede recordar a su agresor y continuar la persecución durante mucho tiempo. Puede ser domesticado usando un Collar, convirtiéndose en un guardián leal que luchará a tu lado. Al morir, existe una pequeña probabilidad de que su espíritu corrupto permanezca en este mundo bajo una nueva forma.",
+  "InfectedFast1": "Aparece a partir de la Oleada 2. Esta variante rápida destaca por su extraordinaria movilidad y agresividad. Puede recorrer grandes distancias en muy poco tiempo, saltar obstáculos con facilidad y cambiar rápidamente de dirección mientras persigue a su presa. Al igual que otras criaturas infectadas por la plaga, puede detectar, perseguir y atacar tanto a los supervivientes como a otras criaturas, además de coordinarse con los infectados cercanos y responder a sus llamadas de ayuda. Si encuentra barreras en su camino, intentará destruirlas para continuar la persecución. Sus brillantes ojos verdes suelen ser lo último que ven quienes intentan escapar. Durante la Noche Verde, se convierte en una amenaza especialmente peligrosa, abandonando toda cautela para centrarse exclusivamente en la caza de supervivientes. Su velocidad superior le permite acortar distancias rápidamente y mantener persecuciones durante largos periodos. Aunque posee una resistencia física notable, es más vulnerable al veneno que la mayoría de los infectados. Puede ser domesticado usando un Collar, convirtiéndose en un guardián veloz capaz de luchar junto a su dueño. Al morir, existe una pequeña probabilidad de que su espíritu corrupto permanezca en este mundo bajo una nueva forma."
+  }
+},
+  "Blocks": {
+  "ImprovedMusketBlock:0": {
+  "DisplayName": "Mosquete Mejorado",
+  "Description": "Un mosquete rediseñado que elimina el engorroso proceso de cargar pólvora y tacos por separado. Te permite insertar directamente hasta 2 perdigones en la recámara. A diferencia del mosquete original, no fallará al disparar si te sumerges en el agua, y su resistente mecanismo evita que pierda durabilidad con cada disparo.",
+  "CRDescription:0": "Mejora un mosquete estándar reforzándolo con bloques y varillas de hierro."
+},
+"AntiTankPelletBlock:0": {
+  "DisplayName": "Perdigón Anti-Tank",
+  "Description": "Munición especial para el Mosquete Mejorado. Atraviesa el agua sin perder velocidad y se hace añicos al impactar sin producir rebotes. Es un perdigón sorpresa que nos ayudará más adelante...",
+  "CRDescription:0": "Fabrica misteriosos perdigones usando bloques de hierro, plumas y azufre."
+},
+    "RepeatCrossbowBlock:0": {
+    "DisplayName": "Ballesta de Repetición",
+    "Description": "Una ballesta de repetición con un cargador que puede contener hasta 8 virotes. Tensa la cuerda, carga los virotes y dispara en rápida sucesión.",
+    "CRDescription:0": "Se fabrica con varillas, lingotes de hierro, cuerda y una ballesta estándar"
+  },
+  "RepeatBoltBlock:0": {
+    "DisplayName": "Virote de Cobre para Repetición",
+    "Description": "Un virote básico de cobre para la ballesta de repetición. Tiene poca potencia, pero es barato de fabricar.",
+    "CRDescription:0": "Se fabrica con un lingote de cobre, una varilla y una pluma"
+  },
+  "RepeatBoltBlock:1": {
+    "DisplayName": "Virote de Hierro para Repetición",
+    "Description": "Un resistente virote de hierro con buena penetración de armadura y daño.",
+    "CRDescription:1": "Se fabrica con un lingote de hierro, una varilla y una pluma"
+  },
+  "RepeatBoltBlock:2": {
+    "DisplayName": "Virote de Diamante para Repetición",
+    "Description": "Un virote con punta de diamante que atraviesa con facilidad incluso las armaduras más resistentes. Su diseño aerodinámico le permite desplazarse por el agua sin perder velocidad.",
+    "CRDescription:2": "Refuerza un virote de hierro con un diamante"
+},
+  "RepeatBoltBlock:3": {
+    "DisplayName": "Virote Explosivo para Repetición",
+    "Description": "Un virote cargado con pólvora que detona al impactar, dañando a las criaturas y al terreno cercanos.",
+    "CRDescription:3": "Combina pólvora con un virote de cobre"
+  },
+  "RepeatBoltBlock:4": {
+    "DisplayName": "Virote Ígneo para Repetición",
+    "Description": "Un virote que incendia a los objetivos y deja un rastro de fuego. Muy eficaz contra enemigos inflamables.",
+    "CRDescription:4": "Combina un trozo de azufre con un virote de cobre"
+  },
+  "RepeatBoltBlock:5": {
+    "DisplayName": "Virote Envenenado para Repetición",
+    "Description": "Un virote recubierto con una toxina suave que envenena al objetivo con el tiempo.",
+    "CRDescription:5": "Recubre un virote de cobre con toxina"
+  },
+  "RepeatBoltBlock:6": {
+    "DisplayName": "Virote Altamente Venenoso para Repetición",
+    "Description": "Un virote impregnado con una toxina altamente concentrada, capaz de provocar un envenenamiento mortal rápidamente.",
+    "CRDescription:6": "Refuerza un virote envenenado con una dosis adicional de toxina"
+  },
+    "CopperSharpHammerBlock:0": {
+      "DisplayName": "Martillo Afilado de Cobre",
+      "Description": "Un martillo afilado es un arma contundente y pesada extremadamente eficaz para realizar devastadores ataques cuerpo a cuerpo. Al usarlo, el martillo perderá durabilidad gradualmente hasta romperse. Los martillos fabricados con mejores materiales duran más y causan un daño significativamente mayor.",
+      "CRDescription:0": "Fabrica un martillo pesado de cobre"
+    },
+    "IronSharpHammerBlock:0": {
+      "DisplayName": "Martillo Afilado de Hierro",
+      "Description": "Un martillo afilado es un arma contundente y pesada extremadamente eficaz para realizar devastadores ataques cuerpo a cuerpo. Al usarlo, el martillo perderá durabilidad gradualmente hasta romperse. Los martillos fabricados con mejores materiales duran más y causan un daño significativamente mayor.",
+      "CRDescription:0": "Fabrica un martillo pesado de hierro"
+    },
+    "DiamondSharpHammerBlock:0": {
+      "DisplayName": "Martillo Afilado de Diamante",
+      "Description": "Un martillo afilado es un arma contundente y pesada extremadamente eficaz para realizar devastadores ataques cuerpo a cuerpo. Al usarlo, el martillo perderá durabilidad gradualmente hasta romperse. Los martillos fabricados con mejores materiales duran más y causan un daño significativamente mayor.",
+      "CRDescription:0": "Añade diamantes para forjar un martillo increíblemente poderoso"
+    },
+    "LavaSharpHammerBlock:0": {
+      "DisplayName": "Martillo Afilado de Lava",
+      "Description": "Un martillo afilado es un arma contundente y pesada extremadamente eficaz para realizar devastadores ataques cuerpo a cuerpo. Forjado en el intenso calor del magma, este martillo presume de una durabilidad inigualable y un poder destructivo catastrófico.",
+      "CRDescription:0": "Funde un martillo de diamante con magma para liberar todo su potencial"
+    },
+    "WoodenLongspearBlock:0": {
+  "DisplayName": "Lanza larga de madera",
+  "Description": "Una variante más larga de la lanza, diseñada para mantener a los enemigos a una distancia más segura. Puede lanzarse o usarse en combate cuerpo a cuerpo, pero con el tiempo perderá su filo. Las lanzas largas arrojadas se clavan en materiales blandos.",
+  "CRDescription:0": "Haz un arma larga de madera"
+},
+"StoneLongspearBlock:0": {
+  "DisplayName": "Lanza larga de piedra",
+  "Description": "Una variante más larga de la lanza, diseñada para mantener a los enemigos a una distancia más segura. Puede lanzarse o usarse en combate cuerpo a cuerpo, pero con el tiempo perderá su filo. Las lanzas largas arrojadas se clavan en materiales blandos.",
+  "CRDescription:0": "Haz un arma larga de piedra con adoquines",
+  "CRDescription:1": "Haz un arma larga de piedra con trozos de roca"
+},
+"CopperLongspearBlock:0": {
+  "DisplayName": "Lanza larga de cobre",
+  "Description": "Una resistente lanza larga con una punta de cobre que ofrece mayor durabilidad y alcance que las variantes de madera. Es eficaz tanto al lanzarla como en combate cuerpo a cuerpo antes de que termine perdiendo el filo.",
+  "CRDescription:0": "Haz un arma larga de cobre"
+},
+"IronLongspearBlock:0": {
+  "DisplayName": "Lanza larga de hierro",
+  "Description": "Una lanza larga pesada y fiable con una punta de hierro. Su material superior le permite infligir un daño considerable y soportar un mayor uso tanto en combate cuerpo a cuerpo como al lanzarla.",
+  "CRDescription:0": "Haz un arma larga de hierro"
+},
+"DiamondLongspearBlock:0": {
+  "DisplayName": "Lanza larga con punta de diamante",
+  "Description": "Una lanza larga excepcionalmente letal con una punta de diamante. Ofrece una durabilidad y un poder de penetración incomparables, lo que la hace devastadora tanto en combate cuerpo a cuerpo como al lanzarla desde lejos.",
+  "CRDescription:0": "Añade diamantes al filo del arma larga"
+},
+"LavaLongspearBlock:0": {
+  "DisplayName": "Lanza larga de lava",
+  "Description": "Una aterradora lanza larga forjada con magma fundido. Posee un alcance extraordinario y un devastador poder ígneo, atravesando fácilmente las defensas tanto al lanzarla como al blandirla en combate cercano.",
+  "CRDescription:0": "Imbuye el arma larga con el calor del magma"
+},
+"FlameThrowerBlock:0": {
+  "DisplayName": "Lanzallamas",
+  "Description": "Un lanzallamas que dispara proyectiles incendiarios o venenosos según la munición cargada. Recarga con balas especiales.",
+  "CRDescription:0": "Fabricar un lanzallamas con lingotes de hierro, cobre, varillas y tablones."
+},
+"FlameBulletBlock:0": {
+  "DisplayName": "Bala de fuego",
+  "Description": "Munición incendiaria para lanzallamas. Prende fuego a los enemigos y al entorno al impactar.",
+  "CRDescription:0": "Fabricar balas de fuego con lingotes de hierro y pólvora."
+},
+"FlameBulletBlock:1": {
+  "DisplayName": "Bala venenosa",
+  "Description": "Munición tóxica para lanzallamas. Envenena a los enemigos al impactar, causando daño continuo.",
+  "CRDescription:1": "Fabricar balas venenosas con toxina y balas de fuego."
+}
+  },
+  "ContentWidgets": {
+    "CreatureInventoryWidget": {
+      "1": "Inventario de Criatura",
+      "2": "Inventario"
+    },
+    "RepeatCrossbowWidget": {
+    "0": "Tensa la cuerda",
+    "1": "{0}/8 virotes",
+    "2": "Inserta los virotes",
+    "3": "Ballesta de repetición",
+    "4": "Inventario"
+  },
+  "ImprovedMusketWidget": {
+  "0": "Mosquete Mejorado",
+  "1": "Inventario",
+  "2": "Sin munición",
+  "3": "Munición: {0}/2"
+},
+"FlameThrowerWidget": {
+  "0": "Lanzallamas",
+  "1": "Inventario",
+  "2": "Inserta un cartucho para cargar",
+  "3": "{ammo}/15 {type}",
+  "4": "Fuego",
+  "5": "Veneno"
+},
+"BestiaryInfectedScreen": {
+  "1": "Bestiario de infectados"
+}
+  },
+  "BestiaryInfectedDescriptionScreen": {
+  "1": "Detalles del infectado",
+  "2": "Objetos obtenidos:",
+  "resilience": "Resistencia",
+  "attack": "Ataque",
+  "herding": "Instinto de manada",
+  "mount": "Montura",
+  "speed": "Velocidad",
+  "jump": "Salto",
+  "weight": "Peso",
+  "egg": "Huevo",
+  "speed_unit": "km/h",
+  "length_unit": "m",
+  "weight_unit": "kg",
+  "range": "{0}-{1}",
+  "probability": " ({0}%)"
+},
+  "CameraManage": {
+  "Game.FreeCamera": "Cámara libre"
+},
+  "SubsystemFlameThrowerBlockBehavior": {
+  "0": "El lanzallamas está vacío"
+},
+  "SubsystemImprovedMusketBlockBehavior": {
+  "0": "¡No cargado!"
+},
+  "SubsystemRepeatCrossbowBlockBehavior": {
+    "0": "¡No está completamente tensada!",
+    "1": "¡No hay virotes cargados!"
+  },
   "SubsystemCreatureHealthBars": {
     "1": "{0} PV: {1}"
   },
   "ShittyInfectedsMod": {
-    "1": "Coordenadas: X:{0:F0} Y:{1:F0} Z:{2:F0}"
+    "1": "Coordenadas: X:{0:F0} Y:{1:F0} Z:{2:F0}",
+    "exitGame": "Salir"
 },
   "ShittyInfectedsSettingsScreen": {
     "1": "Configuración de Shitty Infecteds",
     "2": "Al golpear a una criatura, tus aliados de la manada la atacarán",
     "3": "Cuando una criatura te ataque en modo creativo, tus aliados la atacarán",
     "4": "Mostrar las coordenadas del jugador en pantalla",
-    "5": "Mostrar barras de salud de las criaturas"
+    "5": "Mostrar barras de salud de las criaturas",
+    "6": "Habilitar sangrado de criaturas",
+    "7": "Activa una cámara libre en modos que no son creativos"
   },
   "GreenNightActivationDialog": {
     "1": "Administración Noche Verde",
