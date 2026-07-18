@@ -15,8 +15,9 @@ namespace Game
 		private LabelWidget m_propertyNames1Widget, m_propertyValues1Widget;
 		private LabelWidget m_propertyNames2Widget, m_propertyValues2Widget;
 		private ContainerWidget m_dropsPanel;
+		private LabelWidget m_dropsLabel;
 		private BevelledRectangleWidget m_rainbowBar;
-		private BevelledRectangleWidget m_buttonRect;  // Fondo del botón de retroceso
+		private BevelledRectangleWidget m_buttonRect;
 		private RectangleWidget m_arrowImage;
 		private int m_index;
 		private IList<BestiaryCreatureInfo> m_infoList;
@@ -36,9 +37,12 @@ namespace Game
 			m_propertyNames2Widget = Children.Find<LabelWidget>("PropertyNames2", true);
 			m_propertyValues2Widget = Children.Find<LabelWidget>("PropertyValues2", true);
 			m_dropsPanel = Children.Find<ContainerWidget>("Drops", true);
+
+			// Obtener el label por su nombre en lugar de por su texto
+			m_dropsLabel = Children.Find<LabelWidget>("DropsLabel", true);
+
 			m_rainbowBar = Children.Find<BevelledRectangleWidget>("RainbowBar", true);
 
-			// Obtener componentes del botón de retroceso
 			ButtonWidget backButton = Children.Find<ButtonWidget>("TopBar.Back", true);
 			m_buttonRect = backButton?.Children.Find<BevelledRectangleWidget>("BevelledButton.Rectangle", true);
 			m_arrowImage = backButton?.Children.Find<RectangleWidget>("BevelledButton.Image", true);
@@ -77,21 +81,16 @@ namespace Game
 			Vector3 rgb = Color.HsvToRgb(hsv);
 			Color rainbow = new Color(rgb);
 
-			// Aplicar a la barra lateral (parte inferior)
 			if (m_rainbowBar != null)
 			{
 				m_rainbowBar.CenterColor = rainbow;
 				m_rainbowBar.BevelColor = rainbow;
 			}
-
-			// Aplicar al fondo del botón de retroceso
 			if (m_buttonRect != null)
 			{
 				m_buttonRect.CenterColor = rainbow;
 				m_buttonRect.BevelColor = rainbow;
 			}
-
-			// Aplicar a la flecha de retroceso
 			if (m_arrowImage != null)
 			{
 				m_arrowImage.FillColor = rainbow;
@@ -108,32 +107,77 @@ namespace Game
 			m_nameWidget.Text = info.DisplayName;
 			m_descriptionWidget.Text = info.Description;
 
-			// Propiedades columna 1
-			m_propertyNames1Widget.Text = "Resistencia:\nAtaque:\nManada:\nMontura:";
+			// Título (clave "1")
+			LabelWidget topBarLabel = Children.Find<LabelWidget>("TopBar.Label", true);
+			if (topBarLabel != null)
+			{
+				topBarLabel.Text = LanguageControl.Get("BestiaryInfectedDescriptionScreen", 1);
+			}
+
+			// Botín (clave "2") - AHORA CON EL LABEL ENCONTRADO POR NOMBRE
+			if (m_dropsLabel != null)
+			{
+				m_dropsLabel.Text = LanguageControl.Get("BestiaryInfectedDescriptionScreen", 2);
+			}
+
+			// --- Columna 1 (etiquetas) ---
+			m_propertyNames1Widget.Text =
+				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "resilience") + ":\n" +
+				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "attack") + ":\n" +
+				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "herding") + ":\n" +
+				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "mount") + ":";
+
+			// --- Columna 1 (valores) ---
+			string attackStr = info.AttackPower > 0f ? info.AttackPower.ToString("0.0") : LanguageControl.None;
+			string herdingStr = info.IsHerding ? LanguageControl.Yes : LanguageControl.No;
+			string mountStr = info.CanBeRidden ? LanguageControl.Yes : LanguageControl.No;
+
 			m_propertyValues1Widget.Text =
 				$"{info.AttackResilience:F1}\n" +
-				$"{(info.AttackPower > 0 ? info.AttackPower.ToString("0.0") : "Ninguno")}\n" +
-				$"{(info.IsHerding ? "Sí" : "No")}\n" +
-				$"{(info.CanBeRidden ? "Sí" : "No")}";
+				$"{attackStr}\n" +
+				$"{herdingStr}\n" +
+				$"{mountStr}";
 
-			// Propiedades columna 2
-			m_propertyNames2Widget.Text = "Velocidad:\nSalto:\nPeso:\nHuevo:";
+			// --- Columna 2 (etiquetas) ---
+			m_propertyNames2Widget.Text =
+				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "speed") + ":\n" +
+				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "jump") + ":\n" +
+				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "weight") + ":\n" +
+				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "egg") + ":";
+
+			// --- Columna 2 (valores) ---
+			string speedUnit = LanguageControl.Get("BestiaryInfectedDescriptionScreen", "speed_unit");
+			string jumpUnit = LanguageControl.Get("BestiaryInfectedDescriptionScreen", "length_unit");
+			string weightUnit = LanguageControl.Get("BestiaryInfectedDescriptionScreen", "weight_unit");
+			string eggStr = info.HasSpawnerEgg ? LanguageControl.Exists : LanguageControl.None;
+
 			m_propertyValues2Widget.Text =
-				$"{(info.MovementSpeed * 3.6):F0} km/h\n" +
-				$"{info.JumpHeight:F1} m\n" +
-				$"{info.Mass:F1} kg\n" +
-				$"{(info.HasSpawnerEgg ? "Sí" : "No")}";
+				$"{(info.MovementSpeed * 3.6):F0} {speedUnit}\n" +
+				$"{info.JumpHeight:F1} {jumpUnit}\n" +
+				$"{info.Mass:F1} {weightUnit}\n" +
+				$"{eggStr}";
 
-			// Botín
+			// --- Botín (valores) ---
 			m_dropsPanel.Children.Clear();
 			if (info.Loot != null && info.Loot.Count > 0)
 			{
 				foreach (var loot in info.Loot)
 				{
 					if (loot.MaxCount == 0 || loot.Probability == 0f) continue;
-					string countText = loot.MinCount == loot.MaxCount ? $"{loot.MinCount}" : $"{loot.MinCount}-{loot.MaxCount}";
+					string countText;
+					if (loot.MinCount == loot.MaxCount)
+					{
+						countText = $"{loot.MinCount}";
+					}
+					else
+					{
+						countText = string.Format(LanguageControl.Get("BestiaryInfectedDescriptionScreen", "range"), loot.MinCount, loot.MaxCount);
+					}
 					if (loot.Probability < 1f)
-						countText += $" ({loot.Probability * 100:F0}%)";
+					{
+						string probFormat = LanguageControl.Get("BestiaryInfectedDescriptionScreen", "probability");
+						countText += string.Format(probFormat, (loot.Probability * 100f).ToString("0"));
+					}
 
 					m_dropsPanel.Children.Add(new StackPanelWidget
 					{
@@ -162,7 +206,7 @@ namespace Game
 				m_dropsPanel.Children.Add(new LabelWidget
 				{
 					Margin = new Vector2(20f, 0f),
-					Text = "Nada"
+					Text = LanguageControl.Nothing
 				});
 			}
 		}
