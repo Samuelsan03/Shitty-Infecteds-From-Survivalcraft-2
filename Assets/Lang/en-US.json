@@ -1,16 +1,214 @@
 {
+  "Database": {
+    "DisplayName": {
+      "Aimep3": "Aimep3",
+      "InfectedNormal1": "Infected Normal I",
+      "InfectedNormal2": "Infected Normal II",
+      "InfectedNormalTamed1": "Infected Normal Tamed I",
+      "InfectedNormalTamed2": "Infected Normal Tamed II",
+      "InfectedFast1": "Infected Fast I",
+      "InfectedFastTamed1": "Infected Fast Tamed I",
+      "InfectedFast2": "Infected Fast II",
+      "InfectedFastTamed2": "Infected Fast Tamed II"
+    }
+  },
+  "Description": {
+    "InfectedNormal1": "Appears from Wave 1. This infected is one of the most common threats of the plague, but it should never be underestimated. It constantly roams in search of prey and is capable of detecting, chasing, and attacking both survivors and other creatures. It can travel great distances to reach its target, cooperate with nearby infected, and respond to their calls for help when one of them enters combat. It can pick up weapons, tools, and clothing found along its path, using them to improve its chances of survival. If an obstacle blocks its way, it will attempt to destroy it and continue forward. Its distinctive glowing green eyes remain visible even in complete darkness. During the Green Night, its behavior becomes far more aggressive: it abandons any intention of retreating, focuses entirely on survivors, and pursues them with relentless determination. Even after being attacked, it can remember its aggressor and continue the chase for a long time. It can be tamed using a Collar, becoming a loyal guardian that will fight by your side. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form.",
+    "InfectedFast1": "Appears from Wave 2. This fast variant stands out for its extraordinary mobility and aggression. It can cover great distances in a very short time, leap over obstacles with ease, and rapidly change direction while pursuing its prey. Like other plague-infected creatures, it can detect, chase, and attack both survivors and other creatures, while also coordinating with nearby infected and responding to their calls for assistance. If barriers stand in its way, it will attempt to destroy them to continue the pursuit. Its glowing green eyes are often the last thing seen by those who try to escape. During the Green Night, it becomes an especially dangerous threat, abandoning all caution to focus entirely on hunting survivors. Its superior speed allows it to close distances quickly and maintain pursuits for extended periods. Although it possesses remarkable physical resilience, it is more vulnerable to poison than most infected. It can be tamed using a Collar, becoming a swift guardian capable of fighting alongside its owner. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form."
+  },
+  "Blocks": {
+    "ImprovedMusketBlock:0": {
+    "DisplayName": "Improved Musket",
+    "Description": "A redesigned musket that eliminates the cumbersome process of loading gunpowder and wads separately. It allows you to insert up to 2 pellets directly into the chamber. Unlike the original musket, it will not misfire if you submerge in water, and its sturdy mechanism prevents it from losing durability with each shot.",
+    "CRDescription:0": "Upgrade a standard musket by reinforcing it with iron blocks and rods."
+  },
+  "AntiTankPelletBlock:0": {
+    "DisplayName": "Anti-Tank Pellet",
+    "Description": "A special ammunition for the Improved Musket. It cuts through water without losing speed and shatters on impact without leaving a ricochet. It's a surprise pellet that will help us later...",
+    "CRDescription:0": "Craft mysterious pellets using iron blocks, feathers, and sulphur."
+  },
+  "RepeatCrossbowBlock:0": {
+    "DisplayName": "Repeat Crossbow",
+    "Description": "A repeating crossbow with a magazine that holds up to 8 bolts. Draw the string, load bolts, and fire in quick succession.",
+    "CRDescription:0": "Craft from rods, iron ingots, string, and a standard crossbow"
+  },
+  "RepeatBoltBlock:0": {
+    "DisplayName": "Repeat Copper Bolt",
+    "Description": "A basic copper bolt for the repeating crossbow. Low power but cheap to make.",
+    "CRDescription:0": "Craft from a copper ingot, a rod, and a feather"
+  },
+  "RepeatBoltBlock:1": {
+    "DisplayName": "Repeat Iron Bolt",
+    "Description": "A sturdy iron bolt with good armor penetration and damage.",
+    "CRDescription:1": "Craft from an iron ingot, a rod, and a feather"
+  },
+  "RepeatBoltBlock:2": {
+    "DisplayName": "Repeat Diamond Bolt",
+    "Description": "A diamond-tipped bolt that pierces through the toughest armor with ease. Its aerodynamic design allows it to travel through water without losing speed.",
+    "CRDescription:2": "Reinforce an iron bolt with a diamond"
+},
+  "RepeatBoltBlock:3": {
+    "DisplayName": "Repeat Explosive Bolt",
+    "Description": "A bolt packed with gunpowder that detonates on impact, damaging nearby creatures and terrain.",
+    "CRDescription:3": "Combine gunpowder with a copper bolt"
+  },
+  "RepeatBoltBlock:4": {
+    "DisplayName": "Repeat Fire Bolt",
+    "Description": "A bolt that ignites targets and leaves a trail of fire. Very effective against flammable enemies.",
+    "CRDescription:4": "Combine a sulphur chunk with a copper bolt"
+  },
+  "RepeatBoltBlock:5": {
+    "DisplayName": "Repeat Poison Bolt",
+    "Description": "A bolt coated with a mild toxin that poisons the target over time.",
+    "CRDescription:5": "Coat a copper bolt with toxin"
+  },
+  "RepeatBoltBlock:6": {
+    "DisplayName": "Repeat Severely Poisonous Bolt",
+    "Description": "A bolt laced with a highly concentrated toxin, capable of inflicting fatal poisoning quickly.",
+    "CRDescription:6": "Reinforce a poison bolt with an extra dose of toxin"
+  },
+    "CopperSharpHammerBlock:0": {
+      "DisplayName": "Copper Sharp Hammer",
+      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. When used, the hammer will gradually lose its durability and eventually fail. Hammers made of better materials will last longer and cause significantly more damage.",
+      "CRDescription:0": "Make a copper heavy hammer"
+    },
+    "IronSharpHammerBlock:0": {
+      "DisplayName": "Iron Sharp Hammer",
+      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. When used, the hammer will gradually lose its durability and eventually fail. Hammers made of better materials will last longer and cause significantly more damage.",
+      "CRDescription:0": "Make an iron heavy hammer"
+    },
+    "DiamondSharpHammerBlock:0": {
+      "DisplayName": "Diamond Sharp Hammer",
+      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. When used, the hammer will gradually lose its durability and eventually fail. Hammers made of better materials will last longer and cause significantly more damage.",
+      "CRDescription:0": "Add diamonds to forge an incredibly powerful hammer"
+    },
+    "LavaSharpHammerBlock:0": {
+      "DisplayName": "Lava Sharp Hammer",
+      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. Forged in the intense heat of magma, this hammer boasts unmatched durability and catastrophic destructive power.",
+      "CRDescription:0": "Smelt a diamond hammer with magma to unleash its full potential"
+  },
+      "WoodenLongspearBlock:0": {
+      "DisplayName": "Wooden Longspear",
+      "Description": "A longer variant of the spear designed to keep enemies at a safer distance. It can be thrown or used for melee, but will eventually lose its sharpness. Thrown longspears stick in soft materials.",
+      "CRDescription:0": "Make a long wooden weapon"
+    },
+    "StoneLongspearBlock:0": {
+      "DisplayName": "Stone Longspear",
+      "Description": "A longer variant of the spear designed to keep enemies at a safer distance. It can be thrown or used for melee, but will eventually lose its sharpness. Thrown longspears stick in soft materials.",
+      "CRDescription:0": "Make a long stone weapon with cobblestone",
+      "CRDescription:1": "Make a long stone weapon with chunks"
+    },
+    "CopperLongspearBlock:0": {
+      "DisplayName": "Copper Longspear",
+      "Description": "A sturdy longspear with a copper tip, offering improved durability and reach over wooden variants. It is effective both thrown and in melee combat before it eventually dulls.",
+      "CRDescription:0": "Make a long copper weapon"
+    },
+    "IronLongspearBlock:0": {
+      "DisplayName": "Iron Longspear",
+      "Description": "A heavy and reliable longspear with an iron head. Its superior material allows it to deal significant damage and withstand more use in melee or when thrown.",
+      "CRDescription:0": "Make a long iron weapon"
+    },
+    "DiamondLongspearBlock:0": {
+      "DisplayName": "Diamond Tip Longspear",
+      "Description": "An exceptionally lethal longspear featuring a diamond tip. It offers unmatched durability and piercing power, making it devastating both in melee and when thrown from afar.",
+      "CRDescription:0": "Add diamonds to the cutting edge of the long weapon"
+    },
+    "LavaLongspearBlock:0": {
+      "DisplayName": "Lava Longspear",
+      "Description": "A terrifying longspear forged with molten magma. It possesses extreme reach and devastating burning power, easily piercing through defenses when thrown or wielded in close combat.",
+      "CRDescription:0": "Imbue the long weapon with the heat of magma"
+    },
+    "FlameThrowerBlock:0": {
+  "DisplayName": "Flamethrower",
+  "Description": "A flamethrower that fires incendiary or poisonous projectiles depending on the loaded ammunition. Reloads with special ammo.",
+  "CRDescription:0": "Craft a flamethrower using iron ingots, copper ingots, rods, and wooden planks."
+},
+"FlameBulletBlock:0": {
+  "DisplayName": "Fire Bullet",
+  "Description": "Incendiary ammunition for the flamethrower. Sets enemies and the surrounding area on fire upon impact.",
+  "CRDescription:0": "Craft fire bullets using iron ingots and gunpowder."
+},
+"FlameBulletBlock:1": {
+  "DisplayName": "Poison Bullet",
+  "Description": "Toxic ammunition for the flamethrower. Poisons enemies on impact, dealing continuous damage.",
+  "CRDescription:1": "Craft poison bullets using toxin and fire bullets."
+}
+},
+  "ContentWidgets": {
+  "CreatureInventoryWidget": {
+    "1": "Creature Inventory",
+    "2": "Inventory"
+  },
+  "RepeatCrossbowWidget": {
+    "0": "Draw the string",
+    "1": "{0}/8 Bolts",
+    "2": "Insert bolts",
+    "3": "Repeat Crossbow",
+    "4": "Inventory"
+  },
+  "ImprovedMusketWidget": {
+    "0": "Improved Musket",
+    "1": "Inventory",
+    "2": "No ammo",
+    "3": "Ammo: {0}/2"
+  },
+  "FlameThrowerWidget": {
+  "0": "Flamethrower",
+  "1": "Inventory",
+  "2": "Insert a bullet to load",
+  "3": "{ammo}/15 {type}",
+  "4": "Fire",
+  "5": "Poison"
+},
+"BestiaryInfectedScreen": {
+    "1": "Infected Bestiary"
+  }
+},
+  "BestiaryInfectedDescriptionScreen": {
+    "1": "Infected Details",
+    "2": "Drops:",
+    "resilience": "Resilience",
+    "attack": "Attack",
+    "herding": "Herding",
+    "mount": "Mount",
+    "speed": "Speed",
+    "jump": "Jump",
+    "weight": "Weight",
+    "egg": "Egg",
+    "speed_unit": "km/h",
+    "length_unit": "m",
+    "weight_unit": "kg",
+    "range": "{0}-{1}",
+    "probability": " ({0}%)"
+  },
+"CameraManage": {
+  "Game.FreeCamera": "Cámara libre"
+},
+"SubsystemFlameThrowerBlockBehavior": {
+  "0": "FlameThrower is empty"
+},
+"SubsystemImprovedMusketBlockBehavior": {
+    "0": "Not loaded!"
+},
+  "SubsystemRepeatCrossbowBlockBehavior": {
+    "0": "Not fully drawn!",
+    "1": "No bolts loaded!"
+  },
   "SubsystemCreatureHealthBars": {
     "1": "{0} HP: {1}"
 },
   "ShittyInfectedsMod": {
-    "1": "Coordinates: X:{0:F0} Y:{1:F0} Z:{2:F0}"
-},
+    "1": "X: {0}, Y: {1}, Z: {2}",
+    "exitGame": "Exit"
+  },
   "ShittyInfectedsSettingsScreen": {
     "1": "Shitty Infecteds Settings",
     "2": "When hitting a creature, your herd allies will attack it",
     "3": "When a creature hits you in creative, your allies will attack it",
     "4": "Show player coordinates on screen",
-    "5": "Show creature health bars"
+    "5": "Show creature health bars",
+    "6": "Enable creature bleeding",
+    "7": "Enables a free camera in non-creative modes"
   },
   "GreenNightActivationDialog": {
     "1": "Green Night Management",
