@@ -330,11 +330,41 @@ public class ShittyInfectedsModLoader : ModLoader
 			{
 				Window.Close();
 			}
+
+			// BOTÓN DEL BESTIARIO - AHORA CON FUNCIONALIDAD
+			if (button.Name == "ShittyBestiaryButton" && button.IsClicked)
+			{
+				// Verificar si la pantalla ya está registrada, si no, registrarla
+				if (ScreensManager.FindScreen<Screen>("BestiaryInfected") == null)
+				{
+					ScreensManager.AddScreen("BestiaryInfected", new BestiaryInfectedScreen());
+				}
+
+				// Cambiar a la pantalla del bestiario de infectados
+				ScreensManager.SwitchScreen("BestiaryInfected", Array.Empty<object>());
+			}
 		}
 	}
 
 	public override void OnMainMenuScreenCreated(MainMenuScreen mainMenuScreen, StackPanelWidget leftBottomBar, StackPanelWidget rightBottomBar)
 	{
+		// Registrar la pantalla de configuración (ya existente)
+		if (ScreensManager.FindScreen<Screen>("ShittyInfectedsSettingsScreen") == null)
+		{
+			ScreensManager.AddScreen("ShittyInfectedsSettingsScreen", new ShittyInfectedsSettingsScreen());
+		}
+
+		// REGISTRAR LAS PANTALLAS DEL BESTIARIO DE INFECTADOS
+		if (ScreensManager.FindScreen<Screen>("BestiaryInfected") == null)
+		{
+			ScreensManager.AddScreen("BestiaryInfected", new BestiaryInfectedScreen());
+		}
+
+		if (ScreensManager.FindScreen<Screen>("BestiaryInfectedDescription") == null)
+		{
+			ScreensManager.AddScreen("BestiaryInfectedDescription", new BestiaryInfectedDescriptionScreen());
+		}
+
 		if (ScreensManager.FindScreen<Screen>("ShittyInfectedsSettingsScreen") == null)
 		{
 			ScreensManager.AddScreen("ShittyInfectedsSettingsScreen", new ShittyInfectedsSettingsScreen());
@@ -404,6 +434,36 @@ public class ShittyInfectedsModLoader : ModLoader
 
 			configButton.Children.Add(icon);
 			rightBottomBar.Children.Insert(0, configButton);
+		}
+
+		// NUEVO BOTÓN VERDE EN EL LADO IZQUIERDO
+		if (leftBottomBar != null)
+		{
+			BevelledButtonWidget bestiaryButton = new BevelledButtonWidget
+			{
+				Name = "ShittyBestiaryButton",
+				Size = new Vector2(60f, 60f),
+				Text = "",
+				CenterColor = new Color(100, 255, 100), // Fondo verde
+				BevelColor = new Color(50, 200, 50)     // Bisel más oscuro (opcional)
+			};
+
+			// Creamos el icono como un hijo del botón
+			RectangleWidget bestiaryIcon = new RectangleWidget
+			{
+				Size = new Vector2(40f, 40f), // Tamaño del icono (un poco más pequeño que el botón)
+				HorizontalAlignment = WidgetAlignment.Center,
+				VerticalAlignment = WidgetAlignment.Center,
+				Subtexture = ContentManager.Get<Subtexture>("Textures/zombi bestiario"),
+				FillColor = Color.White, // Blanco para que no se mezcle con el verde del botón
+				OutlineColor = new Color(0, 0, 0, 0) // Sin bordes negros
+			};
+
+			// Agregamos el icono DENTRO del botón
+			bestiaryButton.Children.Add(bestiaryIcon);
+
+			// Lo insertamos al final del panel izquierdo
+			leftBottomBar.Children.Add(bestiaryButton);
 		}
 
 		StackPanelWidget bottomInfos = mainMenuScreen.Children.Find<StackPanelWidget>("BottomInfos", true);
