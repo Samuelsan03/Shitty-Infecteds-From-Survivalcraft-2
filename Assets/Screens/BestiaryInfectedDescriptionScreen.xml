@@ -5,7 +5,7 @@
   <StackPanelWidget Direction="Horizontal">
 
     <CanvasWidget Style="{Widgets/TopBarInfectedContents}" >
-      <LabelWidget Name="TopBar.Label" Text="Detalle de Infectado" />
+      <LabelWidget Name="TopBar.Label" Text="[BestiaryInfectedDescriptionScreen:1]" />
     </CanvasWidget>
 
     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
@@ -45,7 +45,7 @@
       <CanvasWidget Size="0, 5" />
 
       <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
-        <LabelWidget Text="Botín:" VerticalAlignment="Center" Color="128, 128, 128" />
+        <LabelWidget Name="DropsLabel" Text="[BestiaryInfectedDescriptionScreen:2]" VerticalAlignment="Center" Color="128, 128, 128" />
         <StackPanelWidget Name="Drops" Direction="Horizontal" />
       </StackPanelWidget>
 
