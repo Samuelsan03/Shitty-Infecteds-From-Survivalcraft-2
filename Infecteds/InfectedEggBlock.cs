@@ -12,76 +12,108 @@ namespace Game
 		/// </summary>
 		public enum InfectedType
 		{
-			/// <summary>
-			/// Infectados normales/comunes
-			/// </summary>
 			Common,
+			Ghost,
 			// Espacio para agregar más tipos en el futuro
 		}
 
-		public static int Index = 514;
+		/// <summary>
+		/// Clase contenedora para los datos específicos de cada tipo de huevo.
+		/// </summary>
+		public class InfectedEggData
+		{
+			public float Scale;
+			public Color EggColor;
+			public string[] CreatureTemplates;
+		}
+
+		public static int Index = 515;
 		public const string FName = "InfectedEggBlock";
 
-		private BlockMesh m_standaloneBlockMesh;
+		private Dictionary<InfectedType, BlockMesh> m_standaloneBlockMeshes;
 		private Texture2D m_eggTexture;
-		private const float EggScale = 1.0f;
-
-		private static readonly Color CommonEggColor = new Color(0, 255, 0);
 
 		/// <summary>
-		/// Criaturas asociadas a cada tipo de infectado.
-		/// Al spawnear, se elige una aleatoriamente del tipo correspondiente.
+		/// Diccionario estrictamente vinculado al ENUM. Sin números mágicos.
 		/// </summary>
-		private static readonly string[][] TypeCreatures = new string[][]
+		public static readonly Dictionary<InfectedType, InfectedEggData> EggData = new Dictionary<InfectedType, InfectedEggData>
 		{
-			new string[] { "InfectedNormal1", "InfectedNormal2" }, // Common
-            // Agregar más tipos aquí cuando se necesiten
-        };
+			{
+				InfectedType.Common, new InfectedEggData
+				{
+					Scale = 1.0f,
+					EggColor = new Color(0, 255, 0),
+					CreatureTemplates = new string[] { "InfectedNormal1", "InfectedNormal2", "InfectedFast1", "InfectedFast2" }
+				}
+			},
+			{
+				InfectedType.Ghost, new InfectedEggData
+				{
+					Scale = 0.8f,
+					EggColor = new Color(180, 180, 255),
+					CreatureTemplates = new string[] { "GhostNormal" }
+				}
+			}
+		};
 
 		public override void Initialize()
 		{
-			// Cargar el modelo base del huevo
 			Model model = ContentManager.Get<Model>("Models/Egg");
 			Matrix boneTransform = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("Egg", true).ParentBone);
 
-			// Crear el BlockMesh aplicando el color directamente a la malla (sin alterar UVs)
-			m_standaloneBlockMesh = new BlockMesh();
-			m_standaloneBlockMesh.AppendModelMeshPart(
-				model.FindMesh("Egg", true).MeshParts[0],
-				boneTransform,
-				makeEmissive: false,
-				flipWindingOrder: false,
-				doubleSided: false,
-				flipNormals: false,
-				CommonEggColor // <--- AQUÍ SE APLICA EL COLOR
-			);
-
-			// Cargar la textura directa
 			m_eggTexture = ContentManager.Get<Texture2D>("Textures/alerta");
+			m_standaloneBlockMeshes = new Dictionary<InfectedType, BlockMesh>();
+
+			// Generar una malla única por cada valor del ENUM
+			foreach (var kvp in EggData)
+			{
+				InfectedType type = kvp.Key;
+				InfectedEggData data = kvp.Value;
+
+				BlockMesh mesh = new BlockMesh();
+				mesh.AppendModelMeshPart(
+					model.FindMesh("Egg", true).MeshParts[0],
+					boneTransform,
+					makeEmissive: false,
+					flipWindingOrder: false,
+					doubleSided: false,
+					flipNormals: false,
+					data.EggColor
+				);
+
+				// Guardar la malla usando el ENUM como llave
+				m_standaloneBlockMeshes[type] = mesh;
+			}
 
 			base.Initialize();
 		}
 
 		public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z)
 		{
-			// No genera geometría de terreno
 		}
 
 		public override void DrawBlock(PrimitivesRenderer3D primitivesRenderer, int value, Color color, float size, ref Matrix matrix, DrawBlockEnvironmentData environmentData)
 		{
-			BlocksManager.DrawMeshBlock(
-				primitivesRenderer,
-				m_standaloneBlockMesh,
-				m_eggTexture,
-				color, // El color que pasa el motor (afecta iluminación general del mundo)
-				EggScale * size,
-				ref matrix,
-				environmentData
-			);
+			InfectedType type = GetInfectedType(Terrain.ExtractData(value));
+
+			// Buscar por ENUM
+			if (m_standaloneBlockMeshes.TryGetValue(type, out BlockMesh mesh) && EggData.TryGetValue(type, out InfectedEggData data))
+			{
+				BlocksManager.DrawMeshBlock(
+					primitivesRenderer,
+					mesh,
+					m_eggTexture,
+					color,
+					data.Scale * size,
+					ref matrix,
+					environmentData
+				);
+			}
 		}
 
 		public override IEnumerable<int> GetCreativeValues()
 		{
+			// Iterar directamente los valores del ENUM
 			foreach (InfectedType type in Enum.GetValues(typeof(InfectedType)))
 			{
 				yield return Terrain.MakeBlockValue(Index, 0, SetInfectedType(0, type));
@@ -96,37 +128,48 @@ namespace Game
 
 		public override float GetIconViewScale(int value, DrawBlockEnvironmentData environmentData)
 		{
-			return EggScale;
+			InfectedType type = GetInfectedType(Terrain.ExtractData(value));
+
+			// Buscar escala por ENUM
+			if (EggData.TryGetValue(type, out InfectedEggData data))
+			{
+				return data.Scale;
+			}
+			return 1f;
 		}
 
-		/// <summary>
-		/// Obtiene el tipo de infectado del valor de datos del bloque.
-		/// Usa los primeros 4 bits (permite hasta 15 tipos).
-		/// </summary>
 		public static InfectedType GetInfectedType(int data)
 		{
 			return (InfectedType)(data & 0xF);
 		}
 
-		/// <summary>
-		/// Establece el tipo de infectado en el valor de datos del bloque.
-		/// </summary>
 		public static int SetInfectedType(int data, InfectedType type)
 		{
 			return (data & ~0xF) | ((int)type & 0xF);
 		}
 
-		/// <summary>
-		/// Obtiene los nombres de templates de criaturas para un tipo dado.
-		/// </summary>
 		public static string[] GetCreaturesForType(InfectedType type)
 		{
-			int index = (int)type;
-			if (index >= 0 && index < TypeCreatures.Length)
+			// Buscar criaturas por ENUM
+			if (EggData.TryGetValue(type, out InfectedEggData data))
 			{
-				return TypeCreatures[index];
+				return data.CreatureTemplates;
 			}
 			return Array.Empty<string>();
+		}
+
+		public static IEnumerable<string> GetAllCreatureTemplates()
+		{
+			HashSet<string> templates = new HashSet<string>();
+			foreach (var data in EggData.Values)
+				foreach (string t in data.CreatureTemplates)
+					templates.Add(t);
+			return templates;
+		}
+
+		public static int GetBlockValue(InfectedType type)
+		{
+			return Terrain.MakeBlockValue(Index, 0, SetInfectedType(0, type));
 		}
 	}
 }
