@@ -5,7 +5,7 @@
   <StackPanelWidget Direction="Horizontal">
 
     <CanvasWidget Style="{Widgets/TopBarInfectedContents}" >
-      <LabelWidget Name="TopBar.Label" Text="Bestiario de Infectados" />
+      <LabelWidget Name="TopBar.Label" Text="[BestiaryInfectedScreen:1]" />
     </CanvasWidget>
 
     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
