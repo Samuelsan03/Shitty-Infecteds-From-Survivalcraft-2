@@ -1,159 +1,72 @@
 using System;
 using System.Collections.Generic;
 using Engine;
-using Engine.Graphics;
+using GameEntitySystem;
+using TemplatesDatabase;
 
 namespace Game
 {
-	public class InfectedEggBlock : Block
+	public class SubsystemInfectedEggBlockBehavior : SubsystemBlockBehavior
 	{
-		/// <summary>
-		/// Categorías de infectados que pueden spawnear desde los huevos.
-		/// </summary>
-		public enum InfectedType
-		{
-			Common,
-			Ghost,
-			// Espacio para agregar más tipos en el futuro
-		}
+		public override int[] HandledBlocks => Array.Empty<int>();
 
 		/// <summary>
-		/// Clase contenedora para los datos específicos de cada tipo de huevo.
+		/// Diccionario que vincula cada tipo de huevo con sus criaturas posibles.
 		/// </summary>
-		public class InfectedEggData
-		{
-			public float Scale;
-			public Color EggColor;
-			public string[] CreatureTemplates;
-		}
-
-		public static int Index = 515;
-		public const string FName = "InfectedEggBlock";
-
-		private Dictionary<InfectedType, BlockMesh> m_standaloneBlockMeshes;
-		private Texture2D m_eggTexture;
-
-		/// <summary>
-		/// Diccionario estrictamente vinculado al ENUM. Sin números mágicos.
-		/// </summary>
-		public static readonly Dictionary<InfectedType, InfectedEggData> EggData = new Dictionary<InfectedType, InfectedEggData>
+		public static readonly Dictionary<InfectedEggBlock.InfectedType, string[]> CreatureTemplatesByType = new Dictionary<InfectedEggBlock.InfectedType, string[]>
 		{
 			{
-				InfectedType.Common, new InfectedEggData
-				{
-					Scale = 1.0f,
-					EggColor = new Color(0, 255, 0),
-					CreatureTemplates = new string[] { "InfectedNormal1", "InfectedNormal2", "InfectedFast1", "InfectedFast2" }
-				}
+				InfectedEggBlock.InfectedType.Common, new string[] { "InfectedNormal1", "InfectedNormal2", "InfectedFast1", "InfectedFast2" }
 			},
 			{
-				InfectedType.Ghost, new InfectedEggData
-				{
-					Scale = 0.8f,
-					EggColor = new Color(180, 180, 255),
-					CreatureTemplates = new string[] { "GhostNormal" }
-				}
+				InfectedEggBlock.InfectedType.Ghost, new string[] { "GhostNormal" }
 			}
 		};
 
-		public override void Initialize()
+		private Random m_random = new Random();
+		private InfectedEggBlock m_block;
+		private SubsystemGameInfo m_subsystemGameInfo;
+
+		public override void Load(ValuesDictionary valuesDictionary)
 		{
-			Model model = ContentManager.Get<Model>("Models/Egg");
-			Matrix boneTransform = BlockMesh.GetBoneAbsoluteTransform(model.FindMesh("Egg", true).ParentBone);
+			base.Load(valuesDictionary);
+			m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
+			m_block = (InfectedEggBlock)BlocksManager.Blocks[InfectedEggBlock.Index];
+		}
 
-			m_eggTexture = ContentManager.Get<Texture2D>("Textures/alerta");
-			m_standaloneBlockMeshes = new Dictionary<InfectedType, BlockMesh>();
+		public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem)
+		{
+			int data = Terrain.ExtractData(worldItem.Value);
+			InfectedEggBlock.InfectedType type = InfectedEggBlock.GetInfectedType(data);
 
-			// Generar una malla única por cada valor del ENUM
-			foreach (var kvp in EggData)
+			string[] creatures = GetCreaturesForType(type);
+
+			if (creatures.Length > 0)
 			{
-				InfectedType type = kvp.Key;
-				InfectedEggData data = kvp.Value;
+				string creatureTemplate = creatures[m_random.Int(0, creatures.Length - 1)];
 
-				BlockMesh mesh = new BlockMesh();
-				mesh.AppendModelMeshPart(
-					model.FindMesh("Egg", true).MeshParts[0],
-					boneTransform,
-					makeEmissive: false,
-					flipWindingOrder: false,
-					doubleSided: false,
-					flipNormals: false,
-					data.EggColor
-				);
-
-				// Guardar la malla usando el ENUM como llave
-				m_standaloneBlockMeshes[type] = mesh;
+				try
+				{
+					Entity entity = DatabaseManager.CreateEntity(Project, creatureTemplate, true);
+					entity.FindComponent<ComponentBody>(true).Position = worldItem.Position;
+					entity.FindComponent<ComponentBody>(true).Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, m_random.Float(0f, 6.2831855f));
+					entity.FindComponent<ComponentSpawn>(true).SpawnDuration = 0.25f;
+					Project.AddEntity(entity);
+				}
+				catch (Exception ex)
+				{
+					Log.Error($"Error spawning infected from egg (type: {type}): {ex.Message}");
+				}
 			}
 
-			base.Initialize();
+			return true;
 		}
 
-		public override void GenerateTerrainVertices(BlockGeometryGenerator generator, TerrainGeometry geometry, int value, int x, int y, int z)
+		public static string[] GetCreaturesForType(InfectedEggBlock.InfectedType type)
 		{
-		}
-
-		public override void DrawBlock(PrimitivesRenderer3D primitivesRenderer, int value, Color color, float size, ref Matrix matrix, DrawBlockEnvironmentData environmentData)
-		{
-			InfectedType type = GetInfectedType(Terrain.ExtractData(value));
-
-			// Buscar por ENUM
-			if (m_standaloneBlockMeshes.TryGetValue(type, out BlockMesh mesh) && EggData.TryGetValue(type, out InfectedEggData data))
+			if (CreatureTemplatesByType.TryGetValue(type, out string[] data))
 			{
-				BlocksManager.DrawMeshBlock(
-					primitivesRenderer,
-					mesh,
-					m_eggTexture,
-					color,
-					data.Scale * size,
-					ref matrix,
-					environmentData
-				);
-			}
-		}
-
-		public override IEnumerable<int> GetCreativeValues()
-		{
-			// Iterar directamente los valores del ENUM
-			foreach (InfectedType type in Enum.GetValues(typeof(InfectedType)))
-			{
-				yield return Terrain.MakeBlockValue(Index, 0, SetInfectedType(0, type));
-			}
-		}
-
-		public override string GetDisplayName(SubsystemTerrain subsystemTerrain, int value)
-		{
-			InfectedType type = GetInfectedType(Terrain.ExtractData(value));
-			return LanguageControl.Get(FName, type.ToString());
-		}
-
-		public override float GetIconViewScale(int value, DrawBlockEnvironmentData environmentData)
-		{
-			InfectedType type = GetInfectedType(Terrain.ExtractData(value));
-
-			// Buscar escala por ENUM
-			if (EggData.TryGetValue(type, out InfectedEggData data))
-			{
-				return data.Scale;
-			}
-			return 1f;
-		}
-
-		public static InfectedType GetInfectedType(int data)
-		{
-			return (InfectedType)(data & 0xF);
-		}
-
-		public static int SetInfectedType(int data, InfectedType type)
-		{
-			return (data & ~0xF) | ((int)type & 0xF);
-		}
-
-		public static string[] GetCreaturesForType(InfectedType type)
-		{
-			// Buscar criaturas por ENUM
-			if (EggData.TryGetValue(type, out InfectedEggData data))
-			{
-				return data.CreatureTemplates;
+				return data;
 			}
 			return Array.Empty<string>();
 		}
@@ -161,15 +74,14 @@ namespace Game
 		public static IEnumerable<string> GetAllCreatureTemplates()
 		{
 			HashSet<string> templates = new HashSet<string>();
-			foreach (var data in EggData.Values)
-				foreach (string t in data.CreatureTemplates)
+			foreach (string[] list in CreatureTemplatesByType.Values)
+			{
+				foreach (string t in list)
+				{
 					templates.Add(t);
+				}
+			}
 			return templates;
-		}
-
-		public static int GetBlockValue(InfectedType type)
-		{
-			return Terrain.MakeBlockValue(Index, 0, SetInfectedType(0, type));
 		}
 	}
 }
