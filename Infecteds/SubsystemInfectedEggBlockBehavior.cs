@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -8,6 +9,19 @@ namespace Game
 	public class SubsystemInfectedEggBlockBehavior : SubsystemBlockBehavior
 	{
 		public override int[] HandledBlocks => Array.Empty<int>();
+
+		/// <summary>
+		/// Diccionario que vincula cada tipo de huevo con sus criaturas posibles.
+		/// </summary>
+		public static readonly Dictionary<InfectedEggBlock.InfectedType, string[]> CreatureTemplatesByType = new Dictionary<InfectedEggBlock.InfectedType, string[]>
+		{
+			{
+				InfectedEggBlock.InfectedType.Common, new string[] { "InfectedNormal1", "InfectedNormal2", "InfectedFast1", "InfectedFast2" }
+			},
+			{
+				InfectedEggBlock.InfectedType.Ghost, new string[] { "GhostNormal" }
+			}
+		};
 
 		private Random m_random = new Random();
 		private InfectedEggBlock m_block;
@@ -25,12 +39,10 @@ namespace Game
 			int data = Terrain.ExtractData(worldItem.Value);
 			InfectedEggBlock.InfectedType type = InfectedEggBlock.GetInfectedType(data);
 
-			// Obtener las criaturas posibles para este tipo
-			string[] creatures = InfectedEggBlock.GetCreaturesForType(type);
+			string[] creatures = GetCreaturesForType(type);
 
 			if (creatures.Length > 0)
 			{
-				// Elegir una criatura aleatoria de la categoría
 				string creatureTemplate = creatures[m_random.Int(0, creatures.Length - 1)];
 
 				try
@@ -47,7 +59,29 @@ namespace Game
 				}
 			}
 
-			return true; // El proyectil se consume al impactar
+			return true;
+		}
+
+		public static string[] GetCreaturesForType(InfectedEggBlock.InfectedType type)
+		{
+			if (CreatureTemplatesByType.TryGetValue(type, out string[] data))
+			{
+				return data;
+			}
+			return Array.Empty<string>();
+		}
+
+		public static IEnumerable<string> GetAllCreatureTemplates()
+		{
+			HashSet<string> templates = new HashSet<string>();
+			foreach (string[] list in CreatureTemplatesByType.Values)
+			{
+				foreach (string t in list)
+				{
+					templates.Add(t);
+				}
+			}
+			return templates;
 		}
 	}
 }
