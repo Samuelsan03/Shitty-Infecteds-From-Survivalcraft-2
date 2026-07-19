@@ -35,6 +35,13 @@ namespace Game
 		public SubsystemParticles m_subsystemParticles;
 		public SubsystemGameInfo m_subsystemGameInfo;
 
+		// Lista de criaturas que no sangran
+		public static readonly HashSet<string> m_nonBleedingCreatures = new HashSet<string>
+		{
+			"GhostNormal"
+            // Agregar más criaturas aquí
+        };
+
 		public override void Load(ValuesDictionary valuesDictionary)
 		{
 			this.m_subsystemTime = base.Project.FindSubsystem<SubsystemTime>(true);
@@ -193,6 +200,16 @@ namespace Game
 			if (health == null)
 			{
 				return false;
+			}
+
+			// Verificar si la criatura está en la lista de exclusiones
+			if (creature.Entity != null && creature.Entity.ValuesDictionary != null)
+			{
+				string creatureName = creature.Entity.ValuesDictionary.DatabaseObject?.Name;
+				if (!string.IsNullOrEmpty(creatureName) && m_nonBleedingCreatures.Contains(creatureName))
+				{
+					return false;
+				}
 			}
 
 			bool isPlayer = creature is ComponentPlayer;
