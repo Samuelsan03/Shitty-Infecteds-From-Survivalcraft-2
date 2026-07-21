@@ -76,6 +76,7 @@ namespace Game
 		{
 			this.m_subsystemTime = base.Project.FindSubsystem<SubsystemTime>(true);
 			this.m_subsystemPickables = base.Project.FindSubsystem<SubsystemPickables>(true);
+			this.m_subsystemAudio = base.Project.FindSubsystem<SubsystemAudio>(true); // NUEVO
 			this.m_componentCreature = base.Entity.FindComponent<ComponentCreature>(true);
 			this.m_componentPathfinding = base.Entity.FindComponent<ComponentPathfinding>(true);
 			this.m_componentMiner = base.Entity.FindComponent<ComponentMiner>();
@@ -125,7 +126,6 @@ namespace Game
 					}
 				}
 
-				// ELIMINADA la condición m_collectionNeed < 1f - La recolección no tiene "necesidad" como el comer
 				if (!isChasing && this.HasInventorySpace())
 				{
 					if (this.m_pickable == null)
@@ -152,7 +152,6 @@ namespace Game
 			{
 				if (this.m_pickable != null)
 				{
-					// ELIMINADA la lógica de velocidad basada en m_collectionNeed
 					float speed = this.m_random.Float(0.5f, 0.7f);
 					int maxPathfindingPositions = 1000;
 					float num = Vector3.Distance(this.m_componentCreature.ComponentCreatureModel.EyePosition, this.m_componentCreature.ComponentBody.Position);
@@ -174,7 +173,6 @@ namespace Game
 				}
 				else if (this.m_componentPathfinding.IsStuck)
 				{
-					// ELIMINADO m_collectionNeed += 0.75f - No aplica para recolección
 					this.m_importanceLevel = 0f;
 				}
 				else if (this.m_componentPathfinding.Destination == null)
@@ -261,7 +259,6 @@ namespace Game
 						this.m_blockedCount++;
 						if (this.m_blockedCount >= 3)
 						{
-							// ELIMINADO m_collectionNeed += 0.75f
 							this.m_importanceLevel = 0f;
 						}
 						else
@@ -317,9 +314,6 @@ namespace Game
 			{
 				return false;
 			}
-
-			// ELIMINADA la verificación de StuckMatrix != null
-			// Esto permite recoger proyectiles clavados en el suelo/paredes (flechas, etc.)
 
 			int contents = Terrain.ExtractContents(pickable.Value);
 			Block block = BlocksManager.Blocks[contents];
@@ -398,7 +392,12 @@ namespace Game
 			if (actuallyGathered > 0)
 			{
 				this.m_pickable.Count -= actuallyGathered;
-				// ELIMINADO m_collectionNeed += 1f
+
+				// NUEVO: Reproducir el sonido de recogida igual que hace el jugador
+				if (this.m_subsystemAudio != null)
+				{
+					this.m_subsystemAudio.PlaySound("Audio/PickableCollected", 0.7f, -0.4f, this.m_componentCreature.ComponentBody.Position, 2f, false);
+				}
 
 				if (this.m_pickable.Count == 0)
 				{
@@ -476,6 +475,7 @@ namespace Game
 
 		public SubsystemTime m_subsystemTime;
 		public SubsystemPickables m_subsystemPickables;
+		public SubsystemAudio m_subsystemAudio; // NUEVO
 		public ComponentCreature m_componentCreature;
 		public ComponentPathfinding m_componentPathfinding;
 		public ComponentMiner m_componentMiner;
