@@ -9,7 +9,11 @@
       "InfectedFast1": "Infectado Rápido I",
       "InfectedFastTamed1": "Infectado Rápido Domesticado I",
       "InfectedFast2": "Infectado Rápido II",
-      "InfectedFastTamed2": "Infectado Rápido Domesticado II"
+      "InfectedFastTamed2": "Infectado Rápido Domesticado II",
+      "InfectedMuscle1": "Músculo Infectado I",
+      "InfectedMuscleTamed1": "Músculo Infectado Domesticado I",
+      "InfectedMuscle2": "Músculo Infectado II",
+      "InfectedMuscleTamed2": "Músculo Infectado Domesticado II"
     },
   "Description": {
     "InfectedNormal1": "Aparece a partir de la Oleada 1. Este infectado es una de las amenazas más comunes de la plaga, pero nunca debe subestimarse. Deambula constantemente en busca de presas y es capaz de detectar, perseguir y atacar tanto a los supervivientes como a otras criaturas. Puede recorrer grandes distancias para alcanzar a su objetivo, cooperar con los infectados cercanos y responder a sus llamadas de ayuda cuando uno de ellos entra en combate. Puede recoger armas, herramientas y ropa que encuentre a su paso, utilizándolas para mejorar sus posibilidades de supervivencia. Si un obstáculo bloquea su camino, intentará destruirlo y continuar avanzando. Sus característicos ojos verdes brillantes permanecen visibles incluso en la oscuridad absoluta. Durante la Noche Verde, su comportamiento se vuelve mucho más agresivo: abandona cualquier intención de retirarse, se concentra por completo en los supervivientes y los persigue con una determinación implacable. Incluso después de ser atacado, puede recordar a su agresor y continuar la persecución durante mucho tiempo. Puede ser domesticado usando un Collar, convirtiéndose en un guardián leal que luchará a tu lado. Al morir, existe una pequeña probabilidad de que su espíritu corrupto permanezca en este mundo bajo una nueva forma.",
@@ -164,6 +168,9 @@
   "1": "Bestiario de infectados"
 }
   },
+  "SubsystemInfectedEggBlockBehavior": {
+    "0": "No se pudo generar la criatura infectada"
+},
   "BestiaryInfectedDescriptionScreen": {
   "1": "Detalles del infectado",
   "2": "Objetos obtenidos:",
