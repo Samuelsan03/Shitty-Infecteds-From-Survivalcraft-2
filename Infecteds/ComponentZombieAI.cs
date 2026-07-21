@@ -16,8 +16,10 @@ namespace Game
 		private ComponentCreature m_componentCreature;
 		private ComponentBody m_componentBody;
 		private ComponentZombieChaseBehavior m_componentChaseBehavior;
+		private ComponentCreatureClothing m_componentCreatureClothing;
 
 		public bool CanUseInventory;
+		public bool CanWearClothing;
 
 		public Vector2 DistanceRange = new Vector2(5f, 100f);
 		public Vector2 DistanceRangeOfThrowable = new Vector2(5f, 15f);
@@ -50,6 +52,11 @@ namespace Game
 		public float CooldownTimer;
 		public float AimTimeTimer;
 
+		private float m_equipTimer;
+		private bool m_isEquipping;
+		private int m_equipSlot;
+		private int m_equipValue;
+
 		private Random m_random = new Random();
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -65,8 +72,10 @@ namespace Game
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentBody = Entity.FindComponent<ComponentBody>(true);
 			m_componentChaseBehavior = Entity.FindComponent<ComponentZombieChaseBehavior>(false);
+			m_componentCreatureClothing = Entity.FindComponent<ComponentCreatureClothing>(false);
 
 			CanUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
+			CanWearClothing = valuesDictionary.GetValue<bool>("CanWearClothing", false);
 
 			if (m_subsystemProjectiles != null)
 			{
@@ -99,6 +108,32 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
+
+			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
+			{
+				if (!m_isEquipping)
+				{
+					int slot = FindClothingSlot();
+					if (slot >= 0)
+					{
+						m_equipSlot = slot;
+						m_equipValue = m_componentMiner.Inventory.GetSlotValue(slot);
+						m_equipTimer = 0.5f;
+						m_isEquipping = true;
+					}
+				}
+				else
+				{
+					m_equipTimer -= m_subsystemTime.GameTimeDelta;
+					if (m_equipTimer <= 0f)
+					{
+						EquipClothing(m_equipSlot, m_equipValue);
+						m_isEquipping = false;
+						m_equipTimer = 0f;
+					}
+				}
+			}
+
 			if (!CanUseInventory)
 				return;
 
@@ -113,6 +148,31 @@ namespace Game
 			{
 				CancelAiming();
 				return;
+			}
+
+			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
+			{
+				if (!m_isEquipping)
+				{
+					int slot = FindClothingSlot();
+					if (slot >= 0)
+					{
+						m_equipSlot = slot;
+						m_equipValue = m_componentMiner.Inventory.GetSlotValue(slot);
+						m_equipTimer = 0.5f;
+						m_isEquipping = true;
+					}
+				}
+				else
+				{
+					m_equipTimer -= m_subsystemTime.GameTimeDelta;
+					if (m_equipTimer <= 0f)
+					{
+						EquipClothing(m_equipSlot, m_equipValue);
+						m_isEquipping = false;
+						m_equipTimer = 0f;
+					}
+				}
 			}
 
 			ComponentCreature target = m_componentChaseBehavior.Target;
@@ -166,6 +226,41 @@ namespace Game
 					CancelAiming();
 				}
 			}
+		}
+
+		private int FindClothingSlot()
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0)
+				{
+					int value = m_componentMiner.Inventory.GetSlotValue(i);
+					int blockId = Terrain.ExtractContents(value);
+					// Usar el bloque de ropa (ClothingBlock.Index = 203)
+					if (blockId == ClothingBlock.Index)
+					{
+						Block block = BlocksManager.Blocks[blockId];
+						if (block.GetClothingData(value) != null)
+							return i;
+					}
+				}
+			}
+			return -1;
+		}
+
+		private void EquipClothing(int slot, int value)
+		{
+			ClothingData data = BlocksManager.Blocks[Terrain.ExtractContents(value)].GetClothingData(value);
+			if (data == null)
+				return;
+
+			if (!m_componentCreatureClothing.CanWearClothing(value))
+				return;
+
+			var currentList = m_componentCreatureClothing.GetClothes(data.Slot);
+			List<int> newList = new List<int>(currentList) { value };
+			m_componentCreatureClothing.SetClothes(data.Slot, newList);
+			m_componentMiner.Inventory.RemoveSlotItems(slot, 1);
 		}
 
 		private void HandleThrowableAttack(IInventory inventory, ComponentCreature target, float distance)
