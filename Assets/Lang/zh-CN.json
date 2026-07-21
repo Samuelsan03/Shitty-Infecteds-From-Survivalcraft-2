@@ -9,7 +9,11 @@
       "InfectedFast1": "快速感染者 I",
       "InfectedFastTamed1": "驯服快速感染者 I",
       "InfectedFast2": "快速感染者 II",
-      "InfectedFastTamed2": "驯服快速感染者 II"
+      "InfectedFastTamed2": "驯服快速感染者 II",
+      "InfectedMuscle1": "感染肌肉 I",
+      "InfectedMuscleTamed1": "已驯服的感染肌肉 I",
+      "InfectedMuscle2": "感染肌肉 II",
+      "InfectedMuscleTamed2": "已驯服的感染肌肉 II"
   },
   "Description": {
     "InfectedNormal1": "自第1波开始出现。这种感染者是瘟疫中最常见的威胁之一，但绝不能低估它。它会不断游荡寻找猎物，能够侦测、追逐并攻击幸存者以及其他生物。它可以长途跋涉追击目标，与附近的感染者协同行动，并在同伴进入战斗时响应求援。它还能拾取沿途发现的武器、工具和衣物，并利用它们提高自己的生存能力。如果障碍物挡住去路，它会尝试将其摧毁并继续前进。它那双发着绿色光芒的眼睛即使在完全黑暗中也清晰可见。在绿色之夜期间，它会变得更加凶残：彻底放弃撤退的念头，将全部注意力集中在幸存者身上，并以毫不松懈的决心持续追杀目标。即使遭到攻击，它也会记住攻击者，并在很长一段时间内持续追击。可以使用项圈将其驯服，使其成为忠诚的守护者，与主人并肩作战。死亡后，它的堕落灵魂有极小概率会以新的形态继续留存在这个世界。",
@@ -164,6 +168,9 @@
   "1": "感染体图鉴"
 }
   },
+  "SubsystemInfectedEggBlockBehavior": {
+    "0": "无法生成感染生物"
+},
   "BestiaryInfectedDescriptionScreen": {
   "1": "感染体详情",
   "2": "掉落物：",
