@@ -159,7 +159,30 @@ namespace Game
 				}
 				else
 				{
-					// Actualizar temporizador
+					// Actualizar temporizadorif (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
+					{
+						if (!m_isEquipping)
+						{
+							int slot = FindClothingSlot();
+							if (slot >= 0)
+							{
+								m_equipSlot = slot;
+								m_equipValue = m_componentMiner.Inventory.GetSlotValue(slot);
+								m_equipTimer = 0.5f;
+								m_isEquipping = true;
+							}
+						}
+						else
+						{
+							m_equipTimer -= m_subsystemTime.GameTimeDelta;
+							if (m_equipTimer <= 0f)
+							{
+								EquipClothing(m_equipSlot, m_equipValue);
+								m_isEquipping = false;
+								m_equipTimer = 0f;
+							}
+						}
+					}
 					m_equipTimer -= m_subsystemTime.GameTimeDelta;
 					if (m_equipTimer <= 0f)
 					{
