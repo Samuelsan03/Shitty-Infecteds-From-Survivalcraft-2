@@ -88,6 +88,15 @@ namespace Game
 			if (attacker == null || attacker.ComponentHealth == null || attacker.ComponentHealth.Health <= 0f)
 				return;
 
+			// CORRECCIÓN: Si el atacante es de la misma manada, ignorar la llamada por completo.
+			// Esto evita que se reproduzcan los sonidos de "Idle" y "Attack" al forzar el estado "Chasing".
+			if (m_componentNewHerdBehavior != null && !string.IsNullOrEmpty(m_componentNewHerdBehavior.HerdName))
+			{
+				ComponentNewHerdBehavior attackerHerd = attacker.Entity.FindComponent<ComponentNewHerdBehavior>();
+				if (attackerHerd != null && attackerHerd.HerdName == m_componentNewHerdBehavior.HerdName)
+					return;
+			}
+
 			Suppressed = false;
 			m_target = attacker;
 			m_nextUpdateTime = 0.0;
