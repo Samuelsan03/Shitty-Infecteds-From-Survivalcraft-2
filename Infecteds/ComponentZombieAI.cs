@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -59,6 +60,47 @@ namespace Game
 
 		private Random m_random = new Random();
 
+		// Cache del resultado para no buscar en el HashSet cada frame
+		private bool? m_cachedUsesNormalAnimation;
+		private string m_cachedEntityName;
+
+		// Lista de criaturas que usan animación normal de apunte (manos levantadas como humano)
+		public static readonly HashSet<string> NormalAnimationCreatures = new HashSet<string>
+		{
+			"GhostNormal"
+            // Agregar más nombres de criaturas aquí según sea necesario
+        };
+
+		/// <summary>
+		/// Verifica si la criatura actual debe usar la animación normal de apunte (manos levantadas).
+		/// Usa el nombre de la ENTIDAD (no del componente) para la comparación.
+		/// </summary>
+		private bool UsesNormalAimAnimation()
+		{
+			// Usar caché para evitar búsquedas repetitivas en el HashSet
+			if (m_cachedUsesNormalAnimation.HasValue)
+			{
+				return m_cachedUsesNormalAnimation.Value;
+			}
+
+			// IMPORTANTE: Usar Entity.ValuesDictionary.DatabaseObject.Name para obtener
+			// el nombre de la CRIATURA, no m_componentCreature.ValuesDictionary que da
+			// el nombre del COMPONENTE (que suele ser "Creature" o vacío)
+			if (Entity?.ValuesDictionary?.DatabaseObject != null)
+			{
+				m_cachedEntityName = Entity.ValuesDictionary.DatabaseObject.Name;
+				m_cachedUsesNormalAnimation = NormalAnimationCreatures.Contains(m_cachedEntityName);
+
+				// Log para debuggear (comentar en producción)
+				// Log.Information($"[ZombieAI] Entity Name: '{m_cachedEntityName}', UsesNormalAnim: {m_cachedUsesNormalAnimation}");
+
+				return m_cachedUsesNormalAnimation.Value;
+			}
+
+			m_cachedUsesNormalAnimation = false;
+			return false;
+		}
+
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
@@ -76,6 +118,9 @@ namespace Game
 
 			CanUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
 			CanWearClothing = valuesDictionary.GetValue<bool>("CanWearClothing", false);
+
+			// Precalcular si usa animación normal (el nombre de entidad no cambia en runtime)
+			_ = UsesNormalAimAnimation();
 
 			if (m_subsystemProjectiles != null)
 			{
@@ -108,7 +153,6 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
-
 			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
 			{
 				if (!m_isEquipping)
@@ -236,7 +280,6 @@ namespace Game
 				{
 					int value = m_componentMiner.Inventory.GetSlotValue(i);
 					int blockId = Terrain.ExtractContents(value);
-					// Usar el bloque de ropa (ClothingBlock.Index = 203)
 					if (blockId == ClothingBlock.Index)
 					{
 						Block block = BlocksManager.Blocks[blockId];
@@ -390,11 +433,21 @@ namespace Game
 			if (AimTimeTimer > 0f)
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
+				// Solo forzar manos quietas si NO es criatura con animación normal
+				if (!UsesNormalAimAnimation())
+				{
+					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+				}
 				AimTimeTimer -= m_subsystemTime.GameTimeDelta;
 			}
 			else
 			{
 				m_componentMiner.Aim(aim, AimState.Completed);
+				// Solo forzar manos quietas si NO es criatura con animación normal
+				if (!UsesNormalAimAnimation())
+				{
+					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+				}
 				CooldownTimer = ThrowableCooldown;
 				AimTimeTimer = ThrowableAimTime;
 			}
@@ -489,7 +542,6 @@ namespace Game
 				int value = inventory.GetSlotValue(i);
 				int contents = Terrain.ExtractContents(value);
 
-				// Mayor prioridad para el mosquete mejorado
 				if (contents == improvedMusketIndex) return i;
 
 				if (contents == musketIndex || contents == crossbowIndex || contents == bowIndex || contents == repeatCrossbowIndex || contents == flameThrowerIndex)
@@ -534,37 +586,18 @@ namespace Game
 			int value = inventory.GetSlotValue(slot);
 			int contents = Terrain.ExtractContents(value);
 
-			int improvedMusketIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>();
-			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
-			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
-			int bowIndex = BlocksManager.GetBlockIndex<BowBlock>();
-			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
-			int flameThrowerIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>();
-
-			if (contents == improvedMusketIndex)
-			{
+			if (contents == BlocksManager.GetBlockIndex<ImprovedMusketBlock>())
 				EnsureImprovedMusketLoaded(inventory, slot, value);
-			}
-			else if (contents == musketIndex)
-			{
+			else if (contents == BlocksManager.GetBlockIndex<MusketBlock>())
 				EnsureMusketLoaded(inventory, slot, value);
-			}
-			else if (contents == flameThrowerIndex)
-			{
+			else if (contents == BlocksManager.GetBlockIndex<FlameThrowerBlock>())
 				EnsureFlameThrowerLoaded(inventory, slot, value);
-			}
-			else if (contents == crossbowIndex)
-			{
+			else if (contents == BlocksManager.GetBlockIndex<CrossbowBlock>())
 				EnsureCrossbowLoaded(inventory, slot, value, distance);
-			}
-			else if (contents == bowIndex)
-			{
+			else if (contents == BlocksManager.GetBlockIndex<BowBlock>())
 				EnsureBowLoaded(inventory, slot, value);
-			}
-			else if (contents == repeatCrossbowIndex)
-			{
+			else if (contents == BlocksManager.GetBlockIndex<RepeatCrossbowBlock>())
 				EnsureRepeatCrossbowLoaded(inventory, slot, value, distance);
-			}
 		}
 
 		private void EnsureImprovedMusketLoaded(IInventory inventory, int slot, int value)
@@ -577,7 +610,6 @@ namespace Game
 			{
 				data = ImprovedMusketBlock.SetAmmoCount(data, 2);
 				int newValue = Terrain.MakeBlockValue(improvedMusketIndex, 0, data);
-
 				inventory.RemoveSlotItems(slot, 1);
 				inventory.AddSlotItems(slot, newValue, 1);
 			}
@@ -602,7 +634,6 @@ namespace Game
 				data = MusketBlock.SetBulletType(data, randomBullet);
 
 				int newValue = Terrain.MakeBlockValue(musketIndex, 0, data);
-
 				inventory.RemoveSlotItems(slot, 1);
 				inventory.AddSlotItems(slot, newValue, 1);
 			}
@@ -615,7 +646,6 @@ namespace Game
 			var state = FlameThrowerBlock.GetLoadState(data);
 			int ammo = FlameThrowerBlock.GetAmmoCount(data);
 
-			// Si está vacío o sin munición, recarga seleccionando un tipo aleatorio (Fuego o Veneno)
 			if (state != FlameThrowerBlock.LoadState.Loaded || ammo == 0)
 			{
 				int selectedBulletType = m_random.Int(0, 1);
@@ -717,10 +747,8 @@ namespace Game
 			{
 				RepeatBoltType selectedBolt;
 
-				// Lógica de distancia de seguridad para virotes explosivos
 				if (distance <= SafeDistanceForExplosives.X)
 				{
-					// DISTANCIA MÍNIMA: No usar explosivo, usar los otros 6 virotes disponibles
 					RepeatBoltType[] normalBolts = new RepeatBoltType[]
 					{
 						RepeatBoltType.RepeatCopperBolt,
@@ -734,12 +762,10 @@ namespace Game
 				}
 				else if (distance >= SafeDistanceForExplosives.Y)
 				{
-					// DISTANCIA MÁXIMA: Usar virote explosivo
 					selectedBolt = RepeatBoltType.RepeatExplosiveBolt;
 				}
 				else
 				{
-					// DISTANCIA INTERMEDIA: Puede usar CUALQUIERA de los 7 virotes
 					RepeatBoltType[] allBolts = new RepeatBoltType[]
 					{
 						RepeatBoltType.RepeatCopperBolt,
@@ -754,12 +780,11 @@ namespace Game
 				}
 
 				data = RepeatCrossbowBlock.SetRepeatBoltType(data, selectedBolt);
-				data = RepeatCrossbowBlock.SetCount(data, 1); // Cargar solo 1 para que dispare de 1 en 1 y varíe
+				data = RepeatCrossbowBlock.SetCount(data, 1);
 				needsReload = true;
 			}
 			else if (boltType == RepeatBoltType.RepeatExplosiveBolt)
 			{
-				// Si por alguna razón ya tiene uno cargado pero se acercó demasiado, cambiarlo
 				if (distance < SafeDistanceForExplosives.X)
 				{
 					RepeatBoltType[] safeBolts = new RepeatBoltType[]
@@ -843,7 +868,11 @@ namespace Game
 			if (AimTimeTimer > 0f)
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
-				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+				// Solo forzar manos quietas si NO es criatura con animación normal
+				if (!UsesNormalAimAnimation())
+				{
+					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+				}
 				AimTimeTimer -= m_subsystemTime.GameTimeDelta;
 			}
 			else
@@ -860,10 +889,13 @@ namespace Game
 				else
 				{
 					m_componentMiner.Aim(aim, AimState.Completed);
-					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+					// Solo forzar manos quietas si NO es criatura con animación normal
+					if (!UsesNormalAimAnimation())
+					{
+						m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+					}
 				}
 
-				// Asignar los tiempos correspondientes según el arma usada
 				if (contents == BlocksManager.GetBlockIndex<ImprovedMusketBlock>())
 				{
 					CooldownTimer = ImprovedMusketCooldown;
@@ -902,7 +934,10 @@ namespace Game
 			for (int i = 0; i < 3; i++)
 			{
 				m_componentMiner.Aim(aim, AimState.Completed);
-				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+				if (!UsesNormalAimAnimation())
+				{
+					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+				}
 			}
 		}
 
@@ -912,6 +947,17 @@ namespace Game
 			CooldownTimer = 0f;
 			Ray3 emptyAim = new Ray3(Vector3.Zero, Vector3.UnitZ);
 			m_componentMiner.Aim(emptyAim, AimState.Cancelled);
+			// Al cancelar, resetear manos según el tipo de criatura
+			if (!UsesNormalAimAnimation())
+			{
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+			}
+			else
+			{
+				// Para criaturas normales, resetear a 0f también al cancelar
+				// para que bajen las manos cuando dejan de apuntar
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+			}
 		}
 
 		private void SwapSlots(IInventory inventory, int slotA, int slotB)
