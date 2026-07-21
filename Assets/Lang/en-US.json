@@ -9,7 +9,11 @@
       "InfectedFast1": "Infected Fast I",
       "InfectedFastTamed1": "Infected Fast Tamed I",
       "InfectedFast2": "Infected Fast II",
-      "InfectedFastTamed2": "Infected Fast Tamed II"
+      "InfectedFastTamed2": "Infected Fast Tamed II",
+      "InfectedMuscle1": "Infected Muscle I",
+      "InfectedMuscleTamed1": "Infected Muscle Tamed I",
+      "InfectedMuscle2": "Infected Muscle II",
+      "InfectedMuscleTamed2": "Infected Muscle Tamed II"
   },
   "Description": {
     "InfectedNormal1": "Appears from Wave 1. This infected is one of the most common threats of the plague, but it should never be underestimated. It constantly roams in search of prey and is capable of detecting, chasing, and attacking both survivors and other creatures. It can travel great distances to reach its target, cooperate with nearby infected, and respond to their calls for help when one of them enters combat. It can pick up weapons, tools, and clothing found along its path, using them to improve its chances of survival. If an obstacle blocks its way, it will attempt to destroy it and continue forward. Its distinctive glowing green eyes remain visible even in complete darkness. During the Green Night, its behavior becomes far more aggressive: it abandons any intention of retreating, focuses entirely on survivors, and pursues them with relentless determination. Even after being attacked, it can remember its aggressor and continue the chase for a long time. It can be tamed using a Collar, becoming a loyal guardian that will fight by your side. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form.",
@@ -159,6 +163,9 @@
   "3": "{ammo}/15 {type}",
   "4": "Fire",
   "5": "Poison"
+},
+"SubsystemInfectedEggBlockBehavior": {
+    "0": "Failed to spawn infected creature"
 },
 "BestiaryInfectedScreen": {
     "1": "Infected Bestiary"
