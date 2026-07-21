@@ -16,7 +16,7 @@ namespace Game
 		public static readonly Dictionary<InfectedEggBlock.InfectedType, string[]> CreatureTemplatesByType = new Dictionary<InfectedEggBlock.InfectedType, string[]>
 		{
 			{
-				InfectedEggBlock.InfectedType.Common, new string[] { "InfectedNormal1", "InfectedNormal2", "InfectedFast1", "InfectedFast2" }
+				InfectedEggBlock.InfectedType.Common, new string[] { "InfectedNormal1", "InfectedNormal2", "InfectedFast1", "InfectedFast2", "InfectedMuscle1", "InfectedMuscle2" }
 			},
 			{
 				InfectedEggBlock.InfectedType.Ghost, new string[] { "GhostNormal" }
@@ -55,7 +55,24 @@ namespace Game
 				}
 				catch (Exception ex)
 				{
-					Log.Error($"Error spawning infected from egg (type: {type}): {ex.Message}");
+					// Log detallado para el desarrollador (igual que el SubsystemEggBlockBehavior original)
+					Log.Error($"Spawning infected creature from egg (type: {type}, template: {creatureTemplate}) error: {ex}");
+
+					// Mensaje GUI para el jugador
+					Projectile projectile = worldItem as Projectile;
+					if (projectile != null)
+					{
+						ComponentCreature owner = projectile.Owner;
+						ComponentGui componentGui = (owner != null) ? owner.Entity.FindComponent<ComponentGui>() : null;
+						if (componentGui != null)
+						{
+							componentGui.DisplaySmallMessage(LanguageControl.Get(new string[]
+							{
+								"SubsystemInfectedEggBlockBehavior",
+								"0"
+							}), Color.White, true, false);
+						}
+					}
 				}
 			}
 
