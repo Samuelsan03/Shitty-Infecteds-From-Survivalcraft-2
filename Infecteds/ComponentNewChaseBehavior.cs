@@ -239,6 +239,17 @@ namespace Game
 
 			if (IsActive && m_target != null)
 			{
+				// CORRECCIÓN: Si el objetivo actual es de la misma manada, cancelar el ataque inmediatamente
+				if (m_componentNewHerdBehavior != null && !string.IsNullOrEmpty(m_componentNewHerdBehavior.HerdName))
+				{
+					ComponentNewHerdBehavior targetHerd = m_target.Entity.FindComponent<ComponentNewHerdBehavior>();
+					if (targetHerd != null && targetHerd.HerdName == m_componentNewHerdBehavior.HerdName)
+					{
+						StopAttack();
+						return;
+					}
+				}
+
 				m_chaseTime -= dt;
 
 				// Mantener chaseTime alto durante Noche Verde si el target es zombie
@@ -254,6 +265,17 @@ namespace Game
 
 				if (m_componentCreatureModel.IsAttackHitMoment)
 				{
+					// CORRECCIÓN: Doble verificación de manada justo antes de infligir daño
+					if (m_componentNewHerdBehavior != null && !string.IsNullOrEmpty(m_componentNewHerdBehavior.HerdName))
+					{
+						ComponentNewHerdBehavior targetHerd = m_target.Entity.FindComponent<ComponentNewHerdBehavior>();
+						if (targetHerd != null && targetHerd.HerdName == m_componentNewHerdBehavior.HerdName)
+						{
+							StopAttack();
+							return;
+						}
+					}
+
 					Vector3 hitPoint;
 					ComponentBody hitBody = GetHitBody(m_target.ComponentBody, out hitPoint);
 					if (hitBody != null)
