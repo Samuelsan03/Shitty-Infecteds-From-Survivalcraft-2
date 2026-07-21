@@ -2,6 +2,23 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="PickableGathererCreature" Description="Allows a creature to automatically collect nearby items of specific categories into its inventory." Guid="5c7ad457-0c45-49af-9ecd-7254d31a564a" InheritanceParent="81a44c6a-c30a-4f53-8d64-0c30aabab8f9">
+  <Parameter Name="Class" Guid="fe39edee-4b09-457c-b0e4-9a38049e6eed" Value="Game.ComponentPickableGathererCreature" Type="string" />
+  <Parameter Name="CanPickUp" Guid="7db15235-fa1b-4437-8ca6-8894c59af81c" Value="false" Type="bool" Description="If true, the creature will automatically pick up nearby items." />
+  <Parameter Name="CategoriesOfInterest" Guid="d1b3c4ba-07cd-4038-ae89-2e0c67955e9a" Value="" Type="string" Description="Comma-separated list of item categories the creature can collect. Leave empty to collect all categories." />
+</ComponentTemplate>
+
+    <ComponentTemplate Name="CreatureClothing" Description="Ropa y armadura para criaturas" Guid="1b35ee7f-f36a-45c5-9793-3c44d9df22e5" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+    <ParameterSet Name="Clothes" Description="Contiene la ropa equipada en cada parte del cuerpo" Guid="8dc3f501-4ede-44fd-878d-acbac7aec454">
+        <Parameter Name="Legs" Description="Ropa equipada en las piernas" Guid="06dd1b9a-1a67-4a42-b7a4-df4a3f23ec8d" Value="" Type="string" />
+        <Parameter Name="Feet" Description="Ropa equipada en los pies" Guid="22b85f6a-a4de-41bb-9109-2d904b738d3f" Value="" Type="string" />
+        <Parameter Name="Torso" Description="Ropa equipada en el torso" Guid="5fb96a5e-aa12-4c64-81f2-547cd8e025ce" Value="" Type="string" />
+        <Parameter Name="Head" Description="Ropa equipada en la cabeza" Guid="22ee7e63-49a9-43dd-94f5-2b1bc8d194dc" Value="" Type="string" />
+    </ParameterSet>
+    <Parameter Name="BaseTextureName" Description="Textura base de la criatura (piel) para composición de ropa" Guid="d4174046-52b3-4312-a725-542d87fee783" Value="" Type="string" />
+    <Parameter Name="Class" Guid="b6059cfb-259d-4a49-b31b-28e53f129660" Value="Game.ComponentCreatureClothing" Type="string" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="Teleport" Description="Permite a la criatura teletransportarse cerca de su objetivo" Guid="6ff6930a-6379-43e1-bac2-1dcca9a87627" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
       <Parameter Name="Class" Guid="bf59c513-ea90-45c5-87fd-6fd89472a88a" Value="Game.Teleport" Type="string" />
       <Parameter Name="TeleportationRange" Description="Distancia a la que si el objetivo se aleja mas de esto, la criatura podra teletransportarse" Guid="df52b802-9b31-43a6-9157-449903b5abed" Value="10" Type="float" />
@@ -52,11 +69,13 @@
 <ComponentTemplate Name="ZombieAI" Description="Inteligencia artificial especial para zombies, permite el uso de armas a distancia desde el inventario" Guid="86e4d4b9-95b6-4513-b87d-c2180cb16289" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Guid="679a1448-f272-4565-b774-6f5a62d0e41f" Value="Game.ComponentZombieAI" Type="string" />
   <Parameter Name="CanUseInventory" Description="Permite al zombie acceder y usar armas de su inventario" Guid="4aafbac5-4b4a-4087-96ec-e2d81461f504" Value="false" Type="bool" />
+  <Parameter Name="CanWearClothing" Description="Permite a la criatura vestirse con la ropa del inventario" Guid="a356ddc4-862e-4115-97c0-482a0a29284a" Value="false" Type="bool" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="DefensiveCreatureAI" Description="Inteligencia artificial defensiva para criaturas" Guid="4f686fb8-0650-4dd9-8281-1247d07a28a7" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Guid="e1bf88cf-66fe-4788-8354-cc09f750a97a" Value="Game.ComponentDefensiveCreatureAI" Type="string" />
   <Parameter Name="CanUseInventory" Description="Permite a la criatura usar armas a distancia del inventario" Guid="20f70221-3d9e-4411-8784-17ce96fc2663" Value="false" Type="bool" />
+  <Parameter Name="CanWearClothing" Description="Permite a la criatura vestirse con la ropa del inventario" Guid="2b0c5426-ad84-4bc8-b7b1-d2b5fa27afcb" Value="false" Type="bool" />
 </ComponentTemplate>
 
 <ComponentTemplate Name="GatherPickableBehavior" Description="Permite a la criatura recolectar objetos del suelo y almacenarlos en su inventario segun las categorias de bloques configuradas" Guid="0177b6c8-11b2-4f86-951f-205d38e8d9c6" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
@@ -127,6 +146,14 @@
 <ComponentTemplate Name="CreatureInventory" Description="Inventario de criatura" Guid="c2f022c9-399e-4e78-855e-bf0d14798f0a" InheritanceParent="81a44c6a-c30a-4f53-8d64-0c30aabab8f9">
   <Parameter Name="SlotsCount" Guid="27114e84-2a73-4e7f-8020-3704c5382b69" Value="16" Type="int" />
   <Parameter Name="Class" Guid="79a26fa1-a37b-420b-a569-c292381e6e0d" Value="Game.ComponentCreatureInventory" Type="string" />
+</ComponentTemplate>
+
+<ComponentTemplate Name="GhostModel" Description="Modelo de fantasma con opacidad" Guid="5c7e173f-2946-4a68-a4be-619d6acfaa9d" InheritanceParent="0566662e-bb24-45f9-84d8-f3c1e5d083df">
+  <Parameter Name="WalkAnimationSpeed" Description="Velocidad de animacion al caminar" Guid="e30f272d-4006-49e3-8532-84dbcf053639" Value="1" Type="float" />
+  <Parameter Name="WalkLegsAngle" Description="Angulo de las piernas al caminar" Guid="284c560a-cd3a-4f4d-965f-b7d23f18420a" Value="0.5" Type="float" />
+  <Parameter Name="WalkBobHeight" Description="Altura del balanceo al caminar" Guid="05ec377e-67a4-44ab-9a4e-9e44a2d81dc9" Value="0.05" Type="float" />
+  <Parameter Name="GhostOpacity" Description="Opacidad del modelo fantasma" Guid="9751def2-6b90-44ae-8817-dd3f1caf83a0" Value="0.5" Type="float" />
+  <Parameter Name="Class" Guid="7ba47296-ca0f-45f5-ad4e-570a10d91718" Value="Game.ComponentGhostModel" Type="string" />
 </ComponentTemplate>
     </Folder>
 
