@@ -23,6 +23,8 @@ namespace Game
 			}
 		}
 
+		public bool CanWearClothing { get; set; } = false;
+
 		public Vector2 AttackDistanceRange = new Vector2(5f, 100f);
 		public Vector2 ThrowableObjectThrowingDistance = new Vector2(5f, 15f);
 
@@ -59,7 +61,10 @@ namespace Game
 
 		private static readonly HashSet<string> m_noArmMovementCreatures = new HashSet<string>
 		{
-			"InfectedNormalTamed1"
+			"InfectedNormalTamed1",
+			"InfectedNormalTamed2",
+			"InfectedMuscleTamed1",
+			"InfectedMuscleTamed2"
 		};
 
 		private bool m_canUseInventory;
@@ -67,6 +72,11 @@ namespace Game
 		private float m_cooldownTimer;
 		private bool m_isAiming;
 		private bool m_isThrowing;
+		private float m_equipTimer;
+		private bool m_isEquipping;
+		private int m_equipSlot;
+		private int m_equipValue;
+		private ComponentCreatureClothing m_componentCreatureClothing;
 		private ComponentCreature m_componentCreature;
 		private ComponentMiner m_componentMiner;
 		private ComponentPathfinding m_componentPathfinding;
@@ -116,9 +126,11 @@ namespace Game
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			m_canUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory");
+			CanWearClothing = valuesDictionary.GetValue<bool>("CanWearClothing", false);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>();
+			m_componentCreatureClothing = Entity.FindComponent<ComponentCreatureClothing>(false);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
 			m_subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true);
@@ -130,6 +142,36 @@ namespace Game
 
 		public void Update(float dt)
 		{
+			// ---- EQUIPAMIENTO DE ROPA (independiente de CanUseInventory) ----
+			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
+			{
+				if (!m_isEquipping)
+				{
+					// Buscar una prenda en el inventario de la criatura
+					int slot = FindClothingSlot();
+					if (slot >= 0)
+					{
+						m_equipSlot = slot;
+						m_equipValue = m_componentMiner.Inventory.GetSlotValue(slot);
+						m_equipTimer = 0.5f;      // 0,5 segundos de retardo
+						m_isEquipping = true;
+					}
+				}
+				else
+				{
+					// Actualizar temporizador
+					m_equipTimer -= m_subsystemTime.GameTimeDelta;
+					if (m_equipTimer <= 0f)
+					{
+						// Equipar la prenda
+						EquipClothing(m_equipSlot, m_equipValue);
+						// Limpiar estado
+						m_isEquipping = false;
+						m_equipTimer = 0f;
+					}
+				}
+			}
+
 			if (!m_canUseInventory || m_componentMiner.Inventory == null) return;
 
 			ComponentNewChaseBehavior chaseBehavior = m_componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
@@ -214,6 +256,50 @@ namespace Game
 			{
 				CancelAim();
 			}
+		}
+
+		private int FindClothingSlot()
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0)
+				{
+					int value = m_componentMiner.Inventory.GetSlotValue(i);
+					int blockId = Terrain.ExtractContents(value);
+
+					// Usar ClothingBlock.Index (203) para identificar ropa
+					if (blockId == ClothingBlock.Index)
+					{
+						// Verificar que tenga datos de ropa válidos
+						Block block = BlocksManager.Blocks[blockId];
+						if (block.GetClothingData(value) != null)
+						{
+							return i;
+						}
+					}
+				}
+			}
+			return -1;
+		}
+		private void EquipClothing(int slot, int value)
+		{
+			ClothingData data = BlocksManager.Blocks[Terrain.ExtractContents(value)].GetClothingData(value);
+			if (data == null)
+				return;
+
+			// Verificar si la criatura puede llevar esa prenda (capa, etc.)
+			if (!m_componentCreatureClothing.CanWearClothing(value))
+				return;
+
+			// Obtener la lista actual de ropa en el slot correspondiente
+			var currentList = m_componentCreatureClothing.GetClothes(data.Slot);
+			List<int> newList = new List<int>(currentList) { value };
+
+			// Aplicar la nueva lista (esto actualiza el modelo, estadísticas, etc.)
+			m_componentCreatureClothing.SetClothes(data.Slot, newList);
+
+			// Eliminar la prenda del inventario de objetos
+			m_componentMiner.Inventory.RemoveSlotItems(slot, 1);
 		}
 
 		private bool HasClearLineOfSight(Vector3 from, Vector3 to, ComponentCreature target)
