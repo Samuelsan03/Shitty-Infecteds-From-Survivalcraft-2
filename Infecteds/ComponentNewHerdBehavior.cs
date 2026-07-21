@@ -29,6 +29,14 @@ namespace Game
 			if (HerdName == "player" && target.Entity.FindComponent<ComponentPlayer>() != null)
 				return;
 
+			// CORRECCIÓN: Si el atacante es de la misma manada que nosotros, ignorar la llamada (evita friendly-fire en cadena)
+			if (!string.IsNullOrEmpty(HerdName))
+			{
+				ComponentNewHerdBehavior attackerHerd = target.Entity.FindComponent<ComponentNewHerdBehavior>();
+				if (attackerHerd != null && attackerHerd.HerdName == HerdName)
+					return;
+			}
+
 			Vector3 position = target.ComponentBody.Position;
 			// CORREGIDO: Aumentado rango de 256 a 1600 (40 bloques) para mejor respuesta
 			float rangeSquared = 1600f;
