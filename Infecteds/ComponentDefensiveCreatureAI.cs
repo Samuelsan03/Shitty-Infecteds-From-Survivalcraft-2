@@ -220,20 +220,36 @@ namespace Game
 			if (!m_canUseInventory || m_componentMiner.Inventory == null) return;
 
 			ComponentNewChaseBehavior chaseBehavior = m_componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
-			if (chaseBehavior == null || chaseBehavior.Target == null || chaseBehavior.m_chaseTime <= 0f) return;
+			if (chaseBehavior == null || chaseBehavior.Target == null || chaseBehavior.m_chaseTime <= 0f)
+			{
+				// Detener la montura cuando termina la persecución
+				if (m_componentRider != null && m_componentRider.Mount != null)
+				{
+					StopMount();
+				}
+				return;
+			}
 
 			ComponentCreature target = chaseBehavior.Target;
-			if (target.ComponentHealth.Health <= 0f) return;
+			if (target.ComponentHealth.Health <= 0f)
+			{
+				// Detener la montura cuando el objetivo muere (la persecución se va a cancelar)
+				if (m_componentRider != null && m_componentRider.Mount != null)
+				{
+					StopMount();
+				}
+				return;
+			}
 
 			bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
 
-			// NUEVO: Si está montado, el pathfinding del jinete no hace mover a la montura, así que lo detenemos
+			// Si está montado, el pathfinding del jinete no hace mover a la montura, así que lo detenemos
 			if (isMounted && m_componentPathfinding != null)
 			{
 				m_componentPathfinding.Stop();
 			}
 
-			// NUEVO: Usar la posición real de la montura para calcular distancias si está montado
+			// Usar la posición real de la montura para calcular distancias si está montado
 			Vector3 myPosition = isMounted ? m_componentRider.Mount.ComponentBody.Position : m_componentCreature.ComponentBody.Position;
 			float distance = Vector3.Distance(myPosition, target.ComponentBody.Position);
 
@@ -260,7 +276,7 @@ namespace Game
 					if (!isBehind && hasLOS)
 					{
 						HandleThrowableAttack(target, throwableSlot);
-						if (isMounted) PilotMount(target); // NUEVO
+						if (isMounted) PilotMount(target);
 						return;
 					}
 					else
@@ -271,7 +287,6 @@ namespace Game
 							m_isThrowing = false;
 						}
 
-						// NUEVO: Manejar la montura en lugar del pathfinding
 						if (isMounted) PilotMount(target);
 						else MoveToGetClearLineOfSight(target);
 						return;
@@ -295,25 +310,24 @@ namespace Game
 					{
 						CancelAim();
 						m_componentMiner.Inventory.ActiveSlotIndex = meleeSlot;
-						if (isMounted) StopMount(); // NUEVO: Frenar la montura al atacar cuerpo a cuerpo
+						if (isMounted) StopMount();
 					}
 					else
 					{
 						HandleRangedAttack(target, distance);
-						if (isMounted) PilotMount(target); // NUEVO
+						if (isMounted) PilotMount(target);
 					}
 				}
 				else
 				{
 					HandleRangedAttack(target, distance);
-					if (isMounted) PilotMount(target); // NUEVO
+					if (isMounted) PilotMount(target);
 				}
 			}
 			else
 			{
 				CancelAim();
 
-				// NUEVO: Si está montado y muy lejos, manejar la montura (ya que ComponentNewChaseBehavior no controla monturas)
 				if (isMounted) PilotMount(target);
 			}
 		}
@@ -323,9 +337,21 @@ namespace Game
 		{
 			if (m_componentRider != null && m_componentRider.Mount != null)
 			{
+				// Usar el pathfinding de la montura para ordenar la detención del movimiento
+				ComponentPathfinding mountPathfinding = m_componentRider.Mount.Entity.FindComponent<ComponentPathfinding>();
+				if (mountPathfinding != null)
+				{
+					mountPathfinding.Stop();
+				}
+
 				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 				if (steedBehavior != null)
 				{
+					// Forzar la detención inmediata. El índice 1 en m_speedLevels es 0f.
+					// Esto es necesario porque el estado "Steed" controla la locomoción directamente.
+					steedBehavior.m_speedLevel = 1;
+					steedBehavior.m_speedChangeFactor = 100f; // Factor alto para que llegue a 0 instantáneamente
+
 					steedBehavior.SpeedOrder = 0;
 					steedBehavior.TurnOrder = 0f;
 					steedBehavior.JumpOrder = 0f;
@@ -338,34 +364,28 @@ namespace Game
 		/// </summary>
 		private void UpdateMountingBehavior(float dt)
 		{
-			// Si no puede montar, no hacer nada
 			if (!CanItBeMounted)
 			{
 				CurrentMountState = MountState.None;
 				return;
 			}
 
-			// Si no tiene componente Rider, no puede montar
 			if (m_componentRider == null)
 			{
 				CurrentMountState = MountState.None;
 				return;
 			}
 
-			// Verificar estado actual
 			switch (CurrentMountState)
 			{
 				case MountState.None:
-					// Si puede montar pero está en None, cambiar a Searching
 					CurrentMountState = MountState.Searching;
 					break;
 
 				case MountState.Searching:
-					// Buscar una montura cercana
 					ComponentMount nearestMount = FindNearestMountableCreature();
 					if (nearestMount != null)
 					{
-						// Montarse inmediatamente
 						m_componentRider.StartMounting(nearestMount);
 						m_currentMount = nearestMount;
 						CurrentMountState = MountState.Mounting;
@@ -373,29 +393,36 @@ namespace Game
 					break;
 
 				case MountState.Mounting:
-					// Esperar a que termine la animación de montar
 					if (m_componentRider.Mount != null)
 					{
 						CurrentMountState = MountState.Mounted;
 					}
 					else
 					{
-						// Si por alguna razón no se montó, volver a buscar
 						CurrentMountState = MountState.Searching;
 					}
 					break;
 
 				case MountState.Mounted:
-					// Verificar si todavía está montado
 					if (m_componentRider.Mount == null)
 					{
 						m_currentMount = null;
 						CurrentMountState = MountState.Searching;
 					}
+					else
+					{
+						// CORRECCIÓN: Si la montura muere mientras está montada, desmontar de inmediato
+						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
+						if (mountHealth != null && mountHealth.Health <= 0f)
+						{
+							m_componentRider.StartDismounting();
+							m_currentMount = null;
+							CurrentMountState = MountState.Dismounting;
+						}
+					}
 					break;
 
 				case MountState.Dismounting:
-					// Esperar a que termine de desmontarse
 					if (m_componentRider.Mount == null)
 					{
 						m_currentMount = null;
@@ -423,24 +450,24 @@ namespace Game
 
 			foreach (ComponentBody body in m_nearbyBodies)
 			{
-				// No considerar el propio cuerpo
 				if (body.Entity == Entity)
 					continue;
 
-				// Verificar si es una criatura montable
 				if (!IsMountableCreature(body.Entity))
 					continue;
 
-				// Buscar el componente Mount
 				ComponentMount mount = body.Entity.FindComponent<ComponentMount>();
 				if (mount == null)
 					continue;
 
-				// Verificar que no tenga ya un jinete
 				if (mount.Rider != null)
 					continue;
 
-				// Calcular distancia real (incluyendo Y)
+				// CORRECCIÓN: No intentar montar si la criatura está muerta
+				ComponentHealth mountHealth = body.Entity.FindComponent<ComponentHealth>();
+				if (mountHealth == null || mountHealth.Health <= 0f)
+					continue;
+
 				float distanceSquared = Vector3.DistanceSquared(
 					m_componentCreature.ComponentBody.Position,
 					body.Position);
