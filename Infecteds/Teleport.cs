@@ -26,16 +26,17 @@ namespace Game
 		private Vector3 m_realTargetPosition;
 		private ComponentCreature m_teleportTarget;
 		private Random m_random;
-		private DynamicArray<ComponentBody> m_componentBodies = new DynamicArray<ComponentBody>();
 
 		private SubsystemTime m_subsystemTime;
 		private SubsystemAudio m_subsystemAudio;
 		private SubsystemParticles m_subsystemParticles;
 		private SubsystemTerrain m_subsystemTerrain;
-		private SubsystemBodies m_subsystemBodies;
 		private ComponentCreature m_componentCreature;
 		private ComponentBody m_componentBody;
 		private ComponentNewChaseBehavior m_componentNewChaseBehavior;
+
+		// NUEVO: Referencia para verificar si está montado
+		private ComponentRider m_componentRider;
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
@@ -45,10 +46,10 @@ namespace Game
 			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
 			m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
-			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentBody = m_componentCreature.ComponentBody;
 			m_componentNewChaseBehavior = Entity.FindComponent<ComponentNewChaseBehavior>(true);
+			m_componentRider = Entity.FindComponent<ComponentRider>(false); // NUEVO
 
 			m_teleportationRange = valuesDictionary.GetValue<float>("TeleportationRange");
 			m_probabilityOfTeleporting = valuesDictionary.GetValue<float>("ProbabilityOfTeleporting");
@@ -81,70 +82,44 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Busca un target válido que esté FUERA del rango de teletransporte.
-		/// Retorna null si no hay ningún target fuera del rango.
-		/// </summary>
-		private ComponentCreature FindTeleportTarget()
-		{
-			Vector3 myPosition = m_componentBody.Position;
-			float searchRadius = m_teleportationRange * 3f;
-
-			m_componentBodies.Clear();
-			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(myPosition.X, myPosition.Z), searchRadius, m_componentBodies);
-
-			ComponentCreature bestTarget = null;
-			float bestDistance = float.MaxValue;
-
-			for (int i = 0; i < m_componentBodies.Count; i++)
-			{
-				ComponentCreature creature = m_componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
-
-				// Filtros básicos
-				if (creature == null)
-					continue;
-				if (creature == m_componentCreature)
-					continue;
-				if (!creature.Entity.IsAddedToProject)
-					continue;
-				if (creature.ComponentHealth == null || creature.ComponentHealth.Health <= 0f)
-					continue;
-
-				float distance = Vector3.Distance(myPosition, creature.ComponentBody.Position);
-
-				// FILTRO PRINCIPAL: Solo nos interesan los que están FUERA del rango
-				// Si distancia es 14 y rango es 15 -> NO es candidato (14 no es > 15)
-				// Si distancia es 16 y rango es 15 -> ES candidato (16 es > 15)
-				if (distance > m_teleportationRange && distance < bestDistance)
-				{
-					bestDistance = distance;
-					bestTarget = creature;
-				}
-			}
-
-			return bestTarget;
-		}
-
 		private void HandleIdleState()
 		{
-			// No hacer nada si estamos muertos o en cooldown
+			// No hacer nada si estamos muertos
 			if (m_componentCreature.ComponentHealth == null || m_componentCreature.ComponentHealth.Health <= 0f)
 				return;
+
+			// No hacer nada si estamos en cooldown
 			if (m_teleportCooldownTimer > 0f)
 				return;
 
-			// Buscar un target que esté FUERA del rango
-			// Si todos los targets están dentro del rango, esto retorna null
-			ComponentCreature target = FindTeleportTarget();
-			if (target == null)
+			// NUEVO: Si está montado, cancelar el teletransporte y esperar a que se desmonte
+			if (m_componentRider != null && m_componentRider.Mount != null)
 				return;
 
-			// Si llegamos aquí, el target está garantizado a estar fuera del rango
+			// OBTENER EL TARGET ACTUAL DEL CHASE BEHAVIOR
+			ComponentCreature chaseTarget = m_componentNewChaseBehavior.Target;
+
+			// Si NO hay target (está inactivo), NO teletransportarse
+			if (chaseTarget == null)
+				return;
+
+			// Verificar que el target siga vivo
+			if (chaseTarget.ComponentHealth == null || chaseTarget.ComponentHealth.Health <= 0f)
+				return;
+
+			// Calcular distancia al target que estamos persiguiendo
+			float distanceToTarget = Vector3.Distance(m_componentBody.Position, chaseTarget.ComponentBody.Position);
+
+			// Si el target está DENTRO del rango, NO teletransportarse
+			if (distanceToTarget <= m_teleportationRange)
+				return;
+
+			// Si llegamos aquí: está persiguiendo + el target está lejos
 			// Solo falta verificar la probabilidad
 			if (m_random.Float(0f, 1f) < m_probabilityOfTeleporting)
 			{
-				m_teleportTarget = target;
-				StartDisappearing(target.ComponentBody.Position);
+				m_teleportTarget = chaseTarget;
+				StartDisappearing(chaseTarget.ComponentBody.Position);
 			}
 		}
 
@@ -160,7 +135,7 @@ namespace Game
 
 			// Calcular posición de aparición cerca del target
 			Vector2 randomDirection = m_random.Vector2();
-			float randomDistance = m_random.Float(2f, 4f); // Aparecer cerca, no a distancia variable
+			float randomDistance = m_random.Float(2f, 4f);
 
 			m_realTargetPosition = new Vector3(
 				targetPosition.X + randomDirection.X * randomDistance,
@@ -184,6 +159,18 @@ namespace Game
 
 		private void HandleDisappearingState(float dt)
 		{
+			// NUEVO: Prevención de bugs. Si por alguna razón se monta mientras desaparece, cancelar y reaparecer inmediatamente
+			if (m_componentRider != null && m_componentRider.Mount != null)
+			{
+				m_componentBody.Position = m_realTargetPosition;
+				m_componentBody.Velocity = Vector3.Zero;
+				m_componentBody.IsGravityEnabled = true;
+				m_componentBody.TerrainCollidable = true;
+				m_componentBody.BodyCollidable = true;
+				m_currentState = TeleportState.Idle;
+				return;
+			}
+
 			m_missingTimer -= dt;
 			if (m_missingTimer <= 0f)
 			{
