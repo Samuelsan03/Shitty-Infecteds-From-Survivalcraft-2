@@ -2,6 +2,10 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="ImprovedFlyAwayBehavior" Description="Mejora del comportamiento de vuelo que no escapa" Guid="aeefb800-256f-4f15-a20a-cb5f98292c85" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+          <Parameter Name="Class" Guid="e0ac7149-2220-4d3d-8ee2-8f5de5a22aeb" Value="Game.ComponentImprovedFlyAwayBehavior" Type="string" />
+        </ComponentTemplate>
+
     <ComponentTemplate Name="Healing" Description="Habilidad de curación para miembros de la manada y aliados" Guid="db5a4c78-6617-439c-af6b-6093637a40a0" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Guid="6d607b17-9f7c-4893-8aa4-fd893df4f403" Value="Game.Healing" Type="string" />
   <Parameter Name="ProbabilityOfCuring" Description="Probabilidad de realizar la curación" Guid="9b024886-3f79-4d15-a62a-ea5a06b85887" Value="1" Type="float" />
