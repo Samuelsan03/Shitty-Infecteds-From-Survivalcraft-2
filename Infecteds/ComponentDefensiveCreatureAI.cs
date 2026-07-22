@@ -7,9 +7,25 @@ using static Game.RepeatBoltBlock;
 
 namespace Game
 {
+
 	public class ComponentDefensiveCreatureAI : Component, IUpdateable
 	{
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
+
+		/// Lista de criaturas montables que la IA puede usar.
+		private static readonly HashSet<string> MountableCreatures = new HashSet<string>
+		{
+			"Horse_Bay_Saddled",
+			"Horse_White_Saddled",
+			"Horse_Palomino_Saddled",
+			"Horse_Black_Saddled",
+			"Camel_Saddled",
+			"Horse_Chestnut_Saddled",
+			"Donkey_Saddled"
+            // Agregar más criaturas montables aquí...
+        };
+		/// Distancia máxima para detectar y montar una criatura.
+		public const float MountDetectionRange = 2.5f;
 
 		public bool CanUseInventory
 		{
@@ -22,6 +38,18 @@ namespace Game
 				m_canUseInventory = value;
 			}
 		}
+		public enum MountState
+		{
+			None,
+			Searching,
+			Mounting,
+			Mounted,
+			Dismounting
+		}
+		/// Indica si la IA puede montarse en criaturas montables.
+		public bool CanItBeMounted { get; private set; }
+		/// Estado actual de montado de la IA.
+		public MountState CurrentMountState { get; private set; } = MountState.None;
 
 		public bool CanWearClothing { get; set; } = false;
 
@@ -86,7 +114,22 @@ namespace Game
 		private SubsystemTerrain m_subsystemTerrain;
 		private SubsystemBodies m_subsystemBodies;
 
+		// Componentes para montura
+		private ComponentRider m_componentRider;
+		private ComponentMount m_currentMount;
+
 		private Random m_random;
+		private DynamicArray<ComponentBody> m_nearbyBodies = new DynamicArray<ComponentBody>();
+
+		/// <summary>
+		/// Verifica si la IA está actualmente montada en una criatura.
+		/// </summary>
+		public bool IsMounted => CurrentMountState == MountState.Mounted;
+
+		/// <summary>
+		/// Obtiene la montura actual si está montado.
+		/// </summary>
+		public ComponentMount CurrentMount => m_currentMount;
 
 		private bool ShouldSkipArmMovementForRanged()
 		{
@@ -126,11 +169,13 @@ namespace Game
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			m_canUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory");
+			CanItBeMounted = valuesDictionary.GetValue<bool>("CanItBeMounted", false);
 			CanWearClothing = valuesDictionary.GetValue<bool>("CanWearClothing", false);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>();
 			m_componentCreatureClothing = Entity.FindComponent<ComponentCreatureClothing>(false);
+			m_componentRider = Entity.FindComponent<ComponentRider>(false);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
 			m_subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true);
@@ -138,57 +183,36 @@ namespace Game
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 
 			m_random = new Random();
+
+			// Establecer estado inicial basado en si puede montar
+			CurrentMountState = CanItBeMounted ? MountState.Searching : MountState.None;
 		}
 
 		public void Update(float dt)
 		{
+			// ---- LÓGICA DE MONTURA ----
+			UpdateMountingBehavior(dt);
+
 			// ---- EQUIPAMIENTO DE ROPA (independiente de CanUseInventory) ----
 			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
 			{
 				if (!m_isEquipping)
 				{
-					// Buscar una prenda en el inventario de la criatura
 					int slot = FindClothingSlot();
 					if (slot >= 0)
 					{
 						m_equipSlot = slot;
 						m_equipValue = m_componentMiner.Inventory.GetSlotValue(slot);
-						m_equipTimer = 0.5f;      // 0,5 segundos de retardo
+						m_equipTimer = 0.5f;
 						m_isEquipping = true;
 					}
 				}
 				else
 				{
-					// Actualizar temporizadorif (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
-					{
-						if (!m_isEquipping)
-						{
-							int slot = FindClothingSlot();
-							if (slot >= 0)
-							{
-								m_equipSlot = slot;
-								m_equipValue = m_componentMiner.Inventory.GetSlotValue(slot);
-								m_equipTimer = 0.5f;
-								m_isEquipping = true;
-							}
-						}
-						else
-						{
-							m_equipTimer -= m_subsystemTime.GameTimeDelta;
-							if (m_equipTimer <= 0f)
-							{
-								EquipClothing(m_equipSlot, m_equipValue);
-								m_isEquipping = false;
-								m_equipTimer = 0f;
-							}
-						}
-					}
 					m_equipTimer -= m_subsystemTime.GameTimeDelta;
 					if (m_equipTimer <= 0f)
 					{
-						// Equipar la prenda
 						EquipClothing(m_equipSlot, m_equipValue);
-						// Limpiar estado
 						m_isEquipping = false;
 						m_equipTimer = 0f;
 					}
@@ -281,6 +305,153 @@ namespace Game
 			}
 		}
 
+		/// <summary>
+		/// Actualiza el comportamiento de montura de la IA.
+		/// </summary>
+		private void UpdateMountingBehavior(float dt)
+		{
+			// Si no puede montar, no hacer nada
+			if (!CanItBeMounted)
+			{
+				CurrentMountState = MountState.None;
+				return;
+			}
+
+			// Si no tiene componente Rider, no puede montar
+			if (m_componentRider == null)
+			{
+				CurrentMountState = MountState.None;
+				return;
+			}
+
+			// Verificar estado actual
+			switch (CurrentMountState)
+			{
+				case MountState.None:
+					// Si puede montar pero está en None, cambiar a Searching
+					CurrentMountState = MountState.Searching;
+					break;
+
+				case MountState.Searching:
+					// Buscar una montura cercana
+					ComponentMount nearestMount = FindNearestMountableCreature();
+					if (nearestMount != null)
+					{
+						// Montarse inmediatamente
+						m_componentRider.StartMounting(nearestMount);
+						m_currentMount = nearestMount;
+						CurrentMountState = MountState.Mounting;
+					}
+					break;
+
+				case MountState.Mounting:
+					// Esperar a que termine la animación de montar
+					if (m_componentRider.Mount != null)
+					{
+						CurrentMountState = MountState.Mounted;
+					}
+					else
+					{
+						// Si por alguna razón no se montó, volver a buscar
+						CurrentMountState = MountState.Searching;
+					}
+					break;
+
+				case MountState.Mounted:
+					// Verificar si todavía está montado
+					if (m_componentRider.Mount == null)
+					{
+						m_currentMount = null;
+						CurrentMountState = MountState.Searching;
+					}
+					break;
+
+				case MountState.Dismounting:
+					// Esperar a que termine de desmontarse
+					if (m_componentRider.Mount == null)
+					{
+						m_currentMount = null;
+						CurrentMountState = MountState.Searching;
+					}
+					break;
+			}
+		}
+
+		/// <summary>
+		/// Busca la criatura montable más cercana dentro del rango de detección.
+		/// </summary>
+		/// <returns>El ComponentMount de la criatura montable más cercana, o null si no hay ninguna.</returns>
+		private ComponentMount FindNearestMountableCreature()
+		{
+			Vector2 position = new Vector2(
+				m_componentCreature.ComponentBody.Position.X,
+				m_componentCreature.ComponentBody.Position.Z);
+
+			m_nearbyBodies.Clear();
+			m_subsystemBodies.FindBodiesAroundPoint(position, MountDetectionRange, m_nearbyBodies);
+
+			float closestDistance = float.MaxValue;
+			ComponentMount closestMount = null;
+
+			foreach (ComponentBody body in m_nearbyBodies)
+			{
+				// No considerar el propio cuerpo
+				if (body.Entity == Entity)
+					continue;
+
+				// Verificar si es una criatura montable
+				if (!IsMountableCreature(body.Entity))
+					continue;
+
+				// Buscar el componente Mount
+				ComponentMount mount = body.Entity.FindComponent<ComponentMount>();
+				if (mount == null)
+					continue;
+
+				// Verificar que no tenga ya un jinete
+				if (mount.Rider != null)
+					continue;
+
+				// Calcular distancia real (incluyendo Y)
+				float distanceSquared = Vector3.DistanceSquared(
+					m_componentCreature.ComponentBody.Position,
+					body.Position);
+
+				if (distanceSquared < closestDistance)
+				{
+					closestDistance = distanceSquared;
+					closestMount = mount;
+				}
+			}
+
+			return closestMount;
+		}
+
+		/// <summary>
+		/// Verifica si una entidad es una criatura montable según la lista definida.
+		/// </summary>
+		/// <param name="entity">La entidad a verificar.</param>
+		/// <returns>True si es una criatura montable, false en caso contrario.</returns>
+		private bool IsMountableCreature(Entity entity)
+		{
+			if (entity?.ValuesDictionary?.DatabaseObject == null)
+				return false;
+
+			return MountableCreatures.Contains(entity.ValuesDictionary.DatabaseObject.Name);
+		}
+
+		/// <summary>
+		/// Fuerza el desmonte de la criatura actual.
+		/// </summary>
+		public void ForceDismount()
+		{
+			if (CurrentMountState == MountState.Mounted && m_componentRider != null)
+			{
+				m_componentRider.StartDismounting();
+				CurrentMountState = MountState.Dismounting;
+			}
+		}
+
 		private int FindClothingSlot()
 		{
 			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
@@ -290,10 +461,8 @@ namespace Game
 					int value = m_componentMiner.Inventory.GetSlotValue(i);
 					int blockId = Terrain.ExtractContents(value);
 
-					// Usar ClothingBlock.Index (203) para identificar ropa
 					if (blockId == ClothingBlock.Index)
 					{
-						// Verificar que tenga datos de ropa válidos
 						Block block = BlocksManager.Blocks[blockId];
 						if (block.GetClothingData(value) != null)
 						{
@@ -304,24 +473,21 @@ namespace Game
 			}
 			return -1;
 		}
+
 		private void EquipClothing(int slot, int value)
 		{
 			ClothingData data = BlocksManager.Blocks[Terrain.ExtractContents(value)].GetClothingData(value);
 			if (data == null)
 				return;
 
-			// Verificar si la criatura puede llevar esa prenda (capa, etc.)
 			if (!m_componentCreatureClothing.CanWearClothing(value))
 				return;
 
-			// Obtener la lista actual de ropa en el slot correspondiente
 			var currentList = m_componentCreatureClothing.GetClothes(data.Slot);
 			List<int> newList = new List<int>(currentList) { value };
 
-			// Aplicar la nueva lista (esto actualiza el modelo, estadísticas, etc.)
 			m_componentCreatureClothing.SetClothes(data.Slot, newList);
 
-			// Eliminar la prenda del inventario de objetos
 			m_componentMiner.Inventory.RemoveSlotItems(slot, 1);
 		}
 
@@ -441,7 +607,6 @@ namespace Game
 				return;
 			}
 
-			// Prioridad: Mosquete Mejorado > Mosquete > Lanzallamas > Ballesta Repetidora > Ballesta > Arco
 			int improvedMusketSlot = FindImprovedMusketSlot();
 			int musketSlot = improvedMusketSlot >= 0 ? -1 : FindMusketSlot();
 			int flameThrowerSlot = (improvedMusketSlot >= 0 || musketSlot >= 0) ? -1 : FindFlameThrowerSlot();
@@ -862,13 +1027,10 @@ namespace Game
 			var state = FlameThrowerBlock.GetLoadState(data);
 			int ammo = FlameThrowerBlock.GetAmmoCount(data);
 
-			// Si está vacío o sin munición, recarga seleccionando un tipo de munición aleatorio
 			if (state != FlameThrowerBlock.LoadState.Loaded || ammo == 0)
 			{
-				// Seleccionar aleatoriamente entre Fuego (0) y Veneno (1)
 				int selectedBulletType = m_random.Int(0, 1);
 
-				// Aplicar el tipo de munición en los bits 8-9 (según tu SubsystemFlameThrowerBlockBehavior)
 				int newData = data;
 				newData = FlameThrowerBlock.SetLoadState(newData, FlameThrowerBlock.LoadState.Loaded);
 				newData = FlameThrowerBlock.SetAmmoCount(newData, 15);
