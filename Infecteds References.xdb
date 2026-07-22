@@ -2,6 +2,13 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="Healing" Description="Habilidad de curación para miembros de la manada y aliados" Guid="db5a4c78-6617-439c-af6b-6093637a40a0" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="6d607b17-9f7c-4893-8aa4-fd893df4f403" Value="Game.Healing" Type="string" />
+  <Parameter Name="ProbabilityOfCuring" Description="Probabilidad de realizar la curación" Guid="9b024886-3f79-4d15-a62a-ea5a06b85887" Value="1" Type="float" />
+  <Parameter Name="DoesHealAllies" Description="Determina si puede curar a sus aliados y miembros de la manada" Guid="0ab45437-f942-4bdf-9938-6325688a9ca8" Value="false" Type="bool" />
+  <Parameter Name="DoesHealSelf" Description="Determina si puede curarse a sí mismo" Guid="d2b6c2d1-9750-4a55-9d9b-d1611b7f9515" Value="false" Type="bool" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="PickableGathererCreature" Description="Allows a creature to automatically collect nearby items of specific categories into its inventory." Guid="5c7ad457-0c45-49af-9ecd-7254d31a564a" InheritanceParent="81a44c6a-c30a-4f53-8d64-0c30aabab8f9">
   <Parameter Name="Class" Guid="fe39edee-4b09-457c-b0e4-9a38049e6eed" Value="Game.ComponentPickableGathererCreature" Type="string" />
   <Parameter Name="CanPickUp" Guid="7db15235-fa1b-4437-8ca6-8894c59af81c" Value="false" Type="bool" Description="If true, the creature will automatically pick up nearby items." />
@@ -25,6 +32,20 @@
       <Parameter Name="ProbabilityOfTeleporting" Description="Probabilidad de teletransportarse al estar en el rango valido" Guid="78b507ad-2e6a-4909-94d7-ba2aed62c071" Value="0.5" Type="float" />
       <Parameter Name="TimeToTeleportAgain" Description="Tiempo necesario para poder volver a teletransportarse" Guid="b380bae6-5888-4f84-934c-52563afb7f89" Value="10" Type="float" />
       <Parameter Name="TimeMissingBeforeReappearing" Description="Tiempo que tarda en volver a aparecer despues de desaparecer" Guid="765b5711-668d-469c-8a28-e2ea18ebf0a2" Value="1" Type="float" />
+</ComponentTemplate>
+
+<ComponentTemplate Name="CreatureFlu" Description="Afecta a la criatura con gripa, provocando tos y estornudos periodicos que infligen danio" Guid="13c23935-cef8-4284-9177-e890dd9c667d" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+  <Parameter Name="SneezeSoundPath" Description="Ruta del directorio o archivo de sonido para el estornudo" Guid="a0a0d298-1e47-4aad-8917-c0d91d441134" Value="" Type="string" />
+  <Parameter Name="CoughSoundPath" Description="Ruta del directorio o archivo de sonido para la tos" Guid="722d2259-c86f-423f-9243-9eb080c9bf35" Value="" Type="string" />
+  <Parameter Name="FluDuration" Description="Duracion actual de la gripa en la criatura (usado para guardar/cargar el estado)" Guid="af0d8247-c45b-404a-9e5c-04b5f31c3912" Value="0" Type="float" />
+  <Parameter Name="FluIntensity" Description="Intensidad actual de la gripa en la criatura (usado para guardar/cargar el estado)" Guid="b1e9dbd8-b446-4189-ba7d-39d15664b97b" Value="0" Type="float" />
+  <Parameter Name="Class" Guid="cba2ab32-1825-419e-899c-72b6726cf95e" Value="Game.ComponentCreatureFlu" Type="string" />
+</ComponentTemplate>
+
+<ComponentTemplate Name="FluInfectionBehavior" Description="Permite a la criatura infectar con gripa a sus presas al golpearlas" Guid="77629cef-c25f-4a65-87e6-5fcd04b4a8d3" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="FluIntensity" Description="Intensidad de la gripa inyectada a la victima" Guid="25685734-cbb2-4e7f-ba90-374a483fc199" Value="0.8" Type="float" />
+  <Parameter Name="ProbabilityOfFluInfection" Description="Probabilidad de infectar con gripa al golpear" Guid="e1b82505-4892-42c4-8d32-c657e0d7a258" Value="0.5" Type="float" />
+  <Parameter Name="Class" Guid="cd77d9d2-e0f8-42fe-bc18-e80c7c23462b" Value="Game.ComponentFluInfectionBehavior" Type="string" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="InfectedWithPoison" Description="Afecta a la criatura con veneno, reduce su velocidad y la hace vomitar periodicamente" Guid="5a97d777-b5aa-45fc-9442-9f47addf7988" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
