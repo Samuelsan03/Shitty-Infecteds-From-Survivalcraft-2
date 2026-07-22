@@ -81,21 +81,17 @@ namespace Game
 			}
 		}
 
+		/// <summary>
+		/// Busca un target válido que esté FUERA del rango de teletransporte.
+		/// Retorna null si no hay ningún target fuera del rango.
+		/// </summary>
 		private ComponentCreature FindTeleportTarget()
 		{
-			// 1. Primero intentar usar el target actual del chase
-			ComponentCreature chaseTarget = m_componentNewChaseBehavior.Target;
-			if (chaseTarget != null && chaseTarget.ComponentHealth != null && chaseTarget.ComponentHealth.Health > 0f)
-			{
-				return chaseTarget;
-			}
-
-			// 2. Si el chase ya perdió el target, buscarlo nosotros mismos en un radio amplio
-			Vector3 pos = m_componentBody.Position;
+			Vector3 myPosition = m_componentBody.Position;
 			float searchRadius = m_teleportationRange * 3f;
 
 			m_componentBodies.Clear();
-			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(pos.X, pos.Z), searchRadius, m_componentBodies);
+			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(myPosition.X, myPosition.Z), searchRadius, m_componentBodies);
 
 			ComponentCreature bestTarget = null;
 			float bestDistance = float.MaxValue;
@@ -103,14 +99,22 @@ namespace Game
 			for (int i = 0; i < m_componentBodies.Count; i++)
 			{
 				ComponentCreature creature = m_componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
-				if (creature == null || creature == m_componentCreature || !creature.Entity.IsAddedToProject)
+
+				// Filtros básicos
+				if (creature == null)
+					continue;
+				if (creature == m_componentCreature)
+					continue;
+				if (!creature.Entity.IsAddedToProject)
 					continue;
 				if (creature.ComponentHealth == null || creature.ComponentHealth.Health <= 0f)
 					continue;
 
-				float distance = Vector3.Distance(pos, creature.ComponentBody.Position);
+				float distance = Vector3.Distance(myPosition, creature.ComponentBody.Position);
 
-				// Solo nos interesan los que están FUERA del rango de teletransporte
+				// FILTRO PRINCIPAL: Solo nos interesan los que están FUERA del rango
+				// Si distancia es 14 y rango es 15 -> NO es candidato (14 no es > 15)
+				// Si distancia es 16 y rango es 15 -> ES candidato (16 es > 15)
 				if (distance > m_teleportationRange && distance < bestDistance)
 				{
 					bestDistance = distance;
@@ -123,28 +127,24 @@ namespace Game
 
 		private void HandleIdleState()
 		{
+			// No hacer nada si estamos muertos o en cooldown
 			if (m_componentCreature.ComponentHealth == null || m_componentCreature.ComponentHealth.Health <= 0f)
 				return;
+			if (m_teleportCooldownTimer > 0f)
+				return;
 
+			// Buscar un target que esté FUERA del rango
+			// Si todos los targets están dentro del rango, esto retorna null
 			ComponentCreature target = FindTeleportTarget();
 			if (target == null)
 				return;
 
-			Vector3 myPosition = m_componentBody.Position;
-			Vector3 targetPosition = target.ComponentBody.Position;
-
-			float distanceToTarget = Vector3.Distance(myPosition, targetPosition);
-
-			// Si está FUERA del rango configurado, permitir teletransportarse
-			bool isOutOfRange = distanceToTarget > m_teleportationRange;
-
-			if (isOutOfRange && m_teleportCooldownTimer <= 0f)
+			// Si llegamos aquí, el target está garantizado a estar fuera del rango
+			// Solo falta verificar la probabilidad
+			if (m_random.Float(0f, 1f) < m_probabilityOfTeleporting)
 			{
-				if (m_random.Float(0f, 1f) < m_probabilityOfTeleporting)
-				{
-					m_teleportTarget = target;
-					StartDisappearing(targetPosition);
-				}
+				m_teleportTarget = target;
+				StartDisappearing(target.ComponentBody.Position);
 			}
 		}
 
@@ -158,8 +158,9 @@ namespace Game
 			m_subsystemParticles.AddParticleSystem(new TeleportParticleSystem(m_subsystemTerrain, particlePosition, size), false);
 			m_subsystemAudio.PlaySound("Audio/teleport 1", 1f, 0f, particlePosition, 4f, true);
 
+			// Calcular posición de aparición cerca del target
 			Vector2 randomDirection = m_random.Vector2();
-			float randomDistance = m_random.Float(1.5f, m_teleportationRange);
+			float randomDistance = m_random.Float(2f, 4f); // Aparecer cerca, no a distancia variable
 
 			m_realTargetPosition = new Vector3(
 				targetPosition.X + randomDirection.X * randomDistance,
@@ -167,9 +168,7 @@ namespace Game
 				targetPosition.Z + randomDirection.Y * randomDistance
 			);
 
-			// CORRECCIÓN DEL TIEMPO: Mandarlo al cielo en vez de bajo tierra.
-			// Si lo mandabas bajo tierra (Y -= 100), el juego mataba a la criatura por tocar el vacío.
-			// Al morir, el componente se reiniciaba y el enfriamiento volvía a 0, ignorando el XML.
+			// Esconder en el cielo mientras espera
 			Vector3 hiddenPosition = m_realTargetPosition;
 			hiddenPosition.Y += 500f;
 
@@ -207,14 +206,14 @@ namespace Game
 			m_subsystemParticles.AddParticleSystem(new TeleportParticleSystem(m_subsystemTerrain, appearParticlePosition, size), false);
 			m_subsystemAudio.PlaySound("Audio/teleport 2", 1f, 0f, appearParticlePosition, 4f, true);
 
-			// RE-ENGANCHAR EL CHASE
+			// Re-enganchar el chase
 			if (m_teleportTarget != null && m_teleportTarget.ComponentHealth != null && m_teleportTarget.ComponentHealth.Health > 0f)
 			{
 				m_componentNewChaseBehavior.Attack(m_teleportTarget, m_teleportationRange * 2f, 10f, false);
 			}
 
 			m_currentState = TeleportState.Idle;
-			m_teleportCooldownTimer = m_timeToTeleportAgain; // Aquí se aplica estrictamente tu valor del XML
+			m_teleportCooldownTimer = m_timeToTeleportAgain;
 			m_teleportTarget = null;
 		}
 
