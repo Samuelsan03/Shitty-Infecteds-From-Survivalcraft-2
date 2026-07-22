@@ -190,10 +190,8 @@ namespace Game
 
 		public void Update(float dt)
 		{
-			// ---- LÓGICA DE MONTURA ----
 			UpdateMountingBehavior(dt);
 
-			// ---- EQUIPAMIENTO DE ROPA (independiente de CanUseInventory) ----
 			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
 			{
 				if (!m_isEquipping)
@@ -222,13 +220,22 @@ namespace Game
 			if (!m_canUseInventory || m_componentMiner.Inventory == null) return;
 
 			ComponentNewChaseBehavior chaseBehavior = m_componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
-
 			if (chaseBehavior == null || chaseBehavior.Target == null || chaseBehavior.m_chaseTime <= 0f) return;
 
 			ComponentCreature target = chaseBehavior.Target;
 			if (target.ComponentHealth.Health <= 0f) return;
 
-			float distance = Vector3.Distance(m_componentCreature.ComponentBody.Position, target.ComponentBody.Position);
+			bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
+
+			// NUEVO: Si está montado, el pathfinding del jinete no hace mover a la montura, así que lo detenemos
+			if (isMounted && m_componentPathfinding != null)
+			{
+				m_componentPathfinding.Stop();
+			}
+
+			// NUEVO: Usar la posición real de la montura para calcular distancias si está montado
+			Vector3 myPosition = isMounted ? m_componentRider.Mount.ComponentBody.Position : m_componentCreature.ComponentBody.Position;
+			float distance = Vector3.Distance(myPosition, target.ComponentBody.Position);
 
 			int throwableSlot = FindThrowableSlot();
 			if (throwableSlot >= 0 && distance >= ThrowableObjectThrowingDistance.X && distance <= ThrowableObjectThrowingDistance.Y)
@@ -252,11 +259,8 @@ namespace Game
 
 					if (!isBehind && hasLOS)
 					{
-						if (m_componentPathfinding != null)
-						{
-							m_componentPathfinding.Stop();
-						}
 						HandleThrowableAttack(target, throwableSlot);
+						if (isMounted) PilotMount(target); // NUEVO
 						return;
 					}
 					else
@@ -266,7 +270,10 @@ namespace Game
 							CancelAim();
 							m_isThrowing = false;
 						}
-						MoveToGetClearLineOfSight(target);
+
+						// NUEVO: Manejar la montura en lugar del pathfinding
+						if (isMounted) PilotMount(target);
+						else MoveToGetClearLineOfSight(target);
 						return;
 					}
 				}
@@ -288,20 +295,41 @@ namespace Game
 					{
 						CancelAim();
 						m_componentMiner.Inventory.ActiveSlotIndex = meleeSlot;
+						if (isMounted) StopMount(); // NUEVO: Frenar la montura al atacar cuerpo a cuerpo
 					}
 					else
 					{
 						HandleRangedAttack(target, distance);
+						if (isMounted) PilotMount(target); // NUEVO
 					}
 				}
 				else
 				{
 					HandleRangedAttack(target, distance);
+					if (isMounted) PilotMount(target); // NUEVO
 				}
 			}
 			else
 			{
 				CancelAim();
+
+				// NUEVO: Si está montado y muy lejos, manejar la montura (ya que ComponentNewChaseBehavior no controla monturas)
+				if (isMounted) PilotMount(target);
+			}
+		}
+
+		// NUEVO: Método para detener la montura
+		private void StopMount()
+		{
+			if (m_componentRider != null && m_componentRider.Mount != null)
+			{
+				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+				if (steedBehavior != null)
+				{
+					steedBehavior.SpeedOrder = 0;
+					steedBehavior.TurnOrder = 0f;
+					steedBehavior.JumpOrder = 0f;
+				}
 			}
 		}
 
@@ -1165,6 +1193,74 @@ namespace Game
 				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
 				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(BowBlock.Index, 0, data), 1);
 			}
+		}
+
+		// NUEVO: Método para pilotar la montura hacia el objetivo
+		private void PilotMount(ComponentCreature target)
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
+
+			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+			if (steedBehavior == null) return;
+
+			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
+			Vector3 targetPos = target.ComponentBody.Position;
+			Vector3 myPos = mountBody.Position;
+
+			Vector3 dirToTarget = targetPos - myPos;
+			dirToTarget.Y = 0f;
+
+			if (dirToTarget.LengthSquared() < 0.01f)
+			{
+				steedBehavior.TurnOrder = 0f;
+				steedBehavior.SpeedOrder = 0;
+				return;
+			}
+
+			Vector3 forward = mountBody.Matrix.Forward;
+			forward.Y = 0f;
+
+			if (forward.LengthSquared() < 0.001f)
+			{
+				forward = Vector3.UnitZ;
+			}
+
+			// CORRECCIÓN: Usar el método estático Vector3.Normalize() y reasignar la variable
+			forward = Vector3.Normalize(forward);
+			dirToTarget = Vector3.Normalize(dirToTarget);
+
+			// Producto cruzado para saber si el target está a la izquierda (-) o derecha (+)
+			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
+			// Producto punto para saber si estamos mirando hacia el target
+			float dot = Vector3.Dot(forward, dirToTarget);
+
+			// Enviar orden de giro (Clamp entre -0.5 y 0.5 porque así lo lee ComponentSteedBehavior)
+			steedBehavior.TurnOrder = MathUtils.Clamp(cross * 2f, -0.5f, 0.5f);
+
+			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
+
+			// Lógica de avance
+			if (distance > 2f)
+			{
+				if (dot > 0.2f)
+				{
+					steedBehavior.SpeedOrder = 1; // Avanzar
+				}
+				else if (dot < -0.5f)
+				{
+					steedBehavior.SpeedOrder = -1; // Retroceder (raro, pero por si acaso)
+				}
+				else
+				{
+					steedBehavior.SpeedOrder = 0; // Solo girar
+				}
+			}
+			else
+			{
+				steedBehavior.SpeedOrder = 0; // Ya estamos cerca, frenar
+			}
+
+			steedBehavior.JumpOrder = 0f;
 		}
 	}
 }
