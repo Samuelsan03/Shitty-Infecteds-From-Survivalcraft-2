@@ -19,6 +19,48 @@ namespace Game
 		private ComponentZombieChaseBehavior m_componentChaseBehavior;
 		private ComponentCreatureClothing m_componentCreatureClothing;
 
+		/// <summary>
+		/// Lista de criaturas montables que la IA del zombi puede usar.
+		/// </summary>
+		private static readonly HashSet<string> MountableCreatures = new HashSet<string>
+		{
+			"Horse_Bay_Saddled",
+			"Horse_White_Saddled",
+			"Horse_Palomino_Saddled",
+			"Horse_Black_Saddled",
+			"Camel_Saddled",
+			"Horse_Chestnut_Saddled",
+			"Donkey_Saddled"
+            // Agregar más criaturas montables aquí...
+        };
+
+		/// <summary>
+		/// Distancia máxima para detectar y montar una criatura.
+		/// </summary>
+		public const float MountDetectionRange = 2.5f;
+
+		/// <summary>
+		/// Estados posibles de la montura para la IA del zombi.
+		/// </summary>
+		public enum MountState
+		{
+			None,
+			Searching,
+			Mounting,
+			Mounted,
+			Dismounting
+		}
+
+		/// <summary>
+		/// Indica si la IA del zombi puede montarse en criaturas montables.
+		/// </summary>
+		public bool CanItBeMounted;
+
+		/// <summary>
+		/// Estado actual de montado de la IA.
+		/// </summary>
+		public MountState CurrentMountState { get; private set; } = MountState.None;
+
 		public bool CanUseInventory;
 		public bool CanWearClothing;
 
@@ -64,12 +106,27 @@ namespace Game
 		private bool? m_cachedUsesNormalAnimation;
 		private string m_cachedEntityName;
 
+		// Componentes para montura
+		private ComponentRider m_componentRider;
+		private ComponentMount m_currentMount;
+		private DynamicArray<ComponentBody> m_nearbyBodies = new DynamicArray<ComponentBody>();
+
 		// Lista de criaturas que usan animación normal de apunte (manos levantadas como humano)
 		public static readonly HashSet<string> NormalAnimationCreatures = new HashSet<string>
 		{
 			"GhostNormal"
             // Agregar más nombres de criaturas aquí según sea necesario
         };
+
+		/// <summary>
+		/// Verifica si la IA del zombi está actualmente montada en una criatura.
+		/// </summary>
+		public bool IsMounted => CurrentMountState == MountState.Mounted;
+
+		/// <summary>
+		/// Obtiene la montura actual si está montado.
+		/// </summary>
+		public ComponentMount CurrentMount => m_currentMount;
 
 		/// <summary>
 		/// Verifica si la criatura actual debe usar la animación normal de apunte (manos levantadas).
@@ -83,17 +140,10 @@ namespace Game
 				return m_cachedUsesNormalAnimation.Value;
 			}
 
-			// IMPORTANTE: Usar Entity.ValuesDictionary.DatabaseObject.Name para obtener
-			// el nombre de la CRIATURA, no m_componentCreature.ValuesDictionary que da
-			// el nombre del COMPONENTE (que suele ser "Creature" o vacío)
 			if (Entity?.ValuesDictionary?.DatabaseObject != null)
 			{
 				m_cachedEntityName = Entity.ValuesDictionary.DatabaseObject.Name;
 				m_cachedUsesNormalAnimation = NormalAnimationCreatures.Contains(m_cachedEntityName);
-
-				// Log para debuggear (comentar en producción)
-				// Log.Information($"[ZombieAI] Entity Name: '{m_cachedEntityName}', UsesNormalAnim: {m_cachedUsesNormalAnimation}");
-
 				return m_cachedUsesNormalAnimation.Value;
 			}
 
@@ -118,9 +168,22 @@ namespace Game
 
 			CanUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
 			CanWearClothing = valuesDictionary.GetValue<bool>("CanWearClothing", false);
+			CanItBeMounted = valuesDictionary.GetValue<bool>("CanItBeMounted", false);
+
+			// Componente de jinete para montura
+			m_componentRider = Entity.FindComponent<ComponentRider>(false);
+
+			// Si puede montar, asegurar que SubsystemBodies esté disponible
+			if (CanItBeMounted && m_subsystemBodies == null)
+			{
+				m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
+			}
 
 			// Precalcular si usa animación normal (el nombre de entidad no cambia en runtime)
 			_ = UsesNormalAimAnimation();
+
+			// Establecer estado inicial basado en si puede montar
+			CurrentMountState = CanItBeMounted ? MountState.Searching : MountState.None;
 
 			if (m_subsystemProjectiles != null)
 			{
@@ -153,6 +216,9 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
+			// Actualizar comportamiento de montura
+			UpdateMountingBehavior(dt);
+
 			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
 			{
 				if (!m_isEquipping)
@@ -191,6 +257,18 @@ namespace Game
 			if (m_componentChaseBehavior?.Target == null)
 			{
 				CancelAiming();
+				// Detener la montura cuando no hay objetivo
+				if (IsMounted) StopMount();
+				return;
+			}
+
+			ComponentCreature target = m_componentChaseBehavior.Target;
+
+			// Detener la montura cuando el objetivo muere
+			if (target.ComponentHealth.Health <= 0f)
+			{
+				CancelAiming();
+				if (IsMounted) StopMount();
 				return;
 			}
 
@@ -219,8 +297,21 @@ namespace Game
 				}
 			}
 
-			ComponentCreature target = m_componentChaseBehavior.Target;
-			float distance = Vector3.Distance(m_componentBody.Position, target.ComponentBody.Position);
+			bool isMounted = IsMounted;
+
+			// Si está montado, el pathfinding del jinete no hace mover a la montura, así que lo detenemos
+			if (isMounted)
+			{
+				ComponentPathfinding pathfinding = Entity.FindComponent<ComponentPathfinding>(false);
+				if (pathfinding != null)
+				{
+					pathfinding.Stop();
+				}
+			}
+
+			// Usar la posición real de la montura para calcular distancias si está montado
+			Vector3 myPosition = isMounted ? m_componentRider.Mount.ComponentBody.Position : m_componentBody.Position;
+			float distance = Vector3.Distance(myPosition, target.ComponentBody.Position);
 
 			bool hasThrowable = FindThrowableSlot(inventory) >= 0;
 			bool hasRanged = FindRangedWeaponSlot(inventory) >= 0;
@@ -233,25 +324,30 @@ namespace Game
 					if (hasMelee)
 					{
 						HandleCloseRange(inventory, distance);
+						if (isMounted) StopMount();
 					}
 					else
 					{
 						CancelAiming();
+						if (isMounted) StopMount();
 					}
 				}
 				else if (distance <= DistanceRangeOfThrowable.Y)
 				{
 					HandleThrowableAttack(inventory, target, distance);
+					if (isMounted) PilotMount(target);
 				}
 				else
 				{
 					if (hasRanged)
 					{
 						HandleRangedAttack(inventory, target, distance);
+						if (isMounted) PilotMount(target);
 					}
 					else
 					{
 						CancelAiming();
+						if (isMounted) StopMount();
 					}
 				}
 			}
@@ -259,18 +355,297 @@ namespace Game
 			{
 				if (distance < DistanceRange.X)
 				{
-					HandleCloseRange(inventory, distance);
+					if (hasMelee)
+					{
+						HandleCloseRange(inventory, distance);
+						if (isMounted) StopMount();
+					}
+					else
+					{
+						// Sin melee pero con rango, seguir disparando desde la montura
+						if (hasRanged)
+						{
+							HandleCloseRange(inventory, distance);
+							if (isMounted) PilotMount(target);
+						}
+						else
+						{
+							HandleCloseRange(inventory, distance);
+							if (isMounted) StopMount();
+						}
+					}
 				}
 				else if (distance <= DistanceRange.Y)
 				{
 					HandleRangedAttack(inventory, target, distance);
+					if (isMounted) PilotMount(target);
 				}
 				else
 				{
 					CancelAiming();
+					if (isMounted) StopMount();
 				}
 			}
 		}
+
+		#region Mounting Behavior
+
+		/// <summary>
+		/// Actualiza el comportamiento de montura de la IA del zombi.
+		/// </summary>
+		private void UpdateMountingBehavior(float dt)
+		{
+			if (!CanItBeMounted)
+			{
+				CurrentMountState = MountState.None;
+				return;
+			}
+
+			if (m_componentRider == null)
+			{
+				CurrentMountState = MountState.None;
+				return;
+			}
+
+			switch (CurrentMountState)
+			{
+				case MountState.None:
+					CurrentMountState = MountState.Searching;
+					break;
+
+				case MountState.Searching:
+					ComponentMount nearestMount = FindNearestMountableCreature();
+					if (nearestMount != null)
+					{
+						m_componentRider.StartMounting(nearestMount);
+						m_currentMount = nearestMount;
+						CurrentMountState = MountState.Mounting;
+					}
+					break;
+
+				case MountState.Mounting:
+					if (m_componentRider.Mount != null)
+					{
+						CurrentMountState = MountState.Mounted;
+					}
+					else
+					{
+						CurrentMountState = MountState.Searching;
+					}
+					break;
+
+				case MountState.Mounted:
+					if (m_componentRider.Mount == null)
+					{
+						m_currentMount = null;
+						CurrentMountState = MountState.Searching;
+					}
+					else
+					{
+						// Si la montura muere mientras está montada, desmontar de inmediato
+						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
+						if (mountHealth != null && mountHealth.Health <= 0f)
+						{
+							m_componentRider.StartDismounting();
+							m_currentMount = null;
+							CurrentMountState = MountState.Dismounting;
+						}
+					}
+					break;
+
+				case MountState.Dismounting:
+					if (m_componentRider.Mount == null)
+					{
+						m_currentMount = null;
+						CurrentMountState = MountState.Searching;
+					}
+					break;
+			}
+		}
+
+		/// <summary>
+		/// Busca la criatura montable más cercana dentro del rango de detección.
+		/// </summary>
+		/// <returns>El ComponentMount de la criatura montable más cercana, o null si no hay ninguna.</returns>
+		private ComponentMount FindNearestMountableCreature()
+		{
+			if (m_subsystemBodies == null)
+				return null;
+
+			Vector2 position = new Vector2(
+				m_componentBody.Position.X,
+				m_componentBody.Position.Z);
+
+			m_nearbyBodies.Clear();
+			m_subsystemBodies.FindBodiesAroundPoint(position, MountDetectionRange, m_nearbyBodies);
+
+			float closestDistance = float.MaxValue;
+			ComponentMount closestMount = null;
+
+			float maxRangeSquared = MountDetectionRange * MountDetectionRange;
+
+			foreach (ComponentBody body in m_nearbyBodies)
+			{
+				if (body.Entity == Entity)
+					continue;
+
+				if (!IsMountableCreature(body.Entity))
+					continue;
+
+				ComponentMount mount = body.Entity.FindComponent<ComponentMount>();
+				if (mount == null)
+					continue;
+
+				if (mount.Rider != null)
+					continue;
+
+				// No intentar montar si la criatura está muerta
+				ComponentHealth mountHealth = body.Entity.FindComponent<ComponentHealth>();
+				if (mountHealth == null || mountHealth.Health <= 0f)
+					continue;
+
+				float distanceSquared = Vector3.DistanceSquared(
+					m_componentBody.Position,
+					body.Position);
+
+				// Validar que esté estrictamente dentro de MountDetectionRange
+				if (distanceSquared <= maxRangeSquared && distanceSquared < closestDistance)
+				{
+					closestDistance = distanceSquared;
+					closestMount = mount;
+				}
+			}
+
+			return closestMount;
+		}
+
+		/// <summary>
+		/// Verifica si una entidad es una criatura montable según la lista definida.
+		/// </summary>
+		/// <param name="entity">La entidad a verificar.</param>
+		/// <returns>True si es una criatura montable, false en caso contrario.</returns>
+		private bool IsMountableCreature(Entity entity)
+		{
+			if (entity?.ValuesDictionary?.DatabaseObject == null)
+				return false;
+
+			return MountableCreatures.Contains(entity.ValuesDictionary.DatabaseObject.Name);
+		}
+
+		/// <summary>
+		/// Fuerza el desmonte de la criatura actual.
+		/// </summary>
+		public void ForceDismount()
+		{
+			if (CurrentMountState == MountState.Mounted && m_componentRider != null)
+			{
+				m_componentRider.StartDismounting();
+				CurrentMountState = MountState.Dismounting;
+			}
+		}
+
+		/// <summary>
+		/// Detiene el movimiento de la montura.
+		/// </summary>
+		private void StopMount()
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null)
+				return;
+
+			// Usar el pathfinding de la montura para ordenar la detención del movimiento
+			ComponentPathfinding mountPathfinding = m_componentRider.Mount.Entity.FindComponent<ComponentPathfinding>();
+			if (mountPathfinding != null)
+			{
+				mountPathfinding.Stop();
+			}
+
+			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+			if (steedBehavior != null)
+			{
+				// Forzar la detención inmediata
+				steedBehavior.m_speedLevel = 1;
+				steedBehavior.m_speedChangeFactor = 100f;
+
+				steedBehavior.SpeedOrder = 0;
+				steedBehavior.TurnOrder = 0f;
+				steedBehavior.JumpOrder = 0f;
+			}
+		}
+
+		/// <summary>
+		/// Pilotea la montura hacia el objetivo.
+		/// </summary>
+		private void PilotMount(ComponentCreature target)
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null)
+				return;
+
+			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+			if (steedBehavior == null)
+				return;
+
+			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
+			Vector3 targetPos = target.ComponentBody.Position;
+			Vector3 myPos = mountBody.Position;
+
+			Vector3 dirToTarget = targetPos - myPos;
+			dirToTarget.Y = 0f;
+
+			if (dirToTarget.LengthSquared() < 0.01f)
+			{
+				steedBehavior.TurnOrder = 0f;
+				steedBehavior.SpeedOrder = 0;
+				return;
+			}
+
+			Vector3 forward = mountBody.Matrix.Forward;
+			forward.Y = 0f;
+
+			if (forward.LengthSquared() < 0.001f)
+			{
+				forward = Vector3.UnitZ;
+			}
+
+			forward = Vector3.Normalize(forward);
+			dirToTarget = Vector3.Normalize(dirToTarget);
+
+			// Producto cruzado para saber si el target está a la izquierda (-) o derecha (+)
+			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
+			// Producto punto para saber si estamos mirando hacia el target
+			float dot = Vector3.Dot(forward, dirToTarget);
+
+			// Enviar orden de giro (Clamp entre -0.5 y 0.5)
+			steedBehavior.TurnOrder = MathUtils.Clamp(cross * 2f, -0.5f, 0.5f);
+
+			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
+
+			// Lógica de avance
+			if (distance > 2f)
+			{
+				if (dot > 0.2f)
+				{
+					steedBehavior.SpeedOrder = 1; // Avanzar
+				}
+				else if (dot < -0.5f)
+				{
+					steedBehavior.SpeedOrder = -1; // Retroceder
+				}
+				else
+				{
+					steedBehavior.SpeedOrder = 0; // Solo girar
+				}
+			}
+			else
+			{
+				steedBehavior.SpeedOrder = 0; // Ya estamos cerca, frenar
+			}
+
+			steedBehavior.JumpOrder = 0f;
+		}
+
+		#endregion
+
+		#region Clothing
 
 		private int FindClothingSlot()
 		{
@@ -306,6 +681,10 @@ namespace Game
 			m_componentMiner.Inventory.RemoveSlotItems(slot, 1);
 		}
 
+		#endregion
+
+		#region Throwable Attacks
+
 		private void HandleThrowableAttack(IInventory inventory, ComponentCreature target, float distance)
 		{
 			Vector3 dirToTarget = Vector3.Normalize(target.ComponentBody.Position - m_componentBody.Position);
@@ -323,26 +702,30 @@ namespace Game
 				return;
 			}
 
-			ComponentPathfinding pathfinding = Entity.FindComponent<ComponentPathfinding>(false);
-
-			if (pathfinding != null && pathfinding.IsStuck)
+			// Si está montado, no verificar pathfinding propio (la montura se maneja con PilotMount)
+			if (!IsMounted)
 			{
-				CancelAiming();
-				if (pathfinding.Destination == null)
+				ComponentPathfinding pathfinding = Entity.FindComponent<ComponentPathfinding>(false);
+
+				if (pathfinding != null && pathfinding.IsStuck)
 				{
-					Vector3 randomDir = new Vector3(m_random.Float(-1f, 1f), 0f, m_random.Float(-1f, 1f));
-					if (randomDir.LengthSquared() > 0.01f)
+					CancelAiming();
+					if (pathfinding.Destination == null)
 					{
-						randomDir = Vector3.Normalize(randomDir);
-						pathfinding.SetDestination(m_componentBody.Position + randomDir * 3f, 1f, 1f, 0, true, false, false, null);
+						Vector3 randomDir = new Vector3(m_random.Float(-1f, 1f), 0f, m_random.Float(-1f, 1f));
+						if (randomDir.LengthSquared() > 0.01f)
+						{
+							randomDir = Vector3.Normalize(randomDir);
+							pathfinding.SetDestination(m_componentBody.Position + randomDir * 3f, 1f, 1f, 0, true, false, false, null);
+						}
 					}
+					return;
 				}
-				return;
-			}
 
-			if (pathfinding != null && pathfinding.Destination != null)
-			{
-				pathfinding.Stop();
+				if (pathfinding != null && pathfinding.Destination != null)
+				{
+					pathfinding.Stop();
+				}
 			}
 
 			int activeSlot = inventory.ActiveSlotIndex;
@@ -433,7 +816,6 @@ namespace Game
 			if (AimTimeTimer > 0f)
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
-				// Solo forzar manos quietas si NO es criatura con animación normal
 				if (!UsesNormalAimAnimation())
 				{
 					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
@@ -443,7 +825,6 @@ namespace Game
 			else
 			{
 				m_componentMiner.Aim(aim, AimState.Completed);
-				// Solo forzar manos quietas si NO es criatura con animación normal
 				if (!UsesNormalAimAnimation())
 				{
 					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
@@ -452,6 +833,10 @@ namespace Game
 				AimTimeTimer = ThrowableAimTime;
 			}
 		}
+
+		#endregion
+
+		#region Close Range
 
 		private void HandleCloseRange(IInventory inventory, float distance)
 		{
@@ -488,6 +873,10 @@ namespace Game
 
 			CancelAiming();
 		}
+
+		#endregion
+
+		#region Ranged Attacks
 
 		private void HandleRangedAttack(IInventory inventory, ComponentCreature target, float distance)
 		{
@@ -579,6 +968,10 @@ namespace Game
 			}
 			return bestSlot;
 		}
+
+		#endregion
+
+		#region Weapon Loading
 
 		private void EnsureRangedWeaponLoaded(IInventory inventory, float distance)
 		{
@@ -849,6 +1242,10 @@ namespace Game
 			}
 		}
 
+		#endregion
+
+		#region Aiming and Firing
+
 		private void AimAndFire(ComponentCreature target)
 		{
 			CooldownTimer -= m_subsystemTime.GameTimeDelta;
@@ -868,7 +1265,6 @@ namespace Game
 			if (AimTimeTimer > 0f)
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
-				// Solo forzar manos quietas si NO es criatura con animación normal
 				if (!UsesNormalAimAnimation())
 				{
 					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
@@ -889,7 +1285,6 @@ namespace Game
 				else
 				{
 					m_componentMiner.Aim(aim, AimState.Completed);
-					// Solo forzar manos quietas si NO es criatura con animación normal
 					if (!UsesNormalAimAnimation())
 					{
 						m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
@@ -947,18 +1342,12 @@ namespace Game
 			CooldownTimer = 0f;
 			Ray3 emptyAim = new Ray3(Vector3.Zero, Vector3.UnitZ);
 			m_componentMiner.Aim(emptyAim, AimState.Cancelled);
-			// Al cancelar, resetear manos según el tipo de criatura
-			if (!UsesNormalAimAnimation())
-			{
-				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-			}
-			else
-			{
-				// Para criaturas normales, resetear a 0f también al cancelar
-				// para que bajen las manos cuando dejan de apuntar
-				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-			}
+			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 		}
+
+		#endregion
+
+		#region Utility
 
 		private void SwapSlots(IInventory inventory, int slotA, int slotB)
 		{
@@ -975,5 +1364,7 @@ namespace Game
 			inventory.AddSlotItems(slotA, valueB, countB);
 			inventory.AddSlotItems(slotB, valueA, countA);
 		}
+
+		#endregion
 	}
 }
