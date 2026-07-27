@@ -11,9 +11,31 @@ namespace Game
 	/// Soluciona conflictos de gravedad y saltos bruscos en criaturas voladoras.
 	/// PC: Espacio directo para subir, Shift directo para bajar.
 	/// Movil: Sube y baja segun la inclinacion de la camara.
+	/// IA: Usa FlyOrder cuando la montura puede volar, respetando logica de ComponentPilot.
 	/// </summary>
 	public class ComponentSteedBehaviorImproved : ComponentSteedBehavior
 	{
+		// Umbral de altura para que la IA decida despegar
+		private const float c_flyHeightThreshold = 3f;
+
+		// Umbral de distancia horizontal para considerar despegue con poca altura
+		private const float c_flyFarDistanceThreshold = 6f;
+
+		// Umbral de altura para considerar aterrizaje
+		private const float c_landHeightThreshold = 1.5f;
+
+		// Umbral de distancia horizontal para considerar aterrizaje
+		private const float c_landDistanceThreshold = 2f;
+
+		// Velocidad de descenso suave cuando no hay destino (igual que ComponentPilot)
+		private const float c_gentleDescentSpeed = -0.5f;
+
+		// Velocidad de descenso cuando se desmonta
+		private const float c_dismountDescentSpeed = -0.3f;
+
+		// Valor minimo para mantener estado de vuelo activo
+		private const float c_minFlyInput = 0.001f;
+
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			base.Load(valuesDictionary, idToEntityMap);
@@ -31,62 +53,87 @@ namespace Game
 			// Si la criatura no puede volar, salimos (se comportará como un caballo normal)
 			if (!canFly) return;
 
-			float flyInputY = 0f;
 			ComponentRider rider = m_componentMount.Rider;
 
-			if (rider != null)
+			if (rider == null)
 			{
-				ComponentPlayer player = rider.Entity.FindComponent<ComponentPlayer>();
-				if (player != null && player.ComponentInput != null)
+				// SIN JINETE - Si está en el aire, forzar descenso suave para evitar caída libre
+				if (isInAir)
 				{
-					if (player.ComponentInput.IsControlledByTouch)
+					m_componentCreature.ComponentLocomotion.FlyOrder = new Vector3(0f, c_dismountDescentSpeed, 0f);
+					m_componentCreature.ComponentLocomotion.WalkOrder = null;
+					m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
+				}
+				return;
+			}
+
+			ComponentPlayer player = rider.Entity.FindComponent<ComponentPlayer>();
+
+			if (player != null && player.ComponentInput != null)
+			{
+				// LÓGICA PARA JUGADORES (PC y Móvil)
+				ProcessPlayerFlightControls(player, isInAir);
+			}
+			else
+			{
+				// LÓGICA PARA IA/CRIOPTURAS MONTANDO
+				ProcessAIFlightControls(rider, isInAir);
+			}
+		}
+
+		/// <summary>
+		/// Procesa los controles de vuelo para un jugador humano.
+		/// PC: Espacio para subir, Shift para bajar.
+		/// Móvil: La inclinación de la cámara controla la dirección vertical.
+		/// </summary>
+		private void ProcessPlayerFlightControls(ComponentPlayer player, bool isInAir)
+		{
+			float flyInputY = 0f;
+
+			if (player.ComponentInput.IsControlledByTouch)
+			{
+				// LÓGICA MÓVIL: Imitar vuelo creativo con la cámara
+				if (m_speed > 0.1f && player.GameWidget?.ActiveCamera != null)
+				{
+					Vector3 viewDir = player.GameWidget.ActiveCamera.ViewDirection;
+					Vector3 normViewDir = Vector3.Normalize(viewDir);
+
+					flyInputY = normViewDir.Y;
+
+					Matrix m = m_componentCreature.ComponentBody.Matrix;
+					Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
+
+					Vector3 flyDirection = (forward * m_speed) + (Vector3.UnitY * flyInputY * m_speed);
+
+					if (flyDirection.LengthSquared() > 1f)
 					{
-						// LÓGICA MÓVIL: Imitar vuelo creativo con la cámara
-						if (m_speed > 0.1f && player.GameWidget?.ActiveCamera != null)
-						{
-							Vector3 viewDir = player.GameWidget.ActiveCamera.ViewDirection;
-							Vector3 normViewDir = Vector3.Normalize(viewDir);
-
-							flyInputY = normViewDir.Y;
-
-							Matrix m = m_componentCreature.ComponentBody.Matrix;
-							Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
-
-							Vector3 flyDirection = (forward * m_speed) + (Vector3.UnitY * flyInputY * m_speed);
-
-							if (flyDirection.LengthSquared() > 1f)
-							{
-								flyDirection = Vector3.Normalize(flyDirection);
-							}
-
-							m_componentCreature.ComponentLocomotion.FlyOrder = flyDirection;
-							m_componentCreature.ComponentLocomotion.WalkOrder = null;
-							m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
-							return;
-						}
-						else
-						{
-							flyInputY = 0f;
-						}
+						flyDirection = Vector3.Normalize(flyDirection);
 					}
-					else
-					{
-						// LÓGICA PC / GAMEPAD DIRECTA
-						if (Keyboard.IsKeyDown(Key.Space))
-						{
-							flyInputY = 1f; // Espacio = Subir
-						}
-						else if (Keyboard.IsKeyDown(Key.Shift))
-						{
-							flyInputY = -1f; // Shift = Bajar
-						}
-					}
+
+					m_componentCreature.ComponentLocomotion.FlyOrder = flyDirection;
+					m_componentCreature.ComponentLocomotion.WalkOrder = null;
+					m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
+					return;
+				}
+				// Si no se cumple la condición, flyInputY permanece en 0
+			}
+			else
+			{
+				// LÓGICA PC / GAMEPAD DIRECTA
+				if (Keyboard.IsKeyDown(Key.Space))
+				{
+					flyInputY = 1f; // Espacio = Subir
+				}
+				else if (Keyboard.IsKeyDown(Key.Shift))
+				{
+					flyInputY = -1f; // Shift = Bajar
 				}
 			}
 
-			// Lógica de vuelo para mantener la altitud SIEMPRE Y CUANDO HAY UN JINETE
-			// Se activa si está en el aire, o si intenta despegar (flyInputY > 0)
-			if (rider != null && (isInAir || flyInputY > 0.01f))
+			// Determinar si debemos volar: si estamos en el aire o si el jugador quiere subir
+			bool shouldFly = isInAir || flyInputY > 0.01f;
+
+			if (shouldFly)
 			{
 				Matrix m = m_componentCreature.ComponentBody.Matrix;
 				Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
@@ -103,11 +150,11 @@ namespace Game
 
 				// SOLUCIÓN AL DESCENSO AUTOMÁTICO: 
 				// Si el jugador se queda quieto en el aire, flyDirection será Vector3.Zero.
-				// Forzamos un valor mínimo imperceptible (0.001f) para garantizar 
-				// que el motor mantenga el estado de "vuelo activo" y NUNCA re-active la gravedad.
+				// Forzamos un valor mínimo imperceptible para garantizar que el motor 
+				// mantenga el estado de "vuelo activo" y NUNCA re-active la gravedad.
 				if (flyDirection.LengthSquared() <= 0f)
 				{
-					flyDirection = new Vector3(0f, 0.001f, 0f);
+					flyDirection = new Vector3(0f, c_minFlyInput, 0f);
 				}
 
 				m_componentCreature.ComponentLocomotion.FlyOrder = flyDirection;
@@ -116,22 +163,135 @@ namespace Game
 			}
 			else
 			{
-				// CUANDO NO HAY JINETE O ESTÁ EN EL SUELO SIN QUERER VOLAR
+				// En el suelo sin querer volar, usar movimiento normal
+				m_componentCreature.ComponentLocomotion.FlyOrder = null;
+			}
+		}
+
+		/// <summary>
+		/// Procesa los controles de vuelo para IA/Criaturas montando.
+		/// Lee el ComponentPilot del jinete para determinar destino y ajustar vuelo.
+		/// Respeta la lógica original de ComponentPilot para decisiones de vuelo.
+		/// </summary>
+		private void ProcessAIFlightControls(ComponentRider rider, bool isInAir)
+		{
+			ComponentCreature riderCreature = rider.ComponentCreature;
+			if (riderCreature == null) return;
+
+			ComponentPilot riderPilot = rider.Entity.FindComponent<ComponentPilot>();
+			bool shouldFly = false;
+			float verticalInput = 0f;
+
+			if (riderPilot != null && riderPilot.Destination != null)
+			{
+				Vector3 position = m_componentCreature.ComponentBody.Position;
+				Vector3 destination = riderPilot.Destination.Value;
+				Vector3 direction = destination - position;
+				float horizontalDist = new Vector2(direction.X, direction.Z).Length();
+				float heightDiff = direction.Y;
+
 				if (isInAir)
 				{
-					// Si el jugador se desmontó en el aire, forzamos un DESCENSO SUAVE (planeo)
-					// en lugar de quitarle el FlyOrder de golpe. Esto evita que caiga como piedra,
-					// sufra daño de caída o muera.
-					m_componentCreature.ComponentLocomotion.FlyOrder = new Vector3(0f, -0.3f, 0f);
-					m_componentCreature.ComponentLocomotion.WalkOrder = null;
-					m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
+					// ============================================
+					// YA ESTAMOS EN EL AIRE - MANTENER Y AJUSTAR
+					// ============================================
+					shouldFly = true;
+
+					if (heightDiff > 2f)
+					{
+						// Destino significativamente más arriba - subir
+						// Usamos (heightDiff - 1f) para empezar a subir antes de llegar al destino
+						verticalInput = MathUtils.Min((heightDiff - 1f) * 0.3f, 1f);
+					}
+					else if (heightDiff < -2f)
+					{
+						// Destino significativamente más abajo - bajar
+						// Limitamos la velocidad de bajada para seguridad
+						verticalInput = MathUtils.Max((heightDiff + 1f) * 0.3f, -0.8f);
+					}
+					else
+					{
+						// Cerca de la altura objetivo - ajuste fino
+						verticalInput = MathUtils.Clamp(heightDiff * 0.2f, -0.3f, 0.3f);
+					}
+
+					// ============================================
+					// LÓGICA DE ATERRIZAJE
+					// Si estamos cerca del destino horizontalmente y a la altura correcta,
+					// dejar de volar para que la gravedad nos baje al suelo suavemente
+					// ============================================
+					if (horizontalDist < c_landDistanceThreshold &&
+						heightDiff > -c_landHeightThreshold &&
+						heightDiff < 0.5f)
+					{
+						shouldFly = false;
+					}
 				}
 				else
 				{
-					// Solo cuando YA HA TOCADO EL SUELO de forma segura, le quitamos el FlyOrder
-					// para que camine normalmente bajo la gravedad del juego.
-					m_componentCreature.ComponentLocomotion.FlyOrder = null;
+					// ============================================
+					// EN EL SUELO - DECIDIR SI DESPEGAR
+					// Lógica similar a ComponentPilot: volar si el destino está lejos o arriba
+					// ============================================
+
+					// Condición 1: Destino muy arriba
+					bool destinationHigh = heightDiff > c_flyHeightThreshold;
+
+					// Condición 2: Destino lejos con algo de altura (como ComponentPilot: num > 9f)
+					bool destinationFarAndElevated = horizontalDist > c_flyFarDistanceThreshold && heightDiff > 1f;
+
+					// Condición 3: Destino lejano y hay obstáculos (simulado por distancia grande)
+					bool destinationVeryFar = horizontalDist > 9f;
+
+					if (destinationHigh || destinationFarAndElevated || destinationVeryFar)
+					{
+						shouldFly = true;
+						verticalInput = 1f; // Subir al despegar
+					}
 				}
+			}
+			else if (isInAir)
+			{
+				// ============================================
+				// SIN DESTINO PERO EN EL AIRE
+				// Descender suavemente, igual que ComponentPilot original:
+				// m_flyOrder = new Vector3?(new Vector3(0f, -0.5f, 0f));
+				// ============================================
+				shouldFly = true;
+				verticalInput = c_gentleDescentSpeed;
+			}
+
+			if (shouldFly)
+			{
+				Matrix m = m_componentCreature.ComponentBody.Matrix;
+				Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
+
+				Vector3 flyDirection = forward * m_speed;
+				flyDirection.Y = verticalInput;
+
+				// Normalizar si excede magnitud 1
+				if (flyDirection.LengthSquared() > 1f)
+				{
+					flyDirection = Vector3.Normalize(flyDirection);
+				}
+
+				// SOLUCIÓN AL DESCENSO AUTOMÁTICO:
+				// Asegurar que siempre haya algún input para mantener el estado de "vuelo activo"
+				// y NUNCA re-active la gravedad inesperadamente
+				if (flyDirection.LengthSquared() <= 0f)
+				{
+					flyDirection = new Vector3(0f, c_minFlyInput, 0f);
+				}
+
+				m_componentCreature.ComponentLocomotion.FlyOrder = flyDirection;
+				m_componentCreature.ComponentLocomotion.WalkOrder = null;
+				m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
+			}
+			else
+			{
+				// No volar - usar movimiento normal terrestre
+				// WalkOrder y TurnOrder ya fueron establecidos por base.ProcessRidingOrders()
+				m_componentCreature.ComponentLocomotion.FlyOrder = null;
 			}
 		}
 	}
