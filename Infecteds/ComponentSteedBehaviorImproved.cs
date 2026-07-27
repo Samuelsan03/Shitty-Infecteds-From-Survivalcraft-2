@@ -1,6 +1,6 @@
 using System;
 using Engine;
-using Engine.Input; // ¡Necesario para usar Keyboard.IsKeyDown!
+using Engine.Input;
 using GameEntitySystem;
 using TemplatesDatabase;
 
@@ -61,8 +61,6 @@ namespace Game
 
 							m_componentCreature.ComponentLocomotion.FlyOrder = flyDirection;
 							m_componentCreature.ComponentLocomotion.WalkOrder = null;
-
-							// Bloquear el salto normal terrestre en móvil
 							m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
 							return;
 						}
@@ -74,7 +72,6 @@ namespace Game
 					else
 					{
 						// LÓGICA PC / GAMEPAD DIRECTA
-						// Usamos Engine.Input.Keyboard para evitar que el motor bloquee las teclas
 						if (Keyboard.IsKeyDown(Key.Space))
 						{
 							flyInputY = 1f; // Espacio = Subir
@@ -87,8 +84,9 @@ namespace Game
 				}
 			}
 
-			// Lógica común para PC/Gamepad, o móvil cuando no avanza
-			if (isInAir || MathF.Abs(flyInputY) > 0.01f)
+			// Lógica de vuelo para mantener la altitud SIEMPRE Y CUANDO HAY UN JINETE
+			// Se activa si está en el aire, o si intenta despegar (flyInputY > 0)
+			if (rider != null && (isInAir || flyInputY > 0.01f))
 			{
 				Matrix m = m_componentCreature.ComponentBody.Matrix;
 				Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
@@ -103,19 +101,23 @@ namespace Game
 					flyDirection = Vector3.Normalize(flyDirection);
 				}
 
-				// Aplicamos el FlyOrder (esto desactiva la gravedad dentro de ComponentLocomotion)
+				// SOLUCIÓN AL DESCENSO AUTOMÁTICO: 
+				// Si el jugador se queda quieto en el aire, flyDirection será Vector3.Zero.
+				// Forzamos un valor mínimo imperceptible (0.001f) para garantizar 
+				// que el motor mantenga el estado de "vuelo activo" y NUNCA re-active la gravedad.
+				if (flyDirection.LengthSquared() <= 0f)
+				{
+					flyDirection = new Vector3(0f, 0.001f, 0f);
+				}
+
 				m_componentCreature.ComponentLocomotion.FlyOrder = flyDirection;
-
-				// Anulamos el WalkOrder mientras volamos
 				m_componentCreature.ComponentLocomotion.WalkOrder = null;
-
-				// ¡SOLUCIÓN CLAVE!: Forzar JumpOrder a 0. 
-				// Esto evita que el motor haga el "impulso de salto brusco" del suelo y cancele el vuelo fluido.
 				m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
 			}
 			else
 			{
-				// En el suelo y sin intención de volar: restauramos null para usar la gravedad normal
+				// Si NO hay jinete montado (se bajó), o está en el suelo sin querer volar:
+				// FlyOrder se vuelve null, restaurando la gravedad normal y haciendo que caiga.
 				m_componentCreature.ComponentLocomotion.FlyOrder = null;
 			}
 		}
