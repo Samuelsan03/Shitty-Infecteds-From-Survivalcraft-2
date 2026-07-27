@@ -32,6 +32,19 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("AfterWidgetUpdate", this);
 		ModsManager.RegisterHook("GuiUpdate", this);
 		ModsManager.RegisterHook("ManageCameras", this);
+		ModsManager.RegisterHook("OnVitalStatsUpdateSleep", this);
+	}
+
+	public void OnVitalStatsUpdateSleep(ComponentVitalStats vitalStats, ref float sleep, ref float gameTimeDelta, out bool skipVanilla)
+	{
+		skipVanilla = false;
+
+		if (SubsystemGreenNightSky.Instance != null && SubsystemGreenNightSky.Instance.IsGreenNightActive)
+		{
+			// Al poner skipVanilla en true, el juego hace un "return" inmediato.
+			// Esto evita que la barra baje, pero conserva el valor actual que tenga el jugador.
+			skipVanilla = true;
+		}
 	}
 
 	public override IEnumerable<KeyValuePair<string, int>> GetCameraList()
