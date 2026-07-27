@@ -116,9 +116,22 @@ namespace Game
 			}
 			else
 			{
-				// Si NO hay jinete montado (se bajó), o está en el suelo sin querer volar:
-				// FlyOrder se vuelve null, restaurando la gravedad normal y haciendo que caiga.
-				m_componentCreature.ComponentLocomotion.FlyOrder = null;
+				// CUANDO NO HAY JINETE O ESTÁ EN EL SUELO SIN QUERER VOLAR
+				if (isInAir)
+				{
+					// Si el jugador se desmontó en el aire, forzamos un DESCENSO SUAVE (planeo)
+					// en lugar de quitarle el FlyOrder de golpe. Esto evita que caiga como piedra,
+					// sufra daño de caída o muera.
+					m_componentCreature.ComponentLocomotion.FlyOrder = new Vector3(0f, -0.3f, 0f);
+					m_componentCreature.ComponentLocomotion.WalkOrder = null;
+					m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
+				}
+				else
+				{
+					// Solo cuando YA HA TOCADO EL SUELO de forma segura, le quitamos el FlyOrder
+					// para que camine normalmente bajo la gravedad del juego.
+					m_componentCreature.ComponentLocomotion.FlyOrder = null;
+				}
 			}
 		}
 	}
