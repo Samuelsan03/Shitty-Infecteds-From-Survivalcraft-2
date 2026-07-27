@@ -13,7 +13,7 @@ namespace Game
 		private ListPanelWidget m_creaturesList;
 		private List<BestiaryCreatureInfo> m_infectedList = new List<BestiaryCreatureInfo>();
 		private BevelledRectangleWidget m_rainbowBar;
-		private BevelledRectangleWidget m_buttonRect;  // Fondo del botón de retroceso
+		private BevelledRectangleWidget m_buttonRect;
 		private RectangleWidget m_arrowImage;
 		private static float s_hue = 0f;
 
@@ -26,7 +26,6 @@ namespace Game
 			m_creaturesList.ItemClicked += OnCreaturesListItemClicked;
 			m_rainbowBar = Children.Find<BevelledRectangleWidget>("RainbowBar", true);
 
-			// Obtener componentes del botón de retroceso
 			ButtonWidget backButton = Children.Find<ButtonWidget>("TopBar.Back", true);
 			m_buttonRect = backButton?.Children.Find<BevelledRectangleWidget>("BevelledButton.Rectangle", true);
 			m_arrowImage = backButton?.Children.Find<RectangleWidget>("BevelledButton.Image", true);
@@ -36,7 +35,6 @@ namespace Game
 
 		private void BuildInfectedList()
 		{
-			// Obtener todos los templates de criaturas infectadas desde el bloque
 			HashSet<string> infectedTemplates = new HashSet<string>();
 			var eggBlock = (InfectedEggBlock)BlocksManager.Blocks[InfectedEggBlock.Index];
 			foreach (InfectedEggBlock.InfectedType type in Enum.GetValues(typeof(InfectedEggBlock.InfectedType)))
@@ -46,7 +44,8 @@ namespace Game
 					infectedTemplates.Add(t);
 			}
 
-			// Recorrer todas las definiciones de entidades
+			int orderIndex = 0; // Índice para mantener orden consistente
+
 			foreach (ValuesDictionary entityDict in DatabaseManager.EntitiesValuesDictionaries)
 			{
 				string templateName = entityDict.DatabaseObject.Name;
@@ -58,12 +57,21 @@ namespace Game
 					continue;
 
 				string displayName = creatureDict.GetValue<string>("DisplayName");
+				if (displayName.StartsWith('[') && displayName.EndsWith(']'))
+				{
+					string[] array = displayName.Substring(1, displayName.Length - 2).Split(new string[] { ":" }, StringSplitOptions.RemoveEmptyEntries);
+					displayName = LanguageControl.GetDatabase("DisplayName", array[1]);
+				}
 				if (string.IsNullOrEmpty(displayName))
 					continue;
 
-				// Obtener descripción
 				string description = creatureDict.GetValue<string>("Description") ?? "";
-				// Obtener otros componentes
+				if (description.StartsWith('[') && description.EndsWith(']'))
+				{
+					string[] array = description.Substring(1, description.Length - 2).Split(new string[] { ":" }, StringSplitOptions.RemoveEmptyEntries);
+					description = LanguageControl.GetDatabase("Description", array[1]);
+				}
+
 				ValuesDictionary modelDict = DatabaseManager.FindValuesDictionaryForComponent(entityDict, typeof(ComponentCreatureModel));
 				ValuesDictionary bodyDict = DatabaseManager.FindValuesDictionaryForComponent(entityDict, typeof(ComponentBody));
 				ValuesDictionary healthDict = DatabaseManager.FindValuesDictionaryForComponent(entityDict, typeof(ComponentHealth));
@@ -76,7 +84,7 @@ namespace Game
 				BestiaryCreatureInfo info = new BestiaryCreatureInfo
 				{
 					EntityValuesDictionary = entityDict,
-					Order = 0,
+					Order = orderIndex++, // Asignar orden secuencial basado en posición en la base de datos
 					DisplayName = displayName,
 					Description = description,
 					ModelName = modelDict?.GetValue<string>("ModelName") ?? "",
@@ -95,11 +103,12 @@ namespace Game
 				m_infectedList.Add(info);
 			}
 
-			// Ordenar por nombre
-			m_infectedList = m_infectedList.OrderBy(i => i.DisplayName).ToList();
-
-			foreach (var item in m_infectedList)
+			// SOLUCIÓN: Ordenar por Order (número fijo) en lugar de DisplayName (texto localizado)
+			// Igual que hace el BestiaryScreen original
+			foreach (BestiaryCreatureInfo item in m_infectedList.OrderBy(i => i.Order))
+			{
 				m_creaturesList.AddItem(item);
+			}
 		}
 
 		private ContainerWidget ItemWidgetFactory(object item)
@@ -129,28 +138,24 @@ namespace Game
 			if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back", true).IsClicked)
 				ScreensManager.GoBack(Array.Empty<object>());
 
-			// Efecto arcoíris
 			s_hue += 0.005f;
 			if (s_hue >= 1f) s_hue -= 1f;
 			Vector3 hsv = new Vector3(s_hue * 360f, 1f, 1f);
 			Vector3 rgb = Color.HsvToRgb(hsv);
 			Color rainbow = new Color(rgb);
 
-			// Aplicar a la barra lateral (parte inferior)
 			if (m_rainbowBar != null)
 			{
 				m_rainbowBar.CenterColor = rainbow;
 				m_rainbowBar.BevelColor = rainbow;
 			}
 
-			// Aplicar al fondo del botón de retroceso
 			if (m_buttonRect != null)
 			{
 				m_buttonRect.CenterColor = rainbow;
 				m_buttonRect.BevelColor = rainbow;
 			}
 
-			// Aplicar a la flecha de retroceso
 			if (m_arrowImage != null)
 			{
 				m_arrowImage.FillColor = rainbow;
