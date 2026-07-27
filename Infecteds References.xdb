@@ -2,6 +2,12 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="NewSleep" Description="Componente que gestiona el estado de sueño del jugador, incluyendo mecánicas de dormir y despertar." Guid="0f088018-fb70-45f1-bc91-789c9965ca1b" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+  <Parameter Name="SleepStartTime" Description="Momento de inicio del sueño en tiempo de juego." Guid="50d5add3-fa67-4f42-91b7-3712dff9e5a0" Value="0" Type="double" />
+  <Parameter Name="Class" Guid="6d4bdd84-67cf-4889-9c14-ed24f063670c" Value="Game.ComponentNewSleep" Type="string" />
+  <Parameter Name="AllowManualWakeUp" Description="Indica si el jugador puede despertarse manualmente." Guid="44f5ac1a-54e2-4cc4-8ac4-16f2f2a60d52" Value="False" Type="bool" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="ImprovedFlyAwayBehavior" Description="Mejora del comportamiento de vuelo que no escapa" Guid="aeefb800-256f-4f15-a20a-cb5f98292c85" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
           <Parameter Name="Class" Guid="e0ac7149-2220-4d3d-8ee2-8f5de5a22aeb" Value="Game.ComponentImprovedFlyAwayBehavior" Type="string" />
         </ComponentTemplate>
@@ -95,12 +101,14 @@
   <Parameter Name="Class" Guid="679a1448-f272-4565-b774-6f5a62d0e41f" Value="Game.ComponentZombieAI" Type="string" />
   <Parameter Name="CanUseInventory" Description="Permite al zombie acceder y usar armas de su inventario" Guid="4aafbac5-4b4a-4087-96ec-e2d81461f504" Value="false" Type="bool" />
   <Parameter Name="CanWearClothing" Description="Permite a la criatura vestirse con la ropa del inventario" Guid="a356ddc4-862e-4115-97c0-482a0a29284a" Value="false" Type="bool" />
+  <Parameter Name="CanItBeMounted" Description="Permite a la criatura buscar y montar criaturas montables cercanas (caballos, camellos, burros)" Guid="1597774b-bcc0-4517-88f2-3192bc4a10b8" Value="false" Type="bool" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="DefensiveCreatureAI" Description="Inteligencia artificial defensiva para criaturas" Guid="4f686fb8-0650-4dd9-8281-1247d07a28a7" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Guid="e1bf88cf-66fe-4788-8354-cc09f750a97a" Value="Game.ComponentDefensiveCreatureAI" Type="string" />
   <Parameter Name="CanUseInventory" Description="Permite a la criatura usar armas a distancia del inventario" Guid="20f70221-3d9e-4411-8784-17ce96fc2663" Value="false" Type="bool" />
   <Parameter Name="CanWearClothing" Description="Permite a la criatura vestirse con la ropa del inventario" Guid="2b0c5426-ad84-4bc8-b7b1-d2b5fa27afcb" Value="false" Type="bool" />
+  <Parameter Name="CanItBeMounted" Description="Permite a la criatura montarse automáticamente en criaturas montables cercanas" Guid="0e4e8e87-b2ea-4315-855a-fec8eb94abcf" Value="false" Type="bool" />
 </ComponentTemplate>
 
 <ComponentTemplate Name="GatherPickableBehavior" Description="Permite a la criatura recolectar objetos del suelo y almacenarlos en su inventario segun las categorias de bloques configuradas" Guid="0177b6c8-11b2-4f86-951f-205d38e8d9c6" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
