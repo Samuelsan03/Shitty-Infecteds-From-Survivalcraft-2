@@ -7,12 +7,13 @@ using static Game.RepeatBoltBlock;
 
 namespace Game
 {
-
 	public class ComponentDefensiveCreatureAI : Component, IUpdateable
 	{
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
+		/// <summary>
 		/// Lista de criaturas montables que la IA puede usar.
+		/// </summary>
 		private static readonly HashSet<string> MountableCreatures = new HashSet<string>
 		{
 			"Horse_Bay_Saddled",
@@ -21,23 +22,19 @@ namespace Game
 			"Horse_Black_Saddled",
 			"Camel_Saddled",
 			"Horse_Chestnut_Saddled",
-			"Donkey_Saddled"
+			"Donkey_Saddled",
+			"FlyingInfectedTamed1"
             // Agregar más criaturas montables aquí...
         };
+
+		/// <summary>
 		/// Distancia máxima para detectar y montar una criatura.
+		/// También se utiliza como distancia de llegada para el piloto de monturas voladoras.
+		/// </summary>
 		public const float MountDetectionRange = 2.5f;
 
-		public bool CanUseInventory
-		{
-			get
-			{
-				return m_canUseInventory;
-			}
-			set
-			{
-				m_canUseInventory = value;
-			}
-		}
+		public bool CanUseInventory { get; private set; }
+
 		public enum MountState
 		{
 			None,
@@ -46,12 +43,18 @@ namespace Game
 			Mounted,
 			Dismounting
 		}
+
+		/// <summary>
 		/// Indica si la IA puede montarse en criaturas montables.
+		/// </summary>
 		public bool CanItBeMounted { get; private set; }
+
+		/// <summary>
 		/// Estado actual de montado de la IA.
+		/// </summary>
 		public MountState CurrentMountState { get; private set; } = MountState.None;
 
-		public bool CanWearClothing { get; set; } = false;
+		public bool CanWearClothing { get; private set; }
 
 		public Vector2 AttackDistanceRange = new Vector2(5f, 100f);
 		public Vector2 ThrowableObjectThrowingDistance = new Vector2(5f, 15f);
@@ -118,6 +121,9 @@ namespace Game
 		private ComponentRider m_componentRider;
 		private ComponentMount m_currentMount;
 
+		// ComponentPilot para controlar monturas voladoras
+		private ComponentPilot m_componentPilot;
+
 		private Random m_random;
 		private DynamicArray<ComponentBody> m_nearbyBodies = new DynamicArray<ComponentBody>();
 
@@ -130,6 +136,19 @@ namespace Game
 		/// Obtiene la montura actual si está montado.
 		/// </summary>
 		public ComponentMount CurrentMount => m_currentMount;
+
+		/// <summary>
+		/// Verifica si la montura actual puede volar.
+		/// </summary>
+		public bool IsOnFlyingMount
+		{
+			get
+			{
+				if (m_componentRider == null || m_componentRider.Mount == null)
+					return false;
+				return IsFlyingMount(m_componentRider.Mount);
+			}
+		}
 
 		private bool ShouldSkipArmMovementForRanged()
 		{
@@ -168,7 +187,7 @@ namespace Game
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
-			m_canUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory");
+			m_canUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
 			CanItBeMounted = valuesDictionary.GetValue<bool>("CanItBeMounted", false);
 			CanWearClothing = valuesDictionary.GetValue<bool>("CanWearClothing", false);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
@@ -176,6 +195,10 @@ namespace Game
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>();
 			m_componentCreatureClothing = Entity.FindComponent<ComponentCreatureClothing>(false);
 			m_componentRider = Entity.FindComponent<ComponentRider>(false);
+
+			// Buscar ComponentPilot (opcional, necesario para monturas voladoras)
+			m_componentPilot = Entity.FindComponent<ComponentPilot>(false);
+
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
 			m_subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true);
@@ -222,7 +245,6 @@ namespace Game
 			ComponentNewChaseBehavior chaseBehavior = m_componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
 			if (chaseBehavior == null || chaseBehavior.Target == null || chaseBehavior.m_chaseTime <= 0f)
 			{
-				// Detener la montura cuando termina la persecución
 				if (m_componentRider != null && m_componentRider.Mount != null)
 				{
 					StopMount();
@@ -233,7 +255,6 @@ namespace Game
 			ComponentCreature target = chaseBehavior.Target;
 			if (target.ComponentHealth.Health <= 0f)
 			{
-				// Detener la montura cuando el objetivo muere (la persecución se va a cancelar)
 				if (m_componentRider != null && m_componentRider.Mount != null)
 				{
 					StopMount();
@@ -243,13 +264,11 @@ namespace Game
 
 			bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
 
-			// Si está montado, el pathfinding del jinete no hace mover a la montura, así que lo detenemos
 			if (isMounted && m_componentPathfinding != null)
 			{
 				m_componentPathfinding.Stop();
 			}
 
-			// Usar la posición real de la montura para calcular distancias si está montado
 			Vector3 myPosition = isMounted ? m_componentRider.Mount.ComponentBody.Position : m_componentCreature.ComponentBody.Position;
 			float distance = Vector3.Distance(myPosition, target.ComponentBody.Position);
 
@@ -332,36 +351,29 @@ namespace Game
 			}
 		}
 
-		// NUEVO: Método para detener la montura
 		private void StopMount()
 		{
-			if (m_componentRider != null && m_componentRider.Mount != null)
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
+
+			ComponentPathfinding mountPathfinding = m_componentRider.Mount.Entity.FindComponent<ComponentPathfinding>();
+			if (mountPathfinding != null)
 			{
-				// Usar el pathfinding de la montura para ordenar la detención del movimiento
-				ComponentPathfinding mountPathfinding = m_componentRider.Mount.Entity.FindComponent<ComponentPathfinding>();
-				if (mountPathfinding != null)
-				{
-					mountPathfinding.Stop();
-				}
-
-				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
-				if (steedBehavior != null)
-				{
-					// Forzar la detención inmediata. El índice 1 en m_speedLevels es 0f.
-					// Esto es necesario porque el estado "Steed" controla la locomoción directamente.
-					steedBehavior.m_speedLevel = 1;
-					steedBehavior.m_speedChangeFactor = 100f; // Factor alto para que llegue a 0 instantáneamente
-
-					steedBehavior.SpeedOrder = 0;
-					steedBehavior.TurnOrder = 0f;
-					steedBehavior.JumpOrder = 0f;
-				}
+				mountPathfinding.Stop();
 			}
+
+			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+			if (steedBehavior != null)
+			{
+				steedBehavior.m_speedLevel = 1;
+				steedBehavior.m_speedChangeFactor = 100f;
+				steedBehavior.SpeedOrder = 0;
+				steedBehavior.TurnOrder = 0f;
+				steedBehavior.JumpOrder = 0f;
+			}
+
+			ClearPilotDestination();
 		}
 
-		/// <summary>
-		/// Actualiza el comportamiento de montura de la IA.
-		/// </summary>
 		private void UpdateMountingBehavior(float dt)
 		{
 			if (!CanItBeMounted)
@@ -408,16 +420,17 @@ namespace Game
 					{
 						m_currentMount = null;
 						CurrentMountState = MountState.Searching;
+						ClearPilotDestination();
 					}
 					else
 					{
-						// CORRECCIÓN: Si la montura muere mientras está montada, desmontar de inmediato
 						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
 						if (mountHealth != null && mountHealth.Health <= 0f)
 						{
 							m_componentRider.StartDismounting();
 							m_currentMount = null;
 							CurrentMountState = MountState.Dismounting;
+							ClearPilotDestination();
 						}
 					}
 					break;
@@ -432,10 +445,6 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Busca la criatura montable más cercana dentro del rango de detección.
-		/// </summary>
-		/// <returns>El ComponentMount de la criatura montable más cercana, o null si no hay ninguna.</returns>
 		private ComponentMount FindNearestMountableCreature()
 		{
 			Vector2 position = new Vector2(
@@ -447,6 +456,8 @@ namespace Game
 
 			float closestDistance = float.MaxValue;
 			ComponentMount closestMount = null;
+
+			float maxRangeSquared = MountDetectionRange * MountDetectionRange;
 
 			foreach (ComponentBody body in m_nearbyBodies)
 			{
@@ -463,7 +474,6 @@ namespace Game
 				if (mount.Rider != null)
 					continue;
 
-				// CORRECCIÓN: No intentar montar si la criatura está muerta
 				ComponentHealth mountHealth = body.Entity.FindComponent<ComponentHealth>();
 				if (mountHealth == null || mountHealth.Health <= 0f)
 					continue;
@@ -472,7 +482,7 @@ namespace Game
 					m_componentCreature.ComponentBody.Position,
 					body.Position);
 
-				if (distanceSquared < closestDistance)
+				if (distanceSquared <= maxRangeSquared && distanceSquared < closestDistance)
 				{
 					closestDistance = distanceSquared;
 					closestMount = mount;
@@ -482,11 +492,6 @@ namespace Game
 			return closestMount;
 		}
 
-		/// <summary>
-		/// Verifica si una entidad es una criatura montable según la lista definida.
-		/// </summary>
-		/// <param name="entity">La entidad a verificar.</param>
-		/// <returns>True si es una criatura montable, false en caso contrario.</returns>
 		private bool IsMountableCreature(Entity entity)
 		{
 			if (entity?.ValuesDictionary?.DatabaseObject == null)
@@ -496,15 +501,61 @@ namespace Game
 		}
 
 		/// <summary>
-		/// Fuerza el desmonte de la criatura actual.
+		/// Verifica si una montura puede volar basándose en su ComponentLocomotion.
 		/// </summary>
+		private bool IsFlyingMount(ComponentMount mount)
+		{
+			if (mount == null || mount.Entity == null)
+				return false;
+
+			ComponentLocomotion mountLocomotion = mount.Entity.FindComponent<ComponentLocomotion>();
+			return mountLocomotion != null && mountLocomotion.FlySpeed > 0f;
+		}
+
 		public void ForceDismount()
 		{
 			if (CurrentMountState == MountState.Mounted && m_componentRider != null)
 			{
 				m_componentRider.StartDismounting();
 				CurrentMountState = MountState.Dismounting;
+				ClearPilotDestination();
 			}
+		}
+
+		/// <summary>
+		/// Establece el destino en ComponentPilot para controlar monturas voladoras.
+		/// Utiliza MountDetectionRange como distancia de llegada para evitar crear constantes redundantes.
+		/// </summary>
+		private void SetPilotDestination(Vector3 targetPos, float distance)
+		{
+			if (m_componentPilot == null) return;
+
+			// Usamos MountDetectionRange en vez de una constante separada
+			if (distance < MountDetectionRange)
+			{
+				m_componentPilot.Stop();
+				return;
+			}
+
+			m_componentPilot.SetDestination(
+				targetPos,
+				1f,
+				MountDetectionRange,
+				false,
+				false,
+				true,
+				null
+			);
+		}
+
+		/// <summary>
+		/// Limpia el destino de ComponentPilot.
+		/// Esto hace que ComponentSteedBehaviorImproved inicie el descenso suave.
+		/// </summary>
+		private void ClearPilotDestination()
+		{
+			if (m_componentPilot == null) return;
+			m_componentPilot.Stop();
 		}
 
 		private int FindClothingSlot()
@@ -1222,7 +1273,10 @@ namespace Game
 			}
 		}
 
-		// NUEVO: Método para pilotar la montura hacia el objetivo
+		/// <summary>
+		/// Método para pilotar la montura hacia el objetivo.
+		/// Soporta monturas voladoras mediante ComponentPilot.
+		/// </summary>
 		private void PilotMount(ComponentCreature target)
 		{
 			if (m_componentRider == null || m_componentRider.Mount == null) return;
@@ -1241,6 +1295,7 @@ namespace Game
 			{
 				steedBehavior.TurnOrder = 0f;
 				steedBehavior.SpeedOrder = 0;
+				ClearPilotDestination();
 				return;
 			}
 
@@ -1252,42 +1307,47 @@ namespace Game
 				forward = Vector3.UnitZ;
 			}
 
-			// CORRECCIÓN: Usar el método estático Vector3.Normalize() y reasignar la variable
 			forward = Vector3.Normalize(forward);
 			dirToTarget = Vector3.Normalize(dirToTarget);
 
-			// Producto cruzado para saber si el target está a la izquierda (-) o derecha (+)
 			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
-			// Producto punto para saber si estamos mirando hacia el target
 			float dot = Vector3.Dot(forward, dirToTarget);
 
-			// Enviar orden de giro (Clamp entre -0.5 y 0.5 porque así lo lee ComponentSteedBehavior)
 			steedBehavior.TurnOrder = MathUtils.Clamp(cross * 2f, -0.5f, 0.5f);
 
 			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
 
-			// Lógica de avance
 			if (distance > 2f)
 			{
 				if (dot > 0.2f)
 				{
-					steedBehavior.SpeedOrder = 1; // Avanzar
+					steedBehavior.SpeedOrder = 1;
 				}
 				else if (dot < -0.5f)
 				{
-					steedBehavior.SpeedOrder = -1; // Retroceder (raro, pero por si acaso)
+					steedBehavior.SpeedOrder = -1;
 				}
 				else
 				{
-					steedBehavior.SpeedOrder = 0; // Solo girar
+					steedBehavior.SpeedOrder = 0;
 				}
 			}
 			else
 			{
-				steedBehavior.SpeedOrder = 0; // Ya estamos cerca, frenar
+				steedBehavior.SpeedOrder = 0;
 			}
 
 			steedBehavior.JumpOrder = 0f;
+
+			// Control de vuelo para monturas voladoras
+			if (IsFlyingMount(m_componentRider.Mount))
+			{
+				SetPilotDestination(targetPos, distance);
+			}
+			else
+			{
+				ClearPilotDestination();
+			}
 		}
 	}
 }
