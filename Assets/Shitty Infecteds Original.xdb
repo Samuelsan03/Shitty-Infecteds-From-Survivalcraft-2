@@ -5,5 +5,6 @@
 <MemberComponentTemplate Name="NewSleep" Guid="e7b98f0e-317f-4589-8033-ca605f92ee15" InheritanceParent="0f088018-fb70-45f1-bc91-789c9965ca1b">
 <Parameter Name="Class" Guid="b783c0e3-2ca7-478f-8b9e-6fa2209e2b9c" Value="Game.ComponentNewSleep" Type="string" />
 </MemberComponentTemplate>
+<MemberComponentTemplate Name="ZombieRider" Guid="207db8a4-3c12-4c55-8495-c79aff287bc8" InheritanceParent="a59c6dfa-6be1-4450-8e1b-d9aba7a4e80b"/>
 </EntityTemplate>
 </Zombie>
