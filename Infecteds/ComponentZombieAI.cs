@@ -279,7 +279,7 @@ namespace Game
 					if (hasMelee)
 					{
 						HandleCloseRange(inventory, distance);
-						if (isMounted) StopMount();
+						if (isMounted) PilotMount(target);
 					}
 					else
 					{
@@ -313,7 +313,7 @@ namespace Game
 					if (hasMelee)
 					{
 						HandleCloseRange(inventory, distance);
-						if (isMounted) StopMount();
+						if (isMounted) PilotMount(target);
 					}
 					else
 					{
@@ -498,7 +498,6 @@ namespace Game
 				mountPathfinding.Stop();
 			}
 
-			// INTEGRACIÓN DEL STEED MEJORADO: Buscamos la versión mejorada primero.
 			ComponentSteedBehaviorImproved steedImproved = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehaviorImproved>();
 			if (steedImproved != null)
 			{
@@ -511,7 +510,6 @@ namespace Game
 				return;
 			}
 
-			// Respaldo original por si usa el steed normal
 			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 			if (steedBehavior != null)
 			{
@@ -538,7 +536,6 @@ namespace Game
 
 			if (dirToTarget.LengthSquared() < 0.01f)
 			{
-				// INTEGRACIÓN DEL STEED MEJORADO: Detener y girar en versión mejorada
 				ComponentSteedBehaviorImproved steedImproved = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehaviorImproved>();
 				if (steedImproved != null)
 				{
@@ -547,7 +544,6 @@ namespace Game
 					return;
 				}
 
-				// Respaldo original
 				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 				if (steedBehavior != null)
 				{
@@ -571,28 +567,45 @@ namespace Game
 			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
 			float dot = Vector3.Dot(forward, dirToTarget);
 
-			float turnOrder = MathUtils.Clamp(cross * 2f, -0.5f, 0.5f);
-
 			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
 
+			// CORRECCIÓN: TurnOrder más agresivo cuando está cerca para girar rápido
+			// Las monturas necesitan moverse para poder girar
+			float turnMultiplier = distance < 4f ? 4f : 2f;
+			float turnOrder = MathUtils.Clamp(cross * turnMultiplier, -1f, 1f);
+
 			int speedOrder = 0;
-			if (distance > 2f)
+
+			// CORRECCIÓN PRINCIPAL: Eliminada la restricción que detenía la montura
+			// cuando dot estaba entre -0.5 y 0.2 (montura de lado al objetivo).
+			// 
+			// PROBLEMA ANTERIOR: Cuando la montura estaba de lado al objetivo:
+			// - speedOrder = 0 (se detenía)
+			// - Las monturas NO PUEDEN GIRAR estando paradas
+			// - Resultado: montura congelada sin poder ajustar ángulo
+			//
+			// SOLUCIÓN: Siempre avanzar (excepto si está de espaldas completas)
+			// para permitir que la montura gire mientras se mueve.
+			if (distance > 0.3f)
 			{
-				if (dot > 0.2f)
+				if (dot > -0.3f)
 				{
+					// Avanzar: mirando al objetivo frontal O de lado
+					// Necesita moverse para poder girar
 					speedOrder = 1;
 				}
-				else if (dot < -0.5f)
+				else if (dot < -0.8f)
 				{
+					// Solo retroceder si está completamente de espaldas al objetivo
 					speedOrder = -1;
 				}
 				else
 				{
-					speedOrder = 0;
+					// Está de lado trasero, avanzar para poder girar
+					speedOrder = 1;
 				}
 			}
 
-			// INTEGRACIÓN DEL STEED MEJORADO: Aplicar órdenes en versión mejorada
 			ComponentSteedBehaviorImproved steedImp = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehaviorImproved>();
 			if (steedImp != null)
 			{
@@ -602,7 +615,6 @@ namespace Game
 				return;
 			}
 
-			// Respaldo original
 			ComponentSteedBehavior steed = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 			if (steed != null)
 			{
