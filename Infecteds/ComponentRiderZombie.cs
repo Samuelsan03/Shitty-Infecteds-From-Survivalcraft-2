@@ -9,25 +9,27 @@ namespace Game
 	{
 		public override void StartMounting(ComponentMount componentMount)
 		{
-			// Verificamos si la montura es un zombi y si tiene bloqueado el montaje
 			ComponentMountZombie mountZombie = componentMount as ComponentMountZombie;
 
 			if (mountZombie != null && !mountZombie.CanRiderBeMounted)
 			{
-				// Buscamos al jugador para mostrarle el mensaje por el GUI
+				// ============================================
+				// SOLO bloquear si es un jugador
+				// Las criaturas/zombis IA SI pueden montarse
+				// ============================================
 				ComponentPlayer player = this.ComponentCreature.Entity.FindComponent<ComponentPlayer>();
 
-				if (player != null && player.ComponentGui != null)
+				if (player != null)
 				{
-					// Usamos LanguageControl con el índice 1
-					player.ComponentGui.DisplaySmallMessage(LanguageControl.Get("ComponentRiderZombie", 1), new Color(0, 153, 76), true, true);
+					if (player.ComponentGui != null)
+					{
+						player.ComponentGui.DisplaySmallMessage(LanguageControl.Get("ComponentRiderZombie", 1), new Color(0, 153, 76), true, true);
+					}
+					return;
 				}
-
-				// Bloqueamos la acción de montarse haciendo un return sin llamar a la base
-				return;
+				// No es jugador → continuar con el montaje normalmente
 			}
 
-			// Si no es un zombi bloqueado, se monta normalmente
 			base.StartMounting(componentMount);
 		}
 	}
