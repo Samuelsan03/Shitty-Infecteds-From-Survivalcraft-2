@@ -12,6 +12,7 @@ namespace Game
 	/// PC: Espacio directo para subir, Shift directo para bajar.
 	/// Movil: Sube y baja segun la inclinacion de la camara.
 	/// IA: Usa FlyOrder cuando la montura puede volar, respetando logica de ComponentPilot.
+	/// Soporte integrado para jinetes y monturas zombi con validación de restricciones.
 	/// </summary>
 	public class ComponentSteedBehaviorImproved : ComponentSteedBehavior
 	{
@@ -44,6 +45,16 @@ namespace Game
 
 		public override void ProcessRidingOrders()
 		{
+			// ============================================
+			// VERIFICACIÓN DE SEGURIDAD: Jinete zombi en montura restringida
+			// Esta validación protege contra estados inválidos donde un zombi
+			// podría estar montado en una montura que no lo permite
+			// ============================================
+			if (!ValidateZombieRiderMount())
+			{
+				return;
+			}
+
 			bool canFly = m_componentCreature.ComponentLocomotion.FlySpeed > 0f;
 			bool isInAir = m_componentCreature.ComponentBody.StandingOnValue == null;
 
@@ -67,6 +78,10 @@ namespace Game
 				return;
 			}
 
+			// ============================================
+			// DETERMINAR TIPO DE JINETE Y PROCESAR CONTROLES
+			// Prioridad: Jugador > Zombi > IA genérica
+			// ============================================
 			ComponentPlayer player = rider.Entity.FindComponent<ComponentPlayer>();
 
 			if (player != null && player.ComponentInput != null)
@@ -74,11 +89,79 @@ namespace Game
 				// LÓGICA PARA JUGADORES (PC y Móvil)
 				ProcessPlayerFlightControls(player, isInAir);
 			}
+			else if (rider is ComponentRiderZombie)
+			{
+				// LÓGICA PARA JINETES ZOMBI
+				// Los zombis montados usan lógica de IA adaptada
+				ProcessZombieFlightControls((ComponentRiderZombie)rider, isInAir);
+			}
 			else
 			{
 				// LÓGICA PARA IA/CRIOPTURAS MONTANDO
 				ProcessAIFlightControls(rider, isInAir);
 			}
+		}
+
+		/// <summary>
+		/// Valida que un jinete zombi pueda estar montado en la montura actual.
+		/// Si la montura es un ComponentMountZombie con CanRiderBeMounted = false,
+		/// fuerza el desmonte inmediato del zombi usando la API original del juego.
+		/// </summary>
+		/// <returns>True si el estado es válido, false si se forzó el desmonte.</returns>
+		private bool ValidateZombieRiderMount()
+		{
+			if (m_componentMount?.Rider == null) return true;
+
+			// Verificar si el jinete es un zombi
+			ComponentRiderZombie riderZombie = m_componentMount.Rider as ComponentRiderZombie;
+			if (riderZombie == null) return true;
+
+			// Verificar si la montura tiene restricciones para zombis
+			ComponentMountZombie mountZombie = m_componentMount as ComponentMountZombie;
+			if (mountZombie == null) return true;
+
+			// Si la montura no permite jinetes zombi, forzar desmonte inmediato
+			if (!mountZombie.CanRiderBeMounted)
+			{
+				ComponentBody riderBody = riderZombie.ComponentCreature.ComponentBody;
+
+				// Forzar desmonte inmediato sin animación (tal como lo hace el código base en Update)
+				if (riderBody.ParentBody != null)
+				{
+					riderBody.Velocity = riderBody.ParentBody.Velocity;
+					riderBody.ParentBody = null;
+				}
+
+				// Reseteamos los estados de animación internos del jinete por seguridad
+				riderZombie.m_isAnimating = false;
+				riderZombie.m_isDismounting = false;
+
+				return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Procesa los controles de vuelo para jinetes zombi.
+		/// Los zombis no tienen ComponentPilot, por lo que usan una lógica
+		/// simplificada basada en el comportamiento de la criatura montada.
+		/// </summary>
+		private void ProcessZombieFlightControls(ComponentRiderZombie riderZombie, bool isInAir)
+		{
+			if (isInAir)
+			{
+				// ============================================
+				// ZOMBI EN EL AIRE
+				// Los zombis no tienen control de vuelo sofisticado.
+				// Descienden suavemente hacia el suelo, igual que
+				// el comportamiento original de ComponentPilot sin destino.
+				// ============================================
+				m_componentCreature.ComponentLocomotion.FlyOrder = new Vector3(0f, c_gentleDescentSpeed, 0f);
+				m_componentCreature.ComponentLocomotion.WalkOrder = null;
+				m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
+			}
+			// Si está en el suelo, el movimiento terrestre ya fue calculado por base.ProcessRidingOrders()
 		}
 
 		/// <summary>
