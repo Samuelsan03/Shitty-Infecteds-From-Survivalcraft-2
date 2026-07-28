@@ -19,9 +19,6 @@ namespace Game
 		private ComponentZombieChaseBehavior m_componentChaseBehavior;
 		private ComponentCreatureClothing m_componentCreatureClothing;
 
-		/// <summary>
-		/// Lista de criaturas montables que la IA del zombi puede usar.
-		/// </summary>
 		private static readonly HashSet<string> MountableCreatures = new HashSet<string>
 		{
 			"Horse_Bay_Saddled",
@@ -30,18 +27,12 @@ namespace Game
 			"Horse_Black_Saddled",
 			"Camel_Saddled",
 			"Horse_Chestnut_Saddled",
-			"Donkey_Saddled"
-            // Agregar más criaturas montables aquí...
-        };
+			"Donkey_Saddled",
+			"FlyingInfected1"
+		};
 
-		/// <summary>
-		/// Distancia máxima para detectar y montar una criatura.
-		/// </summary>
 		public const float MountDetectionRange = 2.5f;
 
-		/// <summary>
-		/// Estados posibles de la montura para la IA del zombi.
-		/// </summary>
 		public enum MountState
 		{
 			None,
@@ -51,14 +42,7 @@ namespace Game
 			Dismounting
 		}
 
-		/// <summary>
-		/// Indica si la IA del zombi puede montarse en criaturas montables.
-		/// </summary>
 		public bool CanItBeMounted;
-
-		/// <summary>
-		/// Estado actual de montado de la IA.
-		/// </summary>
 		public MountState CurrentMountState { get; private set; } = MountState.None;
 
 		public bool CanUseInventory;
@@ -68,21 +52,18 @@ namespace Game
 		public Vector2 DistanceRangeOfThrowable = new Vector2(5f, 15f);
 		public Vector2 SafeDistanceForExplosives = new Vector2(20f, 100f);
 
-		// Tiempos del Mosquete Mejorado
 		public float ImprovedMusketCooldown = 0.01f;
 		public float ImprovedMusketAimTime = 1.5f;
 
 		public float MusketCooldown = 0.01f;
 		public float MusketAimTime = 1.5f;
 
-		// Tiempos del Lanzallamas
 		public float FlameThrowerCooldown = 0.01f;
 		public float FlameThrowerAimTime = 1.5f;
 
 		public float CrossbowCooldown = 0.01f;
 		public float CrossbowAimTime = 1.5f;
 
-		// Tiempos de la Ballesta Repetidora
 		public float RepeatCrossbowCooldown = 0.01f;
 		public float RepeatCrossbowAimTime = 1.5f;
 
@@ -102,39 +83,23 @@ namespace Game
 
 		private Random m_random = new Random();
 
-		// Cache del resultado para no buscar en el HashSet cada frame
 		private bool? m_cachedUsesNormalAnimation;
 		private string m_cachedEntityName;
 
-		// Componentes para montura
 		private ComponentRider m_componentRider;
 		private ComponentMount m_currentMount;
 		private DynamicArray<ComponentBody> m_nearbyBodies = new DynamicArray<ComponentBody>();
 
-		// Lista de criaturas que usan animación normal de apunte (manos levantadas como humano)
 		public static readonly HashSet<string> NormalAnimationCreatures = new HashSet<string>
 		{
 			"GhostNormal"
-            // Agregar más nombres de criaturas aquí según sea necesario
-        };
+		};
 
-		/// <summary>
-		/// Verifica si la IA del zombi está actualmente montada en una criatura.
-		/// </summary>
 		public bool IsMounted => CurrentMountState == MountState.Mounted;
-
-		/// <summary>
-		/// Obtiene la montura actual si está montado.
-		/// </summary>
 		public ComponentMount CurrentMount => m_currentMount;
 
-		/// <summary>
-		/// Verifica si la criatura actual debe usar la animación normal de apunte (manos levantadas).
-		/// Usa el nombre de la ENTIDAD (no del componente) para la comparación.
-		/// </summary>
 		private bool UsesNormalAimAnimation()
 		{
-			// Usar caché para evitar búsquedas repetitivas en el HashSet
 			if (m_cachedUsesNormalAnimation.HasValue)
 			{
 				return m_cachedUsesNormalAnimation.Value;
@@ -170,19 +135,15 @@ namespace Game
 			CanWearClothing = valuesDictionary.GetValue<bool>("CanWearClothing", false);
 			CanItBeMounted = valuesDictionary.GetValue<bool>("CanItBeMounted", false);
 
-			// Componente de jinete para montura
 			m_componentRider = Entity.FindComponent<ComponentRider>(false);
 
-			// Si puede montar, asegurar que SubsystemBodies esté disponible
 			if (CanItBeMounted && m_subsystemBodies == null)
 			{
 				m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			}
 
-			// Precalcular si usa animación normal (el nombre de entidad no cambia en runtime)
 			_ = UsesNormalAimAnimation();
 
-			// Establecer estado inicial basado en si puede montar
 			CurrentMountState = CanItBeMounted ? MountState.Searching : MountState.None;
 
 			if (m_subsystemProjectiles != null)
@@ -207,7 +168,6 @@ namespace Game
 			int repeatBoltIndex = BlocksManager.GetBlockIndex<RepeatBoltBlock>();
 			int flameBulletIndex = BlocksManager.GetBlockIndex<FlameBulletBlock>();
 
-			// Forzar desaparición al tocar el suelo para flechas, virotes repetidores y balas de lanzallamas
 			if (contents == arrowIndex || contents == repeatBoltIndex || contents == flameBulletIndex)
 			{
 				projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
@@ -216,7 +176,6 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
-			// Actualizar comportamiento de montura
 			UpdateMountingBehavior(dt);
 
 			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
@@ -257,14 +216,12 @@ namespace Game
 			if (m_componentChaseBehavior?.Target == null)
 			{
 				CancelAiming();
-				// Detener la montura cuando no hay objetivo
 				if (IsMounted) StopMount();
 				return;
 			}
 
 			ComponentCreature target = m_componentChaseBehavior.Target;
 
-			// Detener la montura cuando el objetivo muere
 			if (target.ComponentHealth.Health <= 0f)
 			{
 				CancelAiming();
@@ -299,7 +256,6 @@ namespace Game
 
 			bool isMounted = IsMounted;
 
-			// Si está montado, el pathfinding del jinete no hace mover a la montura, así que lo detenemos
 			if (isMounted)
 			{
 				ComponentPathfinding pathfinding = Entity.FindComponent<ComponentPathfinding>(false);
@@ -309,7 +265,6 @@ namespace Game
 				}
 			}
 
-			// Usar la posición real de la montura para calcular distancias si está montado
 			Vector3 myPosition = isMounted ? m_componentRider.Mount.ComponentBody.Position : m_componentBody.Position;
 			float distance = Vector3.Distance(myPosition, target.ComponentBody.Position);
 
@@ -362,7 +317,6 @@ namespace Game
 					}
 					else
 					{
-						// Sin melee pero con rango, seguir disparando desde la montura
 						if (hasRanged)
 						{
 							HandleCloseRange(inventory, distance);
@@ -388,20 +342,9 @@ namespace Game
 			}
 		}
 
-		#region Mounting Behavior
-
-		/// <summary>
-		/// Actualiza el comportamiento de montura de la IA del zombi.
-		/// </summary>
 		private void UpdateMountingBehavior(float dt)
 		{
-			if (!CanItBeMounted)
-			{
-				CurrentMountState = MountState.None;
-				return;
-			}
-
-			if (m_componentRider == null)
+			if (!CanItBeMounted || m_componentRider == null)
 			{
 				CurrentMountState = MountState.None;
 				return;
@@ -442,9 +385,17 @@ namespace Game
 					}
 					else
 					{
-						// Si la montura muere mientras está montada, desmontar de inmediato
 						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
 						if (mountHealth != null && mountHealth.Health <= 0f)
+						{
+							m_componentRider.StartDismounting();
+							m_currentMount = null;
+							CurrentMountState = MountState.Dismounting;
+							break;
+						}
+
+						ComponentMountZombie mountZombie = m_componentRider.Mount as ComponentMountZombie;
+						if (mountZombie != null && !mountZombie.CanRiderBeMounted)
 						{
 							m_componentRider.StartDismounting();
 							m_currentMount = null;
@@ -463,10 +414,6 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Busca la criatura montable más cercana dentro del rango de detección.
-		/// </summary>
-		/// <returns>El ComponentMount de la criatura montable más cercana, o null si no hay ninguna.</returns>
 		private ComponentMount FindNearestMountableCreature()
 		{
 			if (m_subsystemBodies == null)
@@ -499,16 +446,20 @@ namespace Game
 				if (mount.Rider != null)
 					continue;
 
-				// No intentar montar si la criatura está muerta
 				ComponentHealth mountHealth = body.Entity.FindComponent<ComponentHealth>();
 				if (mountHealth == null || mountHealth.Health <= 0f)
 					continue;
+
+				ComponentMountZombie mountZombie = mount as ComponentMountZombie;
+				if (mountZombie != null && !mountZombie.CanRiderBeMounted)
+				{
+					continue;
+				}
 
 				float distanceSquared = Vector3.DistanceSquared(
 					m_componentBody.Position,
 					body.Position);
 
-				// Validar que esté estrictamente dentro de MountDetectionRange
 				if (distanceSquared <= maxRangeSquared && distanceSquared < closestDistance)
 				{
 					closestDistance = distanceSquared;
@@ -519,11 +470,6 @@ namespace Game
 			return closestMount;
 		}
 
-		/// <summary>
-		/// Verifica si una entidad es una criatura montable según la lista definida.
-		/// </summary>
-		/// <param name="entity">La entidad a verificar.</param>
-		/// <returns>True si es una criatura montable, false en caso contrario.</returns>
 		private bool IsMountableCreature(Entity entity)
 		{
 			if (entity?.ValuesDictionary?.DatabaseObject == null)
@@ -532,9 +478,6 @@ namespace Game
 			return MountableCreatures.Contains(entity.ValuesDictionary.DatabaseObject.Name);
 		}
 
-		/// <summary>
-		/// Fuerza el desmonte de la criatura actual.
-		/// </summary>
 		public void ForceDismount()
 		{
 			if (CurrentMountState == MountState.Mounted && m_componentRider != null)
@@ -544,25 +487,34 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Detiene el movimiento de la montura.
-		/// </summary>
 		private void StopMount()
 		{
 			if (m_componentRider == null || m_componentRider.Mount == null)
 				return;
 
-			// Usar el pathfinding de la montura para ordenar la detención del movimiento
 			ComponentPathfinding mountPathfinding = m_componentRider.Mount.Entity.FindComponent<ComponentPathfinding>();
 			if (mountPathfinding != null)
 			{
 				mountPathfinding.Stop();
 			}
 
+			// INTEGRACIÓN DEL STEED MEJORADO: Buscamos la versión mejorada primero.
+			ComponentSteedBehaviorImproved steedImproved = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehaviorImproved>();
+			if (steedImproved != null)
+			{
+				steedImproved.m_speedLevel = 1;
+				steedImproved.m_speedChangeFactor = 100f;
+
+				steedImproved.SpeedOrder = 0;
+				steedImproved.TurnOrder = 0f;
+				steedImproved.JumpOrder = 0f;
+				return;
+			}
+
+			// Respaldo original por si usa el steed normal
 			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 			if (steedBehavior != null)
 			{
-				// Forzar la detención inmediata
 				steedBehavior.m_speedLevel = 1;
 				steedBehavior.m_speedChangeFactor = 100f;
 
@@ -572,16 +524,9 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Pilotea la montura hacia el objetivo.
-		/// </summary>
 		private void PilotMount(ComponentCreature target)
 		{
 			if (m_componentRider == null || m_componentRider.Mount == null)
-				return;
-
-			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
-			if (steedBehavior == null)
 				return;
 
 			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
@@ -593,8 +538,22 @@ namespace Game
 
 			if (dirToTarget.LengthSquared() < 0.01f)
 			{
-				steedBehavior.TurnOrder = 0f;
-				steedBehavior.SpeedOrder = 0;
+				// INTEGRACIÓN DEL STEED MEJORADO: Detener y girar en versión mejorada
+				ComponentSteedBehaviorImproved steedImproved = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehaviorImproved>();
+				if (steedImproved != null)
+				{
+					steedImproved.TurnOrder = 0f;
+					steedImproved.SpeedOrder = 0;
+					return;
+				}
+
+				// Respaldo original
+				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+				if (steedBehavior != null)
+				{
+					steedBehavior.TurnOrder = 0f;
+					steedBehavior.SpeedOrder = 0;
+				}
 				return;
 			}
 
@@ -609,43 +568,49 @@ namespace Game
 			forward = Vector3.Normalize(forward);
 			dirToTarget = Vector3.Normalize(dirToTarget);
 
-			// Producto cruzado para saber si el target está a la izquierda (-) o derecha (+)
 			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
-			// Producto punto para saber si estamos mirando hacia el target
 			float dot = Vector3.Dot(forward, dirToTarget);
 
-			// Enviar orden de giro (Clamp entre -0.5 y 0.5)
-			steedBehavior.TurnOrder = MathUtils.Clamp(cross * 2f, -0.5f, 0.5f);
+			float turnOrder = MathUtils.Clamp(cross * 2f, -0.5f, 0.5f);
 
 			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
 
-			// Lógica de avance
+			int speedOrder = 0;
 			if (distance > 2f)
 			{
 				if (dot > 0.2f)
 				{
-					steedBehavior.SpeedOrder = 1; // Avanzar
+					speedOrder = 1;
 				}
 				else if (dot < -0.5f)
 				{
-					steedBehavior.SpeedOrder = -1; // Retroceder
+					speedOrder = -1;
 				}
 				else
 				{
-					steedBehavior.SpeedOrder = 0; // Solo girar
+					speedOrder = 0;
 				}
 			}
-			else
+
+			// INTEGRACIÓN DEL STEED MEJORADO: Aplicar órdenes en versión mejorada
+			ComponentSteedBehaviorImproved steedImp = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehaviorImproved>();
+			if (steedImp != null)
 			{
-				steedBehavior.SpeedOrder = 0; // Ya estamos cerca, frenar
+				steedImp.TurnOrder = turnOrder;
+				steedImp.SpeedOrder = speedOrder;
+				steedImp.JumpOrder = 0f;
+				return;
 			}
 
-			steedBehavior.JumpOrder = 0f;
+			// Respaldo original
+			ComponentSteedBehavior steed = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+			if (steed != null)
+			{
+				steed.TurnOrder = turnOrder;
+				steed.SpeedOrder = speedOrder;
+				steed.JumpOrder = 0f;
+			}
 		}
-
-		#endregion
-
-		#region Clothing
 
 		private int FindClothingSlot()
 		{
@@ -681,10 +646,6 @@ namespace Game
 			m_componentMiner.Inventory.RemoveSlotItems(slot, 1);
 		}
 
-		#endregion
-
-		#region Throwable Attacks
-
 		private void HandleThrowableAttack(IInventory inventory, ComponentCreature target, float distance)
 		{
 			Vector3 dirToTarget = Vector3.Normalize(target.ComponentBody.Position - m_componentBody.Position);
@@ -702,7 +663,6 @@ namespace Game
 				return;
 			}
 
-			// Si está montado, no verificar pathfinding propio (la montura se maneja con PilotMount)
 			if (!IsMounted)
 			{
 				ComponentPathfinding pathfinding = Entity.FindComponent<ComponentPathfinding>(false);
@@ -834,10 +794,6 @@ namespace Game
 			}
 		}
 
-		#endregion
-
-		#region Close Range
-
 		private void HandleCloseRange(IInventory inventory, float distance)
 		{
 			int activeSlot = inventory.ActiveSlotIndex;
@@ -873,10 +829,6 @@ namespace Game
 
 			CancelAiming();
 		}
-
-		#endregion
-
-		#region Ranged Attacks
 
 		private void HandleRangedAttack(IInventory inventory, ComponentCreature target, float distance)
 		{
@@ -968,10 +920,6 @@ namespace Game
 			}
 			return bestSlot;
 		}
-
-		#endregion
-
-		#region Weapon Loading
 
 		private void EnsureRangedWeaponLoaded(IInventory inventory, float distance)
 		{
@@ -1242,10 +1190,6 @@ namespace Game
 			}
 		}
 
-		#endregion
-
-		#region Aiming and Firing
-
 		private void AimAndFire(ComponentCreature target)
 		{
 			CooldownTimer -= m_subsystemTime.GameTimeDelta;
@@ -1345,10 +1289,6 @@ namespace Game
 			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 		}
 
-		#endregion
-
-		#region Utility
-
 		private void SwapSlots(IInventory inventory, int slotA, int slotB)
 		{
 			if (slotA == slotB)
@@ -1364,7 +1304,5 @@ namespace Game
 			inventory.AddSlotItems(slotA, valueB, countB);
 			inventory.AddSlotItems(slotB, valueA, countA);
 		}
-
-		#endregion
 	}
 }
