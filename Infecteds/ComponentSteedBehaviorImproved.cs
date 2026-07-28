@@ -37,6 +37,9 @@ namespace Game
 		// Valor minimo para mantener estado de vuelo activo
 		private const float c_minFlyInput = 0.001f;
 
+		// Velocidad de ascenso al despegar
+		private const float c_takeoffSpeed = 0.5f;
+
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			base.Load(valuesDictionary, idToEntityMap);
@@ -45,11 +48,6 @@ namespace Game
 
 		public override void ProcessRidingOrders()
 		{
-			// ============================================
-			// VERIFICACIÓN DE SEGURIDAD: Jinete zombi en montura restringida
-			// Esta validación protege contra estados inválidos donde un zombi
-			// podría estar montado en una montura que no lo permite
-			// ============================================
 			if (!ValidateZombieRiderMount())
 			{
 				return;
@@ -80,33 +78,20 @@ namespace Game
 
 			// ============================================
 			// DETERMINAR TIPO DE JINETE Y PROCESAR CONTROLES
-			// Prioridad: Jugador > Zombi > IA genérica
-			// 
-			// CORRECCIÓN: Detectamos zombis por ComponentRiderZombie O por ComponentZombieAI
-			// para cubrir ambos casos:
-			// - Zombis con ComponentRiderZombie (rider especializado)
-			// - Zombis con ComponentRider normal + ComponentZombieAI
 			// ============================================
 			ComponentPlayer player = rider.Entity.FindComponent<ComponentPlayer>();
-
-			// Detectar si el jinete es un zombi por cualquiera de los dos componentes
 			bool isZombieRider = rider is ComponentRiderZombie || rider.Entity.FindComponent<ComponentZombieAI>() != null;
 
 			if (player != null && player.ComponentInput != null)
 			{
-				// LÓGICA PARA JUGADORES (PC y Móvil)
 				ProcessPlayerFlightControls(player, isInAir);
 			}
 			else if (isZombieRider)
 			{
-				// LÓGICA PARA JINETES ZOMBI
-				// Ahora funciona tanto si el zombi tiene ComponentRiderZombie
-				// como si solo tiene ComponentRider + ComponentZombieAI
 				ProcessZombieFlightControls(rider, isInAir);
 			}
 			else
 			{
-				// LÓGICA PARA IA/CRIOPTURAS MONTANDO (usando ComponentPilot)
 				ProcessAIFlightControls(rider, isInAir);
 			}
 		}
@@ -118,53 +103,127 @@ namespace Game
 
 		/// <summary>
 		/// Procesa los controles de vuelo para jinetes zombi.
-		/// CORRECCIÓN: Ahora acepta ComponentRider (no solo ComponentRiderZombie)
-		/// para funcionar con zombis que usan el rider original pero tienen ComponentZombieAI.
-		/// 
-		/// Usa m_speed calculado por base.ProcessRidingOrders() para permitir movimiento
-		/// horizontal cuando el zombi pilotea desde ComponentZombieAI.PilotMount().
+		/// Calcula GIRO y ALTURA directamente, igual que ComponentPilot,
+		/// para no depender del orden de actualización de ComponentZombieAI.
 		/// </summary>
 		private void ProcessZombieFlightControls(ComponentRider rider, bool isInAir)
 		{
+			// ============================================
+			// VERIFICAR SI EL ZOMBI TIENE UN OBJETIVO
+			// ============================================
+			ComponentZombieChaseBehavior chaseBehavior = rider.Entity.FindComponent<ComponentZombieChaseBehavior>(false);
+			bool hasTarget = chaseBehavior != null && chaseBehavior.Target != null && chaseBehavior.Target.ComponentHealth.Health > 0f;
+
+			// Usar m_speed calculado por base.ProcessRidingOrders()
+			float effectiveSpeed = m_speed;
+
+			if (hasTarget && effectiveSpeed < 0.1f)
+			{
+				effectiveSpeed = 0.5f;
+			}
+
+			Matrix m = m_componentCreature.ComponentBody.Matrix;
+			Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
+
+			Vector3 flyDirection = forward * effectiveSpeed;
+
+			// ============================================
+			// CALCULAR GIRO HACIA EL OBJETIVO
+			// Igual que ComponentPilot: Vector2.Angle + TurnOrder
+			// Esto hace que la montura gire hacia el objetivo
+			// ============================================
+			float turnAmount = 0f;
+
+			if (hasTarget)
+			{
+				Vector3 targetPos = chaseBehavior.Target.ComponentBody.Position;
+				Vector3 myPos = m_componentCreature.ComponentBody.Position;
+				Vector3 dirToTarget = targetPos - myPos;
+				Vector2 dirToTargetXZ = new Vector2(dirToTarget.X, dirToTarget.Z);
+
+				if (dirToTargetXZ.LengthSquared() > 0.01f)
+				{
+					dirToTargetXZ = Vector2.Normalize(dirToTargetXZ);
+					Vector2 forwardXZ = new Vector2(forward.X, forward.Z);
+
+					// Vector2.Angle devuelve el ángulo firmado entre los vectores
+					float angleToTarget = Vector2.Angle(forwardXZ, dirToTargetXZ);
+
+					// Aplicar TurnOrder directamente, igual que ComponentPilot
+					turnAmount = MathUtils.Clamp(angleToTarget, -1f, 1f);
+				}
+			}
+
+			// Aplicar giro a la locomoción
+			m_componentCreature.ComponentLocomotion.TurnOrder = new Vector2(turnAmount, 0f);
+
+			// Aplicar LookOrder para que la criatura mire hacia donde gira
+			// Igual que el original: LookOrder = 2 * turnSpeed - LookAngles
+			if (MathF.Abs(effectiveSpeed) > 0.01f || MathF.Abs(turnAmount) > 0.01f)
+			{
+				m_componentCreature.ComponentLocomotion.LookOrder = new Vector2(2f * turnAmount, 0f) - m_componentCreature.ComponentLocomotion.LookAngles;
+			}
+
+			// ============================================
+			// CALCULAR INPUT VERTICAL BASADO EN EL OBJETIVO
+			// ============================================
+			float verticalInput = 0f;
+
+			if (hasTarget)
+			{
+				Vector3 targetPos = chaseBehavior.Target.ComponentBody.Position;
+				float heightDiff = targetPos.Y - m_componentCreature.ComponentBody.Position.Y;
+
+				if (heightDiff > 2f)
+				{
+					verticalInput = MathUtils.Min((heightDiff - 1f) * 0.3f, 1f);
+				}
+				else if (heightDiff < -2f)
+				{
+					verticalInput = MathUtils.Max((heightDiff + 1f) * 0.3f, -0.8f);
+				}
+				else
+				{
+					verticalInput = MathUtils.Clamp(heightDiff * 0.2f, -0.3f, 0.3f);
+				}
+			}
+
 			if (isInAir)
 			{
-				// ============================================
-				// ZOMBI EN EL AIRE
-				// CORRECCIÓN PRINCIPAL: Usar m_speed que viene de PilotMount()
-				// a través de base.ProcessRidingOrders() para permitir que el
-				// zombi pilotee la criatura voladora horizontalmente.
-				// 
-				// ANTES: FlyOrder = (0, -0.5, 0) → Solo descendía, sin movimiento horizontal
-				// AHORA: FlyOrder incluye forward * m_speed → Se mueve hacia donde apunta
-				// ============================================
-				Matrix m = m_componentCreature.ComponentBody.Matrix;
-				Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
-
-				Vector3 flyDirection = forward * m_speed;
-				flyDirection.Y = c_gentleDescentSpeed;
-
-				if (flyDirection.LengthSquared() > 1f)
-				{
-					flyDirection = Vector3.Normalize(flyDirection);
-				}
-
-				// Asegurar que siempre haya algún input para mantener el estado de vuelo
-				if (flyDirection.LengthSquared() <= 0f)
-				{
-					flyDirection = new Vector3(0f, c_minFlyInput, 0f);
-				}
-
-				m_componentCreature.ComponentLocomotion.FlyOrder = flyDirection;
-				m_componentCreature.ComponentLocomotion.WalkOrder = null;
-				m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
+				flyDirection.Y = hasTarget ? verticalInput : c_gentleDescentSpeed;
 			}
-			// Si está en el suelo, el movimiento terrestre ya fue calculado por base.ProcessRidingOrders()
+			else
+			{
+				if (hasTarget && effectiveSpeed > 0.1f)
+				{
+					flyDirection.Y = c_takeoffSpeed;
+				}
+				else
+				{
+					m_componentCreature.ComponentLocomotion.FlyOrder = null;
+					return;
+				}
+			}
+
+			// Normalizar si es necesario
+			if (flyDirection.LengthSquared() > 1f)
+			{
+				flyDirection = Vector3.Normalize(flyDirection);
+			}
+
+			// Asegurar que siempre haya algún input para mantener el estado de vuelo
+			if (flyDirection.LengthSquared() <= 0f)
+			{
+				flyDirection = new Vector3(0f, c_minFlyInput, 0f);
+			}
+
+			m_componentCreature.ComponentLocomotion.FlyOrder = flyDirection;
+			m_componentCreature.ComponentLocomotion.WalkOrder = null;
+			m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
 		}
 
 		/// <summary>
 		/// Procesa los controles de vuelo para un jugador humano.
-		/// PC: Espacio para subir, Shift para bajar.
-		/// Móvil: La inclinación de la cámara controla la dirección vertical.
 		/// </summary>
 		private void ProcessPlayerFlightControls(ComponentPlayer player, bool isInAir)
 		{
@@ -172,7 +231,7 @@ namespace Game
 
 			if (player.ComponentInput.IsControlledByTouch)
 			{
-				// LÓGICA MÓVIL: Imitar vuelo creativo con la cámara
+				// LÓGICA MÓVIL
 				if (m_speed > 0.1f && player.GameWidget?.ActiveCamera != null)
 				{
 					Vector3 viewDir = player.GameWidget.ActiveCamera.ViewDirection;
@@ -195,22 +254,20 @@ namespace Game
 					m_componentCreature.ComponentLocomotion.JumpOrder = 0f;
 					return;
 				}
-				// Si no se cumple la condición, flyInputY permanece en 0
 			}
 			else
 			{
-				// LÓGICA PC / GAMEPAD DIRECTA
+				// LÓGICA PC / GAMEPAD
 				if (Keyboard.IsKeyDown(Key.Space))
 				{
-					flyInputY = 1f; // Espacio = Subir
+					flyInputY = 1f;
 				}
 				else if (Keyboard.IsKeyDown(Key.Shift))
 				{
-					flyInputY = -1f; // Shift = Bajar
+					flyInputY = -1f;
 				}
 			}
 
-			// Determinar si debemos volar: si estamos en el aire o si el jugador quiere subir
 			bool shouldFly = isInAir || flyInputY > 0.01f;
 
 			if (shouldFly)
@@ -219,8 +276,6 @@ namespace Game
 				Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
 
 				Vector3 flyDirection = forward * m_speed;
-
-				// Si está en el aire y no hay input vertical, Y=0 para mantenerse flotando estáticamente
 				flyDirection.Y = (isInAir && MathF.Abs(flyInputY) < 0.01f) ? 0f : flyInputY;
 
 				if (flyDirection.LengthSquared() > 1f)
@@ -228,10 +283,6 @@ namespace Game
 					flyDirection = Vector3.Normalize(flyDirection);
 				}
 
-				// SOLUCIÓN AL DESCENSO AUTOMÁTICO: 
-				// Si el jugador se queda quieto en el aire, flyDirection será Vector3.Zero.
-				// Forzamos un valor mínimo imperceptible para garantizar que el motor 
-				// mantenga el estado de "vuelo activo" y NUNCA re-active la gravedad.
 				if (flyDirection.LengthSquared() <= 0f)
 				{
 					flyDirection = new Vector3(0f, c_minFlyInput, 0f);
@@ -243,15 +294,12 @@ namespace Game
 			}
 			else
 			{
-				// En el suelo sin querer volar, usar movimiento normal
 				m_componentCreature.ComponentLocomotion.FlyOrder = null;
 			}
 		}
 
 		/// <summary>
 		/// Procesa los controles de vuelo para IA/Criaturas montando.
-		/// Lee el ComponentPilot del jinete para determinar destino y ajustar vuelo.
-		/// Respeta la lógica original de ComponentPilot para decisiones de vuelo.
 		/// </summary>
 		private void ProcessAIFlightControls(ComponentRider rider, bool isInAir)
 		{
@@ -272,9 +320,6 @@ namespace Game
 
 				if (isInAir)
 				{
-					// ============================================
-					// YA ESTAMOS EN EL AIRE - MANTENER Y AJUSTAR
-					// ============================================
 					shouldFly = true;
 
 					if (heightDiff > 2f)
@@ -290,9 +335,6 @@ namespace Game
 						verticalInput = MathUtils.Clamp(heightDiff * 0.2f, -0.3f, 0.3f);
 					}
 
-					// ============================================
-					// LÓGICA DE ATERRIZAJE
-					// ============================================
 					if (horizontalDist < c_landDistanceThreshold &&
 						heightDiff > -c_landHeightThreshold &&
 						heightDiff < 0.5f)
@@ -302,9 +344,6 @@ namespace Game
 				}
 				else
 				{
-					// ============================================
-					// EN EL SUELO - DECIDIR SI DESPEGAR
-					// ============================================
 					bool destinationHigh = heightDiff > c_flyHeightThreshold;
 					bool destinationFarAndElevated = horizontalDist > c_flyFarDistanceThreshold && heightDiff > 1f;
 					bool destinationVeryFar = horizontalDist > 9f;
@@ -318,9 +357,6 @@ namespace Game
 			}
 			else if (isInAir)
 			{
-				// ============================================
-				// SIN DESTINO PERO EN EL AIRE
-				// ============================================
 				shouldFly = true;
 				verticalInput = c_gentleDescentSpeed;
 			}
