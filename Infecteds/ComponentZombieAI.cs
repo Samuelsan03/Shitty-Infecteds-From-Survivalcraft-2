@@ -118,13 +118,21 @@ namespace Game
 
 		/// <summary>
 		/// Detecta si la montura actual es una criatura voladora.
-		/// Las monturas voladoras necesitan pilotearse siempre, incluso en rango cercano,
-		/// porque en el aire no pueden ajustar su posición final como los caballos terrestres.
 		/// </summary>
 		private bool IsFlyingMount()
 		{
 			if (m_componentRider?.Mount == null) return false;
 			ComponentLocomotion locomotion = m_componentRider.Mount.Entity.FindComponent<ComponentLocomotion>();
+			return locomotion != null && locomotion.FlySpeed > 0f;
+		}
+
+		/// <summary>
+		/// Verifica si una montura específica puede volar.
+		/// </summary>
+		private bool IsFlyingMount(ComponentMount mount)
+		{
+			if (mount == null || mount.Entity == null) return false;
+			ComponentLocomotion locomotion = mount.Entity.FindComponent<ComponentLocomotion>();
 			return locomotion != null && locomotion.FlySpeed > 0f;
 		}
 
@@ -225,50 +233,23 @@ namespace Game
 			if (inventory == null)
 				return;
 
-			if (m_componentChaseBehavior?.Target == null)
+			// ============================================
+			// VERIFICACIÓN DE OBJETIVO
+			// Si no hay objetivo, cancelar todo y detener montura
+			// ============================================
+			ComponentCreature target = m_componentChaseBehavior?.Target;
+
+			if (target == null || target.ComponentHealth.Health <= 0f)
 			{
 				CancelAiming();
 				if (IsMounted) StopMount();
 				return;
-			}
-
-			ComponentCreature target = m_componentChaseBehavior.Target;
-
-			if (target.ComponentHealth.Health <= 0f)
-			{
-				CancelAiming();
-				if (IsMounted) StopMount();
-				return;
-			}
-
-			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
-			{
-				if (!m_isEquipping)
-				{
-					int slot = FindClothingSlot();
-					if (slot >= 0)
-					{
-						m_equipSlot = slot;
-						m_equipValue = m_componentMiner.Inventory.GetSlotValue(slot);
-						m_equipTimer = 0.5f;
-						m_isEquipping = true;
-					}
-				}
-				else
-				{
-					m_equipTimer -= m_subsystemTime.GameTimeDelta;
-					if (m_equipTimer <= 0f)
-					{
-						EquipClothing(m_equipSlot, m_equipValue);
-						m_isEquipping = false;
-						m_equipTimer = 0f;
-					}
-				}
 			}
 
 			bool isMounted = IsMounted;
 			bool isFlyingMount = isMounted && IsFlyingMount();
 
+			// Detener pathfinding del zombi cuando está montado
 			if (isMounted)
 			{
 				ComponentPathfinding pathfinding = Entity.FindComponent<ComponentPathfinding>(false);
@@ -286,10 +267,7 @@ namespace Game
 			bool hasMelee = FindMeleeWeaponSlot(inventory) >= 0;
 
 			// ============================================
-			// LÓGICA DE COMBATE: Caballos = original, Voladores = siempre pilotear
-			// Los caballos se detienen en rango cercano (el pathfinding del zombi
-			// lo acerca para melee). Las monturas voladoras SIEMPRE necesitan
-			// pilotearse porque en el aire no hay pathfinding que las acerque.
+			// LÓGICA DE COMBATE (independiente del pilotaje)
 			// ============================================
 			if (hasThrowable)
 			{
@@ -298,34 +276,25 @@ namespace Game
 					if (hasMelee)
 					{
 						HandleCloseRange(inventory, distance);
-						if (isMounted)
-						{
-							if (isFlyingMount) PilotMount(target);
-							else StopMount();
-						}
 					}
 					else
 					{
 						CancelAiming();
-						if (isMounted) StopMount();
 					}
 				}
 				else if (distance <= DistanceRangeOfThrowable.Y)
 				{
 					HandleThrowableAttack(inventory, target, distance);
-					if (isMounted) PilotMount(target);
 				}
 				else
 				{
 					if (hasRanged)
 					{
 						HandleRangedAttack(inventory, target, distance);
-						if (isMounted) PilotMount(target);
 					}
 					else
 					{
 						CancelAiming();
-						if (isMounted) StopMount();
 					}
 				}
 			}
@@ -333,42 +302,53 @@ namespace Game
 			{
 				if (distance < DistanceRange.X)
 				{
-					if (hasMelee)
+					if (hasMelee || hasRanged)
 					{
 						HandleCloseRange(inventory, distance);
-						if (isMounted)
-						{
-							if (isFlyingMount) PilotMount(target);
-							else StopMount();
-						}
 					}
 					else
 					{
-						if (hasRanged)
-						{
-							HandleCloseRange(inventory, distance);
-							if (isMounted)
-							{
-								if (isFlyingMount) PilotMount(target);
-								else StopMount();
-							}
-						}
-						else
-						{
-							HandleCloseRange(inventory, distance);
-							if (isMounted) StopMount();
-						}
+						CancelAiming();
 					}
 				}
 				else if (distance <= DistanceRange.Y)
 				{
 					HandleRangedAttack(inventory, target, distance);
-					if (isMounted) PilotMount(target);
 				}
 				else
 				{
 					CancelAiming();
-					if (isMounted) StopMount();
+				}
+			}
+
+			// ============================================
+			// LÓGICA DE PILOTAJE (separada de la lógica de combate)
+			// 
+			// REGLA PRINCIPAL para monturas voladoras:
+			// SIEMPRE pilotar cuando hay un objetivo, sin importar la distancia.
+			// En el aire no hay pathfinding que las acerque, necesitan moverse
+			// constantemente hacia el objetivo.
+			// 
+			// REGLA para monturas terrestres:
+			// Pilotar a distancia media/larga, parar en rango cercano para melee.
+			// ============================================
+			if (isMounted)
+			{
+				if (isFlyingMount)
+				{
+					// Monturas voladoras: SIEMPRE pilotar cuando hay objetivo
+					PilotMount(target);
+				}
+				else if (distance >= DistanceRange.X)
+				{
+					// Caballos: pilotar a distancia media/larga
+					PilotMount(target);
+				}
+				else
+				{
+					// Caballos: parar en rango cercano para que el pathfinding
+					// del zombi lo acerque para melee
+					StopMount();
 				}
 			}
 		}
@@ -422,7 +402,6 @@ namespace Game
 							m_componentRider.StartDismounting();
 							m_currentMount = null;
 							CurrentMountState = MountState.Dismounting;
-							break;
 						}
 					}
 					break;
@@ -520,7 +499,6 @@ namespace Game
 			{
 				steedImproved.m_speedLevel = 1;
 				steedImproved.m_speedChangeFactor = 100f;
-
 				steedImproved.SpeedOrder = 0;
 				steedImproved.TurnOrder = 0f;
 				steedImproved.JumpOrder = 0f;
@@ -532,7 +510,6 @@ namespace Game
 			{
 				steedBehavior.m_speedLevel = 1;
 				steedBehavior.m_speedChangeFactor = 100f;
-
 				steedBehavior.SpeedOrder = 0;
 				steedBehavior.TurnOrder = 0f;
 				steedBehavior.JumpOrder = 0f;
@@ -553,20 +530,7 @@ namespace Game
 
 			if (dirToTarget.LengthSquared() < 0.01f)
 			{
-				ComponentSteedBehaviorImproved steedImproved = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehaviorImproved>();
-				if (steedImproved != null)
-				{
-					steedImproved.TurnOrder = 0f;
-					steedImproved.SpeedOrder = 0;
-					return;
-				}
-
-				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
-				if (steedBehavior != null)
-				{
-					steedBehavior.TurnOrder = 0f;
-					steedBehavior.SpeedOrder = 0;
-				}
+				StopMount();
 				return;
 			}
 
@@ -588,9 +552,8 @@ namespace Game
 
 			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
 
-			// Para monturas voladoras, usar umbral menor porque en el aire no pueden
-			// ajustar su posición final con pathfinding como los caballos terrestres.
-			// Necesitan llegar más cerca para que el ataque melee alcance (~1.75f).
+			// Para monturas voladoras, usar umbral menor porque necesitan
+			// llegar más cerca para que el ataque melee alcance
 			float stopDistance = IsFlyingMount() ? 0.3f : 2f;
 
 			int speedOrder = 0;
@@ -603,10 +566,6 @@ namespace Game
 				else if (dot < -0.5f)
 				{
 					speedOrder = -1;
-				}
-				else
-				{
-					speedOrder = 0;
 				}
 			}
 
