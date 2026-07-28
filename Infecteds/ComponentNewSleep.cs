@@ -26,7 +26,7 @@ namespace Game
 				if (m_componentPlayer?.ComponentGui != null)
 				{
 					m_componentPlayer.ComponentGui.DisplaySmallMessage(
-						"No puedes dormir durante la noche verde. Ellos te encontrarán...",
+						LanguageControl.Get(ComponentNewSleep.fName, 1),
 						new Color(0, 255, 94),
 						true,
 						true
