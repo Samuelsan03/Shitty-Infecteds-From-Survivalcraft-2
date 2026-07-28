@@ -9,8 +9,8 @@ namespace Game
 	/// <summary>
 	/// Componente de comportamiento de montura mejorado.
 	/// Soluciona conflictos de gravedad y saltos bruscos en criaturas voladoras.
-	/// PC: Espacio directo para subir, Shift directo para bajar.
-	/// Movil: Sube y baja segun la inclinacion de la camara.
+	/// PC: Espacio directo para subir, Shift directo para bajar. Doble W para correr.
+	/// Movil: Inclinacion de camara para subir/bajar. Doble toque adelante para correr.
 	/// IA: Usa FlyOrder cuando la montura puede volar, respetando logica de ComponentPilot.
 	/// Soporte integrado para jinetes y monturas zombi con validación de restricciones.
 	/// </summary>
@@ -40,6 +40,9 @@ namespace Game
 		// Velocidad de ascenso al despegar
 		private const float c_takeoffSpeed = 0.5f;
 
+		// Velocidad mínima para vuelo en móvil cuando no se ha hecho doble toque
+		private const float c_mobileMinFlySpeed = 0.5f;
+
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			base.Load(valuesDictionary, idToEntityMap);
@@ -57,6 +60,7 @@ namespace Game
 			bool isInAir = m_componentCreature.ComponentBody.StandingOnValue == null;
 
 			// Llamamos a la base para calcular la velocidad (m_speed) y el giro (m_turnSpeed)
+			// Esto incluye el sistema de niveles de velocidad y el doble toque
 			base.ProcessRidingOrders();
 
 			// Si la criatura no puede volar, salimos (se comportará como un caballo normal)
@@ -129,8 +133,6 @@ namespace Game
 
 			// ============================================
 			// CALCULAR GIRO HACIA EL OBJETIVO
-			// Igual que ComponentPilot: Vector2.Angle + TurnOrder
-			// Esto hace que la montura gire hacia el objetivo
 			// ============================================
 			float turnAmount = 0f;
 
@@ -146,19 +148,13 @@ namespace Game
 					dirToTargetXZ = Vector2.Normalize(dirToTargetXZ);
 					Vector2 forwardXZ = new Vector2(forward.X, forward.Z);
 
-					// Vector2.Angle devuelve el ángulo firmado entre los vectores
 					float angleToTarget = Vector2.Angle(forwardXZ, dirToTargetXZ);
-
-					// Aplicar TurnOrder directamente, igual que ComponentPilot
 					turnAmount = MathUtils.Clamp(angleToTarget, -1f, 1f);
 				}
 			}
 
-			// Aplicar giro a la locomoción
 			m_componentCreature.ComponentLocomotion.TurnOrder = new Vector2(turnAmount, 0f);
 
-			// Aplicar LookOrder para que la criatura mire hacia donde gira
-			// Igual que el original: LookOrder = 2 * turnSpeed - LookAngles
 			if (MathF.Abs(effectiveSpeed) > 0.01f || MathF.Abs(turnAmount) > 0.01f)
 			{
 				m_componentCreature.ComponentLocomotion.LookOrder = new Vector2(2f * turnAmount, 0f) - m_componentCreature.ComponentLocomotion.LookAngles;
@@ -205,13 +201,11 @@ namespace Game
 				}
 			}
 
-			// Normalizar si es necesario
 			if (flyDirection.LengthSquared() > 1f)
 			{
 				flyDirection = Vector3.Normalize(flyDirection);
 			}
 
-			// Asegurar que siempre haya algún input para mantener el estado de vuelo
 			if (flyDirection.LengthSquared() <= 0f)
 			{
 				flyDirection = new Vector3(0f, c_minFlyInput, 0f);
@@ -224,15 +218,22 @@ namespace Game
 
 		/// <summary>
 		/// Procesa los controles de vuelo para un jugador humano.
+		/// PC: W para avanzar, doble W para correr, Espacio para subir, Shift para bajar.
+		/// Movil: Joystick para avanzar, doble toque para correr, inclinar camara para subir/bajar.
 		/// </summary>
 		private void ProcessPlayerFlightControls(ComponentPlayer player, bool isInAir)
 		{
 			float flyInputY = 0f;
 
+			// ============================================
+			// LÓGICA MÓVIL
+			// CORRECCIÓN: Ya no requiere m_speed > 0.1f para activar controles.
+			// Usa velocidad mínima si no se ha hecho doble toque, pero respeta
+			// el sistema de niveles de velocidad (doble toque) cuando está disponible.
+			// ============================================
 			if (player.ComponentInput.IsControlledByTouch)
 			{
-				// LÓGICA MÓVIL
-				if (m_speed > 0.1f && player.GameWidget?.ActiveCamera != null)
+				if (player.GameWidget?.ActiveCamera != null)
 				{
 					Vector3 viewDir = player.GameWidget.ActiveCamera.ViewDirection;
 					Vector3 normViewDir = Vector3.Normalize(viewDir);
@@ -242,11 +243,28 @@ namespace Game
 					Matrix m = m_componentCreature.ComponentBody.Matrix;
 					Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
 
-					Vector3 flyDirection = (forward * m_speed) + (Vector3.UnitY * flyInputY * m_speed);
+					// ============================================
+					// APLICAR SISTEMA DE VELOCIDAD DEL DOBLE TOQUE
+					// m_speed viene de base.ProcessRidingOrders() y refleja
+					// el nivel de velocidad actual (0 a 1).
+					// Si m_speed es muy bajo, usar velocidad mínima para poder volar.
+					// ============================================
+					float effectiveSpeed = m_speed;
+					if (effectiveSpeed < c_mobileMinFlySpeed)
+					{
+						effectiveSpeed = c_mobileMinFlySpeed;
+					}
+
+					Vector3 flyDirection = (forward * effectiveSpeed) + (Vector3.UnitY * flyInputY * effectiveSpeed);
 
 					if (flyDirection.LengthSquared() > 1f)
 					{
 						flyDirection = Vector3.Normalize(flyDirection);
+					}
+
+					if (flyDirection.LengthSquared() <= 0f)
+					{
+						flyDirection = new Vector3(0f, c_minFlyInput, 0f);
 					}
 
 					m_componentCreature.ComponentLocomotion.FlyOrder = flyDirection;
@@ -257,7 +275,12 @@ namespace Game
 			}
 			else
 			{
+				// ============================================
 				// LÓGICA PC / GAMEPAD
+				// Espacio = subir, Shift = bajar
+				// El sistema de velocidad (doble W) viene de m_speed
+				// calculado por base.ProcessRidingOrders()
+				// ============================================
 				if (Keyboard.IsKeyDown(Key.Space))
 				{
 					flyInputY = 1f;
@@ -275,6 +298,10 @@ namespace Game
 				Matrix m = m_componentCreature.ComponentBody.Matrix;
 				Vector3 forward = Vector3.Normalize(new Vector3(m.Forward.X, 0f, m.Forward.Z));
 
+				// ============================================
+				// APLICAR VELOCIDAD DEL SISTEMA DE NIVELES
+				// m_speed refleja el nivel actual (doble W lo aumenta)
+				// ============================================
 				Vector3 flyDirection = forward * m_speed;
 				flyDirection.Y = (isInAir && MathF.Abs(flyInputY) < 0.01f) ? 0f : flyInputY;
 
