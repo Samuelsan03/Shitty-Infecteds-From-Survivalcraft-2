@@ -116,6 +116,18 @@ namespace Game
 			return false;
 		}
 
+		/// <summary>
+		/// Detecta si la montura actual es una criatura voladora.
+		/// Las monturas voladoras necesitan pilotearse siempre, incluso en rango cercano,
+		/// porque en el aire no pueden ajustar su posición final como los caballos terrestres.
+		/// </summary>
+		private bool IsFlyingMount()
+		{
+			if (m_componentRider?.Mount == null) return false;
+			ComponentLocomotion locomotion = m_componentRider.Mount.Entity.FindComponent<ComponentLocomotion>();
+			return locomotion != null && locomotion.FlySpeed > 0f;
+		}
+
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
@@ -255,6 +267,7 @@ namespace Game
 			}
 
 			bool isMounted = IsMounted;
+			bool isFlyingMount = isMounted && IsFlyingMount();
 
 			if (isMounted)
 			{
@@ -272,6 +285,12 @@ namespace Game
 			bool hasRanged = FindRangedWeaponSlot(inventory) >= 0;
 			bool hasMelee = FindMeleeWeaponSlot(inventory) >= 0;
 
+			// ============================================
+			// LÓGICA DE COMBATE: Caballos = original, Voladores = siempre pilotear
+			// Los caballos se detienen en rango cercano (el pathfinding del zombi
+			// lo acerca para melee). Las monturas voladoras SIEMPRE necesitan
+			// pilotearse porque en el aire no hay pathfinding que las acerque.
+			// ============================================
 			if (hasThrowable)
 			{
 				if (distance < DistanceRangeOfThrowable.X)
@@ -279,7 +298,11 @@ namespace Game
 					if (hasMelee)
 					{
 						HandleCloseRange(inventory, distance);
-						if (isMounted) PilotMount(target);
+						if (isMounted)
+						{
+							if (isFlyingMount) PilotMount(target);
+							else StopMount();
+						}
 					}
 					else
 					{
@@ -313,14 +336,22 @@ namespace Game
 					if (hasMelee)
 					{
 						HandleCloseRange(inventory, distance);
-						if (isMounted) PilotMount(target);
+						if (isMounted)
+						{
+							if (isFlyingMount) PilotMount(target);
+							else StopMount();
+						}
 					}
 					else
 					{
 						if (hasRanged)
 						{
 							HandleCloseRange(inventory, distance);
-							if (isMounted) PilotMount(target);
+							if (isMounted)
+							{
+								if (isFlyingMount) PilotMount(target);
+								else StopMount();
+							}
 						}
 						else
 						{
@@ -393,14 +424,6 @@ namespace Game
 							CurrentMountState = MountState.Dismounting;
 							break;
 						}
-
-						ComponentMountZombie mountZombie = m_componentRider.Mount as ComponentMountZombie;
-						if (mountZombie != null && !mountZombie.CanRiderBeMounted)
-						{
-							m_componentRider.StartDismounting();
-							m_currentMount = null;
-							CurrentMountState = MountState.Dismounting;
-						}
 					}
 					break;
 
@@ -449,12 +472,6 @@ namespace Game
 				ComponentHealth mountHealth = body.Entity.FindComponent<ComponentHealth>();
 				if (mountHealth == null || mountHealth.Health <= 0f)
 					continue;
-
-				ComponentMountZombie mountZombie = mount as ComponentMountZombie;
-				if (mountZombie != null && !mountZombie.CanRiderBeMounted)
-				{
-					continue;
-				}
 
 				float distanceSquared = Vector3.DistanceSquared(
 					m_componentBody.Position,
@@ -567,42 +584,29 @@ namespace Game
 			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
 			float dot = Vector3.Dot(forward, dirToTarget);
 
+			float turnOrder = MathUtils.Clamp(cross * 2f, -0.5f, 0.5f);
+
 			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
 
-			// CORRECCIÓN: TurnOrder más agresivo cuando está cerca para girar rápido
-			// Las monturas necesitan moverse para poder girar
-			float turnMultiplier = distance < 4f ? 4f : 2f;
-			float turnOrder = MathUtils.Clamp(cross * turnMultiplier, -1f, 1f);
+			// Para monturas voladoras, usar umbral menor porque en el aire no pueden
+			// ajustar su posición final con pathfinding como los caballos terrestres.
+			// Necesitan llegar más cerca para que el ataque melee alcance (~1.75f).
+			float stopDistance = IsFlyingMount() ? 0.3f : 2f;
 
 			int speedOrder = 0;
-
-			// CORRECCIÓN PRINCIPAL: Eliminada la restricción que detenía la montura
-			// cuando dot estaba entre -0.5 y 0.2 (montura de lado al objetivo).
-			// 
-			// PROBLEMA ANTERIOR: Cuando la montura estaba de lado al objetivo:
-			// - speedOrder = 0 (se detenía)
-			// - Las monturas NO PUEDEN GIRAR estando paradas
-			// - Resultado: montura congelada sin poder ajustar ángulo
-			//
-			// SOLUCIÓN: Siempre avanzar (excepto si está de espaldas completas)
-			// para permitir que la montura gire mientras se mueve.
-			if (distance > 0.3f)
+			if (distance > stopDistance)
 			{
-				if (dot > -0.3f)
+				if (dot > 0.2f)
 				{
-					// Avanzar: mirando al objetivo frontal O de lado
-					// Necesita moverse para poder girar
 					speedOrder = 1;
 				}
-				else if (dot < -0.8f)
+				else if (dot < -0.5f)
 				{
-					// Solo retroceder si está completamente de espaldas al objetivo
 					speedOrder = -1;
 				}
 				else
 				{
-					// Está de lado trasero, avanzar para poder girar
-					speedOrder = 1;
+					speedOrder = 0;
 				}
 			}
 
