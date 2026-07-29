@@ -12,6 +12,16 @@ namespace Game
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
 		/// <summary>
+		/// Enum de estados para el proceso de domar criaturas.
+		/// </summary>
+		public enum TamingState
+		{
+			None,
+			Searching,
+			Taming
+		}
+
+		/// <summary>
 		/// Lista de criaturas montables que la IA puede usar.
 		/// </summary>
 		private static readonly HashSet<string> MountableCreatures = new HashSet<string>
@@ -24,14 +34,24 @@ namespace Game
 			"Horse_Chestnut_Saddled",
 			"Donkey_Saddled",
 			"FlyingInfectedTamed1"
-            // Agregar más criaturas montables aquí...
-        };
+		};
 
 		/// <summary>
 		/// Distancia máxima para detectar y montar una criatura.
 		/// También se utiliza como distancia de llegada para el piloto de monturas voladoras.
 		/// </summary>
 		public const float MountDetectionRange = 2.5f;
+
+		/// <summary>
+		/// Rango de distancia para domesticar criaturas (mínimo, máximo).
+		/// No se carga desde Load(), usa valor por defecto.
+		/// </summary>
+		public Vector2 RangeToTameCreatures = new Vector2(0f, 3f);
+
+		/// <summary>
+		/// Estado actual del proceso de doma.
+		/// </summary>
+		public TamingState CurrentTamingState = TamingState.None;
 
 		public bool CanUseInventory { get; private set; }
 
@@ -116,6 +136,7 @@ namespace Game
 		private SubsystemBlockBehaviors m_subsystemBlockBehaviors;
 		private SubsystemTerrain m_subsystemTerrain;
 		private SubsystemBodies m_subsystemBodies;
+		private SubsystemAudio m_subsystemAudio;
 
 		// Componentes para montura
 		private ComponentRider m_componentRider;
@@ -204,6 +225,7 @@ namespace Game
 			m_subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true);
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
+			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
 
 			m_random = new Random();
 
@@ -214,6 +236,7 @@ namespace Game
 		public void Update(float dt)
 		{
 			UpdateMountingBehavior(dt);
+			UpdateTamingBehavior(dt);
 
 			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
 			{
@@ -349,6 +372,162 @@ namespace Game
 
 				if (isMounted) PilotMount(target);
 			}
+		}
+
+		/// <summary>
+		/// Actualiza el comportamiento de doma de criaturas.
+		/// Si la IA tiene un collar en el inventario y detecta una criatura dentro del rango,
+		/// intenta domesticarla en vez de atacarla.
+		/// </summary>
+		private void UpdateTamingBehavior(float dt)
+		{
+			if (!m_canUseInventory || m_componentMiner?.Inventory == null)
+			{
+				CurrentTamingState = TamingState.None;
+				return;
+			}
+
+			int collarBlockIndex = BlocksManager.GetBlockIndex("CollarBlock");
+			if (collarBlockIndex < 0)
+			{
+				CurrentTamingState = TamingState.None;
+				return;
+			}
+
+			if (!HasCollarInInventory(collarBlockIndex))
+			{
+				CurrentTamingState = TamingState.None;
+				return;
+			}
+
+			CurrentTamingState = TamingState.Searching;
+
+			Vector3 position = m_componentCreature.ComponentBody.Position;
+			Vector2 searchPos = new Vector2(position.X, position.Z);
+			float maxRange = RangeToTameCreatures.Y;
+
+			m_nearbyBodies.Clear();
+			m_subsystemBodies.FindBodiesAroundPoint(searchPos, maxRange, m_nearbyBodies);
+
+			float closestDistance = float.MaxValue;
+			ComponentBody closestBody = null;
+
+			for (int i = 0; i < m_nearbyBodies.Count; i++)
+			{
+				ComponentBody body = m_nearbyBodies.Array[i];
+				if (body.Entity == Entity) continue;
+
+				ComponentCreature creature = body.Entity.FindComponent<ComponentCreature>();
+				if (creature == null) continue;
+
+				ComponentHealth health = creature.ComponentHealth;
+				if (health == null || health.Health <= 0f) continue;
+
+				float distSq = Vector3.DistanceSquared(position, body.Position);
+				if (distSq <= maxRange * maxRange && distSq < closestDistance)
+				{
+					closestDistance = distSq;
+					closestBody = body;
+				}
+			}
+
+			if (closestBody == null) return;
+
+			float distance = MathF.Sqrt(closestDistance);
+			if (distance < RangeToTameCreatures.X) return;
+
+			CurrentTamingState = TamingState.Taming;
+
+			// Intenta domesticar. El SubsystemCollarBlockBehavior ya se encarga de reproducir 
+			// el sonido y de omitir el mensaje si no es un jugador real.
+			TryTameCreature(closestBody, collarBlockIndex);
+
+			CurrentTamingState = TamingState.Searching;
+		}
+
+		/// <summary>
+		/// Verifica si la IA tiene un collar en su inventario.
+		/// </summary>
+		private bool HasCollarInInventory(int collarBlockIndex)
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0)
+				{
+					if (Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == collarBlockIndex)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Intenta domesticar una criatura usando el SubsystemCollarBlockBehavior.
+		/// El subsystem se encarga de la lista de criaturas y la transformación.
+		/// </summary>
+		private bool TryTameCreature(ComponentBody targetBody, int collarBlockIndex)
+		{
+			SubsystemBlockBehavior[] behaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(collarBlockIndex);
+			if (behaviors == null) return false;
+
+			SubsystemCollarBlockBehavior collarBehavior = null;
+			for (int i = 0; i < behaviors.Length; i++)
+			{
+				if (behaviors[i] is SubsystemCollarBlockBehavior)
+				{
+					collarBehavior = (SubsystemCollarBlockBehavior)behaviors[i];
+					break;
+				}
+			}
+
+			if (collarBehavior == null) return false;
+
+			// Encontrar el slot exacto donde está el collar
+			int collarSlot = FindCollarSlot(collarBlockIndex);
+			if (collarSlot < 0) return false;
+
+			// Guardar el slot activo actual (para no perder su arma equipada)
+			int previousActiveSlot = m_componentMiner.Inventory.ActiveSlotIndex;
+
+			// Cambiar temporalmente al slot del collar para que RemoveActiveTool borre el collar y no el arma
+			m_componentMiner.Inventory.ActiveSlotIndex = collarSlot;
+
+			Vector3 from = m_componentCreature.ComponentBody.BoundingBox.Center();
+			Vector3 to = targetBody.BoundingBox.Center();
+			Vector3 dir = to - from;
+			float dist = dir.Length();
+
+			bool result = false;
+			if (dist >= 0.001f)
+			{
+				Ray3 ray = new Ray3(from, dir / dist);
+				result = collarBehavior.OnUse(ray, m_componentMiner);
+			}
+
+			// Restaurar inmediatamente el slot activo a su arma original
+			m_componentMiner.Inventory.ActiveSlotIndex = previousActiveSlot;
+
+			return result;
+		}
+
+		/// <summary>
+		/// Busca el índice exacto del slot donde se encuentra el collar.
+		/// </summary>
+		private int FindCollarSlot(int collarBlockIndex)
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0)
+				{
+					if (Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == collarBlockIndex)
+					{
+						return i;
+					}
+				}
+			}
+			return -1;
 		}
 
 		private void StopMount()
