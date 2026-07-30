@@ -168,14 +168,28 @@ namespace Game
 			double effectiveDay = GetEffectiveDay();
 			bool isScheduledDay = effectiveDay >= m_lastGreenNightDay && effectiveDay < m_lastGreenNightDay + 1.0;
 
-			if (isScheduledDay && IsNightTime && !m_greenNightTriggeredThisCycle)
+			// ACTIVACIÓN: Exactamente igual que Luna de Sangre usa para activar
+			// bool flag2 = IntervalUtils.IsBetween(timeOfDay, DuskStart, NightStart) 
+			//           || IntervalUtils.IsBetween(timeOfDay, NightStart, DawnStart);
+			bool isNightTimeForActivation = IntervalUtils.IsBetween(m_subsystemTimeOfDay.TimeOfDay, m_subsystemTimeOfDay.DuskStart, m_subsystemTimeOfDay.NightStart)
+										 || IntervalUtils.IsBetween(m_subsystemTimeOfDay.TimeOfDay, m_subsystemTimeOfDay.NightStart, m_subsystemTimeOfDay.DawnStart);
+
+			if (isScheduledDay && isNightTimeForActivation && !m_greenNightTriggeredThisCycle)
 			{
 				m_greenNightTriggeredThisCycle = true;
 				m_isGreenNightActive = true;
 				NotifyGreenNightStart();
 			}
 
-			if (m_isGreenNightActive && !IsNightTime)
+			// DESACTIVACIÓN: Exactamente igual que Luna de Sangre usa para desactivar
+			// bool flag6 = IntervalUtils.IsBetween(timeOfDay, DawnStart, DayStart) 
+			//           || IntervalUtils.IsBetween(timeOfDay, DayStart, DuskStart);
+			// bool flag7 = this.IsBloodMoon && flag6;
+			// if (flag7) { this.IsBloodMoon = false; }
+			bool isDaytimeForEnding = IntervalUtils.IsBetween(m_subsystemTimeOfDay.TimeOfDay, m_subsystemTimeOfDay.DawnStart, m_subsystemTimeOfDay.DayStart)
+								   || IntervalUtils.IsBetween(m_subsystemTimeOfDay.TimeOfDay, m_subsystemTimeOfDay.DayStart, m_subsystemTimeOfDay.DuskStart);
+			bool shouldEnd = m_isGreenNightActive && isDaytimeForEnding;
+			if (shouldEnd)
 			{
 				m_isGreenNightActive = false;
 				m_lastGreenNightDay = Math.Floor(effectiveDay) + m_greenNightIntervalDays;
