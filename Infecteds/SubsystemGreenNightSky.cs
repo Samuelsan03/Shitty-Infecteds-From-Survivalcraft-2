@@ -37,6 +37,7 @@ namespace Game
 		private SubsystemTimeOfDay m_subsystemTimeOfDay;
 		private SubsystemTime m_subsystemTime;
 		private SubsystemPlayers m_subsystemPlayers;
+		private SubsystemInfectedWaves m_subsystemInfectedWaves;
 
 		private LabelWidget m_hudLabel;
 		private StackPanelWidget m_hudContainer;
@@ -119,6 +120,7 @@ namespace Game
 			m_subsystemTimeOfDay = Project.FindSubsystem<SubsystemTimeOfDay>(true);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
+			m_subsystemInfectedWaves = Project.FindSubsystem<SubsystemInfectedWaves>(false);
 
 			m_greenNightIntervalDays = valuesDictionary.GetValue<int>("GreenNightIntervalDays", 4);
 			m_lastGreenNightDay = valuesDictionary.GetValue<double>("LastGreenNightDay", -1);
