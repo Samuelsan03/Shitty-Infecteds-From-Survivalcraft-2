@@ -751,19 +751,15 @@ namespace Game
 			if (AimTimeTimer > 0f)
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
-				if (!UsesNormalAimAnimation())
-				{
-					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-				}
+				// NO sobrescribir AimHandAngleOrder para lanzables - 
+				// SubsystemThrowableBlockBehavior ya lo maneja correctamente (3.2f)
 				AimTimeTimer -= m_subsystemTime.GameTimeDelta;
 			}
 			else
 			{
 				m_componentMiner.Aim(aim, AimState.Completed);
-				if (!UsesNormalAimAnimation())
-				{
-					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-				}
+				// NO sobrescribir AimHandAngleOrder para lanzables -
+				// SubsystemThrowableBlockBehavior ya lo maneja correctamente
 				CooldownTimer = ThrowableCooldown;
 				AimTimeTimer = ThrowableAimTime;
 			}
