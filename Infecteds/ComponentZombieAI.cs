@@ -716,8 +716,15 @@ namespace Game
 		{
 			if (IsRangedWeapon(blockIndex)) return false;
 			if (blockIndex <= 0 || blockIndex >= BlocksManager.Blocks.Length) return false;
+
 			Block block = BlocksManager.Blocks[blockIndex];
-			return block.IsAimable && block.GetProjectileSpeed(0) > 0f;
+			if (!block.IsAimable || block.GetProjectileSpeed(0) <= 0f) return false;
+
+			SubsystemThrowableBlockBehavior subsystemThrowable = Project.FindSubsystem<SubsystemThrowableBlockBehavior>(false);
+			if (subsystemThrowable == null) return false;
+
+			int[] handledBlocks = subsystemThrowable.HandledBlocks;
+			return handledBlocks.Length == 0 || Array.IndexOf(handledBlocks, blockIndex) >= 0;
 		}
 
 		private int FindThrowableSlot(IInventory inventory)
