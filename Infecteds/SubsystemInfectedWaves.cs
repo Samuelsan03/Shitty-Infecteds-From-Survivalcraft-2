@@ -27,6 +27,7 @@ namespace Game
 		private SubsystemTime m_subsystemTime;
 		private SubsystemPlayers m_subsystemPlayers;
 		private SubsystemTerrain m_subsystemTerrain;
+		private SubsystemSpawn m_subsystemSpawn; // NUEVO: Referencia al subsistema de spawn original
 
 		private Random m_random = new Random();
 
@@ -34,7 +35,7 @@ namespace Game
 		private bool m_allWavesCompleted;
 		private float m_spawnTimer;
 
-		private const float SPAWN_INTERVAL = 4f;
+		private const float SPAWN_INTERVAL = 1f;
 		private const float SPAWN_RADIUS = 40f;
 		private const float MIN_SPAWN_RADIUS = 15f;
 
@@ -46,6 +47,7 @@ namespace Game
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
+			m_subsystemSpawn = Project.FindSubsystem<SubsystemSpawn>(true); // NUEVO: Inicializar
 
 			LoadWavesFromXml();
 		}
@@ -157,14 +159,17 @@ namespace Game
 				Vector3 spawnPosition = GetSpawnPosition();
 				if (spawnPosition == Vector3.Zero) return;
 
-				ValuesDictionary valuesDictionary = DatabaseManager.FindEntityValuesDictionary(entityName, true);
-				Entity entity = Project.CreateEntity(valuesDictionary);
+				// ACTUALIZADO: Ahora usamos el pipeline nativo del juego.
+				// Esto llama a los hooks "OnReadSpawnData", registra la criatura en el SubsystemSpawn 
+				// para que sea manejada por los Chunks y haga Despawn correctamente.
+				SpawnEntityData data = new SpawnEntityData
+				{
+					TemplateName = entityName,
+					Position = spawnPosition,
+					ConstantSpawn = true
+				};
 
-				ComponentBody body = entity.FindComponent<ComponentBody>(true);
-				body.Position = spawnPosition;
-				body.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, m_random.Float(0f, 6.2831855f));
-
-				Project.AddEntity(entity);
+				m_subsystemSpawn.SpawnEntity(data);
 			}
 			catch (Exception ex)
 			{
