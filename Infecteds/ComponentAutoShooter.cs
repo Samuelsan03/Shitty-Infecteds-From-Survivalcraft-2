@@ -8,11 +8,20 @@ namespace Game
 {
 	public class ComponentAutoShooter : Component, IUpdateable
 	{
+		// Enum de estado de lanzamiento
+		public enum ShooterState
+		{
+			Inactive,
+			Shooting
+		}
+
 		private Dictionary<string, int> m_blocksToShoot = new Dictionary<string, int>();
 		private float m_timeToRelaunch = 1.0f;
 		private Vector2 m_minimumDistanceToAvoid = new Vector2(5f, 0f);
 		private float m_lastFireTime;
 		private Random m_random = new Random();
+
+		private ShooterState m_state = ShooterState.Inactive;
 
 		private SubsystemProjectiles m_subsystemProjectiles;
 		private SubsystemAudio m_subsystemAudio;
@@ -20,14 +29,15 @@ namespace Game
 		private SubsystemBodies m_subsystemBodies;
 		private ComponentBody m_componentBody;
 		private ComponentCreature m_componentCreature;
-		private ComponentHealth m_componentHealth; // AGREGADO
+		private ComponentHealth m_componentHealth;
 
-		// Componentes de chase para obtener el target correcto
 		private ComponentChaseBehavior m_componentChaseBehavior;
 		private ComponentZombieChaseBehavior m_componentZombieChaseBehavior;
 		private ComponentNewChaseBehavior m_componentNewChaseBehavior;
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
+
+		public ShooterState State => m_state;
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
@@ -39,9 +49,8 @@ namespace Game
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_componentBody = Entity.FindComponent<ComponentBody>(true);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(false);
-			m_componentHealth = Entity.FindComponent<ComponentHealth>(false); // AGREGADO
+			m_componentHealth = Entity.FindComponent<ComponentHealth>(false);
 
-			// Buscar componentes de chase (puede tener uno o ninguno)
 			m_componentChaseBehavior = Entity.FindComponent<ComponentChaseBehavior>(false);
 			m_componentZombieChaseBehavior = Entity.FindComponent<ComponentZombieChaseBehavior>(false);
 			m_componentNewChaseBehavior = Entity.FindComponent<ComponentNewChaseBehavior>(false);
@@ -65,35 +74,40 @@ namespace Game
 
 		public void Update(float dt)
 		{
-			// CORRECCIÓN PRINCIPAL: Verificar si estamos vivos
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
+			{
+				m_state = ShooterState.Inactive;
 				return;
-
-			if (m_subsystemTime.GameTime - m_lastFireTime < m_timeToRelaunch)
-				return;
+			}
 
 			ComponentBody target = GetChaseTarget();
 
-			if (target == null)
+			if (target == null || m_blocksToShoot.Count == 0)
+			{
+				m_state = ShooterState.Inactive;
 				return;
+			}
 
 			float distance = Vector3.Distance(m_componentBody.Position, target.Position);
 			if (distance <= m_minimumDistanceToAvoid.X)
-				return;
-
-			if (m_blocksToShoot.Count > 0)
 			{
-				ShootAtTarget(target);
-				m_lastFireTime = (float)m_subsystemTime.GameTime;
+				m_state = ShooterState.Inactive;
+				return;
 			}
+
+			if (m_subsystemTime.GameTime - m_lastFireTime < m_timeToRelaunch)
+			{
+				m_state = ShooterState.Inactive;
+				return;
+			}
+
+			m_state = ShooterState.Shooting;
+			ShootAtTarget(target);
+			m_lastFireTime = (float)m_subsystemTime.GameTime;
 		}
 
-		/// <summary>
-		/// Obtiene el target SOLO si hay un componente de chase activo persiguiendo a alguien
-		/// </summary>
 		private ComponentBody GetChaseTarget()
 		{
-			// Prioridad 1: ComponentNewChaseBehavior (el más personalizado)
 			if (m_componentNewChaseBehavior != null && m_componentNewChaseBehavior.IsActive && m_componentNewChaseBehavior.Target != null)
 			{
 				ComponentCreature targetCreature = m_componentNewChaseBehavior.Target;
@@ -101,7 +115,6 @@ namespace Game
 					return targetCreature.ComponentBody;
 			}
 
-			// Prioridad 2: ComponentZombieChaseBehavior
 			if (m_componentZombieChaseBehavior != null && m_componentZombieChaseBehavior.IsActive && m_componentZombieChaseBehavior.Target != null)
 			{
 				ComponentCreature targetCreature = m_componentZombieChaseBehavior.Target;
@@ -109,7 +122,6 @@ namespace Game
 					return targetCreature.ComponentBody;
 			}
 
-			// Prioridad 3: ComponentChaseBehavior (original del juego)
 			if (m_componentChaseBehavior != null && m_componentChaseBehavior.IsActive && m_componentChaseBehavior.Target != null)
 			{
 				ComponentCreature targetCreature = m_componentChaseBehavior.Target;
@@ -137,7 +149,6 @@ namespace Game
 			if (dirLength < 0.001f) return;
 			direction /= dirLength;
 
-			// Calcular distancia segura basada en el bounding box
 			BoundingBox myBox = m_componentBody.BoundingBox;
 			Vector3 halfSize = 0.5f * (myBox.Max - myBox.Min);
 
