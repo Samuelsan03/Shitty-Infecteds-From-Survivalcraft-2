@@ -20,6 +20,7 @@ namespace Game
 		private SubsystemBodies m_subsystemBodies;
 		private ComponentBody m_componentBody;
 		private ComponentCreature m_componentCreature;
+		private ComponentHealth m_componentHealth; // AGREGADO
 
 		// Componentes de chase para obtener el target correcto
 		private ComponentChaseBehavior m_componentChaseBehavior;
@@ -38,6 +39,7 @@ namespace Game
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_componentBody = Entity.FindComponent<ComponentBody>(true);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(false);
+			m_componentHealth = Entity.FindComponent<ComponentHealth>(false); // AGREGADO
 
 			// Buscar componentes de chase (puede tener uno o ninguno)
 			m_componentChaseBehavior = Entity.FindComponent<ComponentChaseBehavior>(false);
@@ -63,11 +65,13 @@ namespace Game
 
 		public void Update(float dt)
 		{
+			// CORRECCIÓN PRINCIPAL: Verificar si estamos vivos
+			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
+				return;
+
 			if (m_subsystemTime.GameTime - m_lastFireTime < m_timeToRelaunch)
 				return;
 
-			// CORREGIDO: Solo obtener target si hay un chase activo
-			// Eliminado el fallback a FindNearestTarget()
 			ComponentBody target = GetChaseTarget();
 
 			if (target == null)
