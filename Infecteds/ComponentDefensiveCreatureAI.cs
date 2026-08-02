@@ -1314,7 +1314,9 @@ namespace Game
 
 			if (state != FlameThrowerBlock.LoadState.Loaded || ammo == 0)
 			{
-				int selectedBulletType = m_random.Int(0, 1);
+				// MANTENER el bulletType actual si ya tiene uno, solo asignar aleatorio si es 0 (indefinido)
+				int currentBulletType = (data >> 8) & 3;
+				int selectedBulletType = currentBulletType != 0 ? currentBulletType : m_random.Int(0, 1);
 
 				int newData = data;
 				newData = FlameThrowerBlock.SetLoadState(newData, FlameThrowerBlock.LoadState.Loaded);
