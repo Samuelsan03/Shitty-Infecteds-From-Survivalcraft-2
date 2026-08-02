@@ -24,7 +24,6 @@ namespace Game
 		private Dictionary<ComponentMiner, FireFlameThrowerParticleSystem> m_fireParticleSystems = new Dictionary<ComponentMiner, FireFlameThrowerParticleSystem>();
 		private Dictionary<ComponentMiner, PoisonFlameThrowerParticleSystem> m_poisonParticleSystems = new Dictionary<ComponentMiner, PoisonFlameThrowerParticleSystem>();
 
-		// Estado completo del apuntado - NO se lee del inventario durante Aim(InProgress)
 		private Dictionary<ComponentMiner, int> m_aimBulletTypes = new Dictionary<ComponentMiner, int>();
 		private Dictionary<ComponentMiner, int> m_aimAmmo = new Dictionary<ComponentMiner, int>();
 		private Dictionary<ComponentMiner, bool> m_aimSwitchOn = new Dictionary<ComponentMiner, bool>();
@@ -120,7 +119,6 @@ namespace Game
 			int contents = Terrain.ExtractContents(slotValue);
 			int data = Terrain.ExtractData(slotValue);
 
-			// DETECCIÓN DE ARMA CAMBIADA
 			if (contents != FlameThrowerBlock.Index || slotCount <= 0)
 			{
 				if (m_fireParticleSystems.ContainsKey(componentMiner) || m_poisonParticleSystems.ContainsKey(componentMiner))
@@ -134,7 +132,19 @@ namespace Game
 			switch (state)
 			{
 				case AimState.InProgress:
-					return HandleAimInProgress(componentMiner, aim, data);
+					HandleAimInProgress(componentMiner, aim, data);
+
+					// CORREGIDO: Actualizar el inventario inmediatamente cuando cambia el switch 
+					// (exactamente igual a como lo hace el SubsystemMusketBlockBehavior original).
+					// Esto permite que DrawBlock lea el estado y muestre la animación 3D de la palanca.
+					// Como IsSwapAnimationNeeded ignora este bit, NO cortará la animación de apuntado.
+					if (m_aimData.TryGetValue(componentMiner, out int updatedData) && updatedData != data)
+					{
+						int newValue = Terrain.MakeBlockValue(contents, 0, updatedData);
+						inventory.RemoveSlotItems(activeSlotIndex, 1);
+						inventory.AddSlotItems(activeSlotIndex, newValue, 1);
+					}
+					return false;
 
 				case AimState.Cancelled:
 				case AimState.Completed:
@@ -147,7 +157,6 @@ namespace Game
 
 		private bool HandleAimInProgress(ComponentMiner componentMiner, Ray3 aim, int currentData)
 		{
-			// INICIALIZAR estado del apuntado SOLO la primera vez
 			if (!m_aimStartTimes.ContainsKey(componentMiner))
 			{
 				m_aimStartTimes[componentMiner] = m_subsystemTime.GameTime;
@@ -159,7 +168,6 @@ namespace Game
 				m_aimDamageAccumulator[componentMiner] = 0;
 			}
 
-			// USAR SOLO el estado guardado - NUNCA leer del inventario
 			int aimBulletType = m_aimBulletTypes[componentMiner];
 			int ammo = m_aimAmmo[componentMiner];
 			bool switchOn = m_aimSwitchOn[componentMiner];
@@ -181,7 +189,6 @@ namespace Game
 			Vector3 fireDir = Vector3.Normalize(aim.Direction);
 			Vector3 muzzlePos = eyePos + fireDir * 0.5f;
 
-			// LIMPIEZA de partículas del tipo INCORRECTO
 			if (aimBulletType == 0)
 			{
 				StopAndRemovePoisonParticles(componentMiner);
@@ -191,7 +198,6 @@ namespace Game
 				StopAndRemoveFireParticles(componentMiner);
 			}
 
-			// CREAR partículas si hay ammo y switch está ON
 			if (ammo > 0 && switchOn)
 			{
 				if (aimBulletType == 0)
@@ -232,7 +238,6 @@ namespace Game
 				StopAndRemoveAllParticles(componentMiner);
 			}
 
-			// ENCENDER switch después de 0.5s
 			if (aimDuration > 0.5f && !switchOn)
 			{
 				m_aimSwitchOn[componentMiner] = true;
@@ -240,7 +245,6 @@ namespace Game
 				m_subsystemAudio.PlaySound("Audio/Hammer Cock Remake", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 			}
 
-			// DISPARAR si hay ammo y switch está ON
 			if (ammo > 0 && m_aimSwitchOn[componentMiner])
 			{
 				if (!m_lastFireTimes.ContainsKey(componentMiner))
@@ -260,7 +264,6 @@ namespace Game
 				}
 			}
 
-			// ANIMACIONES
 			ComponentFirstPersonModel firstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
 			if (firstPersonModel != null)
 			{
@@ -281,16 +284,13 @@ namespace Game
 
 		private bool HandleAimCompleted(ComponentMiner componentMiner, Ray3 aim, AimState state, int contents, int inventoryData, int activeSlotIndex, IInventory inventory)
 		{
-			ForceResetAnimations(componentMiner);
 			StopAndRemoveAllParticles(componentMiner);
 
-			// Si no hay estado guardado, no hacer nada más
 			if (!m_aimData.ContainsKey(componentMiner))
 			{
 				return false;
 			}
 
-			// Usar el estado guardado
 			int aimData = m_aimData[componentMiner];
 			int aimBulletType = m_aimBulletTypes[componentMiner];
 			int ammo = m_aimAmmo[componentMiner];
@@ -299,7 +299,6 @@ namespace Game
 			bool switchOn = m_aimSwitchOn[componentMiner];
 			bool wasEmptyShown = m_emptyMessageShown.ContainsKey(componentMiner) && m_emptyMessageShown[componentMiner];
 
-			// Mostrar mensaje de vacío
 			if (shots == 0 && ammo == 0 && !wasEmptyShown)
 			{
 				componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
@@ -322,7 +321,8 @@ namespace Game
 
 				if (shots > 0 && ammo > 0)
 				{
-					ammo--;
+					int ammoToUse = Math.Min(shots, ammo);
+					ammo -= ammoToUse;
 					finalData = FlameThrowerBlock.SetAmmoCount(finalData, ammo);
 					if (ammo == 0)
 					{
@@ -333,7 +333,6 @@ namespace Game
 				finalData = FlameThrowerBlock.SetSwitchState(finalData, false);
 			}
 
-			// APLICAR daño acumulado (en lugar de DamageActiveTool durante el apuntado)
 			if (damageToApply > 0)
 			{
 				for (int i = 0; i < damageToApply; i++)
@@ -342,7 +341,6 @@ namespace Game
 				}
 			}
 
-			// ESCRIBIR el estado final al inventario
 			if (finalData != inventoryData)
 			{
 				int newValue = Terrain.MakeBlockValue(contents, 0, finalData);
@@ -350,7 +348,7 @@ namespace Game
 				inventory.AddSlotItems(activeSlotIndex, newValue, 1);
 			}
 
-			ClearAimState(componentMiner);
+			ForceResetAnimations(componentMiner);
 			return false;
 		}
 
@@ -387,7 +385,6 @@ namespace Game
 			m_subsystemAudio.PlaySound(sound, 1f, m_random.Float(-0.1f, 0.1f), eyePos, 10f, true);
 			m_subsystemNoise.MakeNoise(eyePos, 1f, 40f);
 
-			// NO llamar DamageActiveTool aquí - se acumula y aplica al final
 			return true;
 		}
 
