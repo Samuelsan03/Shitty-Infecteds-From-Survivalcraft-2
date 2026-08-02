@@ -110,16 +110,33 @@ namespace Game
 				}
 				return;
 			}
+
+			// CORRECCIÓN: Verificar si la criatura está siendo despawneada por ComponentDeathSpawner u otro componente
+			ComponentSpawn componentSpawn = creature.Entity.FindComponent<ComponentSpawn>();
+
 			SubsystemCreatureBleeding.BleedingData bleedingData;
 			if (this.m_bleedingData.TryGetValue(creature, out bleedingData))
 			{
-				// CORRECCIÓN: Posicionado en las piernas (25% de la altura total desde los pies)
-				if (bleedingData.Particles != null && bleedingData.Particles.SubsystemParticles != null)
+				// CORRECCIÓN: Solo actualizar posición si NO está siendo despawneada
+				if (bleedingData.Particles != null && bleedingData.Particles.SubsystemParticles != null
+					&& (componentSpawn == null || !componentSpawn.IsDespawning))
 				{
 					Vector3 position = componentBody.Position + Vector3.UnitY * componentBody.StanceBoxSize.Y * 0.25f + componentBody.Matrix.Forward * 0.15f;
 					bleedingData.Particles.Position = position;
 					bleedingData.BleedPosition = position;
 				}
+
+				// CORRECCIÓN: Si está siendo despawneada, detener el sangrado inmediatamente
+				if (componentSpawn != null && componentSpawn.IsDespawning)
+				{
+					bleedingData.State = CreatureBleedingState.Fading;
+					if (bleedingData.Particles != null)
+					{
+						bleedingData.Particles.IsStopped = true;
+					}
+					return;
+				}
+
 				switch (bleedingData.State)
 				{
 					case CreatureBleedingState.Dying:
@@ -210,6 +227,13 @@ namespace Game
 				{
 					return false;
 				}
+			}
+
+			// CORRECCIÓN: No iniciar sangrado si ya está siendo despawneada
+			ComponentSpawn componentSpawn = creature.Entity.FindComponent<ComponentSpawn>();
+			if (componentSpawn != null && componentSpawn.IsDespawning)
+			{
+				return false;
 			}
 
 			bool isPlayer = creature is ComponentPlayer;
