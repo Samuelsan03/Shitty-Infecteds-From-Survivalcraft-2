@@ -134,6 +134,17 @@ namespace Game
 
 		private void ShootAtTarget(ComponentBody target)
 		{
+			// Animación de lanzamiento (del código original 生物远程攻击行为 del DayZ Mod)
+			if (m_componentCreature != null)
+			{
+				ComponentHumanModel componentHumanModel = m_componentCreature.ComponentCreatureModel as ComponentHumanModel;
+				if (componentHumanModel != null)
+				{
+					componentHumanModel.m_handAngles2 = new Vector2(4f, -5f);
+					componentHumanModel.m_handAngles1 = new Vector2(4f, 3f);
+				}
+			}
+
 			string blockName = GetRandomBlockName();
 			if (string.IsNullOrEmpty(blockName)) return;
 
