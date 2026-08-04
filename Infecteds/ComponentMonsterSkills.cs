@@ -112,6 +112,19 @@ namespace Game
 		}
 
 		/// <summary>
+		/// Verifica si el objetivo está vivo (salud > 0)
+		/// </summary>
+		public bool IsTargetAlive(ComponentCreature target)
+		{
+			if (target == null) return false;
+
+			ComponentHealth targetHealth = target.Entity.FindComponent<ComponentHealth>(false);
+			if (targetHealth == null) return false;
+
+			return targetHealth.Health > 0f;
+		}
+
+		/// <summary>
 		/// Fuerza el inicio del vómito (para uso externo si es necesario)
 		/// </summary>
 		public void ForceStartVomiting()
@@ -147,6 +160,15 @@ namespace Game
 			ComponentCreature target = GetChaseTarget();
 			float distanceToTarget = float.MaxValue;
 
+			// CORRECCIÓN: Verificar si el objetivo está muerto
+			bool targetIsDead = target != null && !IsTargetAlive(target);
+
+			// Si el objetivo está muerto, tratarlo como si fuera null
+			if (targetIsDead)
+			{
+				target = null;
+			}
+
 			if (target != null && target.ComponentBody != null)
 			{
 				distanceToTarget = Vector3.Distance(
@@ -170,6 +192,7 @@ namespace Game
 				else if (target == null || !IsChasingActive())
 				{
 					// No hay objetivo o no está persiguiendo
+					// CORRECCIÓN: Esto ahora incluye cuando el objetivo murió
 					shouldStop = true;
 				}
 				else if (distanceToTarget < DistanceToVomit.X)
@@ -196,7 +219,8 @@ namespace Game
 			else
 			{
 				// Verificar si debemos iniciar el vómito
-				if (m_vomitCooldownTimer <= 0f && target != null && IsChasingActive())
+				// CORRECCIÓN: Ahora también verifica que el objetivo no esté muerto
+				if (m_vomitCooldownTimer <= 0f && target != null && !targetIsDead && IsChasingActive())
 				{
 					// Solo vomitar si está en el rango de distancia correcto
 					if (distanceToTarget >= DistanceToVomit.X && distanceToTarget <= DistanceToVomit.Y)
@@ -217,7 +241,9 @@ namespace Game
 			if (!CanVomitFire || m_isVomiting) return;
 
 			ComponentCreature target = GetChaseTarget();
-			if (target == null) return;
+
+			// CORRECCIÓN: Verificar que el objetivo existe y está vivo antes de iniciar
+			if (target == null || !IsTargetAlive(target)) return;
 
 			m_isVomiting = true;
 			m_vomitDurationTimer = DurationOfVomiting;
@@ -260,6 +286,9 @@ namespace Game
 		private void UpdateVomitTransform(ComponentCreature target)
 		{
 			if (m_vomitParticleSystem == null || m_componentCreatureModel == null) return;
+
+			// CORRECCIÓN: Verificar que el objetivo sigue vivo antes de actualizar dirección
+			if (!IsTargetAlive(target)) return;
 
 			// Respetando el cálculo de la posición original de ComponentSickness
 			Vector3 upVector = m_componentCreatureModel.EyeRotation.GetUpVector();
