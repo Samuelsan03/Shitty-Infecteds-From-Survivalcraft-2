@@ -38,7 +38,7 @@ namespace Game
 		{
 			dt = Math.Clamp(dt, 0f, 0.1f);
 
-			// Limpiar lista de entidades afectadas cada 2 segundos para permitir re-ignición
+			// Limpiar lista de entidades afectadas cada 2 segundos para permitir re-ignición y daño periódico
 			if (m_subsystemTime != null && m_subsystemTime.GameTime - m_lastClearTime > 2.0)
 			{
 				m_recentlyAffectedEntities.Clear();
@@ -91,7 +91,7 @@ namespace Game
 							}
 							else
 							{
-								// Colisión con cuerpos - SOLO GENERA INCENDIO, NO DAÑO
+								// Colisión con cuerpos - Genera incendio y causa un poco de daño
 								if (CheckBodyCollisionAndSetFire(newPos, particle))
 								{
 									particle.IsStuck = true;
@@ -119,7 +119,7 @@ namespace Game
 
 					// Dirección con dispersión
 					Vector3 dir = Vector3.Normalize(Direction + 0.3f * spread);
-					float speed = m_random.Float(8f, 14f);
+					float speed = m_random.Float(8f, 100f);
 					particle.Velocity = dir * speed;
 
 					particle.Time = 0f;
@@ -139,7 +139,8 @@ namespace Game
 		}
 
 		/// <summary>
-		/// Verifica colisión con cuerpos y SOLO genera incendio, NO quita vida
+		/// Verifica colisión con cuerpos, genera incendio, causa un poco de daño 
+		/// y registra la causa de muerte usando el sistema de idiomas.
 		/// </summary>
 		private bool CheckBodyCollisionAndSetFire(Vector3 position, FireVomitParticleSystem.Particle particle)
 		{
@@ -166,13 +167,21 @@ namespace Game
 
 				if (box.Contains(position))
 				{
-					// SOLO GENERAR INCENDIO - NO DAÑO DIRECTO DEL VÓMITO
+					// Generar incendio
 					ComponentOnFire onFire = body.Entity.FindComponent<ComponentOnFire>();
 					if (onFire != null)
 					{
 						onFire.SetOnFire(Attacker, m_random.Float(8f, 14f));
-						m_recentlyAffectedEntities.Add(entityId);
 					}
+
+					// Causa un poco de daño directo (5% de la vida) y registra la causa de muerte usando lang
+					ComponentHealth targetHealth = body.Entity.FindComponent<ComponentHealth>();
+					if (targetHealth != null && targetHealth.Health > 0f)
+					{
+						targetHealth.Injure(0.05f, Attacker, false, LanguageControl.Get("ComponentMonsterSkills", 1));
+					}
+
+					m_recentlyAffectedEntities.Add(entityId);
 
 					particle.Position = position;
 					return true;
