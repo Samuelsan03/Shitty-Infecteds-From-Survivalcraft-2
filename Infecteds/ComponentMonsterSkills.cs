@@ -10,7 +10,9 @@ namespace Game
 		public enum VomitType
 		{
 			Fire,
-			Poison
+			Poison,
+			Freezing,
+			Blood
 		}
 
 		public VomitType m_vomitType { get; set; }
@@ -18,6 +20,10 @@ namespace Game
 		public bool CanVomitFire { get; set; }
 
 		public bool CanVomitShit { get; set; }
+
+		public bool CanVomitBlood { get; set; }
+
+		public bool CanVomitFreezingCold { get; set; }
 
 		public float TimeToVomitAgain { get; set; }
 
@@ -39,6 +45,8 @@ namespace Game
 			{
 				if (m_vomitType == VomitType.Fire) return CanVomitFire;
 				if (m_vomitType == VomitType.Poison) return CanVomitShit;
+				if (m_vomitType == VomitType.Freezing) return CanVomitFreezingCold;
+				if (m_vomitType == VomitType.Blood) return CanVomitBlood;
 				return false;
 			}
 		}
@@ -208,6 +216,34 @@ namespace Game
 					m_poisonVomitParticleSystem.IsStopped = false;
 				}
 			}
+			else if (m_vomitType == VomitType.Freezing)
+			{
+				if (m_freezingVomitParticleSystem == null || m_freezingVomitParticleSystem.IsStopped)
+				{
+					m_freezingVomitParticleSystem = new FreezingVomitParticleSystem(m_subsystemTerrain, m_subsystemBodies, m_subsystemTime);
+					m_freezingVomitParticleSystem.OwnerBody = m_componentCreature.ComponentBody;
+					m_freezingVomitParticleSystem.Attacker = m_componentCreature;
+					m_subsystemParticles.AddParticleSystem(m_freezingVomitParticleSystem, false);
+				}
+				else
+				{
+					m_freezingVomitParticleSystem.IsStopped = false;
+				}
+			}
+			else if (m_vomitType == VomitType.Blood)
+			{
+				if (m_bloodVomitParticleSystem == null || m_bloodVomitParticleSystem.IsStopped)
+				{
+					m_bloodVomitParticleSystem = new BloodVomitParticleSystem(m_subsystemTerrain, m_subsystemBodies, m_subsystemTime);
+					m_bloodVomitParticleSystem.OwnerBody = m_componentCreature.ComponentBody;
+					m_bloodVomitParticleSystem.Attacker = m_componentCreature;
+					m_subsystemParticles.AddParticleSystem(m_bloodVomitParticleSystem, false);
+				}
+				else
+				{
+					m_bloodVomitParticleSystem.IsStopped = false;
+				}
+			}
 
 			UpdateVomitTransform(target);
 		}
@@ -229,6 +265,18 @@ namespace Game
 			{
 				m_poisonVomitParticleSystem.IsStopped = true;
 				m_poisonVomitParticleSystem = null;
+			}
+
+			if (m_freezingVomitParticleSystem != null)
+			{
+				m_freezingVomitParticleSystem.IsStopped = true;
+				m_freezingVomitParticleSystem = null;
+			}
+
+			if (m_bloodVomitParticleSystem != null)
+			{
+				m_bloodVomitParticleSystem.IsStopped = true;
+				m_bloodVomitParticleSystem = null;
 			}
 		}
 
@@ -266,6 +314,16 @@ namespace Game
 				m_poisonVomitParticleSystem.Position = mouthPos;
 				m_poisonVomitParticleSystem.Direction = direction;
 			}
+			else if (m_vomitType == VomitType.Freezing && m_freezingVomitParticleSystem != null)
+			{
+				m_freezingVomitParticleSystem.Position = mouthPos;
+				m_freezingVomitParticleSystem.Direction = direction;
+			}
+			else if (m_vomitType == VomitType.Blood && m_bloodVomitParticleSystem != null)
+			{
+				m_bloodVomitParticleSystem.Position = mouthPos;
+				m_bloodVomitParticleSystem.Direction = direction;
+			}
 		}
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
@@ -281,10 +339,20 @@ namespace Game
 
 			CanVomitFire = valuesDictionary.GetValue<bool>("CanVomitFire", false);
 			CanVomitShit = valuesDictionary.GetValue<bool>("CanVomitShit", false);
+			CanVomitBlood = valuesDictionary.GetValue<bool>("CanVomitBlood", false);
+			CanVomitFreezingCold = valuesDictionary.GetValue<bool>("CanVomitFreezingCold", false);
 			TimeToVomitAgain = valuesDictionary.GetValue<float>("TimeToVomitAgain", 5f);
 			DistanceToVomit = valuesDictionary.GetValue<Vector2>("DistanceToVomit", new Vector2(3f, 10f));
 
-			if (CanVomitShit)
+			if (CanVomitFreezingCold)
+			{
+				m_vomitType = VomitType.Freezing;
+			}
+			else if (CanVomitBlood)
+			{
+				m_vomitType = VomitType.Blood;
+			}
+			else if (CanVomitShit)
 			{
 				m_vomitType = VomitType.Poison;
 			}
@@ -335,6 +403,8 @@ namespace Game
 		public float m_vomitDurationTimer;
 		public FireVomitParticleSystem m_fireVomitParticleSystem;
 		public PoisonVomitParticleSystem m_poisonVomitParticleSystem;
+		public FreezingVomitParticleSystem m_freezingVomitParticleSystem;
+		public BloodVomitParticleSystem m_bloodVomitParticleSystem;
 		public bool m_isVomiting;
 		public object m_chaseBehavior;
 		public Type m_chaseBehaviorType;
