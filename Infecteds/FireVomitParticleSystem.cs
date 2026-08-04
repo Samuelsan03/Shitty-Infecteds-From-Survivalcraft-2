@@ -88,6 +88,9 @@ namespace Game
 								particle.IsStuck = true;
 								particle.Velocity = Vector3.Zero;
 								particle.Position = oldPos;
+
+								// Manejar impacto con el bloque
+								HandleTerrainHit(terrainHit.Value);
 							}
 							else
 							{
@@ -136,6 +139,75 @@ namespace Game
 			m_toGenerate = MathUtils.Remainder(m_toGenerate, 1f);
 
 			return IsStopped && !anyActive;
+		}
+
+		/// <summary>
+		/// Maneja el impacto de la partícula contra un bloque.
+		/// Rompe bloques frágiles y prende fuego a inflamables.
+		/// </summary>
+		private void HandleTerrainHit(TerrainRaycastResult hitResult)
+		{
+			if (m_subsystemTerrain == null) return;
+
+			CellFace cellFace = hitResult.CellFace;
+			int x = cellFace.X;
+			int y = cellFace.Y;
+			int z = cellFace.Z;
+
+			int cellValue = m_subsystemTerrain.Terrain.GetCellValue(x, y, z);
+			int contents = Terrain.ExtractContents(cellValue);
+
+			if (contents <= 0 || contents >= BlocksManager.Blocks.Length) return;
+
+			Block block = BlocksManager.Blocks[contents];
+			if (block == null) return;
+
+			Type blockType = block.GetType();
+
+			// 1. Verificar si es un bloque frágil que debe romperse inmediatamente
+			if (blockType == typeof(GlassBlock) || blockType == typeof(WindowBlock) || blockType == typeof(FramedGlassBlock))
+			{
+				m_subsystemTerrain.ChangeCell(x, y, z, 0);
+				return;
+			}
+
+			// 2. Verificar si es inflamable y prenderle fuego
+			float fuelHeat = block.GetFuelHeatLevel(cellValue);
+			float fireDuration = block.GetFireDuration(cellValue);
+
+			if (fuelHeat > 0f || fireDuration > 0f)
+			{
+				int fireBlockIndex = BlocksManager.GetBlockIndex<FireBlock>(false, false);
+				if (fireBlockIndex <= 0) return;
+
+				// Calcular posición adyacente según la cara impactada
+				int fireX = x;
+				int fireY = y;
+				int fireZ = z;
+
+				switch (cellFace.Face)
+				{
+					case 0: fireX++; break;
+					case 1: fireX--; break;
+					case 2: fireY++; break;
+					case 3: fireY--; break;
+					case 4: fireZ++; break;
+					case 5: fireZ--; break;
+				}
+
+				// Verificar si la posición para el fuego es válida y está vacía
+				if (m_subsystemTerrain.Terrain.IsCellValid(fireX, fireY, fireZ))
+				{
+					int adjacentValue = m_subsystemTerrain.Terrain.GetCellValue(fireX, fireY, fireZ);
+					int adjacentContents = Terrain.ExtractContents(adjacentValue);
+
+					// Solo colocar fuego si la celda está vacía
+					if (adjacentContents == 0)
+					{
+						m_subsystemTerrain.ChangeCell(fireX, fireY, fireZ, Terrain.MakeBlockValue(fireBlockIndex));
+					}
+				}
+			}
 		}
 
 		/// <summary>
