@@ -64,16 +64,22 @@ namespace Game
 				// Comportamiento para veneno
 				if (componentBody != null)
 				{
-					ComponentInfectedWithPoison infection = componentBody.Entity.FindComponent<ComponentInfectedWithPoison>();
-					if (infection != null)
+					// Primero verificar si es el jugador
+					ComponentPlayer player = componentBody.Entity.FindComponent<ComponentPlayer>();
+					if (player != null && player.ComponentSickness != null)
 					{
-						ComponentCreature attacker = null;
-						if (worldItem is Projectile projectile && projectile.Owner != null)
+						// Aplicar enfermedad al jugador
+						player.ComponentSickness.StartSickness();
+					}
+					else
+					{
+						// Para otras criaturas, usar el componente de infección por veneno
+						ComponentInfectedWithPoison infection = componentBody.Entity.FindComponent<ComponentInfectedWithPoison>();
+						if (infection != null)
 						{
-							attacker = projectile.Owner;
+							// Intensidad 1.0 para veneno fuerte
+							infection.TryInfect(1.0f);
 						}
-						// Intensidad 1.0 para veneno fuerte
-						infection.TryInfect(1.0f);
 					}
 					return true;
 				}
