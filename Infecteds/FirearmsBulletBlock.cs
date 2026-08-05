@@ -35,9 +35,7 @@ namespace Game
 			FirearmsBulletType type = GetFirearmsBulletType(Terrain.ExtractData(value));
 			Color bulletColor = GetBulletColor(type);
 
-			// 0.5f normal directo, sin multiplicadores
 			float drawSize = (environmentData.SubsystemTerrain != null) ? 0.04f : size;
-
 
 			BlocksManager.DrawFlatBlock(primitivesRenderer, value, drawSize, ref matrix, m_texture, bulletColor, true, environmentData);
 		}
@@ -45,6 +43,8 @@ namespace Game
 		public enum FirearmsBulletType
 		{
 			AK47Bullet,
+			DesertEagleBullet,
+			SPAS12Bullet, // Añadido para el SPAS-12
 		}
 
 		public static FirearmsBulletType GetFirearmsBulletType(int data)
@@ -62,7 +62,11 @@ namespace Game
 			switch (type)
 			{
 				case FirearmsBulletType.AK47Bullet:
-					return new Color(255, 180, 0);
+					return new Color(255, 180, 0); // Naranja para AK
+				case FirearmsBulletType.DesertEagleBullet:
+					return new Color(220, 220, 230); // Plateado para .50 AE
+				case FirearmsBulletType.SPAS12Bullet:
+					return new Color(200, 150, 50); // Marrón/dorado para perdigones
 				default:
 					return Color.White;
 			}
@@ -74,6 +78,10 @@ namespace Game
 			{
 				case FirearmsBulletType.AK47Bullet:
 					return 25f;
+				case FirearmsBulletType.DesertEagleBullet:
+					return 60f;
+				case FirearmsBulletType.SPAS12Bullet:
+					return 15f; // Cada perdigón hace menos daño, pero hay 8
 				default:
 					return 10f;
 			}
