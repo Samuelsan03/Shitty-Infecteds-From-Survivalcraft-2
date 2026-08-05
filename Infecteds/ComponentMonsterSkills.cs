@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic; // <-- AGREGADO
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -185,6 +186,10 @@ namespace Game
 
 			if (target == null || !IsTargetAlive(target)) return;
 
+			// <-- INICIO DE LA LÓGICA AGREGADA -->
+			GetNextVomitType();
+			// <-- FIN DE LA LÓGICA AGREGADA -->
+
 			m_isVomiting = true;
 			m_vomitDurationTimer = DurationOfVomiting;
 
@@ -247,6 +252,39 @@ namespace Game
 
 			UpdateVomitTransform(target);
 		}
+
+		// <-- MÉTODO NUEVO AGREGADO (Variación estricta usando Random) -->
+		private void GetNextVomitType()
+		{
+			if (m_vomitQueue.Count == 0)
+			{
+				List<VomitType> types = new List<VomitType>();
+
+				if (CanVomitFire) types.Add(VomitType.Fire);
+				if (CanVomitShit) types.Add(VomitType.Poison);
+				if (CanVomitBlood) types.Add(VomitType.Blood);
+				if (CanVomitFreezingCold) types.Add(VomitType.Freezing);
+
+				// Desordena la lista usando tu propio Random
+				for (int i = 0; i < types.Count; i++)
+				{
+					int j = m_random.Int(i, types.Count - 1);
+					VomitType temp = types[i];
+					types[i] = types[j];
+					types[j] = temp;
+				}
+
+				// Los mete a la cola
+				foreach (VomitType type in types)
+				{
+					m_vomitQueue.Enqueue(type);
+				}
+			}
+
+			// Saca el siguiente de la fila
+			m_vomitType = m_vomitQueue.Dequeue();
+		}
+		// <-- FIN DEL MÉTODO NUEVO -->
 
 		private void StopVomiting()
 		{
@@ -409,5 +447,6 @@ namespace Game
 		public object m_chaseBehavior;
 		public Type m_chaseBehaviorType;
 		public Random m_random = new Random();
+		public Queue<VomitType> m_vomitQueue = new Queue<VomitType>(); // <-- AGREGADO
 	}
 }
