@@ -38,7 +38,7 @@ namespace Game
 
 		public float VomitDurationRemaining => MathUtils.Max(m_vomitDurationTimer, 0f);
 
-		public float DurationOfVomiting { get; set; } = 10f;
+		public float DurationOfVomiting { get; set; } = 5f;
 
 		private bool CanVomit
 		{
