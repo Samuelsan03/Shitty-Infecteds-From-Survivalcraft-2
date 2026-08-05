@@ -2,6 +2,44 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="MonsterSkills" Description="Habilidades especiales de monstruos" Guid="8cc9ec70-bb38-4249-9187-e60627756166" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="0b9f2742-4c03-4faa-be64-b4fada2c62f3" Value="Game.ComponentMonsterSkills" Type="string" />
+  <Parameter Name="CanVomitFire" Description="Indica si la criatura puede vomitar fuego" Guid="cfa67179-fda8-4121-b0a7-1c9aa020c0ac" Value="false" Type="bool" />
+  <Parameter Name="CanVomitShit" Description="Indica si la criatura puede vomitar veneno" Guid="3ea11052-5e2a-4ab6-9d79-081aeede0c3d" Value="false" Type="bool" />
+  <Parameter Name="CanVomitBlood" Description="Indica si la criatura puede vomitar sangre" Guid="a110ba91-e7e3-4c31-91a8-dbc74a625472" Value="false" Type="bool" />
+  <Parameter Name="CanVomitFreezingCold" Description="Indica si la criatura puede vomitar frío congelante" Guid="8039f220-9c61-4e39-96c6-c3a2c14cb800" Value="false" Type="bool" />
+  <Parameter Name="TimeToVomitAgain" Description="Tiempo en segundos que debe esperar para volver a vomitar fuego" Guid="ed29f231-3911-49fb-b1ca-5091f6be924e" Value="5" Type="float" />
+  <Parameter Name="DistanceToVomit" Description="Distancia para vomitar fuego. X es la distancia mínima, Y es la distancia máxima" Guid="b774c49a-75c1-4f5a-9d67-ea4308f2b861" Value="3,10" Type="Engine.Vector2" />
+</ComponentTemplate>
+
+    <ComponentTemplate Name="AutoShooter" Description="Dispara automáticamente bloques a los objetivos cercanos" Guid="f049ffbf-c050-4749-9e50-43efe59e8dd2" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+    <Parameter Name="BlocksToShoot" Description="Lista de bloques a disparar separados por comas (ej: ArrowBlock, SnowballBlock)" Guid="afbf4581-bfb2-4115-aba0-4279cf319eac" Value="" Type="string" />
+    <Parameter Name="TimeToRelaunch" Description="Tiempo en segundos entre cada disparo" Guid="7d22c811-45a0-4044-b0d2-a920d99d7ce1" Value="1.0" Type="float" />
+    <Parameter Name="Class" Guid="9fdb138a-7a07-4955-8497-6f92b74d3e48" Value="Game.ComponentAutoShooter" Type="string" />
+</ComponentTemplate>
+
+    <ComponentTemplate Name="DeathSpawner" Description="Spawnea criaturas al morir la entidad" Guid="0ffb00a2-fa59-4c2c-a6cf-204e30936a86" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+  <Parameter Name="SpawnEntities" Description="Nombres de las entidades a aparecer separadas por comas" Guid="013c3deb-38a0-464a-b087-cd4c209ccbea" Value="" Type="string" />
+  <Parameter Name="Class" Guid="cf656b29-3dd0-414c-aadf-c2c6f5887345" Value="Game.ComponentDeathSpawner" Type="string" />
+  <Parameter Name="Probability" Description="Probabilidad de que aparezcan las criaturas al morir" Guid="ce23dff1-d63a-43fa-a602-0343f9763904" Value="0" Type="float" />
+</ComponentTemplate>
+
+    <ComponentTemplate Name="ZombieRider" Description="Permite a la criatura montar y desmontar de entidades con ComponentMount" Guid="a59c6dfa-6be1-4450-8e1b-d9aba7a4e80b" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+          <Parameter Name="RiderOffset" Description="Desplazamiento del jinete respecto a la montura" Guid="3cba52d1-06d6-4b1b-b457-9146649c9b13" Value="0,0,0" Type="Vector3" />
+          <Parameter Name="Class" Guid="1a740655-2199-48bf-8a8e-4d81aba66343" Value="Game.ComponentRiderZombie" Type="string" />
+</ComponentTemplate>
+
+    <ComponentTemplate Name="ZombieMount" Description="Plantilla de montura para zombis con bloqueo de montaje" Guid="7398a52b-8d21-4260-8826-d4388490bccb" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
+          <Parameter Name="DismountOffset" Description="Desplazamiento al desmontarse" Guid="fdddfab5-db39-4b80-8101-ae82536f84cd" Value="0,0,0" Type="Vector3" />
+          <Parameter Name="MountOffset" Description="Desplazamiento al montarse" Guid="7db4293d-1813-4df8-b98c-41b62a502413" Value="0,0,0" Type="Vector3" />
+          <Parameter Name="CanRiderBeMounted" Description="Determina si el jugador puede montarse en esta criatura" Guid="9b3866f9-dac8-41ed-8a9d-62cad10aed81" Value="true" Type="bool" />
+          <Parameter Name="Class" Guid="26eed4e9-32b7-40ba-8f9f-b86a6ba052ec" Value="Game.ComponentMountZombie" Type="string" />
+</ComponentTemplate>
+
+    <ComponentTemplate Name="SteedBehaviorImproved" Description="Comportamiento de montura sin restriccion de nombre Saddled" Guid="b5a8f8cf-da11-40e0-9d53-6544ab8d1241" InheritanceParent="00cb9da1-b959-4cbf-bfff-ea28fa8c37c8">
+  <Parameter Name="Class" Guid="e49e2a1b-c822-4837-a548-a7dbfb14ce6c" Value="Game.ComponentSteedBehaviorImproved" Type="string" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="NewSleep" Description="Componente que gestiona el estado de sueño del jugador, incluyendo mecánicas de dormir y despertar." Guid="0f088018-fb70-45f1-bc91-789c9965ca1b" InheritanceParent="b05700ed-7e4e-4679-98f5-b597f421496b">
   <Parameter Name="SleepStartTime" Description="Momento de inicio del sueño en tiempo de juego." Guid="50d5add3-fa67-4f42-91b7-3712dff9e5a0" Value="0" Type="double" />
   <Parameter Name="Class" Guid="6d4bdd84-67cf-4889-9c14-ed24f063670c" Value="Game.ComponentNewSleep" Type="string" />
@@ -191,48 +229,55 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
-
+     <MemberSubsystemTemplate Name="SubsystemSPAS12BlockBehavior" Guid="f340ec29-1b33-41e2-8c15-e6058fa46ab3" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="304a81a6-cc2a-428d-9f27-4e4d40f87bb1" Value="Game.SubsystemSPAS12BlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemDesertEagleBlockBehavior" Guid="eb1a7f9f-b580-4003-86ff-312bdcdf8580" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="ffea3e0f-6e18-419e-a412-c52f4bbb1ee9" Value="Game.SubsystemDesertEagleBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemFirearmsBulletBlockBehavior" Guid="a3e1d871-9311-4e1a-8396-f276a70931b1" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="ec440f35-4558-472d-9af4-db4519028c0b" Value="Game.SubsystemFirearmsBulletBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemAK47BlockBehavior" Guid="870cd338-74d9-4cc0-bb60-78eb880d4401" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="632b1e39-e0a9-430d-82bf-c11f4fa17004" Value="Game.SubsystemAK47BlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+<MemberSubsystemTemplate Name="SubsystemInfectedWaves" Guid="9b63a0cb-6e62-43de-b6cd-8a2bc7c39234" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="d686b56f-b370-469a-b976-688f555116e6" Value="Game.SubsystemInfectedWaves" Type="string" />
+  </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemInfectedEggBlockBehavior" Guid="9b63a0cb-6e62-43de-b6cd-8a2bc7c39234" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="d686b56f-b370-469a-b976-688f555116e6" Value="Game.SubsystemInfectedEggBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemInfectedEggBlockBehavior" Guid="53790490-f256-4ea2-a871-a322e59a26df" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="85736a9d-838e-4b6a-9e55-9419e466a98b" Value="Game.SubsystemInfectedEggBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
-
      <MemberSubsystemTemplate Name="SubsystemFlameBulletBlockBehavior" Guid="0b0b68f9-7248-4cd3-abcf-7e863f39b6c4" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="07952798-8917-49da-9c5f-61a7a902e4ef" Value="Game.SubsystemFlameBulletBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
-
      <MemberSubsystemTemplate Name="SubsystemFlameThrowerBlockBehavior" Guid="cbdfef10-ede5-4754-a54e-94a38f78d710" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="3ec0bbf5-7208-4c8a-ae31-43e22f89e24e" Value="Game.SubsystemFlameThrowerBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
-
      <MemberSubsystemTemplate Name="SubsystemAntiTankPelletBlockBehavior" Guid="a17715c8-5f6d-4d26-bea1-7d026e23eff0" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="ee20921c-74f6-41a0-9ed9-d33ab009b01e" Value="Game.SubsystemAntiTankPelletBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
-
      <MemberSubsystemTemplate Name="SubsystemImprovedMusketBlockBehavior" Guid="efadb2f5-097a-40a8-bca7-305875c9ade3" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="2e8c417c-5c23-4bdf-b097-1aebaa65977e" Value="Game.SubsystemImprovedMusketBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
-
      <MemberSubsystemTemplate Name="SubsystemRepeatCrossbowBlockBehavior" Guid="345b12b9-9482-42e5-850b-552b1415c348" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="727dba8e-f6ea-49ee-b6d5-504f717fbc99" Value="Game.SubsystemRepeatCrossbowBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
-
      <MemberSubsystemTemplate Name="SubsystemRepeatBoltBlockBehavior" Guid="ae95efe0-1d48-44bd-8933-94d42107f694" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="1b3f86a3-ef24-44d4-929f-fc3c8a9ce57e" Value="Game.SubsystemRepeatBoltBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
-
      <MemberSubsystemTemplate Name="SubsystemCollarBlockBehavior" Guid="6e0d909d-986e-4323-a6ca-b6c130432a69" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="f4210f21-187f-4892-9bdf-ec41948f4740" Value="Game.SubsystemCollarBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
-
      <MemberSubsystemTemplate Name="CreatureBleeding" Guid="47fafffe-f2e2-492e-8d15-8610ed1849cd" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="39d6e276-7093-41fb-aa8c-f6977c947bdb" Value="Game.SubsystemCreatureBleeding" Type="string" />
   </MemberSubsystemTemplate>
-
     <MemberSubsystemTemplate Name="GreenNightSky" Guid="80bd2261-f596-4cdc-91b8-56c50bcab8bd" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Dependencies" Guid="60010386-31a3-45f2-ba9d-cff2d9c6b65f" Value="TimeOfDay, Time" Type="string" />
   <Parameter Name="Class" Guid="f4efa050-f526-47cd-9431-36e2a634debf" Value="Game.SubsystemGreenNightSky" Type="string" />
   </MemberSubsystemTemplate>
-
   <MemberSubsystemTemplate Name="CreatureHealthBars" Guid="65cf5765-71a7-4dda-9474-24bb62ddc118" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="77ec4e34-fb93-4e65-9b82-d057347c3b4d" Value="Game.SubsystemCreatureHealthBars" Type="string" />
   </MemberSubsystemTemplate>
