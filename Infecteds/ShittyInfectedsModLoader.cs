@@ -33,6 +33,25 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("GuiUpdate", this);
 		ModsManager.RegisterHook("ManageCameras", this);
 		ModsManager.RegisterHook("OnVitalStatsUpdateSleep", this);
+		ModsManager.RegisterHook("OnProjectileHitBody", this);
+	}
+
+	public override void OnProjectileHitBody(Projectile projectile, BodyRaycastResult bodyRaycastResult, ref Attackment attackment, ref Vector3 velocityAfterAttack, ref Vector3 angularVelocityAfterAttack, ref bool ignoreBody)
+	{
+		// Verificamos si el proyectil es de tipo FirearmsBulletBlock directamente (sin importar su índice numérico)
+		if (projectile != null && BlocksManager.Blocks[Terrain.ExtractContents(projectile.Value)] is FirearmsBulletBlock)
+		{
+			// Elimina el empuje físico
+			attackment.ImpulseFactor = 0f;
+
+			// Elimina el aturdimiento por impacto (por si acaso mueve al mob)
+			attackment.StunTimeAdd = 0f;
+			attackment.StunTimeSet = 0f;
+
+			// La bala se queda quieta
+			velocityAfterAttack = Vector3.Zero;
+			angularVelocityAfterAttack = Vector3.Zero;
+		}
 	}
 
 	public void OnVitalStatsUpdateSleep(ComponentVitalStats vitalStats, ref float sleep, ref float gameTimeDelta, out bool skipVanilla)
