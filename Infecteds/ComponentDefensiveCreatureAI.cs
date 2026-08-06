@@ -314,6 +314,7 @@ namespace Game
 
 					if (!isBehind && hasLOS)
 					{
+						if (m_componentPathfinding != null) m_componentPathfinding.Stop();
 						HandleThrowableAttack(target, throwableSlot);
 						if (isMounted) PilotMount(target);
 						return;
