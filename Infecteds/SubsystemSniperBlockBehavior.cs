@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using Engine.Graphics;
@@ -29,6 +29,7 @@ namespace Game
 		private int m_sniperBlockIndex;
 		private int m_sniperAmmunitionBlockIndex;
 
+		private const int MaxAmmo = 1;
 		private const float EmptySoundCooldown = 0.5f;
 		private const float EmptyMessageCooldown = 0.5f;
 		private const float MuzzleOffset = 1.5f;
@@ -85,6 +86,7 @@ namespace Game
 						float timeSinceEmptyMessage = (float)(m_subsystemTime.GameTime - lastEmptyMessageTime);
 
 						SniperBlock.LoadState loadState = SniperBlock.GetLoadState(data);
+						int ammoCount = SniperBlock.GetAmmoCount(data);
 						ComponentPlayer componentPlayer = componentMiner.ComponentPlayer;
 
 						switch (state)
@@ -107,11 +109,11 @@ namespace Game
 										m_wasInScope[componentMiner] = true;
 									}
 
-									if (loadState == SniperBlock.LoadState.Loaded)
+									if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
 									{
 										if (componentPlayer != null)
 										{
-											componentPlayer.ComponentGui.DisplaySmallMessage("1/1", Color.White, false, false);
+											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
 										}
 									}
 									else
@@ -157,7 +159,7 @@ namespace Game
 								{
 									RestoreCamera(componentMiner, componentPlayer);
 
-									if (loadState == SniperBlock.LoadState.Loaded)
+									if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
 									{
 										if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor <= 0.4f)
 										{
@@ -232,7 +234,17 @@ namespace Game
 
 			m_subsystemNoise.MakeNoise(muzzlePosition, NoiseLoudness, NoiseRange);
 
-			int newData = SniperBlock.SetLoadState(data, SniperBlock.LoadState.Empty);
+			// Reducir munición
+			int currentAmmo = SniperBlock.GetAmmoCount(data);
+			int newAmmoCount = currentAmmo - 1;
+			int newData = SniperBlock.SetAmmoCount(data, newAmmoCount);
+
+			// Si no queda munición, cambiar estado a Empty
+			if (newAmmoCount <= 0)
+			{
+				newData = SniperBlock.SetLoadState(newData, SniperBlock.LoadState.Empty);
+			}
+
 			newValue = Terrain.MakeBlockValue(blockContents, 0, newData);
 		}
 
@@ -242,9 +254,10 @@ namespace Game
 
 			if (slotContents != m_sniperBlockIndex) return 0;
 
-			SniperBlock.LoadState loadState = SniperBlock.GetLoadState(Terrain.ExtractData(inventory.GetSlotValue(slotIndex)));
+			int ammoCount = SniperBlock.GetAmmoCount(Terrain.ExtractData(inventory.GetSlotValue(slotIndex)));
 
-			if (loadState != SniperBlock.LoadState.Empty) return 0;
+			// Solo permitir recargar si no está lleno
+			if (ammoCount >= MaxAmmo) return 0;
 
 			int itemContents = Terrain.ExtractContents(value);
 			if (itemContents == m_sniperAmmunitionBlockIndex)
@@ -262,6 +275,7 @@ namespace Game
 			{
 				int data = Terrain.ExtractData(inventory.GetSlotValue(slotIndex));
 				int newData = SniperBlock.SetLoadState(data, SniperBlock.LoadState.Loaded);
+				newData = SniperBlock.SetAmmoCount(newData, MaxAmmo);
 
 				processedValue = 0;
 				processedCount = 0;
