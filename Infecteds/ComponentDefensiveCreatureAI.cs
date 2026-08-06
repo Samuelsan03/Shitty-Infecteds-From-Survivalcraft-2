@@ -11,6 +11,16 @@ namespace Game
 	{
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
+		/// <summary>
+		/// Enum para el estado de recarga de armas de fuego en la IA
+		/// </summary>
+		public enum FirearmReloadState
+		{
+			None,
+			Reloading,
+			Loaded
+		}
+
 		public enum TamingState
 		{
 			None,
@@ -48,6 +58,11 @@ namespace Game
 		public MountState CurrentMountState { get; private set; } = MountState.None;
 		public bool CanWearClothing { get; private set; }
 
+		/// <summary>
+		/// Estado actual de recarga del arma de fuego
+		/// </summary>
+		public FirearmReloadState CurrentFirearmReloadState { get; private set; } = FirearmReloadState.None;
+
 		public Vector2 AttackDistanceRange = new Vector2(5f, 100f);
 		public Vector2 ThrowableObjectThrowingDistance = new Vector2(5f, 15f);
 		public Vector2 SafetyDistanceUseOfExplosiveBolt = new Vector2(20f, 100f);
@@ -67,7 +82,7 @@ namespace Game
 		public float ThrowableAimTime = 1.5f;
 		public float ThrowableCooldown = 0.01f;
 
-		private const float FirearmReloadPauseTime = 0.5f;
+		private const float FirearmReloadPauseTime = 1.5f;
 
 		/// <summary>
 		/// Estructura para almacenar los datos de las armas de fuego usando el nombre del bloque.
@@ -109,6 +124,7 @@ namespace Game
 		private int m_equipValue;
 		private float m_firearmReloadPauseTimer;
 		private bool m_isWaitingForFirearmReload;
+		private bool m_justFinishedReloading;
 
 		private ComponentCreatureClothing m_componentCreatureClothing;
 		private ComponentCreature m_componentCreature;
@@ -120,6 +136,7 @@ namespace Game
 		private SubsystemTerrain m_subsystemTerrain;
 		private SubsystemBodies m_subsystemBodies;
 		private SubsystemAudio m_subsystemAudio;
+		private SubsystemParticles m_subsystemParticles;
 		private ComponentRider m_componentRider;
 		private ComponentMount m_currentMount;
 		private ComponentPilot m_componentPilot;
@@ -226,6 +243,38 @@ namespace Game
 			}
 		}
 
+		/// <summary>
+		/// Reproduce los efectos de recarga: sonido de reload y partículas KillParticle
+		/// </summary>
+		private void PlayReloadEffects()
+		{
+			Vector3 position = m_componentCreature.ComponentBody.Position + new Vector3(0f, m_componentCreature.ComponentBody.StanceBoxSize.Y / 2f, 0f);
+			float size = m_componentCreature.ComponentBody.StanceBoxSize.X;
+
+			KillParticleSystem killParticleSystem = new KillParticleSystem(m_subsystemTerrain, position, size);
+			m_subsystemParticles.AddParticleSystem(killParticleSystem, false);
+
+			m_subsystemAudio.PlaySound("Audio/Armas/reload", 1f, m_random.Float(-0.1f, 0.1f), position, 10f, false);
+		}
+
+		/// <summary>
+		/// Establece el estado de recarga y reproduce efectos si hay cambio de estado
+		/// </summary>
+		private void SetFirearmReloadState(FirearmReloadState newState)
+		{
+			if (CurrentFirearmReloadState != newState)
+			{
+				FirearmReloadState oldState = CurrentFirearmReloadState;
+				CurrentFirearmReloadState = newState;
+
+				// Reproducir efectos al cambiar a Reloading o a Loaded
+				if (newState == FirearmReloadState.Reloading || newState == FirearmReloadState.Loaded)
+				{
+					PlayReloadEffects();
+				}
+			}
+		}
+
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			m_canUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
@@ -244,6 +293,7 @@ namespace Game
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
+			m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
 
 			m_random = new Random();
 			CurrentMountState = CanItBeMounted ? MountState.Searching : MountState.None;
@@ -812,7 +862,7 @@ namespace Game
 			int data = Terrain.ExtractData(value);
 			int blockId = firearm.GetBlockIndex();
 
-			data = firearm.SetLoadState(data, 1); // 1 = Cargado
+			data = firearm.SetLoadState(data, 1);
 			data = firearm.SetAmmoCount(data, firearm.MaxAmmo);
 
 			m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
@@ -832,7 +882,27 @@ namespace Game
 			Vector3 aimDir = Vector3.Normalize(targetPos - eyePos);
 			Ray3 firearmRay = new Ray3(eyePos, aimDir);
 
-			if (IsFirearmEmpty(firearmSlot, firearm))
+			// Si está en pausa post-recarga, decrementar timer y no apuntar hasta que termine
+			if (m_isWaitingForFirearmReload)
+			{
+				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
+
+				if (m_firearmReloadPauseTimer <= 0f)
+				{
+					m_isWaitingForFirearmReload = false;
+					m_firearmReloadPauseTimer = 0f;
+					m_justFinishedReloading = true;
+					CurrentFirearmReloadState = FirearmReloadState.Loaded;
+
+					// Reproducir efecto al terminar la pausa de recarga (como en DayZ)
+					PlayReloadEffects();
+				}
+				return;
+			}
+
+			bool isEmpty = IsFirearmEmpty(firearmSlot, firearm);
+
+			if (isEmpty)
 			{
 				if (m_isAiming)
 				{
@@ -841,22 +911,17 @@ namespace Game
 					m_aimTimer = 0f;
 				}
 
-				if (!m_isWaitingForFirearmReload)
-				{
-					m_isWaitingForFirearmReload = true;
-					m_firearmReloadPauseTimer = FirearmReloadPauseTime;
-				}
+				// Recargar inmediatamente y luego iniciar la pausa post-recarga
+				ReloadFirearm(firearmSlot, firearm);
+				SetFirearmReloadState(FirearmReloadState.Reloading);
+				m_isWaitingForFirearmReload = true;
+				m_firearmReloadPauseTimer = FirearmReloadPauseTime;
 
-				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
-
-				if (m_firearmReloadPauseTimer <= 0f)
-				{
-					ReloadFirearm(firearmSlot, firearm);
-					m_isWaitingForFirearmReload = false;
-					m_firearmReloadPauseTimer = 0f;
-				}
 				return;
 			}
+
+			// El arma tiene munición y no está en pausa
+			CurrentFirearmReloadState = FirearmReloadState.Loaded;
 
 			bool skipArmMovement = ShouldSkipArmMovementForRanged();
 
@@ -866,6 +931,14 @@ namespace Game
 				m_aimTimer = 0f;
 				m_componentMiner.Aim(firearmRay, AimState.InProgress);
 
+				// Reproducir efectos si NO acaba de terminar la recarga (evita doble sonido)
+				// Esto cubre cuando la mira se canceló y vuelve a apuntar con el arma cargada
+				if (!m_justFinishedReloading)
+				{
+					PlayReloadEffects();
+				}
+				m_justFinishedReloading = false;
+
 				if (skipArmMovement)
 				{
 					ApplyNoArmMovementAimSettings(false, false, false, true);
@@ -873,11 +946,21 @@ namespace Game
 			}
 			else
 			{
+				m_aimTimer += m_subsystemTime.GameTimeDelta;
 				m_componentMiner.Aim(firearmRay, AimState.InProgress);
 
 				if (skipArmMovement)
 				{
 					ApplyNoArmMovementAimSettings(false, false, false, true);
+				}
+
+				// Si lleva mucho tiempo apuntando sin disparar (porque las armas de fuego 
+				// en este código no tienen un ciclo de disparo implementado), reiniciamos 
+				// el apuntado para que el efecto de "volver a apuntar" se repita periódicamente.
+				if (m_aimTimer > 2.0f)
+				{
+					m_isAiming = false;
+					m_aimTimer = 0f;
 				}
 			}
 		}
@@ -890,6 +973,9 @@ namespace Game
 				HandleFirearmAttack(target, firearmSlot);
 				return;
 			}
+
+			// No es arma de fuego, resetear estado
+			SetFirearmReloadState(FirearmReloadState.None);
 
 			if (m_cooldownTimer > 0f)
 			{
@@ -1100,6 +1186,10 @@ namespace Game
 				m_aimTimer = 0f;
 				m_isWaitingForFirearmReload = false;
 				m_firearmReloadPauseTimer = 0f;
+				m_justFinishedReloading = false;
+
+				// Resetear estado de recarga al cancelar
+				SetFirearmReloadState(FirearmReloadState.None);
 			}
 		}
 
