@@ -153,18 +153,35 @@ namespace Game
 				SetLoadState = (data, state) => AK47Block.SetLoadState(data, state == 1 ? AK47Block.LoadState.Loaded : AK47Block.LoadState.Empty)
 			});
 
-			// Para agregar más armas de fuego en el futuro, solo añádelas aquí:
-			/*
-            m_firearmsList.Add(new FirearmData
-            {
-                BlockName = "NuevoArmaBlock",
-                MaxAmmo = 20,
-                GetAmmoCount = (data) => NuevoArmaBlock.GetAmmoCount(data),
-                SetAmmoCount = (data, count) => NuevoArmaBlock.SetAmmoCount(data, count),
-                GetLoadState = (data) => NuevoArmaBlock.GetLoadState(data) == NuevoArmaBlock.LoadState.Loaded,
-                SetLoadState = (data, state) => NuevoArmaBlock.SetLoadState(data, state == 1 ? NuevoArmaBlock.LoadState.Loaded : NuevoArmaBlock.LoadState.Empty)
-            });
-            */
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "DesertEagleBlock",
+				MaxAmmo = 7,
+				GetAmmoCount = (data) => DesertEagleBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => DesertEagleBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => DesertEagleBlock.GetLoadState(data) == DesertEagleBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => DesertEagleBlock.SetLoadState(data, state == 1 ? DesertEagleBlock.LoadState.Loaded : DesertEagleBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "SPAS12Block",
+				MaxAmmo = 8,
+				GetAmmoCount = (data) => SPAS12Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => SPAS12Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => SPAS12Block.GetLoadState(data) == SPAS12Block.LoadState.Loaded,
+				SetLoadState = (data, state) => SPAS12Block.SetLoadState(data, state == 1 ? SPAS12Block.LoadState.Loaded : SPAS12Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "SniperBlock",
+				MaxAmmo = 1,
+				GetAmmoCount = (data) => SniperBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => SniperBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => SniperBlock.GetLoadState(data) == SniperBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => SniperBlock.SetLoadState(data, state == 1 ? SniperBlock.LoadState.Loaded : SniperBlock.LoadState.Empty)
+			});
 
 			m_firearmsInitialized = true;
 		}
