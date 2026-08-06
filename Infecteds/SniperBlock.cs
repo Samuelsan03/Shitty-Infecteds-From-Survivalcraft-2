@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Engine;
 using Engine.Graphics;
 
@@ -7,6 +7,7 @@ namespace Game
 	public class SniperBlock : Block
 	{
 		public const int Index = 1008;
+		public const int MaxAmmo = 1;
 
 		private BlockMesh m_standaloneBlockMeshUnloaded;
 		private BlockMesh m_standaloneBlockMeshLoaded;
@@ -70,7 +71,16 @@ namespace Game
 			return (data & ~1) | (int)loadState;
 		}
 
-		// El francotirador solo tiene 1 bala, no necesitamos contador de munición
+		// Bits 1-7: Contador de munición (0-127)
+		public static int GetAmmoCount(int data)
+		{
+			return (data >> 1) & 0x7F;
+		}
+
+		public static int SetAmmoCount(int data, int ammoCount)
+		{
+			return (data & ~0xFE) | ((Math.Clamp(ammoCount, 0, MaxAmmo) & 0x7F) << 1);
+		}
 
 		// Bits 8-15: Daño
 		public override int GetDamage(int value)
