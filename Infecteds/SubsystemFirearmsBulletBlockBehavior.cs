@@ -1,6 +1,7 @@
 using System;
 using Engine;
 using TemplatesDatabase;
+using static Game.FirearmsBulletBlock;
 
 namespace Game
 {
@@ -36,13 +37,12 @@ namespace Game
 		// ===== ESTO HACE QUE LA BALA VAYA RECTA =====
 		public override void OnFiredAsProjectile(Projectile projectile)
 		{
-			// Sin gravedad = no cae
 			projectile.Gravity = 0f;
 
-			// Damping 1.0 = sin desaceleración (MathF.Pow(1.0, dt) = 1.0)
-			projectile.Damping = 1f;
+			// USAR el damping específico de cada tipo de bala, NO 1.0f
+			FirearmsBulletType type = FirearmsBulletBlock.GetFirearmsBulletType(Terrain.ExtractData(projectile.Value));
+			projectile.Damping = FirearmsBulletBlock.GetBulletDamping(type);
 
-			// Sin rotación
 			projectile.AngularVelocity = Vector3.Zero;
 		}
 
