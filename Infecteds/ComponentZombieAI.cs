@@ -54,6 +54,13 @@ namespace Game
 			Loaded
 		}
 
+		public enum FirearmFireMode
+		{
+			Automatic,
+			SemiAuto,
+			BoltAction
+		}
+
 		public bool CanItBeMounted;
 		public MountState CurrentMountState { get; private set; } = MountState.None;
 
@@ -102,6 +109,9 @@ namespace Game
 		{
 			public string BlockName;
 			public int MaxAmmo;
+			public FirearmFireMode FireMode;
+			public float AimTimeBeforeShot;
+			public float CooldownAfterShot;
 			public Func<int, int> GetAmmoCount;
 			public Func<int, int, int> SetAmmoCount;
 			public Func<int, bool> GetLoadState;
@@ -134,6 +144,7 @@ namespace Game
 		private float m_firearmReloadPauseTimer;
 		private bool m_isWaitingForFirearmReload;
 		private bool m_justFinishedReloading;
+		private FirearmData? m_currentFirearmData;
 
 		private Random m_random = new Random();
 
@@ -276,6 +287,9 @@ namespace Game
 			{
 				BlockName = "AK47Block",
 				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.3f,
+				CooldownAfterShot = 1.8f,
 				GetAmmoCount = (data) => AK47Block.GetAmmoCount(data),
 				SetAmmoCount = (data, count) => AK47Block.SetAmmoCount(data, count),
 				GetLoadState = (data) => AK47Block.GetLoadState(data) == AK47Block.LoadState.Loaded,
@@ -286,6 +300,9 @@ namespace Game
 			{
 				BlockName = "DesertEagleBlock",
 				MaxAmmo = 7,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 0.35f,
 				GetAmmoCount = (data) => DesertEagleBlock.GetAmmoCount(data),
 				SetAmmoCount = (data, count) => DesertEagleBlock.SetAmmoCount(data, count),
 				GetLoadState = (data) => DesertEagleBlock.GetLoadState(data) == DesertEagleBlock.LoadState.Loaded,
@@ -296,6 +313,9 @@ namespace Game
 			{
 				BlockName = "SPAS12Block",
 				MaxAmmo = 8,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 0.45f,
 				GetAmmoCount = (data) => SPAS12Block.GetAmmoCount(data),
 				SetAmmoCount = (data, count) => SPAS12Block.SetAmmoCount(data, count),
 				GetLoadState = (data) => SPAS12Block.GetLoadState(data) == SPAS12Block.LoadState.Loaded,
@@ -306,6 +326,9 @@ namespace Game
 			{
 				BlockName = "SniperBlock",
 				MaxAmmo = 1,
+				FireMode = FirearmFireMode.BoltAction,
+				AimTimeBeforeShot = 1.2f,
+				CooldownAfterShot = 2.5f,
 				GetAmmoCount = (data) => SniperBlock.GetAmmoCount(data),
 				SetAmmoCount = (data, count) => SniperBlock.SetAmmoCount(data, count),
 				GetLoadState = (data) => SniperBlock.GetLoadState(data) == SniperBlock.LoadState.Loaded,
@@ -973,6 +996,8 @@ namespace Game
 					return;
 				}
 
+				m_currentFirearmData = null;
+
 				EnsureRangedWeaponLoaded(inventory, distance);
 				AimAndFire(m_componentChaseBehavior.Target);
 				return;
@@ -1019,6 +1044,8 @@ namespace Game
 				HandleFirearmAttack(inventory, target);
 				return;
 			}
+
+			m_currentFirearmData = null;
 
 			EnsureRangedWeaponLoaded(inventory, distance);
 			AimAndFire(target);
@@ -1482,6 +1509,7 @@ namespace Game
 			m_isWaitingForFirearmReload = false;
 			m_firearmReloadPauseTimer = 0f;
 			m_justFinishedReloading = false;
+			m_currentFirearmData = null;
 			SetFirearmReloadState(FirearmReloadState.None);
 		}
 
@@ -1569,13 +1597,13 @@ namespace Game
 
 			if (!firearmDataNullable.HasValue) return;
 			FirearmData firearm = firearmDataNullable.Value;
+			m_currentFirearmData = firearm;
 
 			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
 			Vector3 targetPos = target.ComponentBody.BoundingBox.Center();
 			Vector3 aimDir = Vector3.Normalize(targetPos - eyePos);
 			Ray3 firearmRay = new Ray3(eyePos, aimDir);
 
-			// Si está en pausa post-recarga, decrementar timer y no apuntar hasta que termine
 			if (m_isWaitingForFirearmReload)
 			{
 				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
@@ -1589,6 +1617,12 @@ namespace Game
 
 					PlayReloadEffects();
 				}
+				return;
+			}
+
+			if (CooldownTimer > 0f)
+			{
+				CooldownTimer -= m_subsystemTime.GameTimeDelta;
 				return;
 			}
 
@@ -1611,9 +1645,24 @@ namespace Game
 				return;
 			}
 
-			// El arma tiene munición y no está en pausa
 			CurrentFirearmReloadState = FirearmReloadState.Loaded;
 
+			switch (firearm.FireMode)
+			{
+				case FirearmFireMode.Automatic:
+					HandleAutomaticFirearm(firearmRay, firearm);
+					break;
+				case FirearmFireMode.SemiAuto:
+					HandleSemiAutoFirearm(firearmRay, firearm);
+					break;
+				case FirearmFireMode.BoltAction:
+					HandleBoltActionFirearm(firearmRay, firearm);
+					break;
+			}
+		}
+
+		private void HandleAutomaticFirearm(Ray3 firearmRay, FirearmData firearm)
+		{
 			if (!m_isFirearmAiming)
 			{
 				m_isFirearmAiming = true;
@@ -1626,7 +1675,6 @@ namespace Game
 				}
 				m_justFinishedReloading = false;
 
-				// Aplicar rotación del arma y manos quietas según tipo de criatura
 				ApplyAimVisualSettings(false, false, false, true);
 			}
 			else
@@ -1634,15 +1682,72 @@ namespace Game
 				m_firearmAimTimer += m_subsystemTime.GameTimeDelta;
 				m_componentMiner.Aim(firearmRay, AimState.InProgress);
 
-				// Aplicar rotación del arma y manos quietas según tipo de criatura
 				ApplyAimVisualSettings(false, false, false, true);
 
-				// Si lleva mucho tiempo apuntando sin disparar, reiniciamos
-				// el apuntado para que el efecto de "volver a apuntar" se repita periódicamente.
-				if (m_firearmAimTimer > 2.0f)
+				if (m_firearmAimTimer > firearm.CooldownAfterShot)
 				{
+					m_componentMiner.Aim(firearmRay, AimState.Cancelled);
 					m_isFirearmAiming = false;
 					m_firearmAimTimer = 0f;
+					CooldownTimer = 0.3f;
+				}
+			}
+		}
+
+		private void HandleSemiAutoFirearm(Ray3 firearmRay, FirearmData firearm)
+		{
+			if (!m_isFirearmAiming)
+			{
+				m_isFirearmAiming = true;
+				m_firearmAimTimer = 0f;
+				m_componentMiner.Aim(firearmRay, AimState.InProgress);
+				ApplyAimVisualSettings(false, false, false, true);
+			}
+			else
+			{
+				m_firearmAimTimer += m_subsystemTime.GameTimeDelta;
+
+				if (m_firearmAimTimer >= firearm.AimTimeBeforeShot)
+				{
+					m_componentMiner.Aim(firearmRay, AimState.Completed);
+
+					m_isFirearmAiming = false;
+					m_firearmAimTimer = 0f;
+					CooldownTimer = firearm.CooldownAfterShot;
+				}
+				else
+				{
+					m_componentMiner.Aim(firearmRay, AimState.InProgress);
+					ApplyAimVisualSettings(false, false, false, true);
+				}
+			}
+		}
+
+		private void HandleBoltActionFirearm(Ray3 firearmRay, FirearmData firearm)
+		{
+			if (!m_isFirearmAiming)
+			{
+				m_isFirearmAiming = true;
+				m_firearmAimTimer = 0f;
+				m_componentMiner.Aim(firearmRay, AimState.InProgress);
+				ApplyAimVisualSettings(false, false, false, true);
+			}
+			else
+			{
+				m_firearmAimTimer += m_subsystemTime.GameTimeDelta;
+
+				if (m_firearmAimTimer >= firearm.AimTimeBeforeShot)
+				{
+					m_componentMiner.Aim(firearmRay, AimState.Completed);
+
+					m_isFirearmAiming = false;
+					m_firearmAimTimer = 0f;
+					CooldownTimer = firearm.CooldownAfterShot;
+				}
+				else
+				{
+					m_componentMiner.Aim(firearmRay, AimState.InProgress);
+					ApplyAimVisualSettings(false, false, false, true);
 				}
 			}
 		}
