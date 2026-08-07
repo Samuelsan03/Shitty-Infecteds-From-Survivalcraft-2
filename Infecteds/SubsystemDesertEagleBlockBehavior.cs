@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using TemplatesDatabase;
@@ -161,16 +161,15 @@ namespace Game
 									}
 									else
 									{
-										// No tiene munición - mostrar mensaje de que necesita munición
+										// No tiene munición
 										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
-											Block ammoBlock = BlocksManager.Blocks[m_desertEagleAmmunitionBlockIndex];
-											string ammoName = ammoBlock.DefaultDisplayName;
-											componentPlayer.ComponentGui.DisplaySmallMessage($"Necesitas {ammoName} para disparar", Color.White, true, false);
+											string ammoName = LanguageControl.GetBlock("DesertEagleAmmunitionBlock", "DisplayName");
+											string message = LanguageControl.Get("Firearms", 1);
+											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
 											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
 										}
 
-										// Sonido empty fire con cooldown
 										if (timeSinceEmptySound >= EmptySoundCooldown)
 										{
 											m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
