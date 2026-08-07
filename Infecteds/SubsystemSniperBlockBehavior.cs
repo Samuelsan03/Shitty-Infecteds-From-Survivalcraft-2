@@ -120,9 +120,9 @@ namespace Game
 									{
 										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
-											Block ammoBlock = BlocksManager.Blocks[m_sniperAmmunitionBlockIndex];
-											string ammoName = ammoBlock.DefaultDisplayName;
-											componentPlayer.ComponentGui.DisplaySmallMessage($"Necesitas {ammoName} para disparar", Color.White, true, false);
+											string ammoName = LanguageControl.GetBlock("SniperAmmunitionBlock", "DisplayName");
+											string message = LanguageControl.Get("Firearms", 1);
+											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
 											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
 										}
 
