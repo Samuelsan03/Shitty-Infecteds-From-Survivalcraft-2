@@ -24,8 +24,8 @@ namespace Game
 		private int m_ak47BlockIndex;
 		private int m_ak47AmmunitionBlockIndex;
 
-		// Constantes del AK-47
-		private const float FireRate = 0.1f;
+		// Constantes del AK-47 - AUTOMÁTICA
+		private const float FireRate = 0.1f; // ~600 RPM
 		private const int MaxAmmo = 30;
 		private const float EmptySoundCooldown = 0.5f;
 		private const float EmptyMessageCooldown = 0.5f;
@@ -67,7 +67,7 @@ namespace Game
 						{
 							gameTime = m_subsystemTime.GameTime;
 							m_aimStartTimes[componentMiner] = gameTime;
-							m_lastFireTimes[componentMiner] = gameTime;
+							m_lastFireTimes[componentMiner] = gameTime - FireRate; // CAMBIO: Disparar inmediatamente al apuntar
 							m_lastEmptySoundTimes[componentMiner] = gameTime - EmptySoundCooldown;
 							m_lastEmptyMessageTimes[componentMiner] = gameTime - EmptyMessageCooldown;
 						}
@@ -85,7 +85,7 @@ namespace Game
 						m_lastEmptyMessageTimes.TryGetValue(componentMiner, out lastEmptyMessageTime);
 						float timeSinceEmptyMessage = (float)(m_subsystemTime.GameTime - lastEmptyMessageTime);
 
-						// Dispersión para arma automática (como el mosquete)
+						// Dispersión para arma automática - aumenta más mientras disparas
 						float num5 = (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0);
 						Vector3 v = ((componentMiner.ComponentCreature.ComponentBody.IsCrouching ? 0.01f : 0.03f) + 0.15f * MathUtils.Saturate(num4 / 5f)) * new Vector3
 						{
@@ -112,18 +112,17 @@ namespace Game
 
 									if (loadState == AK47Block.LoadState.Loaded && ammoCount > 0)
 									{
-										// Tiene munición - mostrar contador
+										// Mostrar contador
 										if (componentPlayer != null)
 										{
 											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
 										}
 
-										// Disparo automático - verificar tasa de fuego
+										// AUTOMÁTICO: Seguir disparando mientras mantienes
 										if (timeSinceLastFire >= FireRate)
 										{
 											if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor <= 0.4f)
 											{
-												// Posición de la boca del arma
 												Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
 													+ componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
 													- componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f
@@ -143,7 +142,6 @@ namespace Game
 												m_subsystemParticles.AddParticleSystem(new TestGunFireParticleSystem(m_subsystemTerrain, vector, vector2), false);
 												m_subsystemNoise.MakeNoise(vector, 1f, 40f);
 
-												// Reducir munición
 												int newAmmoCount = ammoCount - 1;
 												int newData = AK47Block.SetAmmoCount(Terrain.ExtractData(num2), newAmmoCount);
 
@@ -161,7 +159,7 @@ namespace Game
 									}
 									else
 									{
-										// No tiene munición - mostrar mensaje de que necesita munición
+										// Sin munición - con cooldown para no spamear
 										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
 											string ammoName = LanguageControl.GetBlock("AK47AmmunitionBlock", "DisplayName");
@@ -170,7 +168,6 @@ namespace Game
 											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
 										}
 
-										// Sonido empty fire con cooldown
 										if (timeSinceEmptySound >= EmptySoundCooldown)
 										{
 											m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
@@ -229,7 +226,6 @@ namespace Game
 
 			int ammoCount = AK47Block.GetAmmoCount(Terrain.ExtractData(inventory.GetSlotValue(slotIndex)));
 
-			// Solo no permitir recargar si ya está lleno (30/30)
 			if (ammoCount >= MaxAmmo) return 0;
 
 			int itemContents = Terrain.ExtractContents(value);
