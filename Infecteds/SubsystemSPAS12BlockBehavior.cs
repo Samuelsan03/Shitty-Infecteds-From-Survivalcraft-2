@@ -20,19 +20,20 @@ namespace Game
 		private Dictionary<ComponentMiner, double> m_lastFireTimes = new Dictionary<ComponentMiner, double>();
 		private Dictionary<ComponentMiner, double> m_lastEmptySoundTimes = new Dictionary<ComponentMiner, double>();
 		private Dictionary<ComponentMiner, double> m_lastEmptyMessageTimes = new Dictionary<ComponentMiner, double>();
+		private Dictionary<ComponentMiner, bool> m_firedThisAim = new Dictionary<ComponentMiner, bool>(); // NUEVO
 		private int m_bulletBlockIndex;
 		private int m_spas12BlockIndex;
 		private int m_spas12AmmunitionBlockIndex;
 
-		// Constantes del SPAS-12
-		private const float FireRate = 0.4f; // Semiautomática, más lento que el AK
-		private const int MaxAmmo = 8; // Capacidad típica del SPAS-12
+		// Constantes del SPAS-12 - SEMIAUTOMÁTICO REAL
+		private const float FireRate = 0.3f; // Solo controla el mínimo entre clics
+		private const int MaxAmmo = 8;
 		private const float EmptySoundCooldown = 0.5f;
 		private const float EmptyMessageCooldown = 0.5f;
 		private const float MuzzleOffset = 0.9f;
-		private const int PelletCount = 8; // Perdigones por disparo
-		private const float PelletSpread = 0.15f; // Dispersión de perdigones
-		private const float PelletVelocity = 100f; // Velocidad de los perdigones
+		private const int PelletCount = 8;
+		private const float PelletSpread = 0.15f;
+		private const float PelletVelocity = 100f;
 
 		public override void Load(ValuesDictionary valuesDictionary)
 		{
@@ -70,9 +71,10 @@ namespace Game
 						{
 							gameTime = m_subsystemTime.GameTime;
 							m_aimStartTimes[componentMiner] = gameTime;
-							m_lastFireTimes[componentMiner] = gameTime;
+							m_lastFireTimes[componentMiner] = gameTime - FireRate; // Permitir disparar inmediatamente
 							m_lastEmptySoundTimes[componentMiner] = gameTime - EmptySoundCooldown;
 							m_lastEmptyMessageTimes[componentMiner] = gameTime - EmptyMessageCooldown;
+							m_firedThisAim[componentMiner] = false; // NUEVO: Resetear
 						}
 						float num4 = (float)(m_subsystemTime.GameTime - gameTime);
 
@@ -88,7 +90,10 @@ namespace Game
 						m_lastEmptyMessageTimes.TryGetValue(componentMiner, out lastEmptyMessageTime);
 						float timeSinceEmptyMessage = (float)(m_subsystemTime.GameTime - lastEmptyMessageTime);
 
-						// Dispersión base para escopeta (mayor que el AK)
+						bool alreadyFiredThisAim;
+						m_firedThisAim.TryGetValue(componentMiner, out alreadyFiredThisAim);
+
+						// Dispersión base para escopeta
 						float num5 = (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0);
 						Vector3 v = ((componentMiner.ComponentCreature.ComponentBody.IsCrouching ? 0.02f : 0.04f) + 0.1f * MathUtils.Saturate(num4 / 3f)) * new Vector3
 						{
@@ -115,28 +120,24 @@ namespace Game
 
 									if (loadState == SPAS12Block.LoadState.Loaded && ammoCount > 0)
 									{
-										// Tiene munición - mostrar contador
 										if (componentPlayer != null)
 										{
 											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
 										}
 
-										// Disparo semiautomático
-										if (timeSinceLastFire >= FireRate)
+										// SEMIAUTOMÁTICO: Solo disparar si NO ha disparado este clic
+										if (!alreadyFiredThisAim && timeSinceLastFire >= FireRate)
 										{
 											if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor <= 0.4f)
 											{
-												// Posición de la boca del arma
 												Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
 													+ componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
 													- componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f
 													+ aim.Direction * MuzzleOffset;
 												Vector3 vector2 = aim.Direction;
 
-												// Disparar múltiples perdigones
 												for (int i = 0; i < PelletCount; i++)
 												{
-													// Dispersión aleatoria para cada perdigón
 													float spreadX = m_random.Float(-PelletSpread, PelletSpread);
 													float spreadY = m_random.Float(-PelletSpread, PelletSpread);
 													float spreadZ = m_random.Float(-PelletSpread, PelletSpread);
@@ -157,7 +158,6 @@ namespace Game
 												m_subsystemParticles.AddParticleSystem(new TestGunFireParticleSystem(m_subsystemTerrain, vector, vector2), false);
 												m_subsystemNoise.MakeNoise(vector, 1.2f, 45f);
 
-												// Reducir munición
 												int newAmmoCount = ammoCount - 1;
 												int newData = SPAS12Block.SetAmmoCount(Terrain.ExtractData(num2), newAmmoCount);
 
@@ -170,13 +170,14 @@ namespace Game
 												num3 = 1;
 
 												m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
+												m_firedThisAim[componentMiner] = true; // NUEVO: Marcar como ya disparó
 											}
 										}
 									}
 									else
 									{
-										// No tiene munición
-										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
+										// No tiene munición - también semiautomático
+										if (componentPlayer != null && !alreadyFiredThisAim && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
 											string ammoName = LanguageControl.GetBlock("SPAS12AmmunitionBlock", "DisplayName");
 											string message = LanguageControl.Get("Firearms", 1);
@@ -184,10 +185,11 @@ namespace Game
 											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
 										}
 
-										if (timeSinceEmptySound >= EmptySoundCooldown)
+										if (!alreadyFiredThisAim && timeSinceEmptySound >= EmptySoundCooldown)
 										{
 											m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 											m_lastEmptySoundTimes[componentMiner] = m_subsystemTime.GameTime;
+											m_firedThisAim[componentMiner] = true; // NUEVO
 										}
 									}
 
@@ -211,12 +213,14 @@ namespace Game
 								m_lastFireTimes.Remove(componentMiner);
 								m_lastEmptySoundTimes.Remove(componentMiner);
 								m_lastEmptyMessageTimes.Remove(componentMiner);
+								m_firedThisAim.Remove(componentMiner); // NUEVO
 								break;
 							case AimState.Completed:
 								m_aimStartTimes.Remove(componentMiner);
 								m_lastFireTimes.Remove(componentMiner);
 								m_lastEmptySoundTimes.Remove(componentMiner);
 								m_lastEmptyMessageTimes.Remove(componentMiner);
+								m_firedThisAim.Remove(componentMiner); // NUEVO
 								break;
 						}
 					}
@@ -242,7 +246,6 @@ namespace Game
 
 			int ammoCount = SPAS12Block.GetAmmoCount(Terrain.ExtractData(inventory.GetSlotValue(slotIndex)));
 
-			// Solo no permitir recargar si ya está lleno (8/8)
 			if (ammoCount >= MaxAmmo) return 0;
 
 			int itemContents = Terrain.ExtractContents(value);
