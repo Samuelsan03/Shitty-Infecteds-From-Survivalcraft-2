@@ -35,12 +35,10 @@ namespace Game
 		public SubsystemParticles m_subsystemParticles;
 		public SubsystemGameInfo m_subsystemGameInfo;
 
-		// Lista de criaturas que no sangran
 		public static readonly HashSet<string> m_nonBleedingCreatures = new HashSet<string>
 		{
 			"GhostNormal"
-            // Agregar más criaturas aquí
-        };
+		};
 
 		public override void Load(ValuesDictionary valuesDictionary)
 		{
@@ -111,13 +109,12 @@ namespace Game
 				return;
 			}
 
-			// CORRECCIÓN: Verificar si la criatura está siendo despawneada por ComponentDeathSpawner u otro componente
 			ComponentSpawn componentSpawn = creature.Entity.FindComponent<ComponentSpawn>();
 
 			SubsystemCreatureBleeding.BleedingData bleedingData;
 			if (this.m_bleedingData.TryGetValue(creature, out bleedingData))
 			{
-				// CORRECCIÓN: Solo actualizar posición si NO está siendo despawneada
+				// Solo actualizar posición si NO está siendo despawneada
 				if (bleedingData.Particles != null && bleedingData.Particles.SubsystemParticles != null
 					&& (componentSpawn == null || !componentSpawn.IsDespawning))
 				{
@@ -126,14 +123,11 @@ namespace Game
 					bleedingData.BleedPosition = position;
 				}
 
-				// CORRECCIÓN: Si está siendo despawneada, detener el sangrado inmediatamente
+				// Si está siendo despawneada, eliminar el sangrado inmediatamente
 				if (componentSpawn != null && componentSpawn.IsDespawning)
 				{
-					bleedingData.State = CreatureBleedingState.Fading;
-					if (bleedingData.Particles != null)
-					{
-						bleedingData.Particles.IsStopped = true;
-					}
+					bleedingData.State = CreatureBleedingState.Finished;
+					this.m_toRemove.Add(creature);
 					return;
 				}
 
@@ -167,14 +161,11 @@ namespace Game
 						}
 						double num = this.m_subsystemGameInfo.TotalElapsedGameTime - componentHealth.DeathTime.Value;
 
-						// Verificamos si el tiempo de muerte superó el CorpseDuration (el momento exacto en que el cuerpo desaparece)
+						// ✅ CAMBIO PRINCIPAL: Eliminación inmediata cuando el cuerpo desaparece
 						if (num >= (double)componentHealth.CorpseDuration)
 						{
-							bleedingData.State = CreatureBleedingState.Fading;
-							if (bleedingData.Particles != null)
-							{
-								bleedingData.Particles.IsStopped = true;
-							}
+							bleedingData.State = CreatureBleedingState.Finished;
+							this.m_toRemove.Add(creature);
 							return;
 						}
 						break;
@@ -219,7 +210,6 @@ namespace Game
 				return false;
 			}
 
-			// Verificar si la criatura está en la lista de exclusiones
 			if (creature.Entity != null && creature.Entity.ValuesDictionary != null)
 			{
 				string creatureName = creature.Entity.ValuesDictionary.DatabaseObject?.Name;
@@ -229,7 +219,6 @@ namespace Game
 				}
 			}
 
-			// CORRECCIÓN: No iniciar sangrado si ya está siendo despawneada
 			ComponentSpawn componentSpawn = creature.Entity.FindComponent<ComponentSpawn>();
 			if (componentSpawn != null && componentSpawn.IsDespawning)
 			{
@@ -255,7 +244,6 @@ namespace Game
 
 		public void StartBleeding(ComponentCreature creature, ComponentBody body)
 		{
-			// CORRECCIÓN: Posicionado en las piernas (25% de la altura total desde los pies)
 			Vector3 position = body.Position + Vector3.UnitY * body.StanceBoxSize.Y * 0.25f + body.Matrix.Forward * 0.15f;
 			Vector3 vector = -body.Matrix.Forward * 0.4f + -Vector3.UnitY * 0.3f;
 			BloodParticleSystem bloodParticleSystem = new BloodParticleSystem(this.m_subsystemTerrain);
