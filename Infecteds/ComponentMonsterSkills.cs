@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic; // <-- AGREGADO
+using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -90,6 +90,24 @@ namespace Game
 			return targetHealth.Health > 0f;
 		}
 
+		private bool IsTargetInSight(ComponentCreature target)
+		{
+			if (target == null || target.ComponentBody == null) return false;
+
+			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
+			Vector3 monsterCenter = m_componentCreature.ComponentBody.BoundingBox.Center();
+			Vector3 targetCenter = target.ComponentBody.BoundingBox.Center();
+			Vector3 toTarget = targetCenter - monsterCenter;
+			float distance = toTarget.Length();
+
+			if (distance < 0.01f) return true;
+
+			Vector3 directionToTarget = toTarget / distance;
+			float dot = Vector3.Dot(forward, directionToTarget);
+
+			return dot > 0f;
+		}
+
 		public void ForceStartVomiting()
 		{
 			if (!CanVomit) return;
@@ -145,6 +163,10 @@ namespace Game
 				{
 					shouldStop = true;
 				}
+				else if (!IsTargetInSight(target))
+				{
+					shouldStop = true;
+				}
 				else if (distanceToTarget < DistanceToVomit.X)
 				{
 					shouldStop = true;
@@ -169,9 +191,12 @@ namespace Game
 				{
 					if (distanceToTarget >= DistanceToVomit.X && distanceToTarget <= DistanceToVomit.Y)
 					{
-						if (m_random.Float(0f, 1f) < 0.15f * dt)
+						if (IsTargetInSight(target))
 						{
-							StartVomiting();
+							if (m_random.Float(0f, 1f) < 0.15f * dt)
+							{
+								StartVomiting();
+							}
 						}
 					}
 				}
@@ -186,9 +211,9 @@ namespace Game
 
 			if (target == null || !IsTargetAlive(target)) return;
 
-			// <-- INICIO DE LA LÓGICA AGREGADA -->
+			if (!IsTargetInSight(target)) return;
+
 			GetNextVomitType();
-			// <-- FIN DE LA LÓGICA AGREGADA -->
 
 			m_isVomiting = true;
 			m_vomitDurationTimer = DurationOfVomiting;
@@ -253,7 +278,6 @@ namespace Game
 			UpdateVomitTransform(target);
 		}
 
-		// <-- MÉTODO NUEVO AGREGADO (Variación estricta usando Random) -->
 		private void GetNextVomitType()
 		{
 			if (m_vomitQueue.Count == 0)
@@ -265,7 +289,6 @@ namespace Game
 				if (CanVomitBlood) types.Add(VomitType.Blood);
 				if (CanVomitFreezingCold) types.Add(VomitType.Freezing);
 
-				// Desordena la lista usando tu propio Random
 				for (int i = 0; i < types.Count; i++)
 				{
 					int j = m_random.Int(i, types.Count - 1);
@@ -274,17 +297,14 @@ namespace Game
 					types[j] = temp;
 				}
 
-				// Los mete a la cola
 				foreach (VomitType type in types)
 				{
 					m_vomitQueue.Enqueue(type);
 				}
 			}
 
-			// Saca el siguiente de la fila
 			m_vomitType = m_vomitQueue.Dequeue();
 		}
-		// <-- FIN DEL MÉTODO NUEVO -->
 
 		private void StopVomiting()
 		{
@@ -447,6 +467,6 @@ namespace Game
 		public object m_chaseBehavior;
 		public Type m_chaseBehaviorType;
 		public Random m_random = new Random();
-		public Queue<VomitType> m_vomitQueue = new Queue<VomitType>(); // <-- AGREGADO
+		public Queue<VomitType> m_vomitQueue = new Queue<VomitType>();
 	}
 }
