@@ -923,8 +923,6 @@ namespace Game
 			// El arma tiene munición y no está en pausa
 			CurrentFirearmReloadState = FirearmReloadState.Loaded;
 
-			bool skipArmMovement = ShouldSkipArmMovementForRanged();
-
 			if (!m_isAiming)
 			{
 				m_isAiming = true;
@@ -939,20 +937,14 @@ namespace Game
 				}
 				m_justFinishedReloading = false;
 
-				if (skipArmMovement)
-				{
-					ApplyNoArmMovementAimSettings(false, false, false, true);
-				}
+				ApplyAimVisualSettings(false, false, false, true);
 			}
 			else
 			{
 				m_aimTimer += m_subsystemTime.GameTimeDelta;
 				m_componentMiner.Aim(firearmRay, AimState.InProgress);
 
-				if (skipArmMovement)
-				{
-					ApplyNoArmMovementAimSettings(false, false, false, true);
-				}
+				ApplyAimVisualSettings(false, false, false, true);
 
 				// Si lleva mucho tiempo apuntando sin disparar (porque las armas de fuego 
 				// en este código no tienen un ciclo de disparo implementado), reiniciamos 
@@ -1014,28 +1006,20 @@ namespace Game
 			Vector3 direction = Vector3.Normalize(targetPos - eyePos);
 			Ray3 rangedRay = new Ray3(eyePos, direction);
 
-			bool skipArmMovement = ShouldSkipArmMovementForRanged();
-
 			if (!m_isAiming)
 			{
 				m_isAiming = true;
 				m_aimTimer = 0f;
 				m_componentMiner.Aim(rangedRay, AimState.InProgress);
 
-				if (skipArmMovement)
-				{
-					ApplyNoArmMovementAimSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket, isFlameThrower);
-				}
+				ApplyAimVisualSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket, isFlameThrower);
 			}
 			else
 			{
 				m_aimTimer += m_subsystemTime.GameTimeDelta;
 				m_componentMiner.Aim(rangedRay, AimState.InProgress);
 
-				if (skipArmMovement)
-				{
-					ApplyNoArmMovementAimSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket, isFlameThrower);
-				}
+				ApplyAimVisualSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket, isFlameThrower);
 
 				float requiredAimTime;
 				if (isImprovedMusket) requiredAimTime = ImprovedMusketAimTime;
@@ -1526,6 +1510,15 @@ namespace Game
 			{
 				ClearPilotDestination();
 			}
+		}
+
+		private void ApplyAimVisualSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
+		{
+			if (ShouldSkipArmMovementForRanged())
+			{
+				ApplyNoArmMovementAimSettings(isBow, isCrossbow, isFlameThrower, isFirearm);
+			}
+			// Si no es criatura especial, no tocar nada - animación de apunte normal
 		}
 	}
 }
