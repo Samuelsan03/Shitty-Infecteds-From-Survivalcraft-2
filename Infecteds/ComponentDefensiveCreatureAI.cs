@@ -484,32 +484,62 @@ namespace Game
 				Vector3 myPos = mountBody.Position;
 				float distance = Vector3.Distance(myPos, targetBody.Position);
 
-				// Llegó al destino (Usamos 4f que es la distancia exacta del Summon original)
+				// Calculamos la diferencia de altura real
+				float heightDiff = targetBody.Position.Y - myPos.Y;
+				bool isAtSameHeight = MathF.Abs(heightDiff) < 2f;
+
+				// Llegó al destino (4 bloques de distancia total)
 				if (distance <= 4f)
 				{
-					// Frenado correcto
-					if (mountBody.Velocity.LengthSquared() > 0.5f)
+					if (IsOnFlyingMount)
 					{
-						steedBehavior.SpeedOrder = -1; // Frenado de emergencia
+						if (isAtSameHeight)
+						{
+							// A la misma altura y cerca: Frenar todo y dejar que el Steed aterrice suavemente
+							if (mountBody.Velocity.LengthSquared() > 0.5f)
+								steedBehavior.SpeedOrder = -1;
+							else
+								steedBehavior.SpeedOrder = 0;
+
+							steedBehavior.TurnOrder = 0f;
+							steedBehavior.JumpOrder = 0f;
+
+							// Apagamos el Pilot para que el Steed ejecute su lógica de c_gentleDescentSpeed
+							if (m_componentPilot != null && m_componentPilot.Destination != null)
+								m_componentPilot.Stop();
+						}
+						else
+						{
+							// Cerca horizontalmente pero NO a la misma altura: 
+							// Frenar avance horizontal PERO seguir mandando orden de vuelo para que suba/baje
+							steedBehavior.SpeedOrder = 0;
+							steedBehavior.TurnOrder = 0f;
+
+							if (m_componentPilot != null)
+							{
+								Vector3 fakePilotTarget = targetBody.Position;
+								if (heightDiff > 0f) fakePilotTarget.Y += 10f; // Forzar subida rápida
+								else fakePilotTarget.Y -= 10f; // Forzar bajada rápida
+
+								m_componentPilot.SetDestination(fakePilotTarget, 1f, 4f, false, false, true, null);
+							}
+						}
 					}
 					else
 					{
-						steedBehavior.SpeedOrder = 0; // Ya está quieto
-					}
+						// Montura normal de tierra: Frenar definitivamente
+						if (mountBody.Velocity.LengthSquared() > 0.5f)
+							steedBehavior.SpeedOrder = -1;
+						else
+							steedBehavior.SpeedOrder = 0;
 
-					steedBehavior.TurnOrder = 0f;
-					steedBehavior.JumpOrder = 0f;
-
-					// Si es volador, al llegar le quitamos el destino al Pilot para que el 
-					// SteedBehaviorImproved ejecute su lógica de aterrizaje suave (c_gentleDescentSpeed)
-					if (IsOnFlyingMount && m_componentPilot != null && m_componentPilot.Destination != null)
-					{
-						m_componentPilot.Stop();
+						steedBehavior.TurnOrder = 0f;
+						steedBehavior.JumpOrder = 0f;
 					}
 					return;
 				}
 
-				// Calcular dirección y ángulo hacia el objetivo
+				// En movimiento: Calcular dirección y ángulo hacia el objetivo
 				Vector3 dirToTarget = targetBody.Position - myPos;
 				dirToTarget.Y = 0f;
 				if (dirToTarget.LengthSquared() < 0.01f) return;
@@ -524,7 +554,7 @@ namespace Game
 				float angleToTarget = MathF.Atan2(cross, dot);
 				float turnAmount = MathUtils.Clamp(angleToTarget * 3f, -1f, 1f);
 
-				// Aplicar giro y velocidad horizontal al Steed (tanto voladores como terrestres lo usan)
+				// Aplicar giro y velocidad horizontal
 				steedBehavior.TurnOrder = turnAmount;
 
 				if (MathF.Abs(angleToTarget) < 0.5f)
@@ -537,20 +567,26 @@ namespace Game
 				}
 
 				// ==========================================
-				// LA MAGIA PARA MONTURAS VOLADORAS
+				// CONTROL DE VUELO EXAGERADO (SIN MODIFICAR STEED)
 				// ==========================================
 				if (IsOnFlyingMount && m_componentPilot != null)
 				{
-					// Le damos la posición 3D exacta del jugador al Pilot del jinete.
-					// Tu ComponentSteedBehaviorImproved.ProcessAIFlightControls va a leer esto,
-					// va a calcular la diferencia de altura y hará que la montura suba o baje
-					// automáticamente usando FlyOrder.Y. ¡No tenemos que hacer nada más!
-					m_componentPilot.SetDestination(targetBody.Position, 1f, 4f, false, false, true, null);
+					Vector3 flyTarget = targetBody.Position;
+
+					// Le sumamos/restamos 10 bloques falsos al destino. 
+					// Esto engaña a tu SteedBehaviorImproved para que SIEMPRE vea que el destino 
+					// es "extremadamente alto/bajo" y fuerce el verticalInput a 1.0f o -0.8f 
+					// desde el primer segundo, logrando que levante vuelo o descienda al instante.
+					if (heightDiff > 0f)
+						flyTarget.Y += 10f;
+					else if (heightDiff < 0f)
+						flyTarget.Y -= 10f;
+
+					m_componentPilot.SetDestination(flyTarget, 1f, 4f, false, false, true, null);
 				}
 				else
 				{
-					// Si es montura de tierra, SÍ apagamos el Pilot porque de lo contrario
-					// el jinete intentaría caminar por su cuenta y causaría bugs de animación.
+					// Si es montura de tierra, apagamos el Pilot porque causaría bugs de animación
 					if (m_componentPilot != null && m_componentPilot.Destination != null)
 					{
 						m_componentPilot.Stop();
