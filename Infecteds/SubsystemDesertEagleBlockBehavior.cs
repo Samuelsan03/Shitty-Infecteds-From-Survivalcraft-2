@@ -20,16 +20,17 @@ namespace Game
 		private Dictionary<ComponentMiner, double> m_lastFireTimes = new Dictionary<ComponentMiner, double>();
 		private Dictionary<ComponentMiner, double> m_lastEmptySoundTimes = new Dictionary<ComponentMiner, double>();
 		private Dictionary<ComponentMiner, double> m_lastEmptyMessageTimes = new Dictionary<ComponentMiner, double>();
+		private Dictionary<ComponentMiner, bool> m_firedThisAim = new Dictionary<ComponentMiner, bool>(); // NUEVO
 		private int m_bulletBlockIndex;
 		private int m_desertEagleBlockIndex;
 		private int m_desertEagleAmmunitionBlockIndex;
 
-		// Constantes de la Desert Eagle
-		private const float FireRate = 0.35f; // Semiautomática - más lenta que el AK
-		private const int MaxAmmo = 7; // Cargador estándar de Desert Eagle
+		// Constantes de la Desert Eagle - SEMIAUTOMÁTICA REAL
+		private const float FireRate = 0.25f; // Tiempo mínimo entre clics
+		private const int MaxAmmo = 7;
 		private const float EmptySoundCooldown = 0.5f;
 		private const float EmptyMessageCooldown = 0.5f;
-		private const float MuzzleOffset = 0.6f; // Pistola más corta
+		private const float MuzzleOffset = 0.6f;
 
 		public override void Load(ValuesDictionary valuesDictionary)
 		{
@@ -67,9 +68,10 @@ namespace Game
 						{
 							gameTime = m_subsystemTime.GameTime;
 							m_aimStartTimes[componentMiner] = gameTime;
-							m_lastFireTimes[componentMiner] = gameTime;
+							m_lastFireTimes[componentMiner] = gameTime - FireRate; // Permitir disparar inmediatamente al apuntar
 							m_lastEmptySoundTimes[componentMiner] = gameTime - EmptySoundCooldown;
 							m_lastEmptyMessageTimes[componentMiner] = gameTime - EmptyMessageCooldown;
+							m_firedThisAim[componentMiner] = false; // NUEVO: Resetear al iniciar aim
 						}
 						float num4 = (float)(m_subsystemTime.GameTime - gameTime);
 
@@ -85,7 +87,10 @@ namespace Game
 						m_lastEmptyMessageTimes.TryGetValue(componentMiner, out lastEmptyMessageTime);
 						float timeSinceEmptyMessage = (float)(m_subsystemTime.GameTime - lastEmptyMessageTime);
 
-						// Dispersión para pistola semiautomática - menos que el AK
+						bool alreadyFiredThisAim;
+						m_firedThisAim.TryGetValue(componentMiner, out alreadyFiredThisAim);
+
+						// Dispersión para pistola semiautomática
 						float num5 = (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0);
 						Vector3 v = ((componentMiner.ComponentCreature.ComponentBody.IsCrouching ? 0.005f : 0.015f) + 0.08f * MathUtils.Saturate(num4 / 5f)) * new Vector3
 						{
@@ -118,12 +123,11 @@ namespace Game
 											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
 										}
 
-										// Disparo semiautomático - verificar tasa de fuego
-										if (timeSinceLastFire >= FireRate)
+										// SEMIAUTOMÁTICO: Solo disparar si NO ha disparado este clic
+										if (!alreadyFiredThisAim && timeSinceLastFire >= FireRate)
 										{
 											if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor <= 0.4f)
 											{
-												// Posición de la boca del arma - pistola más compacta
 												Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
 													+ componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.25f
 													- componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.15f
@@ -143,7 +147,6 @@ namespace Game
 												m_subsystemParticles.AddParticleSystem(new TestGunFireParticleSystem(m_subsystemTerrain, vector, vector2), false);
 												m_subsystemNoise.MakeNoise(vector, 1.2f, 50f);
 
-												// Reducir munición
 												int newAmmoCount = ammoCount - 1;
 												int newData = DesertEagleBlock.SetAmmoCount(Terrain.ExtractData(num2), newAmmoCount);
 
@@ -156,13 +159,14 @@ namespace Game
 												num3 = 1;
 
 												m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
+												m_firedThisAim[componentMiner] = true; // NUEVO: Marcar como ya disparó
 											}
 										}
 									}
 									else
 									{
-										// No tiene munición
-										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
+										// No tiene munición - también semiautomático el sonido
+										if (componentPlayer != null && !alreadyFiredThisAim && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
 											string ammoName = LanguageControl.GetBlock("DesertEagleAmmunitionBlock", "DisplayName");
 											string message = LanguageControl.Get("Firearms", 1);
@@ -170,10 +174,11 @@ namespace Game
 											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
 										}
 
-										if (timeSinceEmptySound >= EmptySoundCooldown)
+										if (!alreadyFiredThisAim && timeSinceEmptySound >= EmptySoundCooldown)
 										{
 											m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 											m_lastEmptySoundTimes[componentMiner] = m_subsystemTime.GameTime;
+											m_firedThisAim[componentMiner] = true; // NUEVO
 										}
 									}
 
@@ -184,7 +189,6 @@ namespace Game
 										{
 											componentPlayer.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
 										}
-										// Posición para pistola - más compacta que el AK
 										componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.18f, 0.12f, 0.06f);
 										componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.6f, 0f, 0f);
 									}
@@ -198,12 +202,14 @@ namespace Game
 								m_lastFireTimes.Remove(componentMiner);
 								m_lastEmptySoundTimes.Remove(componentMiner);
 								m_lastEmptyMessageTimes.Remove(componentMiner);
+								m_firedThisAim.Remove(componentMiner); // NUEVO
 								break;
 							case AimState.Completed:
 								m_aimStartTimes.Remove(componentMiner);
 								m_lastFireTimes.Remove(componentMiner);
 								m_lastEmptySoundTimes.Remove(componentMiner);
 								m_lastEmptyMessageTimes.Remove(componentMiner);
+								m_firedThisAim.Remove(componentMiner); // NUEVO
 								break;
 						}
 					}
@@ -229,7 +235,6 @@ namespace Game
 
 			int ammoCount = DesertEagleBlock.GetAmmoCount(Terrain.ExtractData(inventory.GetSlotValue(slotIndex)));
 
-			// Solo no permitir recargar si ya está lleno (7/7)
 			if (ammoCount >= MaxAmmo) return 0;
 
 			int itemContents = Terrain.ExtractContents(value);
