@@ -11,9 +11,6 @@ namespace Game
 	{
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-		/// <summary>
-		/// Enum para el estado de recarga de armas de fuego en la IA
-		/// </summary>
 		public enum FirearmReloadState
 		{
 			None,
@@ -58,9 +55,6 @@ namespace Game
 		public MountState CurrentMountState { get; private set; } = MountState.None;
 		public bool CanWearClothing { get; private set; }
 
-		/// <summary>
-		/// Estado actual de recarga del arma de fuego
-		/// </summary>
 		public FirearmReloadState CurrentFirearmReloadState { get; private set; } = FirearmReloadState.None;
 
 		public Vector2 AttackDistanceRange = new Vector2(5f, 100f);
@@ -84,9 +78,6 @@ namespace Game
 
 		private const float FirearmReloadPauseTime = 1.5f;
 
-		/// <summary>
-		/// Estructura para almacenar los datos de las armas de fuego usando el nombre del bloque.
-		/// </summary>
 		private struct FirearmData
 		{
 			public string BlockName;
@@ -140,6 +131,7 @@ namespace Game
 		private ComponentRider m_componentRider;
 		private ComponentMount m_currentMount;
 		private ComponentPilot m_componentPilot;
+		private ComponentSummonBehavior m_componentSummon; // NUEVO
 		private Random m_random;
 		private DynamicArray<ComponentBody> m_nearbyBodies = new DynamicArray<ComponentBody>();
 
@@ -212,6 +204,40 @@ namespace Game
 			return false;
 		}
 
+		private void ApplyAimVisualSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
+		{
+			if (ShouldSkipArmMovementForRanged())
+			{
+				ApplyNoArmMovementAimSettings(isBow, isCrossbow, isFlameThrower, isFirearm);
+				return;
+			}
+
+			if (isFirearm)
+			{
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.2f;
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.1f, -0.1f, 0.05f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.5f, 0f, 0f);
+			}
+			else if (isBow)
+			{
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0.8f;
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(0f, 0f, 0f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(0f, -0.2f, 0f);
+			}
+			else if (isFlameThrower)
+			{
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0.6f;
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.21f, 0.15f, 0.08f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
+			}
+			else if (isCrossbow)
+			{
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.0f;
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.1f, 0.07f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.55f, 0f, 0f);
+			}
+		}
+
 		private void ApplyNoArmMovementAimSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
 		{
 			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
@@ -243,9 +269,6 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Reproduce los efectos de recarga: sonido de reload y partículas KillParticle
-		/// </summary>
 		private void PlayReloadEffects()
 		{
 			Vector3 position = m_componentCreature.ComponentBody.Position + new Vector3(0f, m_componentCreature.ComponentBody.StanceBoxSize.Y / 2f, 0f);
@@ -257,17 +280,12 @@ namespace Game
 			m_subsystemAudio.PlaySound("Audio/Armas/reload", 1f, m_random.Float(-0.1f, 0.1f), position, 10f, false);
 		}
 
-		/// <summary>
-		/// Establece el estado de recarga y reproduce efectos si hay cambio de estado
-		/// </summary>
 		private void SetFirearmReloadState(FirearmReloadState newState)
 		{
 			if (CurrentFirearmReloadState != newState)
 			{
-				FirearmReloadState oldState = CurrentFirearmReloadState;
 				CurrentFirearmReloadState = newState;
 
-				// Reproducir efectos al cambiar a Reloading o a Loaded
 				if (newState == FirearmReloadState.Reloading || newState == FirearmReloadState.Loaded)
 				{
 					PlayReloadEffects();
@@ -286,6 +304,7 @@ namespace Game
 			m_componentCreatureClothing = Entity.FindComponent<ComponentCreatureClothing>(false);
 			m_componentRider = Entity.FindComponent<ComponentRider>(false);
 			m_componentPilot = Entity.FindComponent<ComponentPilot>(false);
+			m_componentSummon = Entity.FindComponent<ComponentSummonBehavior>(false); // NUEVO
 
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
@@ -305,6 +324,14 @@ namespace Game
 		{
 			UpdateMountingBehavior(dt);
 			UpdateTamingBehavior(dt);
+
+			// ===== NUEVO: LÓGICA DEL SILBATO PARA CRIATURAS MONTADAS =====
+			if (m_componentSummon != null && m_componentSummon.IsEnabled && m_componentSummon.SummonTarget != null)
+			{
+				HandleSummonWhileMounted(dt);
+				return; // Si va hacia ti por el silbato, no hace nada de combate
+			}
+			// ===== FIN NUEVO =====
 
 			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
 			{
@@ -438,6 +465,157 @@ namespace Game
 			}
 		}
 
+		// ===== NUEVO: MOVIMIENTO HACIA EL JUGADOR AL USAR SILBATO MONTADO =====
+		private void HandleSummonWhileMounted(float dt)
+		{
+			bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
+			ComponentBody targetBody = m_componentSummon.SummonTarget;
+			if (targetBody == null) return;
+
+			if (isMounted)
+			{
+				// ENGAÑAR AL SUMMON: Evitar que se cancele por falta de movimiento
+				m_componentSummon.m_stoppedTime = -1.0;
+
+				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+				if (steedBehavior == null) return;
+
+				ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
+				Vector3 myPos = mountBody.Position;
+				float distance = Vector3.Distance(myPos, targetBody.Position);
+
+				// Llegó al destino (Usamos 4f que es la distancia exacta del Summon original)
+				if (distance <= 4f)
+				{
+					// Frenado correcto
+					if (mountBody.Velocity.LengthSquared() > 0.5f)
+					{
+						steedBehavior.SpeedOrder = -1; // Frenado de emergencia
+					}
+					else
+					{
+						steedBehavior.SpeedOrder = 0; // Ya está quieto
+					}
+
+					steedBehavior.TurnOrder = 0f;
+					steedBehavior.JumpOrder = 0f;
+
+					// Si es volador, al llegar le quitamos el destino al Pilot para que el 
+					// SteedBehaviorImproved ejecute su lógica de aterrizaje suave (c_gentleDescentSpeed)
+					if (IsOnFlyingMount && m_componentPilot != null && m_componentPilot.Destination != null)
+					{
+						m_componentPilot.Stop();
+					}
+					return;
+				}
+
+				// Calcular dirección y ángulo hacia el objetivo
+				Vector3 dirToTarget = targetBody.Position - myPos;
+				dirToTarget.Y = 0f;
+				if (dirToTarget.LengthSquared() < 0.01f) return;
+				dirToTarget = Vector3.Normalize(dirToTarget);
+
+				Vector3 forward = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
+				if (forward.LengthSquared() < 0.01f) return;
+				forward = Vector3.Normalize(forward);
+
+				float dot = Vector3.Dot(forward, dirToTarget);
+				float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
+				float angleToTarget = MathF.Atan2(cross, dot);
+				float turnAmount = MathUtils.Clamp(angleToTarget * 3f, -1f, 1f);
+
+				// Aplicar giro y velocidad horizontal al Steed (tanto voladores como terrestres lo usan)
+				steedBehavior.TurnOrder = turnAmount;
+
+				if (MathF.Abs(angleToTarget) < 0.5f)
+				{
+					steedBehavior.SpeedOrder = 1;
+				}
+				else
+				{
+					steedBehavior.SpeedOrder = 0;
+				}
+
+				// ==========================================
+				// LA MAGIA PARA MONTURAS VOLADORAS
+				// ==========================================
+				if (IsOnFlyingMount && m_componentPilot != null)
+				{
+					// Le damos la posición 3D exacta del jugador al Pilot del jinete.
+					// Tu ComponentSteedBehaviorImproved.ProcessAIFlightControls va a leer esto,
+					// va a calcular la diferencia de altura y hará que la montura suba o baje
+					// automáticamente usando FlyOrder.Y. ¡No tenemos que hacer nada más!
+					m_componentPilot.SetDestination(targetBody.Position, 1f, 4f, false, false, true, null);
+				}
+				else
+				{
+					// Si es montura de tierra, SÍ apagamos el Pilot porque de lo contrario
+					// el jinete intentaría caminar por su cuenta y causaría bugs de animación.
+					if (m_componentPilot != null && m_componentPilot.Destination != null)
+					{
+						m_componentPilot.Stop();
+					}
+				}
+			}
+			else
+			{
+				// Si no está montado, usar el Pilot normal hacia el objetivo
+				SetPilotDestination(targetBody.Position, Vector3.Distance(m_componentCreature.ComponentBody.Position, targetBody.Position));
+			}
+		}
+
+		private void PilotMountToPosition(Vector3 targetPos)
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
+
+			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+			if (steedBehavior == null) return;
+
+			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
+			Vector3 myPos = mountBody.Position;
+			float distance = Vector3.Distance(myPos, targetPos);
+
+			if (distance < MountDetectionRange)
+			{
+				// Llegó al destino, detener la montura
+				steedBehavior.SpeedOrder = 0;
+				steedBehavior.TurnOrder = 0f;
+				steedBehavior.JumpOrder = 0f;
+				return;
+			}
+
+			// Calcular dirección y ángulo hacia el objetivo
+			Vector3 dirToTarget = targetPos - myPos;
+			dirToTarget.Y = 0f;
+			if (dirToTarget.LengthSquared() < 0.01f) return;
+			dirToTarget = Vector3.Normalize(dirToTarget);
+
+			Vector3 forward = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
+			if (forward.LengthSquared() < 0.01f) return;
+			forward = Vector3.Normalize(forward);
+
+			float dot = Vector3.Dot(forward, dirToTarget);
+			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
+			float angleToTarget = MathF.Atan2(cross, dot);
+			float turnAmount = MathUtils.Clamp(angleToTarget * 3f, -1f, 1f);
+
+			// Aplicar órdenes directas al SteedBehavior (la IA de la montura se encarga del resto)
+			steedBehavior.TurnOrder = turnAmount;
+
+			// Velocidad proporcional a la distancia y al ángulo
+			if (MathF.Abs(angleToTarget) < 0.5f)
+			{
+				if (distance > 20f) steedBehavior.SpeedOrder = 1;
+				else if (distance > 10f) steedBehavior.SpeedOrder = 1;
+				else steedBehavior.SpeedOrder = 1;
+			}
+			else
+			{
+				steedBehavior.SpeedOrder = 0; // Frena si tiene que girar mucho
+			}
+		}
+		// ===== FIN NUEVO =====
+
 		private void UpdateTamingBehavior(float dt)
 		{
 			if (!m_canUseInventory || m_componentMiner?.Inventory == null)
@@ -563,14 +741,9 @@ namespace Game
 		{
 			if (m_componentRider == null || m_componentRider.Mount == null) return;
 
-			ComponentPathfinding mountPathfinding = m_componentRider.Mount.Entity.FindComponent<ComponentPathfinding>();
-			if (mountPathfinding != null) mountPathfinding.Stop();
-
 			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 			if (steedBehavior != null)
 			{
-				steedBehavior.m_speedLevel = 1;
-				steedBehavior.m_speedChangeFactor = 100f;
 				steedBehavior.SpeedOrder = 0;
 				steedBehavior.TurnOrder = 0f;
 				steedBehavior.JumpOrder = 0f;
@@ -882,7 +1055,6 @@ namespace Game
 			Vector3 aimDir = Vector3.Normalize(targetPos - eyePos);
 			Ray3 firearmRay = new Ray3(eyePos, aimDir);
 
-			// Si está en pausa post-recarga, decrementar timer y no apuntar hasta que termine
 			if (m_isWaitingForFirearmReload)
 			{
 				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
@@ -894,7 +1066,6 @@ namespace Game
 					m_justFinishedReloading = true;
 					CurrentFirearmReloadState = FirearmReloadState.Loaded;
 
-					// Reproducir efecto al terminar la pausa de recarga (como en DayZ)
 					PlayReloadEffects();
 				}
 				return;
@@ -911,7 +1082,6 @@ namespace Game
 					m_aimTimer = 0f;
 				}
 
-				// Recargar inmediatamente y luego iniciar la pausa post-recarga
 				ReloadFirearm(firearmSlot, firearm);
 				SetFirearmReloadState(FirearmReloadState.Reloading);
 				m_isWaitingForFirearmReload = true;
@@ -920,7 +1090,6 @@ namespace Game
 				return;
 			}
 
-			// El arma tiene munición y no está en pausa
 			CurrentFirearmReloadState = FirearmReloadState.Loaded;
 
 			if (!m_isAiming)
@@ -929,8 +1098,6 @@ namespace Game
 				m_aimTimer = 0f;
 				m_componentMiner.Aim(firearmRay, AimState.InProgress);
 
-				// Reproducir efectos si NO acaba de terminar la recarga (evita doble sonido)
-				// Esto cubre cuando la mira se canceló y vuelve a apuntar con el arma cargada
 				if (!m_justFinishedReloading)
 				{
 					PlayReloadEffects();
@@ -946,9 +1113,6 @@ namespace Game
 
 				ApplyAimVisualSettings(false, false, false, true);
 
-				// Si lleva mucho tiempo apuntando sin disparar (porque las armas de fuego 
-				// en este código no tienen un ciclo de disparo implementado), reiniciamos 
-				// el apuntado para que el efecto de "volver a apuntar" se repita periódicamente.
 				if (m_aimTimer > 2.0f)
 				{
 					m_isAiming = false;
@@ -966,7 +1130,6 @@ namespace Game
 				return;
 			}
 
-			// No es arma de fuego, resetear estado
 			SetFirearmReloadState(FirearmReloadState.None);
 
 			if (m_cooldownTimer > 0f)
@@ -1172,7 +1335,6 @@ namespace Game
 				m_firearmReloadPauseTimer = 0f;
 				m_justFinishedReloading = false;
 
-				// Resetear estado de recarga al cancelar
 				SetFirearmReloadState(FirearmReloadState.None);
 			}
 		}
@@ -1459,66 +1621,46 @@ namespace Game
 			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 			if (steedBehavior == null) return;
 
+			// Asegurarse de que el piloto del jinete no interfiera
+			if (m_componentPilot != null && m_componentPilot.Destination != null)
+			{
+				m_componentPilot.Stop();
+			}
+
 			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
 			Vector3 targetPos = target.ComponentBody.Position;
 			Vector3 myPos = mountBody.Position;
 
 			Vector3 dirToTarget = targetPos - myPos;
 			dirToTarget.Y = 0f;
-
-			if (dirToTarget.LengthSquared() < 0.01f)
-			{
-				steedBehavior.TurnOrder = 0f;
-				steedBehavior.SpeedOrder = 0;
-				ClearPilotDestination();
-				return;
-			}
-
-			Vector3 forward = mountBody.Matrix.Forward;
-			forward.Y = 0f;
-
-			if (forward.LengthSquared() < 0.001f) forward = Vector3.UnitZ;
-
-			forward = Vector3.Normalize(forward);
+			if (dirToTarget.LengthSquared() < 0.01f) return;
 			dirToTarget = Vector3.Normalize(dirToTarget);
 
-			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
+			Vector3 forward = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
+			if (forward.LengthSquared() < 0.01f) return;
+			forward = Vector3.Normalize(forward);
+
 			float dot = Vector3.Dot(forward, dirToTarget);
+			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
+			float angleToTarget = MathF.Atan2(cross, dot);
+			float turnAmount = MathUtils.Clamp(angleToTarget * 3f, -1f, 1f);
 
-			steedBehavior.TurnOrder = MathUtils.Clamp(cross * 2f, -0.5f, 0.5f);
+			float distance = Vector3.Distance(myPos, targetPos);
 
-			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
+			steedBehavior.TurnOrder = turnAmount;
 
-			if (distance > 2f)
+			if (distance > AttackDistanceRange.Y)
 			{
-				if (dot > 0.2f) steedBehavior.SpeedOrder = 1;
-				else if (dot < -0.5f) steedBehavior.SpeedOrder = -1;
-				else steedBehavior.SpeedOrder = 0;
+				steedBehavior.SpeedOrder = 1;
+			}
+			else if (distance > AttackDistanceRange.X)
+			{
+				steedBehavior.SpeedOrder = MathF.Abs(angleToTarget) < 0.5f ? 1 : 0;
 			}
 			else
 			{
 				steedBehavior.SpeedOrder = 0;
 			}
-
-			steedBehavior.JumpOrder = 0f;
-
-			if (IsFlyingMount(m_componentRider.Mount))
-			{
-				SetPilotDestination(targetPos, distance);
-			}
-			else
-			{
-				ClearPilotDestination();
-			}
-		}
-
-		private void ApplyAimVisualSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
-		{
-			if (ShouldSkipArmMovementForRanged())
-			{
-				ApplyNoArmMovementAimSettings(isBow, isCrossbow, isFlameThrower, isFirearm);
-			}
-			// Si no es criatura especial, no tocar nada - animación de apunte normal
 		}
 	}
 }
