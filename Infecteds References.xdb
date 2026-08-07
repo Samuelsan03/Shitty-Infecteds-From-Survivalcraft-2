@@ -2,6 +2,25 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="BanditChaseBehavior" Description="Comportamiento de persecución diseñado para bandidos. Ignora y no ataca a criaturas que tengan el componente BanditHerdBehavior con el mismo nombre de manada." Guid="b122e050-2d19-46f6-8874-97967f422a3b" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+    <Parameter Name="Class" Guid="99b16c98-04ed-475a-a866-fe443e83e305" Value="Game.ComponentBanditChaseBehavior" Type="string" />
+    <Parameter Name="ChaseWhenAttackedProbability" Description="Probabilidad de perseguir al atacante cuando este bandido recibe daño" Guid="10dc9682-0f8a-4f36-b388-104b747ee188" Value="1" Type="float" />
+    <Parameter Name="NightChaseTime" Description="Tiempo máximo de persecución durante la noche" Guid="5ba292ac-a6d3-43e8-8c94-b8a98f697112" Value="10" Type="float" />
+    <Parameter Name="DayChaseRange" Description="Rango de detección para perseguir objetivos durante el día" Guid="e354556a-617e-43cd-874f-46343df7f9a6" Value="12" Type="float" />
+    <Parameter Name="ChaseOnTouchProbability" Description="Probabilidad de atacar al entrar en contacto físico con un objetivo" Guid="abfa7042-5286-4ded-b8da-21515aae3ee9" Value="1" Type="float" />
+    <Parameter Name="DayChaseTime" Description="Tiempo máximo de persecución durante el día" Guid="abbd2740-87ce-4c39-8713-91104f6c5421" Value="10" Type="float" />
+    <Parameter Name="NightChaseRange" Description="Rango de detección para perseguir objetivos durante la noche" Guid="db7def7c-50d1-4c43-a212-3fc81b4fe94e" Value="12" Type="float" />
+    <Parameter Name="AutoChaseMask" Description="Máscara de categorías de criaturas que este bandido perseguirá automáticamente" Guid="73c0b5c1-e197-40f5-9896-b774729a8914" Value="LandOther, Bird" Type="Game.CreatureCategory" />
+    <Parameter Name="ChaseNonPlayerProbability" Description="Probabilidad de perseguir a criaturas que no son jugadores" Guid="56dc6011-4086-45f3-87be-536e34eedca1" Value="0" Type="float" />
+</ComponentTemplate>
+
+<ComponentTemplate Name="BanditHerdBehavior" Description="Comportamiento de manada exclusivo para bandidos. Les permite agruparse y evita que se ataquen entre sí o llamen refuerzos contra aliados de la misma manada." Guid="4dcb8776-8415-47e5-bc00-9888f0986bc3" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+    <Parameter Name="AutoNearbyCreaturesHelp" Description="Indica si los bandidos cercanos acudirán en ayuda cuando uno sea atacado" Guid="fb6eae6a-bb8c-4f0b-bb69-41d19a54cd4e" Value="True" Type="bool" />
+    <Parameter Name="HerdName" Description="Nombre identificador de la manada de bandidos para reconocerse como aliados" Guid="86d8fbe7-9c55-428f-b3d2-6dda783ee85d" Value="bandit" Type="string" />
+    <Parameter Name="Class" Guid="f85f1c0f-7be0-48bd-a3a1-4efc537010a7" Value="Game.ComponentBanditHerdBehavior" Type="string" />
+    <Parameter Name="HerdingRange" Description="Distancia máxima a la que los bandidos buscarán el centro de su manada para seguirse" Guid="133a9cf7-7378-40e9-ade9-59e8854f3a8c" Value="32" Type="float" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="MonsterSkills" Description="Habilidades especiales de monstruos" Guid="8cc9ec70-bb38-4249-9187-e60627756166" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Guid="0b9f2742-4c03-4faa-be64-b4fada2c62f3" Value="Game.ComponentMonsterSkills" Type="string" />
   <Parameter Name="CanVomitFire" Description="Indica si la criatura puede vomitar fuego" Guid="cfa67179-fda8-4121-b0a7-1c9aa020c0ac" Value="false" Type="bool" />
@@ -229,6 +248,9 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="SubsystemSniperBlockBehavior" Guid="fbc2b3c8-cc3b-420e-9d55-769696db8b42" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="e1d2538e-54e9-4302-bfa7-afadad9e5536" Value="Game.SubsystemSniperBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemSPAS12BlockBehavior" Guid="f340ec29-1b33-41e2-8c15-e6058fa46ab3" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="304a81a6-cc2a-428d-9f27-4e4d40f87bb1" Value="Game.SubsystemSPAS12BlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
