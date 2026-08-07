@@ -164,9 +164,9 @@ namespace Game
 										// No tiene munición - mostrar mensaje de que necesita munición
 										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
-											Block ammoBlock = BlocksManager.Blocks[m_ak47AmmunitionBlockIndex];
-											string ammoName = ammoBlock.DefaultDisplayName;
-											componentPlayer.ComponentGui.DisplaySmallMessage($"Necesitas {ammoName} para disparar", Color.White, true, false);
+											string ammoName = LanguageControl.GetBlock("AK47AmmunitionBlock", "DisplayName");
+											string message = LanguageControl.Get("Firearms", 1);
+											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
 											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
 										}
 
