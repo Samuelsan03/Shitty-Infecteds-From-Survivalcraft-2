@@ -20,18 +20,13 @@ namespace Game
 		private Random m_random = new Random();
 
 		private Dictionary<ComponentMiner, double> m_aimStartTimes = new Dictionary<ComponentMiner, double>();
-		private Dictionary<ComponentMiner, double> m_lastEmptySoundTimes = new Dictionary<ComponentMiner, double>();
-		private Dictionary<ComponentMiner, double> m_lastEmptyMessageTimes = new Dictionary<ComponentMiner, double>();
 		private Dictionary<ComponentMiner, Camera> m_savedCameras = new Dictionary<ComponentMiner, Camera>();
-		private Dictionary<ComponentMiner, bool> m_wasInScope = new Dictionary<ComponentMiner, bool>();
 
 		private int m_bulletBlockIndex;
 		private int m_sniperBlockIndex;
 		private int m_sniperAmmunitionBlockIndex;
 
 		private const int MaxAmmo = 1;
-		private const float EmptySoundCooldown = 0.5f;
-		private const float EmptyMessageCooldown = 0.5f;
 		private const float MuzzleOffset = 1.5f;
 		private const float BulletVelocity = 250f;
 		private const float NoiseRange = 80f;
@@ -72,18 +67,9 @@ namespace Game
 						{
 							gameTime = m_subsystemTime.GameTime;
 							m_aimStartTimes[componentMiner] = gameTime;
-							m_lastEmptySoundTimes[componentMiner] = gameTime - EmptySoundCooldown;
-							m_lastEmptyMessageTimes[componentMiner] = gameTime - EmptyMessageCooldown;
-							m_wasInScope[componentMiner] = false;
 						}
 
-						double lastEmptySoundTime;
-						m_lastEmptySoundTimes.TryGetValue(componentMiner, out lastEmptySoundTime);
-						float timeSinceEmptySound = (float)(m_subsystemTime.GameTime - lastEmptySoundTime);
-
-						double lastEmptyMessageTime;
-						m_lastEmptyMessageTimes.TryGetValue(componentMiner, out lastEmptyMessageTime);
-						float timeSinceEmptyMessage = (float)(m_subsystemTime.GameTime - lastEmptyMessageTime);
+						float aimDuration = (float)(m_subsystemTime.GameTime - gameTime);
 
 						SniperBlock.LoadState loadState = SniperBlock.GetLoadState(data);
 						int ammoCount = SniperBlock.GetAmmoCount(data);
@@ -93,6 +79,14 @@ namespace Game
 						{
 							case AimState.InProgress:
 								{
+									// Fatiga por apuntar largo tiempo
+									if (aimDuration >= 10f)
+									{
+										componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
+										return true;
+									}
+
+									// Activar scope
 									if (componentPlayer != null)
 									{
 										Camera currentCamera = componentPlayer.GameWidget.ActiveCamera;
@@ -105,34 +99,15 @@ namespace Game
 											componentPlayer.GameWidget.ActiveCamera = scopeCamera;
 											scopeCamera.Activate(currentCamera);
 										}
-
-										m_wasInScope[componentMiner] = true;
 									}
 
-									if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
+									// Solo mostrar contador de munición mientras apuntas
+									if (componentPlayer != null)
 									{
-										if (componentPlayer != null)
-										{
-											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
-										}
-									}
-									else
-									{
-										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
-										{
-											string ammoName = LanguageControl.GetBlock("SniperAmmunitionBlock", "DisplayName");
-											string message = LanguageControl.Get("Firearms", 1);
-											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
-											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
-										}
-
-										if (timeSinceEmptySound >= EmptySoundCooldown)
-										{
-											m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
-											m_lastEmptySoundTimes[componentMiner] = m_subsystemTime.GameTime;
-										}
+										componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
 									}
 
+									// Posición del arma
 									ComponentFirstPersonModel componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
 									if (componentFirstPersonModel != null)
 									{
@@ -146,17 +121,16 @@ namespace Game
 								}
 							case AimState.Cancelled:
 								{
+									// Canceló el aim sin disparar
 									RestoreCamera(componentMiner, componentPlayer);
 
 									m_aimStartTimes.Remove(componentMiner);
-									m_lastEmptySoundTimes.Remove(componentMiner);
-									m_lastEmptyMessageTimes.Remove(componentMiner);
 									m_savedCameras.Remove(componentMiner);
-									m_wasInScope.Remove(componentMiner);
 									break;
 								}
 							case AimState.Completed:
 								{
+									// BOLT-ACTION: Disparar al soltar el botón
 									RestoreCamera(componentMiner, componentPlayer);
 
 									if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
@@ -166,12 +140,21 @@ namespace Game
 											FireShot(aim, componentMiner, num, data, ref num2);
 										}
 									}
+									else
+									{
+										// Sin munición - sonido y mensaje SOLO al intentar disparar (soltar)
+										if (componentPlayer != null)
+										{
+											string ammoName = LanguageControl.GetBlock("SniperAmmunitionBlock", "DisplayName");
+											string message = LanguageControl.Get("Firearms", 1);
+											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
+										}
+
+										m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+									}
 
 									m_aimStartTimes.Remove(componentMiner);
-									m_lastEmptySoundTimes.Remove(componentMiner);
-									m_lastEmptyMessageTimes.Remove(componentMiner);
 									m_savedCameras.Remove(componentMiner);
-									m_wasInScope.Remove(componentMiner);
 									break;
 								}
 						}
@@ -234,12 +217,10 @@ namespace Game
 
 			m_subsystemNoise.MakeNoise(muzzlePosition, NoiseLoudness, NoiseRange);
 
-			// Reducir munición
 			int currentAmmo = SniperBlock.GetAmmoCount(data);
 			int newAmmoCount = currentAmmo - 1;
 			int newData = SniperBlock.SetAmmoCount(data, newAmmoCount);
 
-			// Si no queda munición, cambiar estado a Empty
 			if (newAmmoCount <= 0)
 			{
 				newData = SniperBlock.SetLoadState(newData, SniperBlock.LoadState.Empty);
@@ -256,7 +237,6 @@ namespace Game
 
 			int ammoCount = SniperBlock.GetAmmoCount(Terrain.ExtractData(inventory.GetSlotValue(slotIndex)));
 
-			// Solo permitir recargar si no está lleno
 			if (ammoCount >= MaxAmmo) return 0;
 
 			int itemContents = Terrain.ExtractContents(value);
