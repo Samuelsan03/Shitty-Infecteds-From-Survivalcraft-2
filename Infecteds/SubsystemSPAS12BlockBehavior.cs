@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using TemplatesDatabase;
@@ -178,9 +178,9 @@ namespace Game
 										// No tiene munición
 										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
-											Block ammoBlock = BlocksManager.Blocks[m_spas12AmmunitionBlockIndex];
-											string ammoName = ammoBlock.DefaultDisplayName;
-											componentPlayer.ComponentGui.DisplaySmallMessage($"Necesitas {ammoName} para disparar", Color.White, true, false);
+											string ammoName = LanguageControl.GetBlock("SPAS12AmmunitionBlock", "DisplayName");
+											string message = LanguageControl.Get("Firearms", 1);
+											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
 											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
 										}
 
