@@ -29,7 +29,7 @@ namespace Game
 			if (HerdName == "player" && target.Entity.FindComponent<ComponentPlayer>() != null)
 				return;
 
-			// CORRECCIÓN: Si el atacante es de la misma manada que nosotros, ignorar la llamada (evita friendly-fire en cadena)
+			// Si el atacante es de la misma manada que nosotros, ignorar la llamada
 			if (!string.IsNullOrEmpty(HerdName))
 			{
 				ComponentNewHerdBehavior attackerHerd = target.Entity.FindComponent<ComponentNewHerdBehavior>();
@@ -38,7 +38,6 @@ namespace Game
 			}
 
 			Vector3 position = target.ComponentBody.Position;
-			// CORREGIDO: Aumentado rango de 256 a 1600 (40 bloques) para mejor respuesta
 			float rangeSquared = 1600f;
 
 			foreach (ComponentCreature componentCreature in m_subsystemCreatureSpawn.Creatures)
@@ -49,7 +48,6 @@ namespace Game
 					if (componentHerdBehavior != null && !string.IsNullOrEmpty(componentHerdBehavior.HerdName) && componentHerdBehavior.HerdName == HerdName && componentHerdBehavior.m_autoNearbyCreaturesHelp)
 					{
 						ComponentNewChaseBehavior chaseBehavior = componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
-						// CORREGIDO: Removida la verificación Target == null para forzar ataque inmediato
 						if (chaseBehavior != null)
 						{
 							chaseBehavior.Attack(target, maxRange, maxChaseTime, isPersistent);
@@ -63,16 +61,13 @@ namespace Game
 		{
 			if (string.IsNullOrEmpty(HerdName)) return null;
 
-			if (HerdName == "player")
-			{
-				ComponentPlayer nearestPlayer = m_subsystemPlayers.FindNearestPlayer(m_componentCreature.ComponentBody.Position);
-				if (nearestPlayer != null) return nearestPlayer.ComponentBody.Position;
-				return null;
-			}
+			// ELIMINADO: El bloque if (HerdName == "player") que hacía que siguieran al jugador.
+			// Ahora usará la lógica de abajo para calcular el centro entre criaturas de la misma manada.
 
 			Vector3 position = m_componentCreature.ComponentBody.Position;
 			int num = 0;
 			Vector3 vector = Vector3.Zero;
+
 			foreach (ComponentCreature componentCreature in m_subsystemCreatureSpawn.Creatures)
 			{
 				if (componentCreature.ComponentHealth.Health > 0f)
@@ -89,6 +84,7 @@ namespace Game
 					}
 				}
 			}
+
 			if (num > 0) return new Vector3?(vector / (float)num);
 			return null;
 		}
@@ -120,7 +116,7 @@ namespace Game
 				CallNearbyCreaturesHelp(injury.Attacker, 20f, 30f, false);
 			}));
 
-			// Si la manada es "player", proteger a todos los jugadores
+			// Si la manada es "player", proteger a todos los jugadores (Esto sigue intacto)
 			if (HerdName == "player")
 				SubscribeToPlayerInjuries();
 
@@ -183,14 +179,12 @@ namespace Game
 
 		private void SubscribeToPlayerInjuries()
 		{
-			// Suscribirse a jugadores que ya existen (usa PlayersData en lugar de Players)
 			foreach (PlayerData playerData in m_subsystemPlayers.PlayersData)
 			{
 				if (playerData.ComponentPlayer != null)
 					SubscribePlayer(playerData.ComponentPlayer);
 			}
 
-			// Suscribirse a futuros jugadores que se conecten después
 			m_subsystemPlayers.PlayerAdded += OnPlayerAdded;
 			m_subsystemPlayers.PlayerRemoved += OnPlayerRemoved;
 		}
@@ -227,8 +221,6 @@ namespace Game
 		{
 			if (injury.Attacker != null && HerdName == "player")
 			{
-				// CORREGIDO: Llamar a CallNearbyCreaturesHelp para que TODAS las criaturas reaccionen
-				// no solo esta criatura individual
 				CallNearbyCreaturesHelp(injury.Attacker, 20f, 30f, false);
 			}
 		}
