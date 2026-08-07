@@ -13,6 +13,8 @@ namespace Game
 		private SubsystemProjectiles m_subsystemProjectiles;
 		private SubsystemTerrain m_subsystemTerrain;
 		private SubsystemBodies m_subsystemBodies;
+		private SubsystemAudio m_subsystemAudio;
+		private SubsystemParticles m_subsystemParticles;
 		private ComponentMiner m_componentMiner;
 		private ComponentCreature m_componentCreature;
 		private ComponentBody m_componentBody;
@@ -42,11 +44,26 @@ namespace Game
 			Dismounting
 		}
 
+		/// <summary>
+		/// Enum para el estado de recarga de armas de fuego en la IA
+		/// </summary>
+		public enum FirearmReloadState
+		{
+			None,
+			Reloading,
+			Loaded
+		}
+
 		public bool CanItBeMounted;
 		public MountState CurrentMountState { get; private set; } = MountState.None;
 
 		public bool CanUseInventory;
 		public bool CanWearClothing;
+
+		/// <summary>
+		/// Estado actual de recarga del arma de fuego
+		/// </summary>
+		public FirearmReloadState CurrentFirearmReloadState { get; private set; } = FirearmReloadState.None;
 
 		public Vector2 DistanceRange = new Vector2(5f, 100f);
 		public Vector2 DistanceRangeOfThrowable = new Vector2(5f, 15f);
@@ -76,10 +93,47 @@ namespace Game
 		public float CooldownTimer;
 		public float AimTimeTimer;
 
+		private const float FirearmReloadPauseTime = 1.5f;
+
+		/// <summary>
+		/// Estructura para almacenar los datos de las armas de fuego usando el nombre del bloque.
+		/// </summary>
+		private struct FirearmData
+		{
+			public string BlockName;
+			public int MaxAmmo;
+			public Func<int, int> GetAmmoCount;
+			public Func<int, int, int> SetAmmoCount;
+			public Func<int, bool> GetLoadState;
+			public Func<int, int, int> SetLoadState;
+
+			public int GetBlockIndex()
+			{
+				return BlocksManager.GetBlockIndex(BlockName);
+			}
+		}
+
+		private static readonly List<FirearmData> m_firearmsList = new List<FirearmData>();
+		private static bool m_firearmsInitialized = false;
+
+		private static readonly HashSet<string> m_noArmMovementCreatures = new HashSet<string>
+		{
+			"InfectedNormalTamed1",
+			"InfectedNormalTamed2",
+			"InfectedMuscleTamed1",
+			"InfectedMuscleTamed2"
+		};
+
 		private float m_equipTimer;
 		private bool m_isEquipping;
 		private int m_equipSlot;
 		private int m_equipValue;
+
+		private bool m_isFirearmAiming;
+		private float m_firearmAimTimer;
+		private float m_firearmReloadPauseTimer;
+		private bool m_isWaitingForFirearmReload;
+		private bool m_justFinishedReloading;
 
 		private Random m_random = new Random();
 
@@ -117,6 +171,151 @@ namespace Game
 		}
 
 		/// <summary>
+		/// Detecta si la criatura actual no debe mover los brazos al apuntar con armas a distancia.
+		/// </summary>
+		private bool ShouldSkipArmMovementForRanged()
+		{
+			if (Entity?.ValuesDictionary?.DatabaseObject != null)
+			{
+				return m_noArmMovementCreatures.Contains(Entity.ValuesDictionary.DatabaseObject.Name);
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Aplica la configuración visual de apuntado para criaturas que no mueven los brazos.
+		/// </summary>
+		private void ApplyNoArmMovementAimSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
+		{
+			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+
+			if (isFirearm)
+			{
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
+			}
+			else if (isBow)
+			{
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(0f, 0f, 0f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(0f, -0.2f, 0f);
+			}
+			else if (isFlameThrower)
+			{
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.21f, 0.15f, 0.08f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
+			}
+			else if (isCrossbow)
+			{
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.1f, 0.07f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.55f, 0f, 0f);
+			}
+			else
+			{
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
+			}
+		}
+
+		/// <summary>
+		/// Aplica la configuración visual de apuntado según el tipo de criatura y arma.
+		/// Para criaturas sin movimiento de brazos: offset/rotación específica + manos quietas.
+		/// Para criaturas con animación normal: NO toca las manos (deja la animación normal).
+		/// Para las demás: solo manos quietas (sin offset/rotación especial).
+		/// </summary>
+		private void ApplyAimVisualSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
+		{
+			bool skipArmMovement = ShouldSkipArmMovementForRanged();
+
+			if (skipArmMovement)
+			{
+				ApplyNoArmMovementAimSettings(isBow, isCrossbow, isFlameThrower, isFirearm);
+			}
+			else if (!UsesNormalAimAnimation())
+			{
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+			}
+			// Si usa animación normal, no tocar nada - deja que el bloque del arma
+			// y el modelo del NPC manejen la rotación y posición del arma naturalmente
+		}
+
+		/// <summary>
+		/// Reproduce los efectos de recarga: sonido de reload y partículas KillParticle
+		/// </summary>
+		private void PlayReloadEffects()
+		{
+			Vector3 position = m_componentCreature.ComponentBody.Position + new Vector3(0f, m_componentCreature.ComponentBody.StanceBoxSize.Y / 2f, 0f);
+			float size = m_componentCreature.ComponentBody.StanceBoxSize.X;
+
+			KillParticleSystem killParticleSystem = new KillParticleSystem(m_subsystemTerrain, position, size);
+			m_subsystemParticles.AddParticleSystem(killParticleSystem, false);
+
+			m_subsystemAudio.PlaySound("Audio/Armas/reload", 1f, m_random.Float(-0.1f, 0.1f), position, 10f, false);
+		}
+
+		/// <summary>
+		/// Establece el estado de recarga y reproduce efectos si hay cambio de estado
+		/// </summary>
+		private void SetFirearmReloadState(FirearmReloadState newState)
+		{
+			if (CurrentFirearmReloadState != newState)
+			{
+				CurrentFirearmReloadState = newState;
+
+				if (newState == FirearmReloadState.Reloading || newState == FirearmReloadState.Loaded)
+				{
+					PlayReloadEffects();
+				}
+			}
+		}
+
+		private static void InitializeFirearmsList()
+		{
+			if (m_firearmsInitialized) return;
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "AK47Block",
+				MaxAmmo = 30,
+				GetAmmoCount = (data) => AK47Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => AK47Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => AK47Block.GetLoadState(data) == AK47Block.LoadState.Loaded,
+				SetLoadState = (data, state) => AK47Block.SetLoadState(data, state == 1 ? AK47Block.LoadState.Loaded : AK47Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "DesertEagleBlock",
+				MaxAmmo = 7,
+				GetAmmoCount = (data) => DesertEagleBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => DesertEagleBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => DesertEagleBlock.GetLoadState(data) == DesertEagleBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => DesertEagleBlock.SetLoadState(data, state == 1 ? DesertEagleBlock.LoadState.Loaded : DesertEagleBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "SPAS12Block",
+				MaxAmmo = 8,
+				GetAmmoCount = (data) => SPAS12Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => SPAS12Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => SPAS12Block.GetLoadState(data) == SPAS12Block.LoadState.Loaded,
+				SetLoadState = (data, state) => SPAS12Block.SetLoadState(data, state == 1 ? SPAS12Block.LoadState.Loaded : SPAS12Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "SniperBlock",
+				MaxAmmo = 1,
+				GetAmmoCount = (data) => SniperBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => SniperBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => SniperBlock.GetLoadState(data) == SniperBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => SniperBlock.SetLoadState(data, state == 1 ? SniperBlock.LoadState.Loaded : SniperBlock.LoadState.Empty)
+			});
+
+			m_firearmsInitialized = true;
+		}
+
+		/// <summary>
 		/// Detecta si la montura actual es una criatura voladora.
 		/// </summary>
 		private bool IsFlyingMount()
@@ -145,6 +344,8 @@ namespace Game
 			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(false);
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(false);
+			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
+			m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentBody = Entity.FindComponent<ComponentBody>(true);
@@ -165,6 +366,8 @@ namespace Game
 			_ = UsesNormalAimAnimation();
 
 			CurrentMountState = CanItBeMounted ? MountState.Searching : MountState.None;
+
+			InitializeFirearmsList();
 
 			if (m_subsystemProjectiles != null)
 			{
@@ -233,10 +436,6 @@ namespace Game
 			if (inventory == null)
 				return;
 
-			// ============================================
-			// VERIFICACIÓN DE OBJETIVO
-			// Si no hay objetivo, cancelar todo y detener montura
-			// ============================================
 			ComponentCreature target = m_componentChaseBehavior?.Target;
 
 			if (target == null || target.ComponentHealth.Health <= 0f)
@@ -249,7 +448,6 @@ namespace Game
 			bool isMounted = IsMounted;
 			bool isFlyingMount = isMounted && IsFlyingMount();
 
-			// Detener pathfinding del zombi cuando está montado
 			if (isMounted)
 			{
 				ComponentPathfinding pathfinding = Entity.FindComponent<ComponentPathfinding>(false);
@@ -266,9 +464,6 @@ namespace Game
 			bool hasRanged = FindRangedWeaponSlot(inventory) >= 0;
 			bool hasMelee = FindMeleeWeaponSlot(inventory) >= 0;
 
-			// ============================================
-			// LÓGICA DE COMBATE (independiente del pilotaje)
-			// ============================================
 			if (hasThrowable)
 			{
 				if (distance < DistanceRangeOfThrowable.X)
@@ -321,33 +516,18 @@ namespace Game
 				}
 			}
 
-			// ============================================
-			// LÓGICA DE PILOTAJE (separada de la lógica de combate)
-			// 
-			// REGLA PRINCIPAL para monturas voladoras:
-			// SIEMPRE pilotar cuando hay un objetivo, sin importar la distancia.
-			// En el aire no hay pathfinding que las acerque, necesitan moverse
-			// constantemente hacia el objetivo.
-			// 
-			// REGLA para monturas terrestres:
-			// Pilotar a distancia media/larga, parar en rango cercano para melee.
-			// ============================================
 			if (isMounted)
 			{
 				if (isFlyingMount)
 				{
-					// Monturas voladoras: SIEMPRE pilotar cuando hay objetivo
 					PilotMount(target);
 				}
 				else if (distance >= DistanceRange.X)
 				{
-					// Caballos: pilotar a distancia media/larga
 					PilotMount(target);
 				}
 				else
 				{
-					// Caballos: parar en rango cercano para que el pathfinding
-					// del zombi lo acerque para melee
 					StopMount();
 				}
 			}
@@ -552,8 +732,6 @@ namespace Game
 
 			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
 
-			// Para monturas voladoras, usar umbral menor porque necesitan
-			// llegar más cerca para que el ataque melee alcance
 			float stopDistance = IsFlyingMount() ? 0.3f : 2f;
 
 			int speedOrder = 0;
@@ -758,7 +936,7 @@ namespace Game
 			if (AimTimeTimer > 0f)
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
-				// NO sobrescribir AimHandAngleOrder para lanzables - 
+				// NO sobrescribir AimHandAngleOrder para lanzables -
 				// SubsystemThrowableBlockBehavior ya lo maneja correctamente (3.2f)
 				AimTimeTimer -= m_subsystemTime.GameTimeDelta;
 			}
@@ -787,6 +965,14 @@ namespace Game
 					CancelAiming();
 					return;
 				}
+
+				// Si es arma de fuego, usar la lógica específica
+				if (IsFirearmBlock(contents))
+				{
+					HandleFirearmAttack(inventory, m_componentChaseBehavior.Target);
+					return;
+				}
+
 				EnsureRangedWeaponLoaded(inventory, distance);
 				AimAndFire(m_componentChaseBehavior.Target);
 				return;
@@ -827,6 +1013,13 @@ namespace Game
 				return;
 			}
 
+			// Si es arma de fuego, usar la lógica específica de armas de fuego
+			if (IsFirearmBlock(contents))
+			{
+				HandleFirearmAttack(inventory, target);
+				return;
+			}
+
 			EnsureRangedWeaponLoaded(inventory, distance);
 			AimAndFire(target);
 		}
@@ -840,11 +1033,20 @@ namespace Game
 			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
 			int flameThrowerIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>();
 
-			return blockIndex == improvedMusketIndex || blockIndex == musketIndex || blockIndex == crossbowIndex || blockIndex == bowIndex || blockIndex == repeatCrossbowIndex || blockIndex == flameThrowerIndex;
+			if (blockIndex == improvedMusketIndex || blockIndex == musketIndex || blockIndex == crossbowIndex || blockIndex == bowIndex || blockIndex == repeatCrossbowIndex || blockIndex == flameThrowerIndex)
+				return true;
+
+			if (IsFirearmBlock(blockIndex))
+				return true;
+
+			return false;
 		}
 
 		private int FindRangedWeaponSlot(IInventory inventory)
 		{
+			int firearmSlot = FindFirearmSlot(inventory);
+			if (firearmSlot >= 0) return firearmSlot;
+
 			int improvedMusketIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>();
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
@@ -967,7 +1169,6 @@ namespace Game
 
 			if (state != FlameThrowerBlock.LoadState.Loaded || ammo == 0)
 			{
-				// MANTENER el bulletType actual si ya tiene uno, solo asignar aleatorio si es 0 (indefinido)
 				int currentBulletType = (data >> 8) & 3;
 				int selectedBulletType = currentBulletType != 0 ? currentBulletType : m_random.Int(0, 1);
 
@@ -1171,6 +1372,18 @@ namespace Game
 			}
 		}
 
+		/// <summary>
+		/// Obtiene los flags de tipo de arma para el slot activo actual (no-firearm).
+		/// </summary>
+		private void GetRangedWeaponTypeFlags(out bool isBow, out bool isCrossbow, out bool isFlameThrower, out bool isImprovedMusket)
+		{
+			int contents = Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(m_componentMiner.Inventory.ActiveSlotIndex));
+			isBow = contents == BlocksManager.GetBlockIndex<BowBlock>();
+			isCrossbow = contents == BlocksManager.GetBlockIndex<CrossbowBlock>() || contents == BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
+			isFlameThrower = contents == BlocksManager.GetBlockIndex<FlameThrowerBlock>();
+			isImprovedMusket = contents == BlocksManager.GetBlockIndex<ImprovedMusketBlock>();
+		}
+
 		private void AimAndFire(ComponentCreature target)
 		{
 			CooldownTimer -= m_subsystemTime.GameTimeDelta;
@@ -1187,13 +1400,12 @@ namespace Game
 
 			Ray3 aim = new Ray3(eyePosition, direction);
 
+			GetRangedWeaponTypeFlags(out bool isBow, out bool isCrossbow, out bool isFlameThrower, out bool isImprovedMusket);
+
 			if (AimTimeTimer > 0f)
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
-				if (!UsesNormalAimAnimation())
-				{
-					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-				}
+				ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
 				AimTimeTimer -= m_subsystemTime.GameTimeDelta;
 			}
 			else
@@ -1210,13 +1422,10 @@ namespace Game
 				else
 				{
 					m_componentMiner.Aim(aim, AimState.Completed);
-					if (!UsesNormalAimAnimation())
-					{
-						m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-					}
+					ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
 				}
 
-				if (contents == BlocksManager.GetBlockIndex<ImprovedMusketBlock>())
+				if (isImprovedMusket)
 				{
 					CooldownTimer = ImprovedMusketCooldown;
 					AimTimeTimer = ImprovedMusketAimTime;
@@ -1226,20 +1435,20 @@ namespace Game
 					CooldownTimer = MusketCooldown;
 					AimTimeTimer = MusketAimTime;
 				}
-				else if (contents == BlocksManager.GetBlockIndex<FlameThrowerBlock>())
+				else if (isFlameThrower)
 				{
 					CooldownTimer = FlameThrowerCooldown;
 					AimTimeTimer = FlameThrowerAimTime;
 				}
-				else if (contents == BlocksManager.GetBlockIndex<CrossbowBlock>())
-				{
-					CooldownTimer = CrossbowCooldown;
-					AimTimeTimer = CrossbowAimTime;
-				}
-				else if (contents == BlocksManager.GetBlockIndex<RepeatCrossbowBlock>())
+				else if (isCrossbow && contents == BlocksManager.GetBlockIndex<RepeatCrossbowBlock>())
 				{
 					CooldownTimer = RepeatCrossbowCooldown;
 					AimTimeTimer = RepeatCrossbowAimTime;
+				}
+				else if (isCrossbow)
+				{
+					CooldownTimer = CrossbowCooldown;
+					AimTimeTimer = CrossbowAimTime;
 				}
 				else
 				{
@@ -1251,13 +1460,12 @@ namespace Game
 
 		private void TripleShot(Ray3 aim)
 		{
+			GetRangedWeaponTypeFlags(out bool isBow, out bool isCrossbow, out bool isFlameThrower, out bool isImprovedMusket);
+
 			for (int i = 0; i < 3; i++)
 			{
 				m_componentMiner.Aim(aim, AimState.Completed);
-				if (!UsesNormalAimAnimation())
-				{
-					m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-				}
+				ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
 			}
 		}
 
@@ -1268,6 +1476,13 @@ namespace Game
 			Ray3 emptyAim = new Ray3(Vector3.Zero, Vector3.UnitZ);
 			m_componentMiner.Aim(emptyAim, AimState.Cancelled);
 			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+
+			m_isFirearmAiming = false;
+			m_firearmAimTimer = 0f;
+			m_isWaitingForFirearmReload = false;
+			m_firearmReloadPauseTimer = 0f;
+			m_justFinishedReloading = false;
+			SetFirearmReloadState(FirearmReloadState.None);
 		}
 
 		private void SwapSlots(IInventory inventory, int slotA, int slotB)
@@ -1284,6 +1499,152 @@ namespace Game
 			inventory.RemoveSlotItems(slotB, countB);
 			inventory.AddSlotItems(slotA, valueB, countB);
 			inventory.AddSlotItems(slotB, valueA, countA);
+		}
+
+		// ============================================
+		// MÉTODOS DE ARMAS DE FUEGO
+		// ============================================
+
+		private bool IsFirearmBlock(int blockIndex)
+		{
+			for (int i = 0; i < m_firearmsList.Count; i++)
+			{
+				int firearmIndex = m_firearmsList[i].GetBlockIndex();
+				if (firearmIndex >= 0 && firearmIndex == blockIndex) return true;
+			}
+			return false;
+		}
+
+		private int FindFirearmSlot(IInventory inventory)
+		{
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				if (inventory.GetSlotCount(i) > 0)
+				{
+					int blockId = Terrain.ExtractContents(inventory.GetSlotValue(i));
+					for (int j = 0; j < m_firearmsList.Count; j++)
+					{
+						int firearmIndex = m_firearmsList[j].GetBlockIndex();
+						if (firearmIndex >= 0 && firearmIndex == blockId) return i;
+					}
+				}
+			}
+			return -1;
+		}
+
+		private FirearmData? GetFirearmData(IInventory inventory, int slotIndex)
+		{
+			int blockId = Terrain.ExtractContents(inventory.GetSlotValue(slotIndex));
+			for (int i = 0; i < m_firearmsList.Count; i++)
+			{
+				int firearmIndex = m_firearmsList[i].GetBlockIndex();
+				if (firearmIndex >= 0 && firearmIndex == blockId) return m_firearmsList[i];
+			}
+			return null;
+		}
+
+		private bool IsFirearmEmpty(IInventory inventory, int slotIndex, FirearmData firearm)
+		{
+			int data = Terrain.ExtractData(inventory.GetSlotValue(slotIndex));
+			return !firearm.GetLoadState(data) || firearm.GetAmmoCount(data) == 0;
+		}
+
+		private void ReloadFirearm(IInventory inventory, int slotIndex, FirearmData firearm)
+		{
+			int value = inventory.GetSlotValue(slotIndex);
+			int data = Terrain.ExtractData(value);
+			int blockId = firearm.GetBlockIndex();
+
+			data = firearm.SetLoadState(data, 1);
+			data = firearm.SetAmmoCount(data, firearm.MaxAmmo);
+
+			inventory.RemoveSlotItems(slotIndex, 1);
+			inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(blockId, 0, data), 1);
+		}
+
+		private void HandleFirearmAttack(IInventory inventory, ComponentCreature target)
+		{
+			int activeSlot = inventory.ActiveSlotIndex;
+			FirearmData? firearmDataNullable = GetFirearmData(inventory, activeSlot);
+
+			if (!firearmDataNullable.HasValue) return;
+			FirearmData firearm = firearmDataNullable.Value;
+
+			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 targetPos = target.ComponentBody.BoundingBox.Center();
+			Vector3 aimDir = Vector3.Normalize(targetPos - eyePos);
+			Ray3 firearmRay = new Ray3(eyePos, aimDir);
+
+			// Si está en pausa post-recarga, decrementar timer y no apuntar hasta que termine
+			if (m_isWaitingForFirearmReload)
+			{
+				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
+
+				if (m_firearmReloadPauseTimer <= 0f)
+				{
+					m_isWaitingForFirearmReload = false;
+					m_firearmReloadPauseTimer = 0f;
+					m_justFinishedReloading = true;
+					CurrentFirearmReloadState = FirearmReloadState.Loaded;
+
+					PlayReloadEffects();
+				}
+				return;
+			}
+
+			bool isEmpty = IsFirearmEmpty(inventory, activeSlot, firearm);
+
+			if (isEmpty)
+			{
+				if (m_isFirearmAiming)
+				{
+					m_componentMiner.Aim(firearmRay, AimState.Cancelled);
+					m_isFirearmAiming = false;
+					m_firearmAimTimer = 0f;
+				}
+
+				ReloadFirearm(inventory, activeSlot, firearm);
+				SetFirearmReloadState(FirearmReloadState.Reloading);
+				m_isWaitingForFirearmReload = true;
+				m_firearmReloadPauseTimer = FirearmReloadPauseTime;
+
+				return;
+			}
+
+			// El arma tiene munición y no está en pausa
+			CurrentFirearmReloadState = FirearmReloadState.Loaded;
+
+			if (!m_isFirearmAiming)
+			{
+				m_isFirearmAiming = true;
+				m_firearmAimTimer = 0f;
+				m_componentMiner.Aim(firearmRay, AimState.InProgress);
+
+				if (!m_justFinishedReloading)
+				{
+					PlayReloadEffects();
+				}
+				m_justFinishedReloading = false;
+
+				// Aplicar rotación del arma y manos quietas según tipo de criatura
+				ApplyAimVisualSettings(false, false, false, true);
+			}
+			else
+			{
+				m_firearmAimTimer += m_subsystemTime.GameTimeDelta;
+				m_componentMiner.Aim(firearmRay, AimState.InProgress);
+
+				// Aplicar rotación del arma y manos quietas según tipo de criatura
+				ApplyAimVisualSettings(false, false, false, true);
+
+				// Si lleva mucho tiempo apuntando sin disparar, reiniciamos
+				// el apuntado para que el efecto de "volver a apuntar" se repita periódicamente.
+				if (m_firearmAimTimer > 2.0f)
+				{
+					m_isFirearmAiming = false;
+					m_firearmAimTimer = 0f;
+				}
+			}
 		}
 	}
 }
