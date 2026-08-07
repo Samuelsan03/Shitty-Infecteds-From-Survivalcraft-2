@@ -14,8 +14,8 @@ namespace Game
 		private const float FluEffectCheckInterval = 5f;
 		private const float DefaultFluDuration = 900f;
 
+		private float m_fluResistance;
 		private float m_fluDuration;
-		private float m_fluIntensity;
 
 		private float m_coughDuration;
 		private float m_sneezeDuration;
@@ -45,22 +45,31 @@ namespace Game
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
+		/// <summary>
+		/// Calcula la efectividad de la gripe basándose en la resistencia.
+		/// Resistencia 0.1 = efectividad 0.9 (muy afectado, tose fuerte, mucho daño)
+		/// Resistencia 0.9 = efectividad 0.1 (poco afectado, tose débil, casi sin daño)
+		/// </summary>
+		private float FluEffectiveness => 1f - m_fluResistance;
+
 		public void TryInfect(float attackerIntensity)
 		{
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 				return;
 
-			bool wasAlreadySick = m_fluDuration > 0f;
-			m_fluIntensity = MathUtils.Max(m_fluIntensity, MathUtils.Clamp(attackerIntensity, 0f, 1f));
-			m_fluDuration = DefaultFluDuration;
+			// La resistencia ahora afecta la probabilidad de contagiarse (igual que el veneno)
+			float infectionChance = 1f - m_fluResistance;
+			if (m_random.Float(0f, 1f) < infectionChance)
+			{
+				m_fluDuration = DefaultFluDuration;
+			}
 		}
 
-		public void ForceInfect(float intensity, float duration)
+		public void ForceInfect(float duration)
 		{
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 				return;
 
-			m_fluIntensity = MathUtils.Clamp(intensity, 0f, 1f);
 			m_fluDuration = duration;
 		}
 
@@ -71,7 +80,8 @@ namespace Game
 
 			if (m_subsystemNoise != null && m_componentCreature != null && m_componentCreature.ComponentBody != null)
 			{
-				m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody.Position, 0.25f, 10f);
+				// El ruido también se escala con la efectividad
+				m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody.Position, 0.25f * FluEffectiveness, 10f);
 			}
 		}
 
@@ -83,7 +93,7 @@ namespace Game
 
 			if (m_subsystemNoise != null && m_componentCreature != null && m_componentCreature.ComponentBody != null)
 			{
-				m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody.Position, 0.25f, 10f);
+				m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody.Position, 0.25f * FluEffectiveness, 10f);
 			}
 		}
 
@@ -93,7 +103,8 @@ namespace Game
 				return;
 
 			Vector3 position = m_componentCreature.ComponentBody.Position;
-			float volume = 0.75f;
+			// El volumen del sonido se escala con la efectividad (los débiles tosen más fuerte)
+			float volume = 0.75f * FluEffectiveness;
 			float pitch = m_random.Float(-0.2f, 0.2f);
 			float minDistance = 10f;
 
@@ -113,7 +124,8 @@ namespace Game
 		{
 			m_lastEffectTime = m_subsystemTime.GameTime;
 
-			float damageToApply = MathUtils.Min(HealthDamagePerFlu * m_fluIntensity,
+			// CORRECCIÓN: El daño ahora se escala con la efectividad (resistencia inversa)
+			float damageToApply = MathUtils.Min(HealthDamagePerFlu * FluEffectiveness,
 				m_componentHealth != null ? m_componentHealth.Health : 0f);
 
 			if (damageToApply > 0f && m_componentHealth != null && m_componentHealth.Health > 0f)
@@ -127,7 +139,9 @@ namespace Game
 				});
 			}
 
-			if (m_coughDuration == 0f && (m_subsystemTime.GameTime - m_lastCoughTime > 40.0 || m_random.Bool(0.5f)))
+			// La probabilidad de toser en vez de estornudar aumenta con la efectividad
+			float coughChance = 0.3f + 0.5f * FluEffectiveness;
+			if (m_coughDuration == 0f && (m_subsystemTime.GameTime - m_lastCoughTime > 40.0 || m_random.Bool(coughChance)))
 			{
 				Cough();
 			}
@@ -142,6 +156,7 @@ namespace Game
 			if (!HasActiveSymptoms)
 				return;
 
+			// CORRECCIÓN BUG MUERTE: Limpiar tos/estornudo inmediatamente si muere
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 			{
 				m_coughDuration = 0f;
@@ -154,7 +169,12 @@ namespace Game
 
 			if (m_componentCreatureModel != null && m_componentLocomotion != null)
 			{
-				float lookDownAngle = MathUtils.DegToRad(MathUtils.Lerp(-35f, -65f,
+				// CORRECCIÓN: La inclinación de la cabeza al toser se escala con la efectividad
+				// Resistencia 0.1 -> se agacha muchísimo (-65f)
+				// Resistencia 0.9 -> casi no se agacha (-38f)
+				float maxAngle = -35f - 30f * FluEffectiveness;
+
+				float lookDownAngle = MathUtils.DegToRad(MathUtils.Lerp(-35f, maxAngle,
 					SimplexNoise.Noise(4f * (float)MathUtils.Remainder(m_subsystemTime.GameTime, 10000.0))));
 
 				m_componentLocomotion.LookOrder = new Vector2(
@@ -164,19 +184,32 @@ namespace Game
 
 			if (m_componentCreature != null
 				&& m_componentCreature.ComponentBody != null
-				&& m_componentCreatureModel != null
-				&& m_random.Bool(2f * dt))
+				&& m_componentCreatureModel != null)
 			{
-				m_componentCreature.ComponentBody.ApplyImpulse(
-					-1.2f * m_componentCreatureModel.EyeRotation.GetForwardVector());
+				// CORRECCIÓN: La fuerza y frecuencia del impulso al toser se escala con la efectividad
+				float impulseChance = 2f * dt * FluEffectiveness;
+				if (m_random.Bool(impulseChance))
+				{
+					float impulseStrength = -1.2f * FluEffectiveness;
+					m_componentCreature.ComponentBody.ApplyImpulse(
+						impulseStrength * m_componentCreatureModel.EyeRotation.GetForwardVector());
+				}
 			}
 		}
 
 		public virtual void Update(float dt)
 		{
-			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
+			// ============================================
+			// CORRECCIÓN BUG MUERTE: Parar todo al inicio
+			// ============================================
+			bool isDead = m_componentHealth != null && m_componentHealth.Health <= 0f;
+
+			if (isDead)
 			{
 				m_fluDuration = 0f;
+				m_coughDuration = 0f;
+				m_sneezeDuration = 0f;
+				return;
 			}
 
 			if (m_fluDuration > 0f)
@@ -200,7 +233,6 @@ namespace Game
 
 				if (!HasActiveSymptoms)
 				{
-					m_fluIntensity = 0f;
 					m_lastEffectTime = -1000.0;
 					m_lastCoughTime = -1000.0;
 				}
@@ -222,14 +254,14 @@ namespace Game
 			m_sneezeSoundPath = valuesDictionary.GetValue<string>("SneezeSoundPath");
 			m_coughSoundPath = valuesDictionary.GetValue<string>("CoughSoundPath");
 
+			m_fluResistance = valuesDictionary.GetValue<float>("FluResistance", 0.5f);
 			m_fluDuration = valuesDictionary.GetValue<float>("FluDuration", 0f);
-			m_fluIntensity = valuesDictionary.GetValue<float>("FluIntensity", 0f);
 		}
 
 		public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)
 		{
+			valuesDictionary.SetValue<float>("FluResistance", m_fluResistance);
 			valuesDictionary.SetValue<float>("FluDuration", m_fluDuration);
-			valuesDictionary.SetValue<float>("FluIntensity", m_fluIntensity);
 		}
 	}
 }
