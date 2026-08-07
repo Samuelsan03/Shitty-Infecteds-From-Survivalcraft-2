@@ -522,6 +522,55 @@ public class ShittyInfectedsModLoader : ModLoader
 		}
 	}
 
+	public static bool ShouldVomitIgnoreBody(ComponentBody ownerBody, ComponentBody hitBody)
+	{
+		if (ownerBody?.Entity == null || hitBody?.Entity == null) return false;
+
+		ComponentCreature owner = ownerBody.Entity.FindComponent<ComponentCreature>();
+		ComponentCreature hit = hitBody.Entity.FindComponent<ComponentCreature>();
+		if (owner == null || hit == null || owner.Entity == hit.Entity) return false;
+
+		ComponentNewHerdBehavior ownerNewHerd = owner.Entity.FindComponent<ComponentNewHerdBehavior>();
+		ComponentNewHerdBehavior hitNewHerd = hit.Entity.FindComponent<ComponentNewHerdBehavior>();
+		ComponentZombieHerdBehavior ownerZombieHerd = owner.Entity.FindComponent<ComponentZombieHerdBehavior>();
+		ComponentZombieHerdBehavior hitZombieHerd = hit.Entity.FindComponent<ComponentZombieHerdBehavior>();
+
+		bool sameNewHerd = ownerNewHerd != null && hitNewHerd != null &&
+			ownerNewHerd.HerdName == hitNewHerd.HerdName &&
+			!string.IsNullOrEmpty(ownerNewHerd.HerdName);
+
+		bool sameZombieHerd = ownerZombieHerd != null && hitZombieHerd != null &&
+			ownerZombieHerd.HerdName == hitZombieHerd.HerdName &&
+			!string.IsNullOrEmpty(ownerZombieHerd.HerdName);
+
+		bool isPlayerHerd = (ownerNewHerd != null && ownerNewHerd.HerdName == "player") ||
+			owner.Entity.FindComponent<ComponentPlayer>() != null;
+
+		bool isHitPlayerHerd = hitNewHerd != null && hitNewHerd.HerdName == "player";
+
+		if (sameNewHerd || sameZombieHerd || (isPlayerHerd && isHitPlayerHerd))
+		{
+			// Permitir daño SI el objetivo es el target actual del chase
+			bool isTarget = false;
+
+			ComponentNewChaseBehavior newChase = owner.Entity.FindComponent<ComponentNewChaseBehavior>();
+			if (newChase?.Target != null && newChase.Target.Entity == hit.Entity)
+				isTarget = true;
+
+			if (!isTarget)
+			{
+				ComponentZombieChaseBehavior zombieChase = owner.Entity.FindComponent<ComponentZombieChaseBehavior>();
+				if (zombieChase?.Target != null && zombieChase.Target.Entity == hit.Entity)
+					isTarget = true;
+			}
+
+			// Si NO es el target, ignorar (no dañar aliados)
+			if (!isTarget) return true;
+		}
+
+		return false;
+	}
+
 	public override void SaveSettings(XElement xElement)
 	{
 		ShittyInfectedsSettingsManager.Save();
