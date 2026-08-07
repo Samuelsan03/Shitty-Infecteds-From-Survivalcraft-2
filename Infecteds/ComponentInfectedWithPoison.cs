@@ -52,6 +52,13 @@ namespace Game
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
+		/// <summary>
+		/// Calcula la efectividad del veneno basándose en la resistencia.
+		/// Resistencia 0.1 = efectividad 0.9 (muy afectado)
+		/// Resistencia 0.9 = efectividad 0.1 (poco afectado)
+		/// </summary>
+		private float PoisonEffectiveness => 1f - m_poisonResistance;
+
 		public void TryInfect(float attackerIntensity)
 		{
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
@@ -108,7 +115,10 @@ namespace Game
 				m_componentCreature.ComponentCreatureSounds.PlayPainSound();
 			}
 
-			float damageToApply = MathUtils.Min(HealthDamagePerVomit * m_poisonIntensity, m_componentHealth != null ? m_componentHealth.Health : 0f);
+			// CORRECCIÓN: El daño ahora se escala con la efectividad (resistencia inversa)
+			float effectiveDamage = HealthDamagePerVomit * m_poisonIntensity * PoisonEffectiveness;
+			float damageToApply = MathUtils.Min(effectiveDamage, m_componentHealth != null ? m_componentHealth.Health : 0f);
+
 			if (damageToApply > 0f && m_componentHealth != null && m_componentHealth.Health > 0f)
 			{
 				m_subsystemTime.QueueGameTimeDelayedExecution(m_subsystemTime.GameTime + 0.75, delegate
@@ -130,7 +140,8 @@ namespace Game
 					m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody.Position, 0.25f, 10f);
 				}
 
-				m_greenoutDuration = 0.8f;
+				// CORRECCIÓN: La duración del efecto visual verde también se escala
+				m_greenoutDuration = 0.8f * PoisonEffectiveness;
 			}
 		}
 
@@ -165,12 +176,34 @@ namespace Game
 			if (m_greenoutDuration > 0f)
 			{
 				m_greenoutDuration = MathUtils.Max(m_greenoutDuration - dt, 0f);
-				m_greenoutFactor = MathUtils.Min(m_greenoutFactor + 0.5f * dt, 0.95f);
+				// CORRECCIÓN: La intensidad del efecto verde se escala con efectividad
+				float maxGreenout = 0.95f * PoisonEffectiveness;
+				m_greenoutFactor = MathUtils.Min(m_greenoutFactor + 0.5f * dt, maxGreenout);
 			}
 			else if (m_greenoutFactor > 0f)
 			{
 				m_greenoutFactor = MathUtils.Max(m_greenoutFactor - 0.5f * dt, 0f);
 			}
+		}
+
+		/// <summary>
+		/// Calcula el cooldown de náuseas basado en la resistencia.
+		/// Menor resistencia = náuseas más frecuentes
+		/// </summary>
+		private float GetAdjustedNauseaCooldown()
+		{
+			// Base 15 segundos, reducido por efectividad del veneno
+			// Resistencia 0.1 -> cooldown ~3s (muy frecuente)
+			// Resistencia 0.9 -> cooldown ~13.5s (casi normal)
+			return NauseaCooldown * (1f - 0.8f * PoisonEffectiveness);
+		}
+
+		/// <summary>
+		/// Calcula el cooldown de gemidos basado en la resistencia.
+		/// </summary>
+		private float GetAdjustedMoanCooldown()
+		{
+			return MoanCooldown * (1f - 0.6f * PoisonEffectiveness);
 		}
 
 		public virtual void Update(float dt)
@@ -199,13 +232,15 @@ namespace Game
 
 				if (m_componentHealth != null && m_componentHealth.Health > 0f)
 				{
+					float currentNauseaCooldown = GetAdjustedNauseaCooldown();
+
 					if (m_subsystemTime.PeriodicGameTimeEvent(NauseaCheckInterval, -0.01f))
 					{
 						bool canNausea = false;
 						if (m_lastNauseaTime != null)
 						{
 							double? timeSinceLastNausea = m_subsystemTime.GameTime - m_lastNauseaTime;
-							if (timeSinceLastNausea.HasValue && timeSinceLastNausea.Value > NauseaCooldown)
+							if (timeSinceLastNausea.HasValue && timeSinceLastNausea.Value > currentNauseaCooldown)
 							{
 								canNausea = true;
 							}
@@ -217,13 +252,15 @@ namespace Game
 						}
 					}
 
+					float currentMoanCooldown = GetAdjustedMoanCooldown();
+
 					if (m_subsystemTime.PeriodicGameTimeEvent(MoanCheckInterval, 0f))
 					{
 						bool canMoan = false;
 						if (m_lastMoanTime != null)
 						{
 							double? timeSinceLastMoan = m_subsystemTime.GameTime - m_lastMoanTime;
-							if (timeSinceLastMoan.HasValue && timeSinceLastMoan.Value > MoanCooldown)
+							if (timeSinceLastMoan.HasValue && timeSinceLastMoan.Value > currentMoanCooldown)
 							{
 								canMoan = true;
 							}
@@ -240,6 +277,7 @@ namespace Game
 				UpdatePukeParticles(dt);
 				UpdateGreenoutEffect(dt);
 
+				// CORRECCIÓN: El frenado por velocidad también se escala con efectividad
 				if (m_componentLocomotion != null
 					&& m_componentCreature != null
 					&& m_componentCreature.ComponentBody != null
@@ -250,8 +288,10 @@ namespace Game
 
 					if (horizontalSpeed > 0.1f)
 					{
-						float dampening = 1f - 0.05f * m_poisonIntensity;
-						dampening = MathUtils.Max(dampening, 0.9f);
+						// Resistencia 0.1 -> dampening ~0.955 (muy afectado)
+						// Resistencia 0.9 -> dampening ~0.995 (casi normal)
+						float dampening = 1f - 0.05f * m_poisonIntensity * PoisonEffectiveness;
+						dampening = MathUtils.Max(dampening, 1f - 0.05f * PoisonEffectiveness);
 
 						m_componentCreature.ComponentBody.Velocity = new Vector3(
 							velocity.X * dampening,
@@ -259,23 +299,19 @@ namespace Game
 							velocity.Z * dampening);
 					}
 				}
-			}
-			else
-			{
-				UpdateGreenoutEffect(dt);
-			}
 
-			// LÓGICA DE VELOCIDAD ADAPTADA DE WONDERFULERA
-			// Se ejecuta SIEMPRE al final del Update para asegurar que nada lo sobreescriba
-			if (m_infectionDuration > 0f)
-			{
+				// --- LÓGICA DE VELOCIDAD (INFECTADO) ---
 				if (!m_speedsStored)
 				{
 					StoreOriginalSpeeds();
 				}
 
-				float penalty = 1f - 0.4f * m_poisonIntensity;
-				penalty = MathUtils.Max(penalty, 0.4f);
+				// CORRECCIÓN: La penalización de velocidad se escala con efectividad
+				// Resistencia 0.1 -> penalty mínimo ~0.36 (muy lento)
+				// Resistencia 0.9 -> penalty mínimo ~0.96 (casi normal)
+				float maxSpeedReduction = 0.6f * PoisonEffectiveness; // Hasta 60% de reducción para el más débil
+				float penalty = 1f - maxSpeedReduction * m_poisonIntensity;
+				penalty = MathUtils.Max(penalty, 1f - maxSpeedReduction);
 
 				m_componentLocomotion.WalkSpeed = m_originalWalkSpeed * penalty;
 				m_componentLocomotion.FlySpeed = m_originalFlySpeed * penalty;
@@ -283,7 +319,13 @@ namespace Game
 				m_componentLocomotion.JumpSpeed = m_originalJumpSpeed * penalty;
 				m_componentLocomotion.LadderSpeed = m_originalLadderSpeed * penalty;
 			}
-			else if (m_speedsStored)
+			else
+			{
+				UpdateGreenoutEffect(dt);
+			}
+
+			// --- RESTAURACIÓN DE VELOCIDAD (FUERA DEL if) ---
+			if (m_infectionDuration <= 0f && m_speedsStored)
 			{
 				RestoreOriginalSpeeds();
 				m_greenoutDuration = 0f;
