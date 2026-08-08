@@ -14,26 +14,25 @@ namespace Game
 		public override void Load(ValuesDictionary valuesDictionary)
 		{
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
-
-			// Inicializamos el manager estático
 			BossChaseMusicManager.Initialize();
 		}
 
 		public override void Dispose()
 		{
-			// ESTO ES LO CLAVE: Cuando sales del mundo al menú principal, 
-			// o mueres y el mundo se descarga, esto se ejecuta y corta la música instantáneamente.
 			BossChaseMusicManager.Stop();
-
 			base.Dispose();
 		}
 
 		public void Update(float dt)
 		{
-			// Verificamos si el jefe te está persiguiendo
-			bool isChasing = CheckIfAnyBruteIsChasing();
+			// Si la opción está desactivada en los ajustes, forzamos la detención y no buscamos entidades
+			if (!ShittyInfectedsSettings.EnableBossChaseMusic)
+			{
+				BossChaseMusicManager.Update(false, dt);
+				return;
+			}
 
-			// Le pasamos el estado al Manager estático
+			bool isChasing = CheckIfAnyBruteIsChasing();
 			BossChaseMusicManager.Update(isChasing, dt);
 		}
 
