@@ -12,6 +12,7 @@ namespace Game
 	{
 		private SubsystemCreatureSpawn m_subsystemCreatureSpawn;
 		private SubsystemGameWidgets m_subsystemGameWidgets;
+		private SubsystemTerrain m_subsystemTerrain;
 		private PrimitivesRenderer3D m_primitivesRenderer = new PrimitivesRenderer3D();
 
 		public int[] DrawOrders => new int[] { 202 };
@@ -20,13 +21,11 @@ namespace Game
 		{
 			if (drawOrder != DrawOrders[0]) return;
 
-			// Cancelar el dibujado si está desactivado en los ajustes
 			if (!ShittyInfectedsSettings.ShowCreatureHealthBars) return;
 
 			var batch = m_primitivesRenderer.FlatBatch(0, DepthStencilState.None, RasterizerState.CullNoneScissor, BlendState.AlphaBlend);
 			var fontBatch = m_primitivesRenderer.FontBatch(LabelWidget.BitmapFont, 0, DepthStencilState.None, null, BlendState.AlphaBlend, SamplerState.LinearClamp);
 
-			// NUEVO: Determinar si estamos en primera persona y obtener la entidad del jugador local
 			bool isFirstPerson = false;
 			Entity localPlayerEntity = null;
 
@@ -37,11 +36,13 @@ namespace Game
 					if (gameWidget.ActiveCamera is FppCamera && gameWidget.Target != null)
 					{
 						isFirstPerson = true;
-						localPlayerEntity = gameWidget.Target.Entity; // Se compara la entidad, no el componente
+						localPlayerEntity = gameWidget.Target.Entity;
 						break;
 					}
 				}
 			}
+
+			Vector3 cameraPosition = camera.ViewPosition;
 
 			foreach (var creature in m_subsystemCreatureSpawn.Creatures)
 			{
@@ -51,20 +52,49 @@ namespace Game
 				var body = creature.ComponentBody;
 				if (body == null) continue;
 
-				// NUEVO: Omitir la barra de vida si es nuestra propia entidad y estamos en primera persona
 				if (isFirstPerson && creature.Entity == localPlayerEntity)
 				{
 					continue;
 				}
-
-				CreatureHealthState state = GetHealthState(health.Health);
-				Color color = GetColor(state);
 
 				Vector3 positionWorld = new Vector3(
 					body.Position.X,
 					body.Position.Y + body.BoxSize.Y + 0.15f,
 					body.Position.Z
 				);
+
+				// Verificar si hay un bloque bloqueando la visión
+				if (m_subsystemTerrain != null)
+				{
+					Vector3 toCreature = positionWorld - cameraPosition;
+					float distanceToCreature = toCreature.Length();
+
+					if (distanceToCreature > 0.5f)
+					{
+						// CORREGIDO: Calcular el punto final en vez de pasar la distancia directamente
+						Vector3 direction = Vector3.Normalize(toCreature);
+						Vector3 endPoint = cameraPosition + direction * (distanceToCreature - 0.3f);
+
+						// CORREGIDO: Firma correcta (start, end, useInteractionBoxes, skipAirBlocks, action)
+						// skipAirBlocks = true para que ignore el aire
+						TerrainRaycastResult? raycastResult = m_subsystemTerrain.Raycast(
+							cameraPosition,
+							endPoint,
+							false,      // useInteractionBoxes
+							true,       // skipAirBlocks
+							null        // action
+						);
+
+						// CORREGIDO: Verificar si tiene valor (nullable) y si la distancia es menor
+						if (raycastResult.HasValue && raycastResult.Value.Distance > 0f && raycastResult.Value.Distance < distanceToCreature - 0.4f)
+						{
+							continue;
+						}
+					}
+				}
+
+				CreatureHealthState state = GetHealthState(health.Health);
+				Color color = GetColor(state);
 
 				Vector3 positionView = Vector3.Transform(positionWorld, camera.ViewMatrix);
 
@@ -138,6 +168,7 @@ namespace Game
 		{
 			m_subsystemCreatureSpawn = Project.FindSubsystem<SubsystemCreatureSpawn>(true);
 			m_subsystemGameWidgets = Project.FindSubsystem<SubsystemGameWidgets>(true);
+			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
 		}
 
 		public enum CreatureHealthState
