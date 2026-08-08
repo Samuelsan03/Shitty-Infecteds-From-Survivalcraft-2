@@ -8,7 +8,6 @@ namespace Game
 		public static bool ShowCreatureHealthBars { get; set; } = true;
 		public static bool EnableCreatureBleeding { get; set; } = true;
 		public static bool EnableFreeCamera { get; set; } = true;
-
-		// Futuras configuraciones se agregarán aquí
+		public static bool EnableBossChaseMusic { get; set; } = true;
 	}
 }
