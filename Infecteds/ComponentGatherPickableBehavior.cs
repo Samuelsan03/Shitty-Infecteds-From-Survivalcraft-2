@@ -55,7 +55,13 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
-			// CANCELAR RECOLECCIÓN SI HAY PERSECUCIÓN ACTIVA
+			if (!this.m_initialEquipmentAdded)
+			{
+				this.m_initialEquipmentAdded = true;
+				string creatureName = base.Entity.ValuesDictionary.DatabaseObject.Name;
+				this.EquipCreatureWithObjects(creatureName);
+			}
+
 			if (this.m_importanceLevel > 0f)
 			{
 				foreach (ComponentBehavior behavior in base.Entity.FindComponents<ComponentBehavior>())
@@ -72,11 +78,129 @@ namespace Game
 			this.m_stateMachine.Update();
 		}
 
+		/// <summary>
+		/// Creature with its objects - Equipa a la criatura con objetos específicos al aparecer.
+		/// </summary>
+		public virtual void EquipCreatureWithObjects(string creatureName)
+		{
+			IInventory inventory = this.Inventory;
+			if (inventory == null)
+			{
+				return;
+			}
+
+			if (creatureName == "Werewolf")
+			{
+				int[] rangedWeapons = new int[]
+				{
+					BlocksManager.GetBlockIndex("MusketBlock"),
+					BlocksManager.GetBlockIndex("CrossbowBlock"),
+					BlocksManager.GetBlockIndex("BowBlock"),
+					BlocksManager.GetBlockIndex("RepeatCrossbowBlock"),
+					BlocksManager.GetBlockIndex("FlameThrowerBlock")
+				};
+
+				int[] meleeWeapons = new int[]
+				{
+					BlocksManager.GetBlockIndex("IronMacheteBlock"),
+					BlocksManager.GetBlockIndex("DiamondMacheteBlock"),
+					BlocksManager.GetBlockIndex("CopperMacheteBlock"),
+					BlocksManager.GetBlockIndex("StoneClubBlock"),
+					BlocksManager.GetBlockIndex("WoodenClubBlock")
+				};
+
+				int[] throwables = new int[]
+				{
+					BlocksManager.GetBlockIndex("BombBlock"),
+					BlocksManager.GetBlockIndex("IncendiaryBombBlock"),
+					BlocksManager.GetBlockIndex("PoisonBombBlock")
+				};
+
+				int[] spears = new int[]
+				{
+					BlocksManager.GetBlockIndex("IronSpearBlock"),
+					BlocksManager.GetBlockIndex("DiamondSpearBlock"),
+					BlocksManager.GetBlockIndex("CopperSpearBlock"),
+					BlocksManager.GetBlockIndex("WoodenSpearBlock"),
+					BlocksManager.GetBlockIndex("StoneSpearBlock"),
+					BlocksManager.GetBlockIndex("WoodenLongspearBlock"),
+					BlocksManager.GetBlockIndex("StoneLongspearBlock"),
+					BlocksManager.GetBlockIndex("LavaLongspearBlock"),
+					BlocksManager.GetBlockIndex("IronLongspearBlock"),
+					BlocksManager.GetBlockIndex("DiamondLongspearBlock"),
+					BlocksManager.GetBlockIndex("CopperLongspearBlock")
+				};
+
+				// Rango 0-24: Solo arma a distancia (25%)
+				// Rango 25-49: Solo arma cuerpo a cuerpo (25%)
+				// Rango 50-69: Arma a distancia + UN lanzable (20%)
+				// Rango 70-89: Arma cuerpo a cuerpo + UN lanzable (20%)
+				// Rango 90-94: UNA sola lanza (5%)
+				// Rango 95-99: Inventario vacío (5%)
+				int roll = this.m_random.Int(0, 99);
+
+				if (roll < 25)
+				{
+					int weapon = rangedWeapons[this.m_random.Int(0, rangedWeapons.Length - 1)];
+					if (weapon >= 0)
+					{
+						this.AddItemsToInventory(inventory, weapon, 1);
+					}
+				}
+				else if (roll < 50)
+				{
+					int weapon = meleeWeapons[this.m_random.Int(0, meleeWeapons.Length - 1)];
+					if (weapon >= 0)
+					{
+						this.AddItemsToInventory(inventory, weapon, 1);
+					}
+				}
+				else if (roll < 70)
+				{
+					int ranged = rangedWeapons[this.m_random.Int(0, rangedWeapons.Length - 1)];
+					if (ranged >= 0)
+					{
+						this.AddItemsToInventory(inventory, ranged, 1);
+					}
+
+					int throwable = throwables[this.m_random.Int(0, throwables.Length - 1)];
+					if (throwable >= 0)
+					{
+						this.AddItemsToInventory(inventory, throwable, 8);
+					}
+				}
+				else if (roll < 90)
+				{
+					int melee = meleeWeapons[this.m_random.Int(0, meleeWeapons.Length - 1)];
+					if (melee >= 0)
+					{
+						this.AddItemsToInventory(inventory, melee, 1);
+					}
+
+					int throwable = throwables[this.m_random.Int(0, throwables.Length - 1)];
+					if (throwable >= 0)
+					{
+						this.AddItemsToInventory(inventory, throwable, 8);
+					}
+				}
+				else if (roll < 95)
+				{
+					// UNA sola lanza aleatoria
+					int spear = spears[this.m_random.Int(0, spears.Length - 1)];
+					if (spear >= 0)
+					{
+						this.AddItemsToInventory(inventory, spear, 1);
+					}
+				}
+				// else roll 95-99: Inventario vacío
+			}
+		}
+
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			this.m_subsystemTime = base.Project.FindSubsystem<SubsystemTime>(true);
 			this.m_subsystemPickables = base.Project.FindSubsystem<SubsystemPickables>(true);
-			this.m_subsystemAudio = base.Project.FindSubsystem<SubsystemAudio>(true); // NUEVO
+			this.m_subsystemAudio = base.Project.FindSubsystem<SubsystemAudio>(true);
 			this.m_componentCreature = base.Entity.FindComponent<ComponentCreature>(true);
 			this.m_componentPathfinding = base.Entity.FindComponent<ComponentPathfinding>(true);
 			this.m_componentMiner = base.Entity.FindComponent<ComponentMiner>();
@@ -115,7 +239,6 @@ namespace Game
 				this.m_pickable = null;
 			}, delegate
 			{
-				// Solo busca si no hay persecución activa
 				bool isChasing = false;
 				foreach (ComponentBehavior behavior in base.Entity.FindComponents<ComponentBehavior>())
 				{
@@ -351,6 +474,7 @@ namespace Game
 		public virtual bool TryAddPickable(Pickable pickable)
 		{
 			if (!this.ShouldCollectPickable(pickable))
+
 			{
 				return false;
 			}
@@ -393,7 +517,6 @@ namespace Game
 			{
 				this.m_pickable.Count -= actuallyGathered;
 
-				// NUEVO: Reproducir el sonido de recogida igual que hace el jugador
 				if (this.m_subsystemAudio != null)
 				{
 					this.m_subsystemAudio.PlaySound("Audio/PickableCollected", 0.7f, -0.4f, this.m_componentCreature.ComponentBody.Position, 2f, false);
@@ -475,7 +598,7 @@ namespace Game
 
 		public SubsystemTime m_subsystemTime;
 		public SubsystemPickables m_subsystemPickables;
-		public SubsystemAudio m_subsystemAudio; // NUEVO
+		public SubsystemAudio m_subsystemAudio;
 		public ComponentCreature m_componentCreature;
 		public ComponentPathfinding m_componentPathfinding;
 		public ComponentMiner m_componentMiner;
@@ -504,6 +627,8 @@ namespace Game
 		public int m_blockedCount;
 
 		public IInventory m_inventory;
+
+		public bool m_initialEquipmentAdded;
 
 		public const float m_range = 16f;
 	}
