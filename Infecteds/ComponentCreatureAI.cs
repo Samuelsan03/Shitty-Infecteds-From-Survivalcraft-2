@@ -26,6 +26,8 @@ namespace Game
 		private bool m_isAiming;
 		private int m_originalActiveSlot = -1;
 
+		private Random m_random = new Random();
+
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
@@ -111,8 +113,6 @@ namespace Game
 					return;
 				}
 
-				ReloadMusket(musketBlockIndex);
-
 				m_isAiming = true;
 				m_aimStartTime = gameTime;
 				m_componentMiner.Aim(aimRay, AimState.InProgress);
@@ -124,10 +124,50 @@ namespace Game
 
 			if (aimDuration >= MusketAimTime)
 			{
-				m_componentMiner.Aim(aimRay, AimState.Completed);
+				FireWeapon(musketBlockIndex, aimRay);
 				m_lastShotTime = gameTime;
 				m_isAiming = false;
 			}
+		}
+
+		private void FireWeapon(int musketBlockIndex, Ray3 aimRay)
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return;
+
+			int slot = inventory.ActiveSlotIndex;
+
+			bool isTripleShot = m_random.Bool(0.05f);
+
+			if (isTripleShot)
+			{
+				FireSpecificBullet(musketBlockIndex, slot, BulletBlock.BulletType.MusketBall, aimRay);
+				FireSpecificBullet(musketBlockIndex, slot, BulletBlock.BulletType.Buckshot, aimRay);
+				FireSpecificBullet(musketBlockIndex, slot, BulletBlock.BulletType.BuckshotBall, aimRay);
+			}
+			else
+			{
+				int roll = m_random.Int(0, 2);
+				BulletBlock.BulletType type = (BulletBlock.BulletType)roll;
+				FireSpecificBullet(musketBlockIndex, slot, type, aimRay);
+			}
+		}
+
+		private void FireSpecificBullet(int musketBlockIndex, int slot, BulletBlock.BulletType bulletType, Ray3 aimRay)
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return;
+
+			int data = MusketBlock.SetLoadState(0, MusketBlock.LoadState.Loaded);
+			data = MusketBlock.SetBulletType(data, bulletType);
+			data = MusketBlock.SetHammerState(data, true);
+
+			int newValue = Terrain.MakeBlockValue(musketBlockIndex, 0, data);
+
+			inventory.RemoveSlotItems(slot, 1);
+			inventory.AddSlotItems(slot, newValue, 1);
+
+			m_componentMiner.Aim(aimRay, AimState.Completed);
 		}
 
 		private int FindBlockSlot(int blockIndex)
@@ -197,27 +237,6 @@ namespace Game
 				m_componentMiner.Inventory.ActiveSlotIndex = m_originalActiveSlot;
 				m_originalActiveSlot = -1;
 			}
-		}
-
-		private void ReloadMusket(int musketBlockIndex)
-		{
-			IInventory inventory = m_componentMiner.Inventory;
-			if (inventory == null) return;
-
-			int slot = inventory.ActiveSlotIndex;
-			int value = inventory.GetSlotValue(slot);
-
-			if (Terrain.ExtractContents(value) != musketBlockIndex) return;
-
-			int data = Terrain.ExtractData(value);
-
-			data = MusketBlock.SetLoadState(data, MusketBlock.LoadState.Loaded);
-			data = MusketBlock.SetBulletType(data, BulletBlock.BulletType.MusketBall);
-
-			int newValue = Terrain.MakeBlockValue(musketBlockIndex, 0, data);
-
-			inventory.RemoveSlotItems(slot, 1);
-			inventory.AddSlotItems(slot, newValue, 1);
 		}
 	}
 }
