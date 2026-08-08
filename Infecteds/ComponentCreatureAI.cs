@@ -12,6 +12,8 @@ namespace Game
 		public Vector2 RangedDistanceRange = new Vector2(5f, 100f);
 		public float MusketAimTime = 1.5f;
 		public float MusketCooldown = 0.01f;
+		public float ImprovedMusketAimTime = 1.5f;
+		public float ImprovedMusketCooldown = 0.01f;
 		public float BowAimTime = 1.5f;
 		public float BowCooldown = 0.01f;
 		public float CrossbowAimTime = 1.5f;
@@ -205,13 +207,15 @@ namespace Game
 				}
 			}
 
-			// 2. LÓGICA DE RANGO (MOSQUETE, ARCO, BALLESTA, BALLESTA REPETIDORA Y LANZALLAMAS)
+			// 2. LÓGICA DE RANGO (MOSQUETE MEJORADO, MOSQUETE, ARCO, BALLESTA, BALLESTA REPETIDORA Y LANZALLAMAS)
+			int improvedMusketBlockIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>(false, false);
 			int musketBlockIndex = BlocksManager.GetBlockIndex<MusketBlock>(false, false);
 			int bowBlockIndex = BlocksManager.GetBlockIndex<BowBlock>(false, false);
 			int crossbowBlockIndex = BlocksManager.GetBlockIndex<CrossbowBlock>(false, false);
 			int repeatCrossbowBlockIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>(false, false);
 			int flameThrowerBlockIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>(false, false);
 
+			int improvedMusketSlot = improvedMusketBlockIndex > 0 ? FindAndLoadImprovedMusketSlot(improvedMusketBlockIndex) : -1;
 			int musketSlot = FindBlockSlot(musketBlockIndex);
 			int bowSlot = bowBlockIndex > 0 ? FindAndLoadBowSlot(bowBlockIndex) : -1;
 			int crossbowSlot = crossbowBlockIndex > 0 ? FindAndLoadCrossbowSlot(crossbowBlockIndex, distance) : -1;
@@ -226,7 +230,14 @@ namespace Game
 			float currentCooldown = MusketCooldown;
 			bool isMusket = false;
 
-			if (musketSlot >= 0)
+			// Prioridad: Mosquete Mejorado > Mosquete > Arco > Ballesta > Ballesta Repetidora > Lanzallamas
+			if (improvedMusketSlot >= 0)
+			{
+				activeRangedSlot = improvedMusketSlot;
+				currentAimTime = ImprovedMusketAimTime;
+				currentCooldown = ImprovedMusketCooldown;
+			}
+			else if (musketSlot >= 0)
 			{
 				activeRangedSlot = musketSlot;
 				isMusket = true;
@@ -303,12 +314,45 @@ namespace Game
 				}
 				else
 				{
+					// Mosquete Mejorado, Arco, Ballesta, Ballesta Repetidora y Lanzallamas
+					// usan el comportamiento estándar del SubsystemBlockBehavior
 					m_componentMiner.Aim(aimRay, AimState.Completed);
 				}
 
 				m_lastRangedTime = gameTime;
 				m_isAiming = false;
 			}
+		}
+
+		private int FindAndLoadImprovedMusketSlot(int improvedMusketBlockIndex)
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return -1;
+
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int value = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(value) == improvedMusketBlockIndex)
+				{
+					int data = Terrain.ExtractData(value);
+					int ammoCount = ImprovedMusketBlock.GetAmmoCount(data);
+
+					// Si tiene munición, usarlo directamente
+					if (ammoCount > 0)
+					{
+						return i;
+					}
+
+					// Si no tiene munición, recargar instantáneamente con 2 (capacidad máxima)
+					int newData = ImprovedMusketBlock.SetAmmoCount(data, 2);
+					int newValue = Terrain.MakeBlockValue(improvedMusketBlockIndex, 0, newData);
+
+					inventory.RemoveSlotItems(i, 1);
+					inventory.AddSlotItems(i, newValue, 1);
+					return i;
+				}
+			}
+			return -1;
 		}
 
 		private int FindAndLoadBowSlot(int bowBlockIndex)
