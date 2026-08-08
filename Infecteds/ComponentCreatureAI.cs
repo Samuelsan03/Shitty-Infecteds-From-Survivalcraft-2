@@ -8,6 +8,45 @@ namespace Game
 {
 	public class ComponentCreatureAI : Component, IUpdateable
 	{
+		public UpdateOrder UpdateOrder => UpdateOrder.Default;
+
+		public enum FirearmReloadState
+		{
+			None,
+			Reloading,
+			Loaded
+		}
+
+		public enum FirearmFireMode
+		{
+			Automatic,
+			SemiAuto,
+			BoltAction
+		}
+
+		public enum MountState
+		{
+			None,
+			Searching,
+			Mounting,
+			Mounted,
+			Dismounting
+		}
+
+		private static readonly HashSet<string> MountableCreatures = new HashSet<string>
+		{
+			"Horse_Bay_Saddled",
+			"Horse_White_Saddled",
+			"Horse_Palomino_Saddled",
+			"Horse_Black_Saddled",
+			"Camel_Saddled",
+			"Horse_Chestnut_Saddled",
+			"Donkey_Saddled"
+		};
+
+		public const float MountDetectionRange = 2.5f;
+		private const float FirearmReloadPauseTime = 1.5f;
+
 		// NOT loaded from XML - hardcoded values
 		public Vector2 RangedDistanceRange = new Vector2(5f, 100f);
 		public float MusketAimTime = 1.5f;
@@ -31,27 +70,79 @@ namespace Game
 
 		// Loaded from XML
 		public bool CanUseInventory;
+		public bool CanItBeMounted { get; private set; }
 
-		// Private fields
+		public MountState CurrentMountState { get; private set; } = MountState.None;
+		public FirearmReloadState CurrentFirearmReloadState { get; private set; } = FirearmReloadState.None;
+		public bool IsMounted => CurrentMountState == MountState.Mounted;
+		public ComponentMount CurrentMount => m_currentMount;
+
+		public bool IsOnFlyingMount
+		{
+			get
+			{
+				if (m_componentRider == null || m_componentRider.Mount == null) return false;
+				return IsFlyingMount(m_componentRider.Mount);
+			}
+		}
+
+		// Subsystems
 		private SubsystemTime m_subsystemTime;
 		private SubsystemBlockBehaviors m_subsystemBlockBehaviors;
 		private SubsystemBodies m_subsystemBodies;
 		private SubsystemTerrain m_subsystemTerrain;
+		private SubsystemAudio m_subsystemAudio;
+		private SubsystemParticles m_subsystemParticles;
+
+		// Components
 		private ComponentCreature m_componentCreature;
 		private ComponentMiner m_componentMiner;
 		private ComponentChaseBehavior m_componentChaseBehavior;
 		private ComponentPathfinding m_componentPathfinding;
+		private ComponentRider m_componentRider;
+		private ComponentMount m_currentMount;
+		private ComponentPilot m_componentPilot;
 
-		private double m_lastRangedTime;
-		private double m_aimStartTime;
+		// Timers (unificados con float + delta)
+		private float m_aimTimer;
+		private float m_cooldownTimer;
 		private bool m_isAiming;
 		private int m_originalActiveSlot = -1;
 
-		private double m_lastThrowableTime;
-		private double m_aimThrowableStartTime;
+		private float m_throwableAimTimer;
+		private float m_throwableCooldownTimer;
 		private bool m_isAimingThrowable;
 
+		// Firearm state
+		private float m_firearmReloadPauseTimer;
+		private bool m_isWaitingForFirearmReload;
+		private bool m_isUsingFirearm;
+		private FirearmData? m_currentFirearmData;
+
+		// Misc
 		private Random m_random = new Random();
+		private DynamicArray<ComponentBody> m_nearbyBodies = new DynamicArray<ComponentBody>();
+
+		private struct FirearmData
+		{
+			public string BlockName;
+			public int MaxAmmo;
+			public FirearmFireMode FireMode;
+			public float AimTimeBeforeShot;
+			public float CooldownAfterShot;
+			public Func<int, int> GetAmmoCount;
+			public Func<int, int, int> SetAmmoCount;
+			public Func<int, bool> GetLoadState;
+			public Func<int, int, int> SetLoadState;
+
+			public int GetBlockIndex()
+			{
+				return BlocksManager.GetBlockIndex(BlockName);
+			}
+		}
+
+		private static readonly List<FirearmData> m_firearmsList = new List<FirearmData>();
+		private static bool m_firearmsInitialized = false;
 
 		private static readonly ArrowBlock.ArrowType[] m_bowArrows = new ArrowBlock.ArrowType[]
 		{
@@ -97,7 +188,64 @@ namespace Game
 			RepeatBoltType.RepeatSeverelyPoisonousBolt
 		};
 
-		public UpdateOrder UpdateOrder => UpdateOrder.Default;
+		private static void InitializeFirearmsList()
+		{
+			if (m_firearmsInitialized) return;
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "AK47Block",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.3f,
+				CooldownAfterShot = 1.8f,
+				GetAmmoCount = (data) => AK47Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => AK47Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => AK47Block.GetLoadState(data) == AK47Block.LoadState.Loaded,
+				SetLoadState = (data, state) => AK47Block.SetLoadState(data, state == 1 ? AK47Block.LoadState.Loaded : AK47Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "DesertEagleBlock",
+				MaxAmmo = 7,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 0.35f,
+				GetAmmoCount = (data) => DesertEagleBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => DesertEagleBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => DesertEagleBlock.GetLoadState(data) == DesertEagleBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => DesertEagleBlock.SetLoadState(data, state == 1 ? DesertEagleBlock.LoadState.Loaded : DesertEagleBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "SPAS12Block",
+				MaxAmmo = 8,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 0.45f,
+				GetAmmoCount = (data) => SPAS12Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => SPAS12Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => SPAS12Block.GetLoadState(data) == SPAS12Block.LoadState.Loaded,
+				SetLoadState = (data, state) => SPAS12Block.SetLoadState(data, state == 1 ? SPAS12Block.LoadState.Loaded : SPAS12Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "SniperBlock",
+				MaxAmmo = 1,
+				FireMode = FirearmFireMode.BoltAction,
+				AimTimeBeforeShot = 1.2f,
+				CooldownAfterShot = 2.5f,
+				GetAmmoCount = (data) => SniperBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => SniperBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => SniperBlock.GetLoadState(data) == SniperBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => SniperBlock.SetLoadState(data, state == 1 ? SniperBlock.LoadState.Loaded : SniperBlock.LoadState.Empty)
+			});
+
+			m_firearmsInitialized = true;
+		}
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
@@ -105,16 +253,27 @@ namespace Game
 			m_subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true);
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
+			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
+			m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
+
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentChaseBehavior = Entity.FindComponent<ComponentChaseBehavior>();
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>();
+			m_componentRider = Entity.FindComponent<ComponentRider>(false);
+			m_componentPilot = Entity.FindComponent<ComponentPilot>(false);
 
 			CanUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
+			CanItBeMounted = valuesDictionary.GetValue<bool>("CanItBeMounted", false);
+			CurrentMountState = CanItBeMounted ? MountState.Searching : MountState.None;
+
+			InitializeFirearmsList();
 		}
 
 		public void Update(float dt)
 		{
+			UpdateMountingBehavior(dt);
+
 			if (!CanUseInventory || m_componentCreature?.ComponentBody == null ||
 				m_componentCreature?.ComponentCreatureModel == null)
 			{
@@ -129,13 +288,19 @@ namespace Game
 			if (!hasValidTarget)
 			{
 				StopAllCombat();
+				if (IsMounted) StopMount();
 				return;
 			}
 
-			float distance = Vector3.Distance(
-				m_componentCreature.ComponentBody.Position,
-				target.ComponentBody.Position
-			);
+			bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
+
+			Vector3 myPosition = isMounted ? m_componentRider.Mount.ComponentBody.Position : m_componentCreature.ComponentBody.Position;
+			float distance = Vector3.Distance(myPosition, target.ComponentBody.Position);
+
+			if (isMounted && m_componentPathfinding != null)
+			{
+				m_componentPathfinding.Stop();
+			}
 
 			IInventory inventory = m_componentMiner.Inventory;
 			if (inventory == null)
@@ -144,7 +309,6 @@ namespace Game
 				return;
 			}
 
-			double gameTime = m_subsystemTime.GameTime;
 			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
 			Vector3 targetCenter = target.ComponentBody.BoundingBox.Center();
 			Vector3 aimDir = Vector3.Normalize(targetCenter - eyePos);
@@ -177,26 +341,30 @@ namespace Game
 
 				if (!m_isAimingThrowable)
 				{
-					if ((gameTime - m_lastThrowableTime) < ThrowableCooldown)
+					if (m_throwableCooldownTimer > 0f)
 					{
+						if (isMounted) PilotMount(target);
 						return;
 					}
 
 					m_isAimingThrowable = true;
-					m_aimThrowableStartTime = gameTime;
+					m_throwableAimTimer = 0f;
 					m_componentMiner.Aim(aimRay, AimState.InProgress);
+					if (isMounted) PilotMount(target);
 					return;
 				}
 
-				float aimDuration = (float)(gameTime - m_aimThrowableStartTime);
+				m_throwableAimTimer += m_subsystemTime.GameTimeDelta;
 				m_componentMiner.Aim(aimRay, AimState.InProgress);
 
-				if (aimDuration >= ThrowableAimTime)
+				if (m_throwableAimTimer >= ThrowableAimTime)
 				{
 					m_componentMiner.Aim(aimRay, AimState.Completed);
-					m_lastThrowableTime = gameTime;
+					m_throwableCooldownTimer = ThrowableCooldown;
 					m_isAimingThrowable = false;
+					m_throwableAimTimer = 0f;
 				}
+				if (isMounted) PilotMount(target);
 				return;
 			}
 			else
@@ -207,7 +375,31 @@ namespace Game
 				}
 			}
 
-			// 2. LÓGICA DE RANGO (MOSQUETE MEJORADO, MOSQUETE, ARCO, BALLESTA, BALLESTA REPETIDORA Y LANZALLAMAS)
+			// Decrementar cooldown de throwables
+			if (m_throwableCooldownTimer > 0f)
+			{
+				m_throwableCooldownTimer -= m_subsystemTime.GameTimeDelta;
+			}
+
+			// 2. LÓGICA DE ARMAS DE FUEGO (PRIORIDAD ALTA)
+			int firearmSlot = FindFirearmSlot();
+			bool inRangedRange = distance <= RangedDistanceRange.Y &&
+								  (distance > RangedDistanceRange.X || FindMeleeWeaponSlot() < 0);
+
+			if (firearmSlot >= 0 && inRangedRange)
+			{
+				HandleFirearmAttack(target, firearmSlot);
+				if (isMounted) PilotMount(target);
+				return;
+			}
+
+			// Si estaba usando arma de fuego pero ya no puede, cancelar
+			if (m_isUsingFirearm)
+			{
+				CancelFirearmAim();
+			}
+
+			// 3. LÓGICA DE RANGO LEGADO (MOSQUETE MEJORADO, MOSQUETE, ARCO, BALLESTA, BALLESTA REPETIDORA, LANZALLAMAS)
 			int improvedMusketBlockIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>(false, false);
 			int musketBlockIndex = BlocksManager.GetBlockIndex<MusketBlock>(false, false);
 			int bowBlockIndex = BlocksManager.GetBlockIndex<BowBlock>(false, false);
@@ -230,7 +422,6 @@ namespace Game
 			float currentCooldown = MusketCooldown;
 			bool isMusket = false;
 
-			// Prioridad: Mosquete Mejorado > Mosquete > Arco > Ballesta > Ballesta Repetidora > Lanzallamas
 			if (improvedMusketSlot >= 0)
 			{
 				activeRangedSlot = improvedMusketSlot;
@@ -267,9 +458,7 @@ namespace Game
 				currentCooldown = FlameThrowerCooldown;
 			}
 
-			bool shouldUseRanged = activeRangedSlot >= 0 &&
-								   distance <= RangedDistanceRange.Y &&
-								   (distance > RangedDistanceRange.X || !hasMeleeWeapon);
+			bool shouldUseRanged = activeRangedSlot >= 0 && inRangedRange;
 
 			if (!shouldUseRanged)
 			{
@@ -277,10 +466,12 @@ namespace Game
 				{
 					SwitchToSlot(meleeSlot);
 					StopRangedCombat(false);
+					if (isMounted) StopMount();
 				}
 				else
 				{
 					StopRangedCombat(true);
+					if (isMounted) PilotMount(target);
 				}
 				return;
 			}
@@ -290,23 +481,27 @@ namespace Game
 				SwitchToSlot(activeRangedSlot);
 			}
 
-			if (!m_isAiming)
+			// Decrementar cooldown de rango legado
+			if (m_cooldownTimer > 0f)
 			{
-				if ((gameTime - m_lastRangedTime) < currentCooldown)
-				{
-					return;
-				}
-
-				m_isAiming = true;
-				m_aimStartTime = gameTime;
-				m_componentMiner.Aim(aimRay, AimState.InProgress);
+				m_cooldownTimer -= m_subsystemTime.GameTimeDelta;
+				if (isMounted) PilotMount(target);
 				return;
 			}
 
-			float rangedAimDuration = (float)(gameTime - m_aimStartTime);
+			if (!m_isAiming)
+			{
+				m_isAiming = true;
+				m_aimTimer = 0f;
+				m_componentMiner.Aim(aimRay, AimState.InProgress);
+				if (isMounted) PilotMount(target);
+				return;
+			}
+
+			m_aimTimer += m_subsystemTime.GameTimeDelta;
 			m_componentMiner.Aim(aimRay, AimState.InProgress);
 
-			if (rangedAimDuration >= currentAimTime)
+			if (m_aimTimer >= currentAimTime)
 			{
 				if (isMusket)
 				{
@@ -314,15 +509,435 @@ namespace Game
 				}
 				else
 				{
-					// Mosquete Mejorado, Arco, Ballesta, Ballesta Repetidora y Lanzallamas
-					// usan el comportamiento estándar del SubsystemBlockBehavior
 					m_componentMiner.Aim(aimRay, AimState.Completed);
 				}
 
-				m_lastRangedTime = gameTime;
+				m_cooldownTimer = currentCooldown;
 				m_isAiming = false;
+				m_aimTimer = 0f;
+			}
+
+			if (isMounted) PilotMount(target);
+		}
+
+		#region Mounting
+
+		private void UpdateMountingBehavior(float dt)
+		{
+			if (!CanItBeMounted || m_componentRider == null)
+			{
+				CurrentMountState = MountState.None;
+				return;
+			}
+
+			switch (CurrentMountState)
+			{
+				case MountState.None:
+					CurrentMountState = MountState.Searching;
+					break;
+
+				case MountState.Searching:
+					ComponentMount nearestMount = FindNearestMountableCreature();
+					if (nearestMount != null)
+					{
+						m_componentRider.StartMounting(nearestMount);
+						m_currentMount = nearestMount;
+						CurrentMountState = MountState.Mounting;
+					}
+					break;
+
+				case MountState.Mounting:
+					CurrentMountState = m_componentRider.Mount != null ? MountState.Mounted : MountState.Searching;
+					break;
+
+				case MountState.Mounted:
+					if (m_componentRider.Mount == null)
+					{
+						m_currentMount = null;
+						CurrentMountState = MountState.Searching;
+						ClearPilotDestination();
+					}
+					else
+					{
+						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
+						if (mountHealth != null && mountHealth.Health <= 0f)
+						{
+							m_componentRider.StartDismounting();
+							m_currentMount = null;
+							CurrentMountState = MountState.Dismounting;
+							ClearPilotDestination();
+						}
+					}
+					break;
+
+				case MountState.Dismounting:
+					if (m_componentRider.Mount == null)
+					{
+						m_currentMount = null;
+						CurrentMountState = MountState.Searching;
+					}
+					break;
 			}
 		}
+
+		private ComponentMount FindNearestMountableCreature()
+		{
+			Vector2 position = new Vector2(m_componentCreature.ComponentBody.Position.X, m_componentCreature.ComponentBody.Position.Z);
+			m_nearbyBodies.Clear();
+			m_subsystemBodies.FindBodiesAroundPoint(position, MountDetectionRange, m_nearbyBodies);
+
+			float closestDistance = float.MaxValue;
+			ComponentMount closestMount = null;
+			float maxRangeSquared = MountDetectionRange * MountDetectionRange;
+
+			foreach (ComponentBody body in m_nearbyBodies)
+			{
+				if (body.Entity == Entity || !IsMountableCreature(body.Entity)) continue;
+
+				ComponentMount mount = body.Entity.FindComponent<ComponentMount>();
+				if (mount == null || mount.Rider != null) continue;
+
+				ComponentHealth mountHealth = body.Entity.FindComponent<ComponentHealth>();
+				if (mountHealth == null || mountHealth.Health <= 0f) continue;
+
+				float distanceSquared = Vector3.DistanceSquared(m_componentCreature.ComponentBody.Position, body.Position);
+				if (distanceSquared <= maxRangeSquared && distanceSquared < closestDistance)
+				{
+					closestDistance = distanceSquared;
+					closestMount = mount;
+				}
+			}
+
+			return closestMount;
+		}
+
+		private bool IsMountableCreature(Entity entity)
+		{
+			if (entity?.ValuesDictionary?.DatabaseObject == null) return false;
+			return MountableCreatures.Contains(entity.ValuesDictionary.DatabaseObject.Name);
+		}
+
+		private bool IsFlyingMount(ComponentMount mount)
+		{
+			if (mount == null || mount.Entity == null) return false;
+			ComponentLocomotion mountLocomotion = mount.Entity.FindComponent<ComponentLocomotion>();
+			return mountLocomotion != null && mountLocomotion.FlySpeed > 0f;
+		}
+
+		public void ForceDismount()
+		{
+			if (CurrentMountState == MountState.Mounted && m_componentRider != null)
+			{
+				m_componentRider.StartDismounting();
+				CurrentMountState = MountState.Dismounting;
+				ClearPilotDestination();
+			}
+		}
+
+		private void StopMount()
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
+
+			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+			if (steedBehavior != null)
+			{
+				steedBehavior.SpeedOrder = 0;
+				steedBehavior.TurnOrder = 0f;
+				steedBehavior.JumpOrder = 0f;
+			}
+
+			ClearPilotDestination();
+		}
+
+		private void PilotMount(ComponentCreature target)
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
+
+			Vector3 targetPos = target.ComponentBody.Position;
+			Vector3 mountPos = m_componentRider.Mount.ComponentBody.Position;
+			float distance = Vector3.Distance(mountPos, targetPos);
+
+			float desiredDistance = RangedDistanceRange.X + (RangedDistanceRange.Y - RangedDistanceRange.X) * 0.5f;
+			Vector3 toTarget = Vector3.Normalize(targetPos - mountPos);
+			toTarget.Y = 0f;
+
+			Vector3 destination;
+			if (distance < RangedDistanceRange.X + 2f)
+			{
+				destination = targetPos - toTarget * desiredDistance;
+			}
+			else if (distance > RangedDistanceRange.Y - 5f)
+			{
+				destination = targetPos - toTarget * desiredDistance;
+			}
+			else
+			{
+				Vector3 sideDir = new Vector3(-toTarget.Z, 0f, toTarget.X);
+				if (m_random.Bool(0.5f)) sideDir = -sideDir;
+				destination = mountPos + sideDir * 3f;
+			}
+
+			PilotMountToPosition(destination);
+		}
+
+		private void PilotMountToPosition(Vector3 targetPos)
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
+
+			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
+			Vector3 myPos = mountBody.Position;
+			float distance = Vector3.Distance(myPos, targetPos);
+
+			if (distance < MountDetectionRange)
+			{
+				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+				if (steedBehavior != null)
+				{
+					steedBehavior.SpeedOrder = 0;
+					steedBehavior.TurnOrder = 0f;
+					steedBehavior.JumpOrder = 0f;
+				}
+				ClearPilotDestination();
+				return;
+			}
+
+			if (IsOnFlyingMount && m_componentPilot != null)
+			{
+				m_componentPilot.SetDestination(targetPos, 1f, MountDetectionRange, false, false, true, null);
+			}
+			else
+			{
+				ClearPilotDestination();
+
+				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+				if (steedBehavior == null) return;
+
+				Vector3 dirToTarget = targetPos - myPos;
+				dirToTarget.Y = 0f;
+				if (dirToTarget.LengthSquared() < 0.01f) return;
+				dirToTarget = Vector3.Normalize(dirToTarget);
+
+				Vector3 forward = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
+				if (forward.LengthSquared() < 0.01f) return;
+				forward = Vector3.Normalize(forward);
+
+				float dot = Vector3.Dot(forward, dirToTarget);
+				float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
+				float angleToTarget = MathF.Atan2(cross, dot);
+				float turnAmount = MathUtils.Clamp(angleToTarget * 3f, -1f, 1f);
+
+				steedBehavior.TurnOrder = turnAmount;
+				steedBehavior.SpeedOrder = MathF.Abs(angleToTarget) < 0.5f ? 1 : 0;
+			}
+		}
+
+		private void SetPilotDestination(Vector3 targetPos, float distance)
+		{
+			if (m_componentPilot == null) return;
+			if (distance < MountDetectionRange)
+			{
+				m_componentPilot.Stop();
+				return;
+			}
+			m_componentPilot.SetDestination(targetPos, 1f, MountDetectionRange, false, false, true, null);
+		}
+
+		private void ClearPilotDestination()
+		{
+			if (m_componentPilot == null) return;
+			m_componentPilot.Stop();
+		}
+
+		#endregion
+
+		#region Firearms
+
+		private int FindFirearmSlot()
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return -1;
+
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				if (inventory.GetSlotCount(i) > 0)
+				{
+					int blockId = Terrain.ExtractContents(inventory.GetSlotValue(i));
+					for (int j = 0; j < m_firearmsList.Count; j++)
+					{
+						int firearmIndex = m_firearmsList[j].GetBlockIndex();
+						if (firearmIndex >= 0 && firearmIndex == blockId) return i;
+					}
+				}
+			}
+			return -1;
+		}
+
+		private FirearmData? GetFirearmData(int slotIndex)
+		{
+			int blockId = Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(slotIndex));
+			for (int i = 0; i < m_firearmsList.Count; i++)
+			{
+				int firearmIndex = m_firearmsList[i].GetBlockIndex();
+				if (firearmIndex >= 0 && firearmIndex == blockId) return m_firearmsList[i];
+			}
+			return null;
+		}
+
+		private bool IsFirearmEmpty(int slotIndex, FirearmData firearm)
+		{
+			int data = Terrain.ExtractData(m_componentMiner.Inventory.GetSlotValue(slotIndex));
+			return !firearm.GetLoadState(data) || firearm.GetAmmoCount(data) == 0;
+		}
+
+		private void ReloadFirearm(int slotIndex, FirearmData firearm)
+		{
+			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
+			int data = Terrain.ExtractData(value);
+			int blockId = firearm.GetBlockIndex();
+
+			data = firearm.SetLoadState(data, 1);
+			data = firearm.SetAmmoCount(data, firearm.MaxAmmo);
+
+			m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
+			m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(blockId, 0, data), 1);
+		}
+
+		private void HandleFirearmAttack(ComponentCreature target, int firearmSlot)
+		{
+			m_componentMiner.Inventory.ActiveSlotIndex = firearmSlot;
+			FirearmData? firearmDataNullable = GetFirearmData(firearmSlot);
+
+			if (!firearmDataNullable.HasValue) return;
+			FirearmData firearm = firearmDataNullable.Value;
+			m_currentFirearmData = firearm;
+			m_isUsingFirearm = true;
+
+			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 targetPos = target.ComponentCreatureModel.EyePosition;
+			Vector3 aimDir = Vector3.Normalize(targetPos - eyePos);
+			Ray3 firearmRay = new Ray3(eyePos, aimDir);
+
+			if (m_isWaitingForFirearmReload)
+			{
+				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
+
+				if (m_firearmReloadPauseTimer <= 0f)
+				{
+					m_isWaitingForFirearmReload = false;
+					m_firearmReloadPauseTimer = 0f;
+					CurrentFirearmReloadState = FirearmReloadState.Loaded;
+					PlayReloadEffects();
+				}
+				return;
+			}
+
+			if (m_cooldownTimer > 0f)
+			{
+				m_cooldownTimer -= m_subsystemTime.GameTimeDelta;
+				return;
+			}
+
+			bool isEmpty = IsFirearmEmpty(firearmSlot, firearm);
+
+			if (isEmpty)
+			{
+				if (m_isAiming)
+				{
+					m_componentMiner.Aim(firearmRay, AimState.Cancelled);
+					m_isAiming = false;
+					m_aimTimer = 0f;
+				}
+
+				ReloadFirearm(firearmSlot, firearm);
+				SetFirearmReloadState(FirearmReloadState.Reloading);
+				m_isWaitingForFirearmReload = true;
+				m_firearmReloadPauseTimer = FirearmReloadPauseTime;
+				return;
+			}
+
+			CurrentFirearmReloadState = FirearmReloadState.Loaded;
+
+			if (!m_isAiming)
+			{
+				m_isAiming = true;
+				m_aimTimer = 0f;
+				ApplyFirearmAimSettings();
+				m_componentMiner.Aim(firearmRay, AimState.InProgress);
+			}
+			else
+			{
+				m_aimTimer += m_subsystemTime.GameTimeDelta;
+				m_componentMiner.Aim(firearmRay, AimState.InProgress);
+				ApplyFirearmAimSettings();
+
+				if (m_aimTimer >= firearm.AimTimeBeforeShot)
+				{
+					m_componentMiner.Aim(firearmRay, AimState.Completed);
+					m_isAiming = false;
+					m_cooldownTimer = firearm.CooldownAfterShot;
+					m_aimTimer = 0f;
+				}
+			}
+		}
+
+		private void ApplyFirearmAimSettings()
+		{
+			if (m_componentCreature?.ComponentCreatureModel == null) return;
+			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.2f;
+			m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.1f, -0.1f, 0.05f);
+			m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.5f, 0f, 0f);
+		}
+
+		private void SetFirearmReloadState(FirearmReloadState newState)
+		{
+			if (CurrentFirearmReloadState != newState)
+			{
+				CurrentFirearmReloadState = newState;
+				if (newState == FirearmReloadState.Reloading)
+				{
+					PlayReloadEffects();
+				}
+			}
+		}
+
+		private void PlayReloadEffects()
+		{
+			if (m_componentCreature?.ComponentBody == null) return;
+			Vector3 position = m_componentCreature.ComponentBody.Position + new Vector3(0f, m_componentCreature.ComponentBody.StanceBoxSize.Y / 2f, 0f);
+			float size = m_componentCreature.ComponentBody.StanceBoxSize.X;
+
+			KillParticleSystem killParticleSystem = new KillParticleSystem(m_subsystemTerrain, position, size);
+			m_subsystemParticles.AddParticleSystem(killParticleSystem, false);
+
+			m_subsystemAudio.PlaySound("Audio/Armas/reload", 1f, m_random.Float(-0.1f, 0.1f), position, 10f, false);
+		}
+
+		private void CancelFirearmAim()
+		{
+			if (m_isAiming && m_isUsingFirearm)
+			{
+				if (m_componentCreature?.ComponentCreatureModel != null)
+				{
+					Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+					Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
+					Ray3 cancelRay = new Ray3(eyePos, forward);
+					m_componentMiner.Aim(cancelRay, AimState.Cancelled);
+				}
+				m_isAiming = false;
+				m_aimTimer = 0f;
+			}
+
+			m_isUsingFirearm = false;
+			m_isWaitingForFirearmReload = false;
+			m_firearmReloadPauseTimer = 0f;
+			m_cooldownTimer = 0f;
+			m_currentFirearmData = null;
+			SetFirearmReloadState(FirearmReloadState.None);
+		}
+
+		#endregion
+
+		#region Legacy Ranged Weapons
 
 		private int FindAndLoadImprovedMusketSlot(int improvedMusketBlockIndex)
 		{
@@ -337,13 +952,8 @@ namespace Game
 					int data = Terrain.ExtractData(value);
 					int ammoCount = ImprovedMusketBlock.GetAmmoCount(data);
 
-					// Si tiene munición, usarlo directamente
-					if (ammoCount > 0)
-					{
-						return i;
-					}
+					if (ammoCount > 0) return i;
 
-					// Si no tiene munición, recargar instantáneamente con 2 (capacidad máxima)
 					int newData = ImprovedMusketBlock.SetAmmoCount(data, 2);
 					int newValue = Terrain.MakeBlockValue(improvedMusketBlockIndex, 0, newData);
 
@@ -369,10 +979,7 @@ namespace Game
 					int draw = BowBlock.GetDraw(data);
 					ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
 
-					if (draw == 15 && arrowType != null)
-					{
-						return i;
-					}
+					if (draw == 15 && arrowType != null) return i;
 
 					if (draw == 0)
 					{
@@ -408,10 +1015,7 @@ namespace Game
 
 					if (draw == 15 && arrowType != null)
 					{
-						if (!isSafeDistance && arrowType == ArrowBlock.ArrowType.ExplosiveBolt)
-						{
-							continue;
-						}
+						if (!isSafeDistance && arrowType == ArrowBlock.ArrowType.ExplosiveBolt) continue;
 						return i;
 					}
 
@@ -419,13 +1023,9 @@ namespace Game
 					{
 						ArrowBlock.ArrowType randomBolt;
 						if (isSafeDistance)
-						{
 							randomBolt = m_crossbowBolts[m_random.Int(0, m_crossbowBolts.Length - 1)];
-						}
 						else
-						{
 							randomBolt = m_crossbowSafeBolts[m_random.Int(0, m_crossbowSafeBolts.Length - 1)];
-						}
 
 						int newData = CrossbowBlock.SetDraw(data, 15);
 						newData = CrossbowBlock.SetArrowType(newData, randomBolt);
@@ -459,10 +1059,7 @@ namespace Game
 
 					if (draw == 15 && boltType != null && count > 0)
 					{
-						if (!isSafeDistance && boltType == RepeatBoltType.RepeatExplosiveBolt)
-						{
-							continue;
-						}
+						if (!isSafeDistance && boltType == RepeatBoltType.RepeatExplosiveBolt) continue;
 						return i;
 					}
 
@@ -470,13 +1067,9 @@ namespace Game
 					{
 						RepeatBoltType randomBolt;
 						if (isSafeDistance)
-						{
 							randomBolt = m_repeatCrossbowBolts[m_random.Int(0, m_repeatCrossbowBolts.Length - 1)];
-						}
 						else
-						{
 							randomBolt = m_repeatCrossbowSafeBolts[m_random.Int(0, m_repeatCrossbowSafeBolts.Length - 1)];
-						}
 
 						int newData = RepeatCrossbowBlock.SetDraw(data, 15);
 						newData = RepeatCrossbowBlock.SetRepeatBoltType(newData, randomBolt);
@@ -506,20 +1099,13 @@ namespace Game
 					FlameThrowerBlock.LoadState loadState = FlameThrowerBlock.GetLoadState(data);
 					int ammo = FlameThrowerBlock.GetAmmoCount(data);
 
-					// Si está cargado y con munición, usarlo
-					if (loadState == FlameThrowerBlock.LoadState.Loaded && ammo > 0)
-					{
-						return i;
-					}
+					if (loadState == FlameThrowerBlock.LoadState.Loaded && ammo > 0) return i;
 
-					// Si está vacío o sin munición, recargar instantáneamente con 15 de munición
-					int randomBulletType = m_random.Int(0, 1); // 0 = Fire, 1 = Poison
+					int randomBulletType = m_random.Int(0, 1);
 
 					int newData = FlameThrowerBlock.SetLoadState(data, FlameThrowerBlock.LoadState.Loaded);
 					newData = FlameThrowerBlock.SetAmmoCount(newData, 15);
 					newData = FlameThrowerBlock.SetSwitchState(newData, false);
-
-					// SetBulletType (bits 8-9) replicando la lógica privada del subsystem
 					newData = (newData & ~0x300) | ((randomBulletType & 3) << 8);
 
 					int newValue = Terrain.MakeBlockValue(flameThrowerBlockIndex, 0, newData);
@@ -532,76 +1118,12 @@ namespace Game
 			return -1;
 		}
 
-		private bool IsThrowableLineOfSightClear(Vector3 start, Vector3 end, ComponentCreature target)
-		{
-			float maxDistance = Vector3.Distance(start, end);
-
-			BodyRaycastResult? bodyHit = m_subsystemBodies.Raycast(start, end, 0.1f, (ComponentBody body, float distance) =>
-			{
-				return body.Entity != m_componentCreature.Entity && body.Entity != target.Entity;
-			});
-
-			if (bodyHit.HasValue && bodyHit.Value.Distance < maxDistance)
-			{
-				return false;
-			}
-
-			TerrainRaycastResult? terrainHit = m_subsystemTerrain.Raycast(start, end, false, true, null);
-
-			if (terrainHit.HasValue && terrainHit.Value.Distance < maxDistance - 0.5f)
-			{
-				return false;
-			}
-
-			return true;
-		}
-
-		private bool IsTargetInFront(Vector3 eyePos, Vector3 targetCenter)
-		{
-			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
-			Vector3 dirToTarget = Vector3.Normalize(targetCenter - eyePos);
-			float dot = Vector3.Dot(forward, dirToTarget);
-			return dot >= 0.2f;
-		}
-
-		private bool IsThrowable(int blockIndex)
-		{
-			if (blockIndex <= 0) return false;
-
-			SubsystemBlockBehavior[] behaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(blockIndex);
-			for (int i = 0; i < behaviors.Length; i++)
-			{
-				if (behaviors[i] is SubsystemThrowableBlockBehavior)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private int FindThrowableSlot()
-		{
-			IInventory inventory = m_componentMiner.Inventory;
-			if (inventory == null) return -1;
-
-			for (int i = 0; i < inventory.SlotsCount; i++)
-			{
-				int value = inventory.GetSlotValue(i);
-				if (inventory.GetSlotCount(i) > 0 && IsThrowable(Terrain.ExtractContents(value)))
-				{
-					return i;
-				}
-			}
-			return -1;
-		}
-
 		private void FireWeapon(int musketBlockIndex, Ray3 aimRay)
 		{
 			IInventory inventory = m_componentMiner.Inventory;
 			if (inventory == null) return;
 
 			int slot = inventory.ActiveSlotIndex;
-
 			bool isTripleShot = m_random.Bool(0.05f);
 
 			if (isTripleShot)
@@ -635,6 +1157,82 @@ namespace Game
 			m_componentMiner.Aim(aimRay, AimState.Completed);
 		}
 
+		#endregion
+
+		#region Utility
+
+		private bool IsThrowableLineOfSightClear(Vector3 start, Vector3 end, ComponentCreature target)
+		{
+			float maxDistance = Vector3.Distance(start, end);
+
+			BodyRaycastResult? bodyHit = m_subsystemBodies.Raycast(start, end, 0.1f, (ComponentBody body, float distance) =>
+			{
+				return body.Entity != m_componentCreature.Entity && body.Entity != target.Entity;
+			});
+
+			if (bodyHit.HasValue && bodyHit.Value.Distance < maxDistance) return false;
+
+			TerrainRaycastResult? terrainHit = m_subsystemTerrain.Raycast(start, end, false, true, null);
+			if (terrainHit.HasValue && terrainHit.Value.Distance < maxDistance - 0.5f) return false;
+
+			return true;
+		}
+
+		private bool IsTargetInFront(Vector3 eyePos, Vector3 targetCenter)
+		{
+			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
+			Vector3 dirToTarget = Vector3.Normalize(targetCenter - eyePos);
+			float dot = Vector3.Dot(forward, dirToTarget);
+			return dot >= 0.2f;
+		}
+
+		private bool IsThrowable(int blockIndex)
+		{
+			if (blockIndex <= 0) return false;
+
+			SubsystemBlockBehavior[] behaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(blockIndex);
+			for (int i = 0; i < behaviors.Length; i++)
+			{
+				if (behaviors[i] is SubsystemThrowableBlockBehavior) return true;
+			}
+			return false;
+		}
+
+		private int FindThrowableSlot()
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return -1;
+
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int value = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0)
+				{
+					int blockId = Terrain.ExtractContents(value);
+
+					if (blockId == MusketBlock.Index || blockId == ImprovedMusketBlock.Index ||
+						blockId == BowBlock.Index || blockId == CrossbowBlock.Index ||
+						blockId == RepeatCrossbowBlock.Index || blockId == FlameThrowerBlock.Index)
+						continue;
+
+					bool isFirearm = false;
+					for (int j = 0; j < m_firearmsList.Count; j++)
+					{
+						int firearmIndex = m_firearmsList[j].GetBlockIndex();
+						if (firearmIndex >= 0 && firearmIndex == blockId)
+						{
+							isFirearm = true;
+							break;
+						}
+					}
+					if (isFirearm) continue;
+
+					if (IsThrowable(blockId)) return i;
+				}
+			}
+			return -1;
+		}
+
 		private int FindBlockSlot(int blockIndex)
 		{
 			IInventory inventory = m_componentMiner.Inventory;
@@ -642,10 +1240,7 @@ namespace Game
 
 			for (int i = 0; i < inventory.SlotsCount; i++)
 			{
-				if (Terrain.ExtractContents(inventory.GetSlotValue(i)) == blockIndex)
-				{
-					return i;
-				}
+				if (Terrain.ExtractContents(inventory.GetSlotValue(i)) == blockIndex) return i;
 			}
 			return -1;
 		}
@@ -659,14 +1254,10 @@ namespace Game
 			{
 				int value = inventory.GetSlotValue(i);
 				int contents = Terrain.ExtractContents(value);
-
 				if (contents == 0) continue;
 
 				Block block = BlocksManager.Blocks[contents];
-				if (block.GetMeleePower(value) > 1f)
-				{
-					return i;
-				}
+				if (block.GetMeleePower(value) > 1f) return i;
 			}
 			return -1;
 		}
@@ -682,6 +1273,10 @@ namespace Game
 			m_componentMiner.Inventory.ActiveSlotIndex = slot;
 		}
 
+		#endregion
+
+		#region Stop / Cancel
+
 		private void StopThrowableCombat()
 		{
 			if (m_isAimingThrowable)
@@ -691,10 +1286,10 @@ namespace Game
 					Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
 					Vector3 forward = m_componentCreature.ComponentCreatureModel.EyeRotation.GetForwardVector();
 					Ray3 aimRay = new Ray3(eyePos, forward);
-
 					m_componentMiner.Aim(aimRay, AimState.Cancelled);
 				}
 				m_isAimingThrowable = false;
+				m_throwableAimTimer = 0f;
 			}
 		}
 
@@ -707,11 +1302,13 @@ namespace Game
 					Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
 					Vector3 forward = m_componentCreature.ComponentCreatureModel.EyeRotation.GetForwardVector();
 					Ray3 aimRay = new Ray3(eyePos, forward);
-
 					m_componentMiner.Aim(aimRay, AimState.Cancelled);
 				}
 				m_isAiming = false;
+				m_aimTimer = 0f;
 			}
+
+			m_cooldownTimer = 0f;
 
 			if (restoreSlot && m_originalActiveSlot >= 0 && m_componentMiner.Inventory != null)
 			{
@@ -723,7 +1320,10 @@ namespace Game
 		private void StopAllCombat()
 		{
 			StopThrowableCombat();
+			CancelFirearmAim();
 			StopRangedCombat(true);
 		}
+
+		#endregion
 	}
 }
