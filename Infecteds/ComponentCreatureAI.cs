@@ -11,6 +11,8 @@ namespace Game
 		public Vector2 RangedDistanceRange = new Vector2(5f, 100f);
 		public float MusketAimTime = 1.5f;
 		public float MusketCooldown = 0.01f;
+		public float BowAimTime = 1.5f;
+		public float BowCooldown = 0.01f;
 		public float CrossbowAimTime = 1.5f;
 		public float CrossbowCooldown = 0.01f;
 
@@ -41,6 +43,16 @@ namespace Game
 		private bool m_isAimingThrowable;
 
 		private Random m_random = new Random();
+
+		private static readonly ArrowBlock.ArrowType[] m_bowArrows = new ArrowBlock.ArrowType[]
+		{
+			ArrowBlock.ArrowType.WoodenArrow,
+			ArrowBlock.ArrowType.StoneArrow,
+			ArrowBlock.ArrowType.CopperArrow,
+			ArrowBlock.ArrowType.IronArrow,
+			ArrowBlock.ArrowType.DiamondArrow,
+			ArrowBlock.ArrowType.FireArrow
+		};
 
 		private static readonly ArrowBlock.ArrowType[] m_crossbowBolts = new ArrowBlock.ArrowType[]
 		{
@@ -159,11 +171,13 @@ namespace Game
 				}
 			}
 
-			// 2. LÓGICA DE RANGO (MOSQUETE Y BALLESTA)
+			// 2. LÓGICA DE RANGO (MOSQUETE, ARCO Y BALLESTA)
 			int musketBlockIndex = BlocksManager.GetBlockIndex<MusketBlock>(false, false);
+			int bowBlockIndex = BlocksManager.GetBlockIndex<BowBlock>(false, false);
 			int crossbowBlockIndex = BlocksManager.GetBlockIndex<CrossbowBlock>(false, false);
 
 			int musketSlot = FindBlockSlot(musketBlockIndex);
+			int bowSlot = bowBlockIndex > 0 ? FindAndLoadBowSlot(bowBlockIndex) : -1;
 			int crossbowSlot = crossbowBlockIndex > 0 ? FindAndLoadCrossbowSlot(crossbowBlockIndex) : -1;
 			int meleeSlot = FindMeleeWeaponSlot();
 			bool hasMeleeWeapon = meleeSlot >= 0;
@@ -177,6 +191,12 @@ namespace Game
 			{
 				activeRangedSlot = musketSlot;
 				isMusket = true;
+			}
+			else if (bowSlot >= 0)
+			{
+				activeRangedSlot = bowSlot;
+				currentAimTime = BowAimTime;
+				currentCooldown = BowCooldown;
 			}
 			else if (crossbowSlot >= 0)
 			{
@@ -232,18 +252,18 @@ namespace Game
 				}
 				else
 				{
-					// Interceptar el proyectil para hacer que el virote desaparezca al caer
+					// Interceptar el proyectil para hacer que la flecha/virote desaparezca al caer
 					SubsystemProjectiles subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
-					Action<Projectile> onBoltFired = null;
-					onBoltFired = (Projectile p) =>
+					Action<Projectile> onArrowFired = null;
+					onArrowFired = (Projectile p) =>
 					{
 						if (p != null && p.Owner == m_componentCreature && Terrain.ExtractContents(p.Value) == ArrowBlock.Index)
 						{
 							p.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
 						}
-						subsystemProjectiles.ProjectileAdded -= onBoltFired;
+						subsystemProjectiles.ProjectileAdded -= onArrowFired;
 					};
-					subsystemProjectiles.ProjectileAdded += onBoltFired;
+					subsystemProjectiles.ProjectileAdded += onArrowFired;
 
 					m_componentMiner.Aim(aimRay, AimState.Completed);
 				}
@@ -251,6 +271,43 @@ namespace Game
 				m_lastRangedTime = gameTime;
 				m_isAiming = false;
 			}
+		}
+
+		private int FindAndLoadBowSlot(int bowBlockIndex)
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return -1;
+
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int value = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(value) == bowBlockIndex)
+				{
+					int data = Terrain.ExtractData(value);
+					int draw = BowBlock.GetDraw(data);
+					ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
+
+					// Si ya está completamente cargado, usarlo
+					if (draw == 15 && arrowType != null)
+					{
+						return i;
+					}
+
+					// Si está sin cargar, cargarlo instantáneamente con una flecha aleatoria
+					if (draw == 0)
+					{
+						ArrowBlock.ArrowType randomArrow = m_bowArrows[m_random.Int(0, m_bowArrows.Length - 1)];
+						int newData = BowBlock.SetDraw(data, 15);
+						newData = BowBlock.SetArrowType(newData, randomArrow);
+						int newValue = Terrain.MakeBlockValue(bowBlockIndex, 0, newData);
+
+						inventory.RemoveSlotItems(i, 1);
+						inventory.AddSlotItems(i, newValue, 1);
+						return i;
+					}
+				}
+			}
+			return -1;
 		}
 
 		private int FindAndLoadCrossbowSlot(int crossbowBlockIndex)
