@@ -34,6 +34,59 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("ManageCameras", this);
 		ModsManager.RegisterHook("OnVitalStatsUpdateSleep", this);
 		ModsManager.RegisterHook("OnProjectileHitBody", this);
+		ModsManager.RegisterHook("ProcessAttackment", this);
+	}
+
+	/// Aplica protección de armadura de ComponentCreatureClothing a criaturas
+	/// que no son jugadores (el ComponentClothing del jugador ya se maneja en vanilla)
+	public override void ProcessAttackment(Attackment attackment)
+	{
+		// Verificaciones de seguridad
+		if (attackment?.Target == null) return;
+		if (attackment.AttackPower <= 0f) return;
+		if (!attackment.EnableArmorProtection) return;
+
+		// Si el objetivo ya tiene ComponentClothing (jugador), no intervenir
+		// porque el sistema vanilla ya lo maneja
+		if (attackment.Target.FindComponent<ComponentClothing>() != null) return;
+
+		// Buscar ComponentCreatureClothing en la criatura objetivo
+		ComponentCreatureClothing creatureClothing = attackment.Target.FindComponent<ComponentCreatureClothing>();
+
+		if (creatureClothing != null)
+		{
+			// Guardar el daño original ANTES de la protección
+			float originalPower = attackment.AttackPower;
+
+			// Aplicar la protección de armadura de la ropa de la criatura
+			// Esto reduce attackment.AttackPower y daña la ropa según su protección
+			float remainingDamage = creatureClothing.ApplyArmorProtection(attackment);
+
+			// Actualizar el poder de ataque con el daño restante después de la protección
+			attackment.AttackPower = remainingDamage;
+
+			// ============================================================
+			// CORRECCIÓN PRINCIPAL: Si la armadura absorbió TODO el daño,
+			// el flujo normal NO disparará el evento Injured (porque 
+			// CalculateInjuryAmount retorna 0 cuando AttackPower <= 0).
+			// Necesitamos dispararlo MANUALMENTE para que los ChaseBehaviors
+			// (ComponentChaseBehavior, ComponentNewChaseBehavior, etc.)
+			// reaccionen y persigan al atacante.
+			// ============================================================
+			if (remainingDamage <= 0f && originalPower > 0f)
+			{
+				ComponentHealth health = attackment.Target.FindComponent<ComponentHealth>();
+				ComponentCreature attacker = attackment.Attacker?.FindComponent<ComponentCreature>();
+
+				// Solo disparar si hay un atacante válido y el evento tiene suscriptores
+				if (health?.Injured != null && attacker != null)
+				{
+					// AttackInjury con daño 0: no afecta la salud pero activa los ChaseBehaviors
+					// porque ellos solo verifican injury.Attacker, no injury.Amount
+					health.Injured.Invoke(new AttackInjury(0f, attackment));
+				}
+			}
+		}
 	}
 
 	public override void OnProjectileHitBody(Projectile projectile, BodyRaycastResult bodyRaycastResult, ref Attackment attackment, ref Vector3 velocityAfterAttack, ref Vector3 angularVelocityAfterAttack, ref bool ignoreBody)
