@@ -80,11 +80,19 @@ namespace Game
 
 		/// <summary>
 		/// Creature with its objects - Equipa a la criatura con objetos específicos al aparecer.
+		/// Solo se ejecuta si el inventario está completamente vacío.
 		/// </summary>
 		public virtual void EquipCreatureWithObjects(string creatureName)
 		{
 			IInventory inventory = this.Inventory;
 			if (inventory == null)
+			{
+				return;
+			}
+
+			// VERIFICAR SI EL INVENTARIO YA TIENE ALGÚN OBJETO
+			// Si tiene algo, no agregar nada (evita duplicados al recargar el mundo)
+			if (!this.IsInventoryEmpty(inventory))
 			{
 				return;
 			}
@@ -185,7 +193,6 @@ namespace Game
 				}
 				else if (roll < 95)
 				{
-					// UNA sola lanza aleatoria
 					int spear = spears[this.m_random.Int(0, spears.Length - 1)];
 					if (spear >= 0)
 					{
@@ -194,6 +201,25 @@ namespace Game
 				}
 				// else roll 95-99: Inventario vacío
 			}
+		}
+
+		/// <summary>
+		/// Verifica si el inventario está completamente vacío.
+		/// </summary>
+		public virtual bool IsInventoryEmpty(IInventory inventory)
+		{
+			if (inventory == null)
+			{
+				return false;
+			}
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				if (inventory.GetSlotCount(i) > 0)
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
@@ -474,7 +500,6 @@ namespace Game
 		public virtual bool TryAddPickable(Pickable pickable)
 		{
 			if (!this.ShouldCollectPickable(pickable))
-
 			{
 				return false;
 			}
