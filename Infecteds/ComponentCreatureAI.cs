@@ -20,6 +20,8 @@ namespace Game
 		public float ThrowableAimTime = 1.5f;
 		public float ThrowableCooldown = 0.01f;
 
+		public Vector2 SafeDistanceForExplosives = new Vector2(20f, 100f);
+
 		// Loaded from XML
 		public bool CanUseInventory;
 
@@ -59,6 +61,12 @@ namespace Game
 			ArrowBlock.ArrowType.IronBolt,
 			ArrowBlock.ArrowType.DiamondBolt,
 			ArrowBlock.ArrowType.ExplosiveBolt
+		};
+
+		private static readonly ArrowBlock.ArrowType[] m_crossbowSafeBolts = new ArrowBlock.ArrowType[]
+		{
+			ArrowBlock.ArrowType.IronBolt,
+			ArrowBlock.ArrowType.DiamondBolt
 		};
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -178,7 +186,7 @@ namespace Game
 
 			int musketSlot = FindBlockSlot(musketBlockIndex);
 			int bowSlot = bowBlockIndex > 0 ? FindAndLoadBowSlot(bowBlockIndex) : -1;
-			int crossbowSlot = crossbowBlockIndex > 0 ? FindAndLoadCrossbowSlot(crossbowBlockIndex) : -1;
+			int crossbowSlot = crossbowBlockIndex > 0 ? FindAndLoadCrossbowSlot(crossbowBlockIndex, distance) : -1;
 			int meleeSlot = FindMeleeWeaponSlot();
 			bool hasMeleeWeapon = meleeSlot >= 0;
 
@@ -310,10 +318,12 @@ namespace Game
 			return -1;
 		}
 
-		private int FindAndLoadCrossbowSlot(int crossbowBlockIndex)
+		private int FindAndLoadCrossbowSlot(int crossbowBlockIndex, float distanceToTarget)
 		{
 			IInventory inventory = m_componentMiner.Inventory;
 			if (inventory == null) return -1;
+
+			bool isSafeDistance = distanceToTarget >= SafeDistanceForExplosives.X;
 
 			for (int i = 0; i < inventory.SlotsCount; i++)
 			{
@@ -324,16 +334,32 @@ namespace Game
 					int draw = CrossbowBlock.GetDraw(data);
 					ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
 
-					// Si ya está completamente cargada, usarla
+					// Si ya está completamente cargada
 					if (draw == 15 && arrowType != null)
 					{
+						// Si está cargada con explosivo pero estamos muy cerca, ignorar este slot y buscar otro
+						if (!isSafeDistance && arrowType == ArrowBlock.ArrowType.ExplosiveBolt)
+						{
+							continue;
+						}
 						return i;
 					}
 
-					// Si está descargada, cargarla instantáneamente con un virote aleatorio
+					// Si está descargada, cargarla instantáneamente
 					if (draw == 0)
 					{
-						ArrowBlock.ArrowType randomBolt = m_crossbowBolts[m_random.Int(0, m_crossbowBolts.Length - 1)];
+						ArrowBlock.ArrowType randomBolt;
+
+						// Elegir virote dependiendo de si estamos a distancia segura
+						if (isSafeDistance)
+						{
+							randomBolt = m_crossbowBolts[m_random.Int(0, m_crossbowBolts.Length - 1)];
+						}
+						else
+						{
+							randomBolt = m_crossbowSafeBolts[m_random.Int(0, m_crossbowSafeBolts.Length - 1)];
+						}
+
 						int newData = CrossbowBlock.SetDraw(data, 15);
 						newData = CrossbowBlock.SetArrowType(newData, randomBolt);
 						int newValue = Terrain.MakeBlockValue(crossbowBlockIndex, 0, newData);
