@@ -18,6 +18,8 @@ namespace Game
 		public float CrossbowCooldown = 0.01f;
 		public float RepeatCrossbowAimTime = 1.5f;
 		public float RepeatCrossbowCooldown = 0.01f;
+		public float FlameThrowerAimTime = 1.5f;
+		public float FlameThrowerCooldown = 0.01f;
 
 		public Vector2 DistanceForUseOfThrowableObjects = new Vector2(5f, 15f);
 		public float ThrowableAimTime = 1.5f;
@@ -203,16 +205,18 @@ namespace Game
 				}
 			}
 
-			// 2. LÓGICA DE RANGO (MOSQUETE, ARCO, BALLESTA Y BALLESTA REPETIDORA)
+			// 2. LÓGICA DE RANGO (MOSQUETE, ARCO, BALLESTA, BALLESTA REPETIDORA Y LANZALLAMAS)
 			int musketBlockIndex = BlocksManager.GetBlockIndex<MusketBlock>(false, false);
 			int bowBlockIndex = BlocksManager.GetBlockIndex<BowBlock>(false, false);
 			int crossbowBlockIndex = BlocksManager.GetBlockIndex<CrossbowBlock>(false, false);
 			int repeatCrossbowBlockIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>(false, false);
+			int flameThrowerBlockIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>(false, false);
 
 			int musketSlot = FindBlockSlot(musketBlockIndex);
 			int bowSlot = bowBlockIndex > 0 ? FindAndLoadBowSlot(bowBlockIndex) : -1;
 			int crossbowSlot = crossbowBlockIndex > 0 ? FindAndLoadCrossbowSlot(crossbowBlockIndex, distance) : -1;
 			int repeatCrossbowSlot = repeatCrossbowBlockIndex > 0 ? FindAndLoadRepeatCrossbowSlot(repeatCrossbowBlockIndex, distance) : -1;
+			int flameThrowerSlot = flameThrowerBlockIndex > 0 ? FindAndLoadFlameThrowerSlot(flameThrowerBlockIndex) : -1;
 
 			int meleeSlot = FindMeleeWeaponSlot();
 			bool hasMeleeWeapon = meleeSlot >= 0;
@@ -244,6 +248,12 @@ namespace Game
 				activeRangedSlot = repeatCrossbowSlot;
 				currentAimTime = RepeatCrossbowAimTime;
 				currentCooldown = RepeatCrossbowCooldown;
+			}
+			else if (flameThrowerSlot >= 0)
+			{
+				activeRangedSlot = flameThrowerSlot;
+				currentAimTime = FlameThrowerAimTime;
+				currentCooldown = FlameThrowerCooldown;
 			}
 
 			bool shouldUseRanged = activeRangedSlot >= 0 &&
@@ -293,23 +303,6 @@ namespace Game
 				}
 				else
 				{
-					// Interceptar el proyectil para hacer que desaparezca al caer (Flechas, Virotes y Virotes Repetidores)
-					SubsystemProjectiles subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
-					Action<Projectile> onArrowFired = null;
-					onArrowFired = (Projectile p) =>
-					{
-						if (p != null && p.Owner == m_componentCreature)
-						{
-							int contents = Terrain.ExtractContents(p.Value);
-							if (contents == ArrowBlock.Index || contents == RepeatBoltBlock.Index)
-							{
-								p.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-							}
-						}
-						subsystemProjectiles.ProjectileAdded -= onArrowFired;
-					};
-					subsystemProjectiles.ProjectileAdded += onArrowFired;
-
 					m_componentMiner.Aim(aimRay, AimState.Completed);
 				}
 
@@ -420,7 +413,6 @@ namespace Game
 					RepeatBoltType? boltType = RepeatCrossbowBlock.GetRepeatBoltType(data);
 					int count = RepeatCrossbowBlock.GetCount(data);
 
-					// Si ya está completamente cargada y con munición
 					if (draw == 15 && boltType != null && count > 0)
 					{
 						if (!isSafeDistance && boltType == RepeatBoltType.RepeatExplosiveBolt)
@@ -430,7 +422,6 @@ namespace Game
 						return i;
 					}
 
-					// Si está vacía o se quedó sin balas, recargar instantáneamente con 1 solo virote
 					if (count == 0 || (draw == 0 && boltType == null))
 					{
 						RepeatBoltType randomBolt;
@@ -445,13 +436,53 @@ namespace Game
 
 						int newData = RepeatCrossbowBlock.SetDraw(data, 15);
 						newData = RepeatCrossbowBlock.SetRepeatBoltType(newData, randomBolt);
-						newData = RepeatCrossbowBlock.SetCount(newData, 1); // Carga 1 para que no muestre 8/8
+						newData = RepeatCrossbowBlock.SetCount(newData, 1);
 						int newValue = Terrain.MakeBlockValue(repeatCrossbowBlockIndex, 0, newData);
 
 						inventory.RemoveSlotItems(i, 1);
 						inventory.AddSlotItems(i, newValue, 1);
 						return i;
 					}
+				}
+			}
+			return -1;
+		}
+
+		private int FindAndLoadFlameThrowerSlot(int flameThrowerBlockIndex)
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return -1;
+
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int value = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(value) == flameThrowerBlockIndex)
+				{
+					int data = Terrain.ExtractData(value);
+					FlameThrowerBlock.LoadState loadState = FlameThrowerBlock.GetLoadState(data);
+					int ammo = FlameThrowerBlock.GetAmmoCount(data);
+
+					// Si está cargado y con munición, usarlo
+					if (loadState == FlameThrowerBlock.LoadState.Loaded && ammo > 0)
+					{
+						return i;
+					}
+
+					// Si está vacío o sin munición, recargar instantáneamente con 15 de munición
+					int randomBulletType = m_random.Int(0, 1); // 0 = Fire, 1 = Poison
+
+					int newData = FlameThrowerBlock.SetLoadState(data, FlameThrowerBlock.LoadState.Loaded);
+					newData = FlameThrowerBlock.SetAmmoCount(newData, 15);
+					newData = FlameThrowerBlock.SetSwitchState(newData, false);
+
+					// SetBulletType (bits 8-9) replicando la lógica privada del subsystem
+					newData = (newData & ~0x300) | ((randomBulletType & 3) << 8);
+
+					int newValue = Terrain.MakeBlockValue(flameThrowerBlockIndex, 0, newData);
+
+					inventory.RemoveSlotItems(i, 1);
+					inventory.AddSlotItems(i, newValue, 1);
+					return i;
 				}
 			}
 			return -1;
