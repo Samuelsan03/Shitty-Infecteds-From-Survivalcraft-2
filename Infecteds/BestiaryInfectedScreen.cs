@@ -117,7 +117,13 @@ namespace Game
 			XElement node = ContentManager.Get<XElement>("Widgets/BestiaryItem");
 			ContainerWidget widget = (ContainerWidget)Widget.LoadWidget(this, node, null);
 			ModelWidget model = widget.Children.Find<ModelWidget>("BestiaryItem.Model", true);
-			BestiaryScreen.SetupBestiaryModelWidget(info, model, new Vector3(-1f, 0f, -1f), false, false);
+
+			// ALTERNAR DIRECCIÓN: par = izquierda (-1,0,-1), impar = derecha (1,0,-1)
+			Vector3 offset = (m_creaturesList.Items.IndexOf(item) % 2 == 0)
+				? new Vector3(-1f, 0f, -1f)
+				: new Vector3(1f, 0f, -1f);
+
+			BestiaryScreen.SetupBestiaryModelWidget(info, model, offset, false, false);
 			widget.Children.Find<LabelWidget>("BestiaryItem.Text", true).Text = info.DisplayName;
 			widget.Children.Find<LabelWidget>("BestiaryItem.Details", true).Text = info.Description;
 			return widget;
