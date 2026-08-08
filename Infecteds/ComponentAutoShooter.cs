@@ -8,7 +8,6 @@ namespace Game
 {
 	public class ComponentAutoShooter : Component, IUpdateable
 	{
-		// Enum de estado de lanzamiento
 		public enum ShooterState
 		{
 			Inactive,
@@ -18,7 +17,7 @@ namespace Game
 		private Dictionary<string, int> m_blocksToShoot = new Dictionary<string, int>();
 		private float m_timeToRelaunch = 1.0f;
 		private Vector2 m_minimumDistanceToAvoid = new Vector2(5f, 0f);
-		private float m_lastFireTime;
+		private double m_nextFireTime = 0.0;  // Tiempo absoluto para el próximo disparo
 		private Random m_random = new Random();
 
 		private ShooterState m_state = ShooterState.Inactive;
@@ -36,7 +35,6 @@ namespace Game
 		private ComponentNewChaseBehavior m_componentNewChaseBehavior;
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
-
 		public ShooterState State => m_state;
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
@@ -70,10 +68,15 @@ namespace Game
 			}
 
 			m_timeToRelaunch = valuesDictionary.GetValue<float>("TimeToRelaunch");
+			if (m_timeToRelaunch < 0f) m_timeToRelaunch = 0f;
+
+			// Inicializamos el próximo disparo para que pueda ocurrir inmediatamente
+			m_nextFireTime = 0.0;
 		}
 
 		public void Update(float dt)
 		{
+			// Salud del dueño
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 			{
 				m_state = ShooterState.Inactive;
@@ -81,13 +84,13 @@ namespace Game
 			}
 
 			ComponentBody target = GetChaseTarget();
-
 			if (target == null || m_blocksToShoot.Count == 0)
 			{
 				m_state = ShooterState.Inactive;
 				return;
 			}
 
+			// Distancia mínima (no disparar si está muy cerca)
 			float distance = Vector3.Distance(m_componentBody.Position, target.Position);
 			if (distance <= m_minimumDistanceToAvoid.X)
 			{
@@ -95,15 +98,19 @@ namespace Game
 				return;
 			}
 
-			if (m_subsystemTime.GameTime - m_lastFireTime < m_timeToRelaunch)
+			// Cooldown: solo disparar si ha pasado suficiente tiempo
+			if (m_subsystemTime.GameTime < m_nextFireTime)
 			{
 				m_state = ShooterState.Inactive;
 				return;
 			}
 
+			// Si llegamos aquí, podemos disparar
 			m_state = ShooterState.Shooting;
 			ShootAtTarget(target);
-			m_lastFireTime = (float)m_subsystemTime.GameTime;
+
+			// Programar el próximo disparo
+			m_nextFireTime = m_subsystemTime.GameTime + m_timeToRelaunch;
 		}
 
 		private ComponentBody GetChaseTarget()
@@ -134,7 +141,7 @@ namespace Game
 
 		private void ShootAtTarget(ComponentBody target)
 		{
-			// Animación de lanzamiento (del código original 生物远程攻击行为 del DayZ Mod)
+			// Animación de lanzamiento (similar al código DayZ)
 			if (m_componentCreature != null)
 			{
 				ComponentHumanModel componentHumanModel = m_componentCreature.ComponentCreatureModel as ComponentHumanModel;
@@ -167,7 +174,6 @@ namespace Game
 								 MathF.Abs(halfSize.Y * direction.Y) +
 								 MathF.Abs(halfSize.Z * direction.Z) +
 								 0.15f;
-
 			safeDistance = MathUtils.Max(safeDistance, 1.0f);
 
 			Vector3 shootPos = myCenter + safeDistance * direction;
@@ -182,11 +188,8 @@ namespace Game
 			float speed = m_random.Float(39f, 41f);
 			Vector3 velocity = speed * (direction + m_random.Vector3(0.025f) + new Vector3(0f, 0.05f, 0f));
 			Projectile projectile = m_subsystemProjectiles.CreateProjectile(value, firePosition, velocity, Vector3.Zero, null);
-
 			projectile.OwnerEntity = Entity;
-
 			m_subsystemProjectiles.FireProjectileFast(projectile);
-
 			m_subsystemAudio.PlaySound("Audio/Throw", 1f, 0f, new Vector3(shootPos.X, shootPos.Y, shootPos.Z), 4f, true);
 		}
 
