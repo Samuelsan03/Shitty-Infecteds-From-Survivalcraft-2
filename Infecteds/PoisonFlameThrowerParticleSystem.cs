@@ -6,24 +6,30 @@ namespace Game
 {
 	public class PoisonFlameThrowerParticleSystem : ParticleSystem<PoisonFlameThrowerParticleSystem.Particle>
 	{
-		public bool IsStopped { get; set; }
-		public Vector3 Position { get => m_position; set => m_position = value; }
-		public Vector3 Direction { get => m_direction; set => m_direction = Vector3.Normalize(value); }
+		public Vector3 Position { get; set; }
 
-		private Vector3 m_position;
-		private Vector3 m_direction = Vector3.UnitY;
-		private float m_size;
-		private float m_toGenerate;
-		private bool m_visible;
-		private float m_maxVisibilityDistance;
-		private float m_age;
+		public Vector3 Direction { get; set; }
+
+		public bool IsStopped { get; set; }
+
 		private Random m_random = new Random();
 
-		public PoisonFlameThrowerParticleSystem(Vector3 position, Vector3 direction, float size, float maxVisibilityDistance)
-			: base(150) // AUMENTADO
+		private float m_size;
+
+		private float m_maxVisibilityDistance;
+
+		private float m_toGenerate;
+
+		private float m_age;
+
+		private bool m_visible;
+
+		private Vector3? m_lastPosition;
+
+		public PoisonFlameThrowerParticleSystem(Vector3 position, Vector3 direction, float size, float maxVisibilityDistance) : base(200)
 		{
-			m_position = position;
-			m_direction = Vector3.Normalize(direction);
+			Position = position;
+			Direction = direction;
 			m_size = size;
 			m_maxVisibilityDistance = maxVisibilityDistance;
 			Texture = ContentManager.Get<Texture2D>("Textures/PukeParticle");
@@ -33,80 +39,91 @@ namespace Game
 		public override bool Simulate(float dt)
 		{
 			m_age += dt;
-			bool flag = false;
-
-			if (m_visible || m_age < 2f)
+			float generationRate = 180f;
+			m_toGenerate += (IsStopped ? 0f : (generationRate * dt));
+			if (m_lastPosition == null)
 			{
-				m_toGenerate += (IsStopped ? 0f : (80f * dt)); // AUMENTADO
-
-				float s = MathF.Pow(0.15f, dt); // REDUCIDO
-				Vector3 v = new Vector3(0f, -1f, 0f); // El veneno tiene una ligera caída hacia abajo al perder velocidad
-
-				for (int i = 0; i < Particles.Length; i++)
+				m_lastPosition = new Vector3?(Position);
+			}
+			bool flag = false;
+			Vector3 dir = Vector3.Normalize(Direction);
+			Vector3 right = Vector3.Normalize(Vector3.Cross(dir, Vector3.UnitY));
+			if (right.LengthSquared() < 0.001f)
+			{
+				right = Vector3.UnitX;
+			}
+			Vector3 up = Vector3.Normalize(Vector3.Cross(dir, right));
+			float drag = MathF.Pow(0.08f, dt);
+			for (int i = 0; i < Particles.Length; i++)
+			{
+				Particle particle = Particles[i];
+				if (particle.IsActive)
 				{
-					Particle particle = Particles[i];
-
-					if (particle.IsActive)
+					flag = true;
+					particle.Time += dt;
+					particle.TimeToLive -= dt;
+					if (particle.TimeToLive > 0f)
 					{
-						flag = true;
-						particle.Time += dt;
-
-						if (particle.Time <= particle.Duration)
-						{
-							particle.Position += particle.Velocity * dt;
-							particle.Velocity *= s;
-							particle.Velocity += v * dt;
-							particle.TextureSlot = (int)MathUtils.Min(9f * particle.Time / particle.Duration, 8f);
-						}
-						else
-						{
-							particle.IsActive = false;
-						}
+						particle.Position += particle.Velocity * dt;
+						particle.Velocity *= drag;
+						particle.Position.Y += particle.Buoyancy * dt;
+						float ageRatio = particle.Time / particle.Duration;
+						particle.TextureSlot = (int)MathUtils.Min(9f * ageRatio, 8f);
 					}
-					else if (m_toGenerate >= 1f)
+					else
 					{
-						particle.IsActive = true;
-
-						Vector3 v2 = new Vector3(m_random.Float(-1f, 1f), m_random.Float(-1f, 1f), m_random.Float(-1f, 1f));
-						particle.Position = m_position + 0.3f * v2 * m_size;
-
-						particle.Color = new Color(0, 255, 0);
-
-						// Velocidad ligeramente menor para que se sienta más pesado
-						particle.Velocity = m_random.Float(90f, 130f) * (m_direction + 0.15f * v2);
-
-						particle.Time = 0f;
-						particle.Duration = m_random.Float(0.3f, 0.7f);
-						particle.Size = new Vector2(m_size * m_random.Float(2.5f, 4f)); // AUMENTADO
-						particle.FlipX = (m_random.Int(0, 1) == 0);
-						particle.FlipY = (m_random.Int(0, 1) == 0);
-						m_toGenerate -= 1f;
+						particle.IsActive = false;
 					}
 				}
-
-				m_toGenerate = MathUtils.Remainder(m_toGenerate, 1f);
+				else if (!IsStopped && m_toGenerate >= 1f)
+				{
+					particle.IsActive = true;
+					float lerpT = m_random.Float(0f, 1f);
+					particle.Position = Vector3.Lerp(m_lastPosition.Value, Position, lerpT);
+					float spreadAngle = 0.1f + 0.05f * MathUtils.Saturate(m_age * 0.5f);
+					Vector3 spread = m_random.Float(-spreadAngle, spreadAngle) * right + m_random.Float(-spreadAngle, spreadAngle) * up;
+					Vector3 particleDir = Vector3.Normalize(dir + spread);
+					float speed = m_random.Float(14f, 100f);
+					particle.Velocity = speed * particleDir;
+					float sizeVar = m_random.Float(2.3f, 1.3f);
+					particle.Size = new Vector2(m_size * sizeVar);
+					particle.Time = 0f;
+					particle.Duration = m_random.Float(0.2f, 0.5f);
+					particle.TimeToLive = particle.Duration;
+					particle.Buoyancy = m_random.Float(0.2f, 1.0f);
+					particle.Color = new Color(50, 200, 50);
+					particle.FlipX = m_random.Bool();
+					particle.FlipY = m_random.Bool();
+					m_toGenerate -= 1f;
+				}
 			}
-
-			m_visible = false;
+			m_toGenerate = MathUtils.Remainder(m_toGenerate, 1f);
+			m_lastPosition = new Vector3?(Position);
 			return IsStopped && !flag;
 		}
 
 		public override void Draw(Camera camera)
 		{
-			float num = Vector3.Dot(m_position - camera.ViewPosition, camera.ViewDirection);
-			if (num > -0.5f && num <= m_maxVisibilityDistance &&
-				Vector3.DistanceSquared(m_position, camera.ViewPosition) <= m_maxVisibilityDistance * m_maxVisibilityDistance)
+			float num = Vector3.Dot(Position - camera.ViewPosition, camera.ViewDirection);
+			if (num > -0.5f && num <= m_maxVisibilityDistance && Vector3.DistanceSquared(Position, camera.ViewPosition) <= m_maxVisibilityDistance * m_maxVisibilityDistance)
 			{
 				m_visible = true;
 				base.Draw(camera);
 			}
+			m_visible = false;
 		}
 
 		public class Particle : Game.Particle
 		{
 			public Vector3 Velocity;
+
 			public float Time;
+
 			public float Duration;
+
+			public float TimeToLive;
+
+			public float Buoyancy;
 		}
 	}
 }
