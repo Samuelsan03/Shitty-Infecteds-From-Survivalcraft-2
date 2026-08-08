@@ -42,10 +42,15 @@ namespace Game
 					new XAttribute("value", ShittyInfectedsSettings.EnableCreatureBleeding.ToString().ToLower())
 				));
 
-				// NUEVO BLOQUE
 				root.Add(new XElement("EnableFreeCamera",
 					new XAttribute("type", "bool"),
 					new XAttribute("value", ShittyInfectedsSettings.EnableFreeCamera.ToString().ToLower())
+				));
+
+				// NUEVO BLOQUE
+				root.Add(new XElement("EnableBossChaseMusic",
+					new XAttribute("type", "bool"),
+					new XAttribute("value", ShittyInfectedsSettings.EnableBossChaseMusic.ToString().ToLower())
 				));
 
 				using (Stream stream = Storage.OpenFile(SettingsFilePath, OpenFileMode.Create))
@@ -110,6 +115,14 @@ namespace Game
 					{
 						if (bool.TryParse(elem6.Attribute("value")?.Value, out bool val6))
 							ShittyInfectedsSettings.EnableFreeCamera = val6;
+					}
+
+					// NUEVA LÓGICA
+					XElement elem7 = root.Element("EnableBossChaseMusic");
+					if (elem7 != null)
+					{
+						if (bool.TryParse(elem7.Attribute("value")?.Value, out bool val7))
+							ShittyInfectedsSettings.EnableBossChaseMusic = val7;
 					}
 				}
 			}
