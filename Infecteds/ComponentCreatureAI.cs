@@ -2,6 +2,7 @@ using System;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
+using static Game.RepeatBoltBlock;
 
 namespace Game
 {
@@ -15,6 +16,8 @@ namespace Game
 		public float BowCooldown = 0.01f;
 		public float CrossbowAimTime = 1.5f;
 		public float CrossbowCooldown = 0.01f;
+		public float RepeatCrossbowAimTime = 1.5f;
+		public float RepeatCrossbowCooldown = 0.01f;
 
 		public Vector2 DistanceForUseOfThrowableObjects = new Vector2(5f, 15f);
 		public float ThrowableAimTime = 1.5f;
@@ -67,6 +70,27 @@ namespace Game
 		{
 			ArrowBlock.ArrowType.IronBolt,
 			ArrowBlock.ArrowType.DiamondBolt
+		};
+
+		private static readonly RepeatBoltType[] m_repeatCrossbowBolts = new RepeatBoltType[]
+		{
+			RepeatBoltType.RepeatCopperBolt,
+			RepeatBoltType.RepeatIronBolt,
+			RepeatBoltType.RepeatDiamondBolt,
+			RepeatBoltType.RepeatExplosiveBolt,
+			RepeatBoltType.RepeatFireBolt,
+			RepeatBoltType.RepeatPoisonBolt,
+			RepeatBoltType.RepeatSeverelyPoisonousBolt
+		};
+
+		private static readonly RepeatBoltType[] m_repeatCrossbowSafeBolts = new RepeatBoltType[]
+		{
+			RepeatBoltType.RepeatCopperBolt,
+			RepeatBoltType.RepeatIronBolt,
+			RepeatBoltType.RepeatDiamondBolt,
+			RepeatBoltType.RepeatFireBolt,
+			RepeatBoltType.RepeatPoisonBolt,
+			RepeatBoltType.RepeatSeverelyPoisonousBolt
 		};
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -179,14 +203,17 @@ namespace Game
 				}
 			}
 
-			// 2. LÓGICA DE RANGO (MOSQUETE, ARCO Y BALLESTA)
+			// 2. LÓGICA DE RANGO (MOSQUETE, ARCO, BALLESTA Y BALLESTA REPETIDORA)
 			int musketBlockIndex = BlocksManager.GetBlockIndex<MusketBlock>(false, false);
 			int bowBlockIndex = BlocksManager.GetBlockIndex<BowBlock>(false, false);
 			int crossbowBlockIndex = BlocksManager.GetBlockIndex<CrossbowBlock>(false, false);
+			int repeatCrossbowBlockIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>(false, false);
 
 			int musketSlot = FindBlockSlot(musketBlockIndex);
 			int bowSlot = bowBlockIndex > 0 ? FindAndLoadBowSlot(bowBlockIndex) : -1;
 			int crossbowSlot = crossbowBlockIndex > 0 ? FindAndLoadCrossbowSlot(crossbowBlockIndex, distance) : -1;
+			int repeatCrossbowSlot = repeatCrossbowBlockIndex > 0 ? FindAndLoadRepeatCrossbowSlot(repeatCrossbowBlockIndex, distance) : -1;
+
 			int meleeSlot = FindMeleeWeaponSlot();
 			bool hasMeleeWeapon = meleeSlot >= 0;
 
@@ -211,6 +238,12 @@ namespace Game
 				activeRangedSlot = crossbowSlot;
 				currentAimTime = CrossbowAimTime;
 				currentCooldown = CrossbowCooldown;
+			}
+			else if (repeatCrossbowSlot >= 0)
+			{
+				activeRangedSlot = repeatCrossbowSlot;
+				currentAimTime = RepeatCrossbowAimTime;
+				currentCooldown = RepeatCrossbowCooldown;
 			}
 
 			bool shouldUseRanged = activeRangedSlot >= 0 &&
@@ -260,14 +293,18 @@ namespace Game
 				}
 				else
 				{
-					// Interceptar el proyectil para hacer que la flecha/virote desaparezca al caer
+					// Interceptar el proyectil para hacer que desaparezca al caer (Flechas, Virotes y Virotes Repetidores)
 					SubsystemProjectiles subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
 					Action<Projectile> onArrowFired = null;
 					onArrowFired = (Projectile p) =>
 					{
-						if (p != null && p.Owner == m_componentCreature && Terrain.ExtractContents(p.Value) == ArrowBlock.Index)
+						if (p != null && p.Owner == m_componentCreature)
 						{
-							p.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+							int contents = Terrain.ExtractContents(p.Value);
+							if (contents == ArrowBlock.Index || contents == RepeatBoltBlock.Index)
+							{
+								p.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+							}
 						}
 						subsystemProjectiles.ProjectileAdded -= onArrowFired;
 					};
@@ -295,13 +332,11 @@ namespace Game
 					int draw = BowBlock.GetDraw(data);
 					ArrowBlock.ArrowType? arrowType = BowBlock.GetArrowType(data);
 
-					// Si ya está completamente cargado, usarlo
 					if (draw == 15 && arrowType != null)
 					{
 						return i;
 					}
 
-					// Si está sin cargar, cargarlo instantáneamente con una flecha aleatoria
 					if (draw == 0)
 					{
 						ArrowBlock.ArrowType randomArrow = m_bowArrows[m_random.Int(0, m_bowArrows.Length - 1)];
@@ -334,10 +369,8 @@ namespace Game
 					int draw = CrossbowBlock.GetDraw(data);
 					ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
 
-					// Si ya está completamente cargada
 					if (draw == 15 && arrowType != null)
 					{
-						// Si está cargada con explosivo pero estamos muy cerca, ignorar este slot y buscar otro
 						if (!isSafeDistance && arrowType == ArrowBlock.ArrowType.ExplosiveBolt)
 						{
 							continue;
@@ -345,12 +378,9 @@ namespace Game
 						return i;
 					}
 
-					// Si está descargada, cargarla instantáneamente
 					if (draw == 0)
 					{
 						ArrowBlock.ArrowType randomBolt;
-
-						// Elegir virote dependiendo de si estamos a distancia segura
 						if (isSafeDistance)
 						{
 							randomBolt = m_crossbowBolts[m_random.Int(0, m_crossbowBolts.Length - 1)];
@@ -363,6 +393,60 @@ namespace Game
 						int newData = CrossbowBlock.SetDraw(data, 15);
 						newData = CrossbowBlock.SetArrowType(newData, randomBolt);
 						int newValue = Terrain.MakeBlockValue(crossbowBlockIndex, 0, newData);
+
+						inventory.RemoveSlotItems(i, 1);
+						inventory.AddSlotItems(i, newValue, 1);
+						return i;
+					}
+				}
+			}
+			return -1;
+		}
+
+		private int FindAndLoadRepeatCrossbowSlot(int repeatCrossbowBlockIndex, float distanceToTarget)
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return -1;
+
+			bool isSafeDistance = distanceToTarget >= SafeDistanceForExplosives.X;
+
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int value = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(value) == repeatCrossbowBlockIndex)
+				{
+					int data = Terrain.ExtractData(value);
+					int draw = RepeatCrossbowBlock.GetDraw(data);
+					RepeatBoltType? boltType = RepeatCrossbowBlock.GetRepeatBoltType(data);
+					int count = RepeatCrossbowBlock.GetCount(data);
+
+					// Si ya está completamente cargada y con munición
+					if (draw == 15 && boltType != null && count > 0)
+					{
+						if (!isSafeDistance && boltType == RepeatBoltType.RepeatExplosiveBolt)
+						{
+							continue;
+						}
+						return i;
+					}
+
+					// Si está vacía o se quedó sin balas, recargar instantáneamente con 1 solo virote
+					if (count == 0 || (draw == 0 && boltType == null))
+					{
+						RepeatBoltType randomBolt;
+						if (isSafeDistance)
+						{
+							randomBolt = m_repeatCrossbowBolts[m_random.Int(0, m_repeatCrossbowBolts.Length - 1)];
+						}
+						else
+						{
+							randomBolt = m_repeatCrossbowSafeBolts[m_random.Int(0, m_repeatCrossbowSafeBolts.Length - 1)];
+						}
+
+						int newData = RepeatCrossbowBlock.SetDraw(data, 15);
+						newData = RepeatCrossbowBlock.SetRepeatBoltType(newData, randomBolt);
+						newData = RepeatCrossbowBlock.SetCount(newData, 1); // Carga 1 para que no muestre 8/8
+						int newValue = Terrain.MakeBlockValue(repeatCrossbowBlockIndex, 0, newData);
 
 						inventory.RemoveSlotItems(i, 1);
 						inventory.AddSlotItems(i, newValue, 1);
