@@ -14,7 +14,8 @@ namespace Game
 		{
 			Common,
 			Ghost,
-			// Espacio para agregar más tipos en el futuro
+			Flying,
+			Boss // NUEVO TIPO JEFE
 		}
 
 		/// <summary>
@@ -50,6 +51,20 @@ namespace Game
 					Scale = 0.8f,
 					EggColor = new Color(180, 180, 255)
 				}
+			},
+			{
+				InfectedType.Flying, new InfectedEggData
+				{
+					Scale = 0.7f,
+					EggColor = new Color(140, 50, 220)
+				}
+			},
+			{
+				InfectedType.Boss, new InfectedEggData // NUEVO
+                {
+					Scale = 1.4f,                       // Más grande para indicar que es un jefe
+                    EggColor = new Color(200, 20, 20)    // Rojo sangre
+                }
 			}
 		};
 
