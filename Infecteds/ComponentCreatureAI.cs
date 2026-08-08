@@ -12,19 +12,31 @@ namespace Game
 		public float MusketAimTime = 1.5f;
 		public float MusketCooldown = 0.01f;
 
+		public Vector2 DistanceForUseOfThrowableObjects = new Vector2(5f, 15f);
+		public float ThrowableAimTime = 1.5f;
+		public float ThrowableCooldown = 0.01f;
+
 		// Loaded from XML
 		public bool CanUseInventory;
 
 		// Private fields
 		private SubsystemTime m_subsystemTime;
+		private SubsystemBlockBehaviors m_subsystemBlockBehaviors;
+		private SubsystemBodies m_subsystemBodies;
+		private SubsystemTerrain m_subsystemTerrain;
 		private ComponentCreature m_componentCreature;
 		private ComponentMiner m_componentMiner;
 		private ComponentChaseBehavior m_componentChaseBehavior;
+		private ComponentPathfinding m_componentPathfinding;
 
 		private double m_lastShotTime;
 		private double m_aimStartTime;
 		private bool m_isAiming;
 		private int m_originalActiveSlot = -1;
+
+		private double m_lastThrowableTime;
+		private double m_aimThrowableStartTime;
+		private bool m_isAimingThrowable;
 
 		private Random m_random = new Random();
 
@@ -33,9 +45,13 @@ namespace Game
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
+			m_subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true);
+			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
+			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentChaseBehavior = Entity.FindComponent<ComponentChaseBehavior>();
+			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>();
 
 			CanUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
 		}
@@ -45,7 +61,7 @@ namespace Game
 			if (!CanUseInventory || m_componentCreature?.ComponentBody == null ||
 				m_componentCreature?.ComponentCreatureModel == null)
 			{
-				StopRangedCombat();
+				StopAllCombat();
 				return;
 			}
 
@@ -55,7 +71,7 @@ namespace Game
 
 			if (!hasValidTarget)
 			{
-				StopRangedCombat();
+				StopAllCombat();
 				return;
 			}
 
@@ -67,10 +83,81 @@ namespace Game
 			IInventory inventory = m_componentMiner.Inventory;
 			if (inventory == null)
 			{
-				StopRangedCombat();
+				StopAllCombat();
 				return;
 			}
 
+			double gameTime = m_subsystemTime.GameTime;
+			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 targetCenter = target.ComponentBody.BoundingBox.Center();
+			Vector3 aimDir = Vector3.Normalize(targetCenter - eyePos);
+			Ray3 aimRay = new Ray3(eyePos, aimDir);
+
+			// 1. LÓGICA DE OBJETOS LANZABLES (PRIORIDAD)
+			int throwableSlot = FindThrowableSlot();
+			bool inThrowableRange = distance >= DistanceForUseOfThrowableObjects.X &&
+									distance <= DistanceForUseOfThrowableObjects.Y;
+
+			bool hasLineOfSight = IsThrowableLineOfSightClear(eyePos, targetCenter, target);
+			bool isInFront = IsTargetInFront(eyePos, targetCenter);
+
+			if (throwableSlot >= 0 && inThrowableRange && hasLineOfSight && isInFront)
+			{
+				// Cancelar apunte de mosquete si estábamos haciéndolo
+				if (m_isAiming)
+				{
+					StopRangedCombat(false);
+				}
+
+				// Nos quedamos quietos
+				if (m_componentPathfinding != null)
+				{
+					m_componentPathfinding.Stop();
+				}
+
+				// Cambiar al objeto lanzable
+				if (inventory.ActiveSlotIndex != throwableSlot)
+				{
+					SwitchToSlot(throwableSlot);
+				}
+
+				// Lógica de apunte y lanzamiento
+				if (!m_isAimingThrowable)
+				{
+					if ((gameTime - m_lastThrowableTime) < ThrowableCooldown)
+					{
+						return;
+					}
+
+					m_isAimingThrowable = true;
+					m_aimThrowableStartTime = gameTime;
+					m_componentMiner.Aim(aimRay, AimState.InProgress);
+					return;
+				}
+
+				float aimDuration = (float)(gameTime - m_aimThrowableStartTime);
+				m_componentMiner.Aim(aimRay, AimState.InProgress);
+
+				if (aimDuration >= ThrowableAimTime)
+				{
+					m_componentMiner.Aim(aimRay, AimState.Completed);
+					m_lastThrowableTime = gameTime;
+					m_isAimingThrowable = false;
+				}
+				return; // Si usamos lanzables, no ejecutamos la lógica de mosquetes
+			}
+			else
+			{
+				// Si salimos del rango, nos quedamos sin lanzables, o NO TENEMOS LÍNEA DE VISIÓN / ESTÁ DETRÁS
+				if (m_isAimingThrowable)
+				{
+					StopThrowableCombat();
+				}
+				// No retornamos aquí. Dejamos que la lógica de abajo (ChaseBehavior) mueva a la criatura
+				// alrededor de obstáculos o para ponerse frente al objetivo.
+			}
+
+			// 2. LÓGICA DE MOSQUETE / MELEE (FALLBACK)
 			int musketBlockIndex = BlocksManager.GetBlockIndex<MusketBlock>(false, false);
 			int musketSlot = FindBlockSlot(musketBlockIndex);
 			int meleeSlot = FindMeleeWeaponSlot();
@@ -99,13 +186,6 @@ namespace Game
 				SwitchToSlot(musketSlot);
 			}
 
-			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
-			Vector3 targetCenter = target.ComponentBody.BoundingBox.Center();
-			Vector3 aimDir = Vector3.Normalize(targetCenter - eyePos);
-			Ray3 aimRay = new Ray3(eyePos, aimDir);
-
-			double gameTime = m_subsystemTime.GameTime;
-
 			if (!m_isAiming)
 			{
 				if ((gameTime - m_lastShotTime) < MusketCooldown)
@@ -119,15 +199,82 @@ namespace Game
 				return;
 			}
 
-			float aimDuration = (float)(gameTime - m_aimStartTime);
+			float musketAimDuration = (float)(gameTime - m_aimStartTime);
 			m_componentMiner.Aim(aimRay, AimState.InProgress);
 
-			if (aimDuration >= MusketAimTime)
+			if (musketAimDuration >= MusketAimTime)
 			{
 				FireWeapon(musketBlockIndex, aimRay);
 				m_lastShotTime = gameTime;
 				m_isAiming = false;
 			}
+		}
+
+		private bool IsThrowableLineOfSightClear(Vector3 start, Vector3 end, ComponentCreature target)
+		{
+			float maxDistance = Vector3.Distance(start, end);
+
+			// 1. Comprobar colisiones con cuerpos (ignorando a sí mismo y al objetivo)
+			BodyRaycastResult? bodyHit = m_subsystemBodies.Raycast(start, end, 0.1f, (ComponentBody body, float distance) =>
+			{
+				return body.Entity != m_componentCreature.Entity && body.Entity != target.Entity;
+			});
+
+			if (bodyHit.HasValue && bodyHit.Value.Distance < maxDistance)
+			{
+				return false;
+			}
+
+			// 2. Comprobar colisiones con el terreno
+			TerrainRaycastResult? terrainHit = m_subsystemTerrain.Raycast(start, end, false, true, null);
+
+			if (terrainHit.HasValue && terrainHit.Value.Distance < maxDistance - 0.5f)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		private bool IsTargetInFront(Vector3 eyePos, Vector3 targetCenter)
+		{
+			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
+			Vector3 dirToTarget = Vector3.Normalize(targetCenter - eyePos);
+
+			// Producto punto: 1 = completamente de frente, < 0 = detrás
+			float dot = Vector3.Dot(forward, dirToTarget);
+			return dot >= 0.2f; // Umbral para permitir un poco de ángulo pero evitar que dispare hacia atrás
+		}
+
+		private bool IsThrowable(int blockIndex)
+		{
+			if (blockIndex <= 0) return false;
+
+			SubsystemBlockBehavior[] behaviors = m_subsystemBlockBehaviors.GetBlockBehaviors(blockIndex);
+			for (int i = 0; i < behaviors.Length; i++)
+			{
+				if (behaviors[i] is SubsystemThrowableBlockBehavior)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private int FindThrowableSlot()
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return -1;
+
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int value = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0 && IsThrowable(Terrain.ExtractContents(value)))
+				{
+					return i;
+				}
+			}
+			return -1;
 		}
 
 		private void FireWeapon(int musketBlockIndex, Ray3 aimRay)
@@ -217,6 +364,22 @@ namespace Game
 			m_componentMiner.Inventory.ActiveSlotIndex = slot;
 		}
 
+		private void StopThrowableCombat()
+		{
+			if (m_isAimingThrowable)
+			{
+				if (m_componentCreature?.ComponentCreatureModel != null)
+				{
+					Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+					Vector3 forward = m_componentCreature.ComponentCreatureModel.EyeRotation.GetForwardVector();
+					Ray3 aimRay = new Ray3(eyePos, forward);
+
+					m_componentMiner.Aim(aimRay, AimState.Cancelled);
+				}
+				m_isAimingThrowable = false;
+			}
+		}
+
 		private void StopRangedCombat(bool restoreSlot = true)
 		{
 			if (m_isAiming)
@@ -237,6 +400,12 @@ namespace Game
 				m_componentMiner.Inventory.ActiveSlotIndex = m_originalActiveSlot;
 				m_originalActiveSlot = -1;
 			}
+		}
+
+		private void StopAllCombat()
+		{
+			StopThrowableCombat();
+			StopRangedCombat(true);
 		}
 	}
 }
