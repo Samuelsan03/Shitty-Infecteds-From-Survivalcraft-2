@@ -16,10 +16,29 @@ namespace Game
 		public static readonly Dictionary<InfectedEggBlock.InfectedType, string[]> CreatureTemplatesByType = new Dictionary<InfectedEggBlock.InfectedType, string[]>
 		{
 			{
-				InfectedEggBlock.InfectedType.Common, new string[] { "InfectedNormal1", "InfectedNormal2", "InfectedFast1", "InfectedFast2", "InfectedMuscle1", "InfectedMuscle2" }
+				InfectedEggBlock.InfectedType.Common, new string[] {
+					"InfectedNormal1", "InfectedNormal2",
+					"InfectedFast1", "InfectedFast2",
+					"InfectedMuscle1", "InfectedMuscle2"
+				}
 			},
 			{
-				InfectedEggBlock.InfectedType.Ghost, new string[] { "GhostNormal" }
+				InfectedEggBlock.InfectedType.Ghost, new string[] {
+					"GhostNormal"
+                    // InfectedBrute fue removido de aquí
+                }
+			},
+			{
+				InfectedEggBlock.InfectedType.Flying, new string[] {
+					"FlyingInfected1",
+					"FlyingInfected2",
+					"FlyingInfected3"
+				}
+			},
+			{
+				InfectedEggBlock.InfectedType.Boss, new string[] { // NUEVO
+                    "InfectedBrute"
+				}
 			}
 		};
 
@@ -55,10 +74,8 @@ namespace Game
 				}
 				catch (Exception ex)
 				{
-					// Log detallado para el desarrollador (igual que el SubsystemEggBlockBehavior original)
 					Log.Error($"Spawning infected creature from egg (type: {type}, template: {creatureTemplate}) error: {ex}");
 
-					// Mensaje GUI para el jugador
 					Projectile projectile = worldItem as Projectile;
 					if (projectile != null)
 					{
