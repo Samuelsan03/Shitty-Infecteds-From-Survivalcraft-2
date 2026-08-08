@@ -11,6 +11,8 @@ namespace Game
 		public Vector2 RangedDistanceRange = new Vector2(5f, 100f);
 		public float MusketAimTime = 1.5f;
 		public float MusketCooldown = 0.01f;
+		public float CrossbowAimTime = 1.5f;
+		public float CrossbowCooldown = 0.01f;
 
 		public Vector2 DistanceForUseOfThrowableObjects = new Vector2(5f, 15f);
 		public float ThrowableAimTime = 1.5f;
@@ -29,7 +31,7 @@ namespace Game
 		private ComponentChaseBehavior m_componentChaseBehavior;
 		private ComponentPathfinding m_componentPathfinding;
 
-		private double m_lastShotTime;
+		private double m_lastRangedTime;
 		private double m_aimStartTime;
 		private bool m_isAiming;
 		private int m_originalActiveSlot = -1;
@@ -39,6 +41,13 @@ namespace Game
 		private bool m_isAimingThrowable;
 
 		private Random m_random = new Random();
+
+		private static readonly ArrowBlock.ArrowType[] m_crossbowBolts = new ArrowBlock.ArrowType[]
+		{
+			ArrowBlock.ArrowType.IronBolt,
+			ArrowBlock.ArrowType.DiamondBolt,
+			ArrowBlock.ArrowType.ExplosiveBolt
+		};
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -103,25 +112,21 @@ namespace Game
 
 			if (throwableSlot >= 0 && inThrowableRange && hasLineOfSight && isInFront)
 			{
-				// Cancelar apunte de mosquete si estábamos haciéndolo
 				if (m_isAiming)
 				{
 					StopRangedCombat(false);
 				}
 
-				// Nos quedamos quietos
 				if (m_componentPathfinding != null)
 				{
 					m_componentPathfinding.Stop();
 				}
 
-				// Cambiar al objeto lanzable
 				if (inventory.ActiveSlotIndex != throwableSlot)
 				{
 					SwitchToSlot(throwableSlot);
 				}
 
-				// Lógica de apunte y lanzamiento
 				if (!m_isAimingThrowable)
 				{
 					if ((gameTime - m_lastThrowableTime) < ThrowableCooldown)
@@ -144,26 +149,43 @@ namespace Game
 					m_lastThrowableTime = gameTime;
 					m_isAimingThrowable = false;
 				}
-				return; // Si usamos lanzables, no ejecutamos la lógica de mosquetes
+				return;
 			}
 			else
 			{
-				// Si salimos del rango, nos quedamos sin lanzables, o NO TENEMOS LÍNEA DE VISIÓN / ESTÁ DETRÁS
 				if (m_isAimingThrowable)
 				{
 					StopThrowableCombat();
 				}
-				// No retornamos aquí. Dejamos que la lógica de abajo (ChaseBehavior) mueva a la criatura
-				// alrededor de obstáculos o para ponerse frente al objetivo.
 			}
 
-			// 2. LÓGICA DE MOSQUETE / MELEE (FALLBACK)
+			// 2. LÓGICA DE RANGO (MOSQUETE Y BALLESTA)
 			int musketBlockIndex = BlocksManager.GetBlockIndex<MusketBlock>(false, false);
+			int crossbowBlockIndex = BlocksManager.GetBlockIndex<CrossbowBlock>(false, false);
+
 			int musketSlot = FindBlockSlot(musketBlockIndex);
+			int crossbowSlot = crossbowBlockIndex > 0 ? FindAndLoadCrossbowSlot(crossbowBlockIndex) : -1;
 			int meleeSlot = FindMeleeWeaponSlot();
 			bool hasMeleeWeapon = meleeSlot >= 0;
 
-			bool shouldUseRanged = musketSlot >= 0 &&
+			int activeRangedSlot = -1;
+			float currentAimTime = MusketAimTime;
+			float currentCooldown = MusketCooldown;
+			bool isMusket = false;
+
+			if (musketSlot >= 0)
+			{
+				activeRangedSlot = musketSlot;
+				isMusket = true;
+			}
+			else if (crossbowSlot >= 0)
+			{
+				activeRangedSlot = crossbowSlot;
+				currentAimTime = CrossbowAimTime;
+				currentCooldown = CrossbowCooldown;
+			}
+
+			bool shouldUseRanged = activeRangedSlot >= 0 &&
 								   distance <= RangedDistanceRange.Y &&
 								   (distance > RangedDistanceRange.X || !hasMeleeWeapon);
 
@@ -181,14 +203,14 @@ namespace Game
 				return;
 			}
 
-			if (inventory.ActiveSlotIndex != musketSlot)
+			if (inventory.ActiveSlotIndex != activeRangedSlot)
 			{
-				SwitchToSlot(musketSlot);
+				SwitchToSlot(activeRangedSlot);
 			}
 
 			if (!m_isAiming)
 			{
-				if ((gameTime - m_lastShotTime) < MusketCooldown)
+				if ((gameTime - m_lastRangedTime) < currentCooldown)
 				{
 					return;
 				}
@@ -199,22 +221,79 @@ namespace Game
 				return;
 			}
 
-			float musketAimDuration = (float)(gameTime - m_aimStartTime);
+			float rangedAimDuration = (float)(gameTime - m_aimStartTime);
 			m_componentMiner.Aim(aimRay, AimState.InProgress);
 
-			if (musketAimDuration >= MusketAimTime)
+			if (rangedAimDuration >= currentAimTime)
 			{
-				FireWeapon(musketBlockIndex, aimRay);
-				m_lastShotTime = gameTime;
+				if (isMusket)
+				{
+					FireWeapon(musketBlockIndex, aimRay);
+				}
+				else
+				{
+					// Interceptar el proyectil para hacer que el virote desaparezca al caer
+					SubsystemProjectiles subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
+					Action<Projectile> onBoltFired = null;
+					onBoltFired = (Projectile p) =>
+					{
+						if (p != null && p.Owner == m_componentCreature && Terrain.ExtractContents(p.Value) == ArrowBlock.Index)
+						{
+							p.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+						}
+						subsystemProjectiles.ProjectileAdded -= onBoltFired;
+					};
+					subsystemProjectiles.ProjectileAdded += onBoltFired;
+
+					m_componentMiner.Aim(aimRay, AimState.Completed);
+				}
+
+				m_lastRangedTime = gameTime;
 				m_isAiming = false;
 			}
+		}
+
+		private int FindAndLoadCrossbowSlot(int crossbowBlockIndex)
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return -1;
+
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int value = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(value) == crossbowBlockIndex)
+				{
+					int data = Terrain.ExtractData(value);
+					int draw = CrossbowBlock.GetDraw(data);
+					ArrowBlock.ArrowType? arrowType = CrossbowBlock.GetArrowType(data);
+
+					// Si ya está completamente cargada, usarla
+					if (draw == 15 && arrowType != null)
+					{
+						return i;
+					}
+
+					// Si está descargada, cargarla instantáneamente con un virote aleatorio
+					if (draw == 0)
+					{
+						ArrowBlock.ArrowType randomBolt = m_crossbowBolts[m_random.Int(0, m_crossbowBolts.Length - 1)];
+						int newData = CrossbowBlock.SetDraw(data, 15);
+						newData = CrossbowBlock.SetArrowType(newData, randomBolt);
+						int newValue = Terrain.MakeBlockValue(crossbowBlockIndex, 0, newData);
+
+						inventory.RemoveSlotItems(i, 1);
+						inventory.AddSlotItems(i, newValue, 1);
+						return i;
+					}
+				}
+			}
+			return -1;
 		}
 
 		private bool IsThrowableLineOfSightClear(Vector3 start, Vector3 end, ComponentCreature target)
 		{
 			float maxDistance = Vector3.Distance(start, end);
 
-			// 1. Comprobar colisiones con cuerpos (ignorando a sí mismo y al objetivo)
 			BodyRaycastResult? bodyHit = m_subsystemBodies.Raycast(start, end, 0.1f, (ComponentBody body, float distance) =>
 			{
 				return body.Entity != m_componentCreature.Entity && body.Entity != target.Entity;
@@ -225,7 +304,6 @@ namespace Game
 				return false;
 			}
 
-			// 2. Comprobar colisiones con el terreno
 			TerrainRaycastResult? terrainHit = m_subsystemTerrain.Raycast(start, end, false, true, null);
 
 			if (terrainHit.HasValue && terrainHit.Value.Distance < maxDistance - 0.5f)
@@ -240,10 +318,8 @@ namespace Game
 		{
 			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
 			Vector3 dirToTarget = Vector3.Normalize(targetCenter - eyePos);
-
-			// Producto punto: 1 = completamente de frente, < 0 = detrás
 			float dot = Vector3.Dot(forward, dirToTarget);
-			return dot >= 0.2f; // Umbral para permitir un poco de ángulo pero evitar que dispare hacia atrás
+			return dot >= 0.2f;
 		}
 
 		private bool IsThrowable(int blockIndex)
