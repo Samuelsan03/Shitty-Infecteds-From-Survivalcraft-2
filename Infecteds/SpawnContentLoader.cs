@@ -53,19 +53,11 @@ public class SpawnContentLoader : ModLoader
 
 			creatureTypes.Add(new SubsystemCreatureSpawn.CreatureType(templateName, SpawnLocationType.Surface, false, true)
 			{
+				// --- SOLUCIÓN AQUÍ ---
+				// Desactivamos completamente el spawn natural de estas criaturas.
+				// Solo deben aparecer a través de tu XML (SubsystemInfectedWaves).
 				SpawnSuitabilityFunction = delegate (SubsystemCreatureSpawn.CreatureType ct, Point3 point)
 				{
-					// VERIFICACIÓN ACTUALIZADA: Ya no es noche normal. Solo spawnea si la Noche Verde está activa.
-					if (SubsystemGreenNightSky.Instance != null && SubsystemGreenNightSky.Instance.IsGreenNightActive)
-					{
-						int blockBelow = Terrain.ExtractContents(subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
-
-						if (allowedBlocks.Contains(blockBelow))
-						{
-							return 1.0f; // Peso de probabilidad natural del engine
-						}
-					}
-
 					return 0f;
 				},
 
