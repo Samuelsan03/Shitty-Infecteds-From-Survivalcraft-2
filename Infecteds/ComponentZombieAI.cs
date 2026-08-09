@@ -697,6 +697,13 @@ namespace Game
 				mountPathfinding.Stop();
 			}
 
+			// NUEVO: Asegurarnos de apagar el Pilot al detener la montura
+			ComponentPilot pilot = Entity.FindComponent<ComponentPilot>(false);
+			if (pilot != null && pilot.Destination != null)
+			{
+				pilot.Stop();
+			}
+
 			ComponentSteedBehaviorImproved steedImproved = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehaviorImproved>();
 			if (steedImproved != null)
 			{
@@ -727,6 +734,8 @@ namespace Game
 			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
 			Vector3 targetPos = target.ComponentBody.Position;
 			Vector3 myPos = mountBody.Position;
+			bool isInAir = mountBody.StandingOnValue == null;
+			bool isFlying = IsFlyingMount();
 
 			Vector3 dirToTarget = targetPos - myPos;
 			dirToTarget.Y = 0f;
@@ -755,7 +764,7 @@ namespace Game
 
 			float distance = Vector3.Distance(new Vector3(myPos.X, 0, myPos.Z), new Vector3(targetPos.X, 0, targetPos.Z));
 
-			float stopDistance = IsFlyingMount() ? 0.3f : 2f;
+			float stopDistance = isFlying ? 0.3f : 2f;
 
 			int speedOrder = 0;
 			if (distance > stopDistance)
@@ -767,6 +776,48 @@ namespace Game
 				else if (dot < -0.5f)
 				{
 					speedOrder = -1;
+				}
+			}
+
+			// ==========================================
+			// NUEVO: CONTROL DE VUELO PARA MONTURAS VOLADORAS
+			// ==========================================
+			if (isFlying && isInAir)
+			{
+				ComponentPilot pilot = Entity.FindComponent<ComponentPilot>(false);
+				if (pilot != null)
+				{
+					Vector3 dirXZ = targetPos - myPos;
+					dirXZ.Y = 0f;
+					float hDist = dirXZ.Length();
+
+					// Mantener distancia horizontal falsa > 2f para evitar aterrizaje
+					Vector3 pilotDest = myPos;
+					if (hDist > 0.01f)
+					{
+						dirXZ = Vector3.Normalize(dirXZ);
+						pilotDest = myPos + dirXZ * MathUtils.Max(hDist, 2.5f);
+					}
+					else
+					{
+						Vector3 fwd = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
+						if (fwd.LengthSquared() > 0.01f) fwd = Vector3.Normalize(fwd);
+						pilotDest = myPos + fwd * 2.5f;
+					}
+
+					// Mantenerse 3 bloques por encima del enemigo
+					pilotDest.Y = targetPos.Y + 3f;
+
+					pilot.SetDestination(pilotDest, 1f, 1f, false, false, true, null);
+				}
+			}
+			else
+			{
+				// Apagar pilot si es montura de tierra
+				ComponentPilot pilot = Entity.FindComponent<ComponentPilot>(false);
+				if (pilot != null && pilot.Destination != null)
+				{
+					pilot.Stop();
 				}
 			}
 
