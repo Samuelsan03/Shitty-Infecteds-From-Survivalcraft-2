@@ -41,7 +41,8 @@ namespace Game
 			"Camel_Saddled",
 			"Horse_Chestnut_Saddled",
 			"Donkey_Saddled",
-			"FlyingInfectedTamed1"
+			"FlyingInfectedTamed1",
+			"FlyingInfectedBossTamed"
 		};
 
 		public const float MountDetectionRange = 2.5f;
@@ -1674,16 +1675,52 @@ namespace Game
 			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 			if (steedBehavior == null) return;
 
-			// Asegurarse de que el piloto del jinete no interfiera
-			if (m_componentPilot != null && m_componentPilot.Destination != null)
-			{
-				m_componentPilot.Stop();
-			}
-
 			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
 			Vector3 targetPos = target.ComponentBody.Position;
 			Vector3 myPos = mountBody.Position;
+			bool isInAir = mountBody.StandingOnValue == null;
 
+			// ==========================================
+			// CONTROL DE VUELO PARA MONTURAS VOLADORAS
+			// ==========================================
+			if (IsOnFlyingMount && isInAir && m_componentPilot != null)
+			{
+				Vector3 dirToTargetXZ = targetPos - myPos;
+				dirToTargetXZ.Y = 0f;
+				float hDist = dirToTargetXZ.Length();
+
+				// Mantener siempre una distancia horizontal mínima de 2.5f 
+				Vector3 pilotDest = myPos;
+				if (hDist > 0.01f)
+				{
+					dirToTargetXZ = Vector3.Normalize(dirToTargetXZ);
+					pilotDest = myPos + dirToTargetXZ * MathUtils.Max(hDist, 2.5f);
+				}
+				else
+				{
+					// CAMBIO AQUÍ: Usamos 'fwd' en lugar de 'forward'
+					Vector3 fwd = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
+					if (fwd.LengthSquared() > 0.01f) fwd = Vector3.Normalize(fwd);
+					pilotDest = myPos + fwd * 2.5f;
+				}
+
+				// Altura objetivo: 3 bloques por encima del enemigo
+				pilotDest.Y = targetPos.Y + 3f;
+
+				m_componentPilot.SetDestination(pilotDest, 1f, 1f, false, false, true, null);
+			}
+			else
+			{
+				// Montura de tierra: apagar el Pilot
+				if (m_componentPilot != null && m_componentPilot.Destination != null)
+				{
+					m_componentPilot.Stop();
+				}
+			}
+
+			// ==========================================
+			// CONTROL HORIZONTAL (GIRO Y VELOCIDAD)
+			// ==========================================
 			Vector3 dirToTarget = targetPos - myPos;
 			dirToTarget.Y = 0f;
 			if (dirToTarget.LengthSquared() < 0.01f) return;
