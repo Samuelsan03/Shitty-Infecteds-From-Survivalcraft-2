@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Engine;
 using Engine.Graphics;
@@ -99,11 +99,13 @@ namespace Game
 											componentPlayer.GameWidget.ActiveCamera = scopeCamera;
 											scopeCamera.Activate(currentCamera);
 										}
-									}
 
-									// Solo mostrar contador de munición mientras apuntas
-									if (componentPlayer != null)
-									{
+										// ✅ MOSTRAR RETÍCULA DEL SCOPE mientras apuntas
+										// Esto se llama cada frame, manteniendo IsSightsVisible = true
+										Vector3 eyePosition = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
+										componentPlayer.ComponentAimingSights.ShowAimingSights(eyePosition, aim.Direction);
+
+										// Solo mostrar contador de munición mientras apuntas
 										componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
 									}
 
@@ -135,7 +137,6 @@ namespace Game
 
 									if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
 									{
-										if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor <= 0.4f)
 										{
 											FireShot(aim, componentMiner, num, data, ref num2);
 										}

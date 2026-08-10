@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Engine;
 using TemplatesDatabase;
@@ -126,7 +126,6 @@ namespace Game
 										// SEMIAUTOMÁTICO: Solo disparar si NO ha disparado este clic
 										if (!alreadyFiredThisAim && timeSinceLastFire >= FireRate)
 										{
-											if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor <= 0.4f)
 											{
 												Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
 													+ componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.25f

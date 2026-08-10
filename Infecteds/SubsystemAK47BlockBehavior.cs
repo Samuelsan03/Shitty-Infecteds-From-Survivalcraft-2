@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Engine;
 using TemplatesDatabase;
@@ -121,7 +121,6 @@ namespace Game
 										// AUTOMÁTICO: Seguir disparando mientras mantienes
 										if (timeSinceLastFire >= FireRate)
 										{
-											if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor <= 0.4f)
 											{
 												Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
 													+ componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
