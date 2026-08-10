@@ -35,6 +35,8 @@ namespace Game
 		private float m_originalLadderSpeed;
 		private bool m_speedsStored;
 
+		private string m_poisonSourceName;
+
 		private SubsystemTime m_subsystemTime;
 		private SubsystemTerrain m_subsystemTerrain;
 		private SubsystemParticles m_subsystemParticles;
@@ -52,14 +54,9 @@ namespace Game
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-		/// <summary>
-		/// Calcula la efectividad del veneno basándose en la resistencia.
-		/// Resistencia 0.1 = efectividad 0.9 (muy afectado)
-		/// Resistencia 0.9 = efectividad 0.1 (poco afectado)
-		/// </summary>
 		private float PoisonEffectiveness => 1f - m_poisonResistance;
 
-		public void TryInfect(float attackerIntensity)
+		public void TryInfect(float attackerIntensity, string poisonSourceName = null)
 		{
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 				return;
@@ -70,6 +67,11 @@ namespace Game
 				bool wasAlreadyInfected = m_infectionDuration > 0f;
 				m_poisonIntensity = MathUtils.Max(m_poisonIntensity, MathUtils.Clamp(attackerIntensity, 0f, 1f));
 				m_infectionDuration = m_durationOfPoison;
+
+				if (!wasAlreadyInfected && !string.IsNullOrEmpty(poisonSourceName))
+				{
+					m_poisonSourceName = poisonSourceName;
+				}
 
 				if (!wasAlreadyInfected)
 				{
@@ -105,25 +107,18 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Limpia completamente todo el estado de infección y efectos visuales.
-		/// Se usa cuando la criatura muere o la infección termina.
-		/// </summary>
 		private void ClearAllEffects()
 		{
-			// Limpiar partículas de vómito
 			if (m_pukeParticleSystem != null)
 			{
 				m_pukeParticleSystem = null;
 			}
 
-			// Restaurar velocidades
 			if (m_speedsStored)
 			{
 				RestoreOriginalSpeeds();
 			}
 
-			// Limpiar estado de infección
 			m_infectionDuration = 0f;
 			m_greenoutDuration = 0f;
 			m_greenoutFactor = 0f;
@@ -132,11 +127,11 @@ namespace Game
 			m_poisonIntensity = 0f;
 			m_firstVomitQueued = false;
 			m_firstVomitTimer = -1f;
+			m_poisonSourceName = null;
 		}
 
 		private void NauseaEffect()
 		{
-			// CORRECCIÓN: Verificar si está vivo ANTES de cualquier efecto
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 				return;
 
@@ -148,7 +143,6 @@ namespace Game
 				m_componentCreature.ComponentCreatureSounds.PlayPainSound();
 			}
 
-			// El daño ahora se escala con la efectividad (resistencia inversa)
 			float effectiveDamage = HealthDamagePerVomit * m_poisonIntensity * PoisonEffectiveness;
 			float damageToApply = MathUtils.Min(effectiveDamage, m_componentHealth != null ? m_componentHealth.Health : 0f);
 
@@ -156,17 +150,17 @@ namespace Game
 			{
 				m_subsystemTime.QueueGameTimeDelayedExecution(m_subsystemTime.GameTime + 0.75, delegate
 				{
-					// CORRECCIÓN: Verificar nuevamente al ejecutar el daño diferido
 					if (m_componentHealth != null && m_componentHealth.Health > 0f)
 					{
-						m_componentHealth.Injure(damageToApply, null, false, "Poison");
+						PoisonInjury injury = new PoisonInjury(damageToApply, null, m_poisonSourceName);
+						injury.ComponentHealth = m_componentHealth;
+						injury.Process();
 					}
 				});
 			}
 
 			if (m_pukeParticleSystem == null && m_subsystemParticles != null && m_subsystemTerrain != null)
 			{
-				// CORRECCIÓN: Verificar si sigue vivo antes de crear partículas
 				if (m_componentHealth == null || m_componentHealth.Health > 0f)
 				{
 					m_pukeParticleSystem = new PukeParticleSystem(m_subsystemTerrain);
@@ -177,7 +171,6 @@ namespace Game
 						m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody.Position, 0.25f, 10f);
 					}
 
-					// La duración del efecto visual verde también se escala
 					m_greenoutDuration = 0.8f * PoisonEffectiveness;
 				}
 			}
@@ -188,7 +181,6 @@ namespace Game
 			if (m_pukeParticleSystem == null)
 				return;
 
-			// CORRECCIÓN: No actualizar partículas si está muerto
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 			{
 				m_pukeParticleSystem = null;
@@ -221,7 +213,6 @@ namespace Game
 			if (m_greenoutDuration > 0f)
 			{
 				m_greenoutDuration = MathUtils.Max(m_greenoutDuration - dt, 0f);
-				// La intensidad del efecto verde se escala con efectividad
 				float maxGreenout = 0.95f * PoisonEffectiveness;
 				m_greenoutFactor = MathUtils.Min(m_greenoutFactor + 0.5f * dt, maxGreenout);
 			}
@@ -231,21 +222,11 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Calcula el cooldown de náuseas basado en la resistencia.
-		/// Menor resistencia = náuseas más frecuentes
-		/// </summary>
 		private float GetAdjustedNauseaCooldown()
 		{
-			// Base 15 segundos, reducido por efectividad del veneno
-			// Resistencia 0.1 -> cooldown ~3s (muy frecuente)
-			// Resistencia 0.9 -> cooldown ~13.5s (casi normal)
 			return NauseaCooldown * (1f - 0.8f * PoisonEffectiveness);
 		}
 
-		/// <summary>
-		/// Calcula el cooldown de gemidos basado en la resistencia.
-		/// </summary>
 		private float GetAdjustedMoanCooldown()
 		{
 			return MoanCooldown * (1f - 0.6f * PoisonEffectiveness);
@@ -253,19 +234,14 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
-			// ============================================
-			// CORRECCIÓN PRINCIPAL: Manejar muerte al inicio
-			// ============================================
 			bool isDead = m_componentHealth != null && m_componentHealth.Health <= 0f;
 
 			if (isDead)
 			{
-				// Limpiar absolutamente todo al morir
 				ClearAllEffects();
-				return; // No procesar nada más
+				return;
 			}
 
-			// Si la infección terminó pero aún hay partículas, limpiarlas
 			if (m_infectionDuration <= 0f && m_pukeParticleSystem != null)
 			{
 				m_pukeParticleSystem = null;
@@ -281,12 +257,10 @@ namespace Game
 					if (m_firstVomitTimer <= 0f)
 					{
 						m_firstVomitQueued = true;
-						// La verificación de vida ya se hace dentro de NauseaEffect()
 						NauseaEffect();
 					}
 				}
 
-				// Verificar vida antes de procesar náuseas periódicas
 				if (m_componentHealth == null || m_componentHealth.Health > 0f)
 				{
 					float currentNauseaCooldown = GetAdjustedNauseaCooldown();
@@ -334,7 +308,6 @@ namespace Game
 				UpdatePukeParticles(dt);
 				UpdateGreenoutEffect(dt);
 
-				// El frenado por velocidad se escala con efectividad
 				if (m_componentLocomotion != null
 					&& m_componentCreature != null
 					&& m_componentCreature.ComponentBody != null
@@ -345,8 +318,6 @@ namespace Game
 
 					if (horizontalSpeed > 0.1f)
 					{
-						// Resistencia 0.1 -> dampening ~0.955 (muy afectado)
-						// Resistencia 0.9 -> dampening ~0.995 (casi normal)
 						float dampening = 1f - 0.05f * m_poisonIntensity * PoisonEffectiveness;
 						dampening = MathUtils.Max(dampening, 1f - 0.05f * PoisonEffectiveness);
 
@@ -357,16 +328,12 @@ namespace Game
 					}
 				}
 
-				// --- LÓGICA DE VELOCIDAD (INFECTADO) ---
 				if (!m_speedsStored)
 				{
 					StoreOriginalSpeeds();
 				}
 
-				// La penalización de velocidad se escala con efectividad
-				// Resistencia 0.1 -> penalty mínimo ~0.36 (muy lento)
-				// Resistencia 0.9 -> penalty mínimo ~0.96 (casi normal)
-				float maxSpeedReduction = 0.6f * PoisonEffectiveness; // Hasta 60% de reducción para el más débil
+				float maxSpeedReduction = 0.6f * PoisonEffectiveness;
 				float penalty = 1f - maxSpeedReduction * m_poisonIntensity;
 				penalty = MathUtils.Max(penalty, 1f - maxSpeedReduction);
 
@@ -381,7 +348,6 @@ namespace Game
 				UpdateGreenoutEffect(dt);
 			}
 
-			// --- RESTAURACIÓN DE VELOCIDAD (FUERA DEL if) ---
 			if (m_infectionDuration <= 0f && m_speedsStored)
 			{
 				RestoreOriginalSpeeds();
@@ -392,6 +358,7 @@ namespace Game
 				m_poisonIntensity = 0f;
 				m_firstVomitQueued = false;
 				m_firstVomitTimer = -1f;
+				m_poisonSourceName = null;
 			}
 		}
 
