@@ -62,8 +62,6 @@ namespace Game
 
 		/// <summary>
 		/// Calcula la efectividad de la gripe basándose en la resistencia.
-		/// Resistencia 0.1 = efectividad 0.9 (muy afectado)
-		/// Resistencia 0.9 = efectividad 0.1 (poco afectado)
 		/// </summary>
 		private float FluEffectiveness => 1f - m_fluResistance;
 
@@ -123,7 +121,6 @@ namespace Game
 
 		/// <summary>
 		/// Actualiza las velocidades de locomoción basándose en la efectividad de la gripe
-		/// Efectividad 0 = velocidad normal, Efectividad 1 = velocidad reducida al mínimo
 		/// </summary>
 		private void UpdateLocomotionSpeeds()
 		{
@@ -132,19 +129,14 @@ namespace Game
 
 			if (m_fluDuration > 0f)
 			{
-				// Guardar velocidades originales la primera vez
 				if (!m_speedsStored)
 				{
 					StoreOriginalSpeeds();
 				}
 
-				// Calcular factor de velocidad basado en efectividad
 				float effectiveness = FluEffectiveness;
-
-				// Interpolar entre 1.0 (velocidad completa) y MinimumSpeedFactor (mitad)
 				float speedFactor = MathUtils.Lerp(1f, MinimumSpeedFactor, effectiveness);
 
-				// Aplicar reducción a todas las velocidades
 				m_componentLocomotion.WalkSpeed = m_originalWalkSpeed * speedFactor;
 				m_componentLocomotion.LadderSpeed = m_originalLadderSpeed * speedFactor;
 				m_componentLocomotion.FlySpeed = m_originalFlySpeed * speedFactor;
@@ -153,7 +145,6 @@ namespace Game
 			}
 			else if (m_speedsStored)
 			{
-				// Restaurar velocidades cuando termina la gripe
 				RestoreOriginalSpeeds();
 			}
 		}
@@ -213,7 +204,6 @@ namespace Game
 			// VERIFICACIÓN: No dañar si ya está en el mínimo de salud por gripe
 			if (m_componentHealth != null && m_componentHealth.Health > MinimumHealthFromFlu)
 			{
-				// Limitar el daño para no bajar de MinimumHealthFromFlu (0.1)
 				float maxSafeDamage = m_componentHealth.Health - MinimumHealthFromFlu;
 				damageToApply = MathUtils.Min(damageToApply, maxSafeDamage);
 
@@ -222,7 +212,6 @@ namespace Game
 					float damageToDefer = damageToApply;
 					m_subsystemTime.QueueGameTimeDelayedExecution(m_subsystemTime.GameTime + 0.75, delegate
 					{
-						// Doble verificación al ejecutar el daño
 						if (m_componentHealth != null && m_componentHealth.Health > MinimumHealthFromFlu)
 						{
 							float safeDamage = MathUtils.Min(damageToDefer, m_componentHealth.Health - MinimumHealthFromFlu);
@@ -235,14 +224,35 @@ namespace Game
 				}
 			}
 
-			// Probabilidad de toser vs estornudar
+			// ============================================
+			// CORRECCIÓN: Secuencia Cough -> Sneeze
+			// ============================================
+
 			float coughChance = 0.3f + 0.5f * FluEffectiveness;
+
+			// Primero verificar si puede toser
 			if (m_coughDuration == 0f && (m_subsystemTime.GameTime - m_lastCoughTime > 40.0 || m_random.Bool(coughChance)))
 			{
+				// Tose
 				Cough();
+
+				// Programar estornudo DESPUÉS de que termine la tos
+				float coughEndTime = (float)m_lastCoughTime + CoughDuration;
+				m_subsystemTime.QueueGameTimeDelayedExecution(coughEndTime, delegate
+				{
+					// Verificar que sigue vivo, con gripe, y no está ya estornudando
+					if (m_sneezeDuration == 0f
+						&& m_fluDuration > 0f
+						&& m_componentHealth != null
+						&& m_componentHealth.Health > 0f)
+					{
+						Sneeze();
+					}
+				});
 			}
 			else if (m_sneezeDuration == 0f)
 			{
+				// Si no tosió, estornuda directamente
 				Sneeze();
 			}
 		}
@@ -295,7 +305,6 @@ namespace Game
 
 			if (isDead)
 			{
-				// Restaurar velocidades al morir
 				if (m_speedsStored)
 				{
 					RestoreOriginalSpeeds();
@@ -327,7 +336,6 @@ namespace Game
 			}
 			else
 			{
-				// Restaurar velocidades cuando termina la gripe
 				if (m_speedsStored)
 				{
 					RestoreOriginalSpeeds();
