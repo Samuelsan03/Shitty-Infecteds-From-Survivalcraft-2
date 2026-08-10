@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Engine;
-using Engine.Graphics;
-using Engine.Input;
 using TemplatesDatabase;
 
 namespace Game
 {
-	public class SubsystemSniperBlockBehavior : SubsystemBlockBehavior
+	public class SubsystemAK47BlockBehavior : SubsystemBlockBehavior
 	{
 		public override int[] HandledBlocks => Array.Empty<int>();
 
@@ -18,19 +16,19 @@ namespace Game
 		private SubsystemAudio m_subsystemAudio;
 		private SubsystemNoise m_subsystemNoise;
 		private Random m_random = new Random();
-
 		private Dictionary<ComponentMiner, double> m_aimStartTimes = new Dictionary<ComponentMiner, double>();
-		private Dictionary<ComponentMiner, Camera> m_savedCameras = new Dictionary<ComponentMiner, Camera>();
-
+		private Dictionary<ComponentMiner, double> m_lastFireTimes = new Dictionary<ComponentMiner, double>();
+		private Dictionary<ComponentMiner, double> m_lastEmptySoundTimes = new Dictionary<ComponentMiner, double>();
+		private Dictionary<ComponentMiner, double> m_lastEmptyMessageTimes = new Dictionary<ComponentMiner, double>();
 		private int m_bulletBlockIndex;
-		private int m_sniperBlockIndex;
-		private int m_sniperAmmunitionBlockIndex;
+		private int m_ak47BlockIndex;
+		private int m_ak47AmmunitionBlockIndex;
 
-		private const int MaxAmmo = 1;
-		private const float MuzzleOffset = 1.5f;
-		private const float BulletVelocity = 250f;
-		private const float NoiseRange = 80f;
-		private const float NoiseLoudness = 2f;
+		private const float FireRate = 0.1f;
+		private const int MaxAmmo = 30;
+		private const float EmptySoundCooldown = 0.5f;
+		private const float EmptyMessageCooldown = 0.5f;
+		private const float MuzzleOffset = 0.8f;
 
 		public override void Load(ValuesDictionary valuesDictionary)
 		{
@@ -41,8 +39,8 @@ namespace Game
 			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
 			m_bulletBlockIndex = BlocksManager.GetBlockIndex<FirearmsBulletBlock>(false, false);
-			m_sniperBlockIndex = BlocksManager.GetBlockIndex<SniperBlock>(false, false);
-			m_sniperAmmunitionBlockIndex = BlocksManager.GetBlockIndex<SniperAmmunitionBlock>(false, false);
+			m_ak47BlockIndex = BlocksManager.GetBlockIndex<AK47Block>(false, false);
+			m_ak47AmmunitionBlockIndex = BlocksManager.GetBlockIndex<AK47AmmunitionBlock>(false, false);
 			base.Load(valuesDictionary);
 		}
 
@@ -59,181 +57,173 @@ namespace Game
 					int num = Terrain.ExtractContents(slotValue);
 					int data = Terrain.ExtractData(slotValue);
 					int num2 = slotValue;
+					int num3 = 0;
 
-					if (num == m_sniperBlockIndex && slotCount > 0)
+					if (num == m_ak47BlockIndex && slotCount > 0)
 					{
 						double gameTime;
 						if (!m_aimStartTimes.TryGetValue(componentMiner, out gameTime))
 						{
 							gameTime = m_subsystemTime.GameTime;
 							m_aimStartTimes[componentMiner] = gameTime;
+							m_lastFireTimes[componentMiner] = gameTime - FireRate;
+							m_lastEmptySoundTimes[componentMiner] = gameTime - EmptySoundCooldown;
+							m_lastEmptyMessageTimes[componentMiner] = gameTime - EmptyMessageCooldown;
 						}
+						float num4 = (float)(m_subsystemTime.GameTime - gameTime);
 
-						float aimDuration = (float)(m_subsystemTime.GameTime - gameTime);
+						double lastFireTime;
+						m_lastFireTimes.TryGetValue(componentMiner, out lastFireTime);
+						float timeSinceLastFire = (float)(m_subsystemTime.GameTime - lastFireTime);
 
-						// ✅ DECLARAR ANTES DEL SWITCH para usar en todos los cases
-						SniperBlock.LoadState loadState = SniperBlock.GetLoadState(data);
-						int ammoCount = SniperBlock.GetAmmoCount(data);
+						double lastEmptySoundTime;
+						m_lastEmptySoundTimes.TryGetValue(componentMiner, out lastEmptySoundTime);
+						float timeSinceEmptySound = (float)(m_subsystemTime.GameTime - lastEmptySoundTime);
+
+						double lastEmptyMessageTime;
+						m_lastEmptyMessageTimes.TryGetValue(componentMiner, out lastEmptyMessageTime);
+						float timeSinceEmptyMessage = (float)(m_subsystemTime.GameTime - lastEmptyMessageTime);
+
+						float num5 = (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0);
+						Vector3 v = ((componentMiner.ComponentCreature.ComponentBody.IsCrouching ? 0.01f : 0.03f) + 0.15f * MathUtils.Saturate(num4 / 5f)) * new Vector3
+						{
+							X = SimplexNoise.OctavedNoise(num5, 2f, 3, 2f, 0.5f, false),
+							Y = SimplexNoise.OctavedNoise(num5 + 100f, 2f, 3, 2f, 0.5f, false),
+							Z = SimplexNoise.OctavedNoise(num5 + 200f, 2f, 3, 2f, 0.5f, false)
+						};
+						aim.Direction = Vector3.Normalize(aim.Direction + v);
+
+						// ✅ DECLARAR ANTES DEL SWITCH
+						AK47Block.LoadState loadState = AK47Block.GetLoadState(data);
+						int ammoCount = AK47Block.GetAmmoCount(data);
 						ComponentPlayer componentPlayer = componentMiner.ComponentPlayer;
 
 						switch (state)
 						{
 							case AimState.InProgress:
 								{
-									if (aimDuration >= 10f)
+									if (num4 >= 10f)
 									{
 										componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
 										return true;
 									}
 
-									if (componentPlayer != null)
+									if (loadState == AK47Block.LoadState.Loaded && ammoCount > 0)
 									{
-										Camera currentCamera = componentPlayer.GameWidget.ActiveCamera;
-
-										if (!(currentCamera is SniperScopeCamera))
-										{
-											m_savedCameras[componentMiner] = currentCamera;
-
-											SniperScopeCamera scopeCamera = new SniperScopeCamera(componentPlayer.GameWidget);
-											componentPlayer.GameWidget.ActiveCamera = scopeCamera;
-											scopeCamera.Activate(currentCamera);
-										}
-
-										Vector3 eyePosition = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
-										componentPlayer.ComponentAimingSights.ShowAimingSights(eyePosition, aim.Direction);
-
-										// ✅ SOLO mostrar contador si hay munición
-										if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
+										// ✅ Solo mostrar contador si hay munición
+										if (componentPlayer != null)
 										{
 											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
+										}
+
+										if (timeSinceLastFire >= FireRate)
+										{
+											Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
+												+ componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
+												- componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f
+												+ aim.Direction * MuzzleOffset;
+											Vector3 vector2 = aim.Direction;
+
+											int bulletValue = Terrain.MakeBlockValue(m_bulletBlockIndex, 0, FirearmsBulletBlock.SetFirearmsBulletType(0, FirearmsBulletBlock.FirearmsBulletType.AK47Bullet));
+											Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + 120f * vector2;
+
+											Projectile projectile = m_subsystemProjectiles.FireProjectile(bulletValue, vector, velocity, Vector3.Zero, componentMiner.ComponentCreature);
+											if (projectile != null)
+											{
+												projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+											}
+
+											m_subsystemAudio.PlaySound("Audio/Armas/ak 47 fuego", 1f, m_random.Float(-0.1f, 0.1f), vector, 10f, true);
+											m_subsystemParticles.AddParticleSystem(new TestGunFireParticleSystem(m_subsystemTerrain, vector, vector2), false);
+											m_subsystemNoise.MakeNoise(vector, 1f, 40f);
+
+											int newAmmoCount = ammoCount - 1;
+											int newData = AK47Block.SetAmmoCount(Terrain.ExtractData(num2), newAmmoCount);
+
+											if (newAmmoCount <= 0)
+											{
+												newData = AK47Block.SetLoadState(newData, AK47Block.LoadState.Empty);
+											}
+
+											num2 = Terrain.MakeBlockValue(num, 0, newData);
+											num3 = 1;
+
+											m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
+										}
+									}
+									else
+									{
+										// ✅ Sin munición - NO mostrar contador "0/30"
+										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
+										{
+											string ammoName = LanguageControl.GetBlock("AK47AmmunitionBlock", "DisplayName");
+											string message = LanguageControl.Get("Firearms", 1);
+											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
+											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
+										}
+
+										if (timeSinceEmptySound >= EmptySoundCooldown)
+										{
+											m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
+											m_lastEmptySoundTimes[componentMiner] = m_subsystemTime.GameTime;
 										}
 									}
 
 									ComponentFirstPersonModel componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
 									if (componentFirstPersonModel != null)
 									{
-										componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.3f, 0.1f, 0.15f);
-										componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.6f, 0f, 0f);
+										if (componentPlayer != null)
+										{
+											componentPlayer.ComponentAimingSights.ShowAimingSights(aim.Position, aim.Direction);
+										}
+										componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.21f, 0.15f, 0.08f);
+										componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
 									}
 									componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.4f;
-									componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.1f, -0.06f, 0.1f);
-									componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.5f, 0f, 0f);
+									componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
+									componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
 									break;
 								}
 							case AimState.Cancelled:
-								{
-									RestoreCamera(componentMiner, componentPlayer);
-									m_aimStartTimes.Remove(componentMiner);
-									m_savedCameras.Remove(componentMiner);
-									break;
-								}
+								m_aimStartTimes.Remove(componentMiner);
+								m_lastFireTimes.Remove(componentMiner);
+								m_lastEmptySoundTimes.Remove(componentMiner);
+								m_lastEmptyMessageTimes.Remove(componentMiner);
+								break;
 							case AimState.Completed:
-								{
-									RestoreCamera(componentMiner, componentPlayer);
-
-									if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
-									{
-										FireShot(aim, componentMiner, num, data, ref num2);
-									}
-									else
-									{
-										if (componentPlayer != null)
-										{
-											string ammoName = LanguageControl.GetBlock("SniperAmmunitionBlock", "DisplayName");
-											string message = LanguageControl.Get("Firearms", 1);
-											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
-										}
-										m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
-									}
-
-									m_aimStartTimes.Remove(componentMiner);
-									m_savedCameras.Remove(componentMiner);
-									break;
-								}
+								m_aimStartTimes.Remove(componentMiner);
+								m_lastFireTimes.Remove(componentMiner);
+								m_lastEmptySoundTimes.Remove(componentMiner);
+								m_lastEmptyMessageTimes.Remove(componentMiner);
+								break;
 						}
 					}
-
 					if (num2 != slotValue)
 					{
 						inventory.RemoveSlotItems(activeSlotIndex, 1);
 						inventory.AddSlotItems(activeSlotIndex, num2, 1);
+					}
+					if (num3 > 0)
+					{
+						componentMiner.DamageActiveTool(num3);
 					}
 				}
 			}
 			return false;
 		}
 
-		private void RestoreCamera(ComponentMiner componentMiner, ComponentPlayer componentPlayer)
-		{
-			if (componentPlayer != null && componentPlayer.GameWidget.ActiveCamera is SniperScopeCamera)
-			{
-				Camera savedCamera;
-				if (m_savedCameras.TryGetValue(componentMiner, out savedCamera) && savedCamera != null)
-				{
-					componentPlayer.GameWidget.ActiveCamera = savedCamera;
-
-					if (savedCamera is FppCamera fppCamera)
-					{
-						fppCamera.Activate(componentPlayer.GameWidget.ActiveCamera);
-					}
-				}
-				else
-				{
-					componentPlayer.GameWidget.ActiveCamera = new FppCamera(componentPlayer.GameWidget);
-				}
-			}
-		}
-
-		private void FireShot(Ray3 aim, ComponentMiner componentMiner, int blockContents, int data, ref int newValue)
-		{
-			Vector3 muzzlePosition = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
-				+ componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.35f
-				- componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.15f
-				+ aim.Direction * MuzzleOffset;
-
-			Vector3 fireDirection = aim.Direction;
-
-			int bulletValue = Terrain.MakeBlockValue(m_bulletBlockIndex, 0,
-				FirearmsBulletBlock.SetFirearmsBulletType(0, FirearmsBulletBlock.FirearmsBulletType.SniperBullet));
-
-			Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + BulletVelocity * fireDirection;
-
-			Projectile projectile = m_subsystemProjectiles.FireProjectile(bulletValue, muzzlePosition, velocity, Vector3.Zero, componentMiner.ComponentCreature);
-			if (projectile != null)
-			{
-				projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-			}
-
-			m_subsystemAudio.PlaySound("Audio/Armas/Sniper fuego", 1f, m_random.Float(-0.05f, 0.05f), muzzlePosition, 15f, true);
-
-			m_subsystemParticles.AddParticleSystem(new TestGunFireParticleSystem(m_subsystemTerrain, muzzlePosition, fireDirection), false);
-
-			m_subsystemNoise.MakeNoise(muzzlePosition, NoiseLoudness, NoiseRange);
-
-			int currentAmmo = SniperBlock.GetAmmoCount(data);
-			int newAmmoCount = currentAmmo - 1;
-			int newData = SniperBlock.SetAmmoCount(data, newAmmoCount);
-
-			if (newAmmoCount <= 0)
-			{
-				newData = SniperBlock.SetLoadState(newData, SniperBlock.LoadState.Empty);
-			}
-
-			newValue = Terrain.MakeBlockValue(blockContents, 0, newData);
-		}
-
 		public override int GetProcessInventoryItemCapacity(IInventory inventory, int slotIndex, int value)
 		{
 			int slotContents = Terrain.ExtractContents(inventory.GetSlotValue(slotIndex));
 
-			if (slotContents != m_sniperBlockIndex) return 0;
+			if (slotContents != m_ak47BlockIndex) return 0;
 
-			int ammoCount = SniperBlock.GetAmmoCount(Terrain.ExtractData(inventory.GetSlotValue(slotIndex)));
+			int ammoCount = AK47Block.GetAmmoCount(Terrain.ExtractData(inventory.GetSlotValue(slotIndex)));
 
 			if (ammoCount >= MaxAmmo) return 0;
 
 			int itemContents = Terrain.ExtractContents(value);
-			if (itemContents == m_sniperAmmunitionBlockIndex)
+			if (itemContents == m_ak47AmmunitionBlockIndex)
 				return 1;
 
 			return 0;
@@ -247,13 +237,13 @@ namespace Game
 			if (processCount == 1)
 			{
 				int data = Terrain.ExtractData(inventory.GetSlotValue(slotIndex));
-				int newData = SniperBlock.SetLoadState(data, SniperBlock.LoadState.Loaded);
-				newData = SniperBlock.SetAmmoCount(newData, MaxAmmo);
+				int newData = AK47Block.SetLoadState(data, AK47Block.LoadState.Loaded);
+				newData = AK47Block.SetAmmoCount(newData, MaxAmmo);
 
 				processedValue = 0;
 				processedCount = 0;
 				inventory.RemoveSlotItems(slotIndex, 1);
-				inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(m_sniperBlockIndex, 0, newData), 1);
+				inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(m_ak47BlockIndex, 0, newData), 1);
 
 				m_subsystemAudio.PlaySound("Audio/Armas/reload", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 			}
