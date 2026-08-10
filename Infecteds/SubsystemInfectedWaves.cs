@@ -27,7 +27,7 @@ namespace Game
 		private SubsystemTime m_subsystemTime;
 		private SubsystemPlayers m_subsystemPlayers;
 		private SubsystemTerrain m_subsystemTerrain;
-		private SubsystemSpawn m_subsystemSpawn; // NUEVO: Referencia al subsistema de spawn original
+		private SubsystemSpawn m_subsystemSpawn;
 
 		private Random m_random = new Random();
 
@@ -47,7 +47,7 @@ namespace Game
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
-			m_subsystemSpawn = Project.FindSubsystem<SubsystemSpawn>(true); // NUEVO: Inicializar
+			m_subsystemSpawn = Project.FindSubsystem<SubsystemSpawn>(true);
 
 			LoadWavesFromXml();
 		}
@@ -143,12 +143,15 @@ namespace Game
 
 				InfectedWaveData currentWave = AllWaves[CurrentWaveIndex];
 
-				if (CurrentSpawnIndex < currentWave.InfectedList.Count)
+				// LOOP CONTINUO: Reiniciar al llegar al final
+				if (CurrentSpawnIndex >= currentWave.InfectedList.Count)
 				{
-					string entityName = currentWave.InfectedList[CurrentSpawnIndex];
-					SpawnInfected(entityName);
-					CurrentSpawnIndex++;
+					CurrentSpawnIndex = 0;
 				}
+
+				string entityName = currentWave.InfectedList[CurrentSpawnIndex];
+				SpawnInfected(entityName);
+				CurrentSpawnIndex++;
 			}
 		}
 
@@ -159,14 +162,13 @@ namespace Game
 				Vector3 spawnPosition = GetSpawnPosition();
 				if (spawnPosition == Vector3.Zero) return;
 
-				// ACTUALIZADO: Ahora usamos el pipeline nativo del juego.
-				// Esto llama a los hooks "OnReadSpawnData", registra la criatura en el SubsystemSpawn 
-				// para que sea manejada por los Chunks y haga Despawn correctamente.
+				// ConstantSpawn = false: Spawn temporal, no se guarda en chunks
+				// Así no se acumulan al recargar el mundo
 				SpawnEntityData data = new SpawnEntityData
 				{
 					TemplateName = entityName,
 					Position = spawnPosition,
-					ConstantSpawn = true
+					ConstantSpawn = false
 				};
 
 				m_subsystemSpawn.SpawnEntity(data);
