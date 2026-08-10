@@ -1,4 +1,53 @@
 <Recipes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="CraftingRecipes.xsd">
+<Recipe Result="FrozenSnowballBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="snowball" b="ice" Description="[0]">
+  "a"
+  "b"
+</Recipe>
+  <Recipe Result="FrozenBombBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ice" b="ironingot" c="gunpowder" Description="[0]">
+    " a "
+    "bcb"
+    " b "
+  </Recipe>
+  <Recipe Result="PoisonBombBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="toxin" b="ironingot" c="gunpowder" Description="[0]">
+  " a "
+  "bcb"
+  " b "
+</Recipe>
+<Recipe Result="AK47Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="rod" c="semiconductorblock" Description="[0]">
+    " ab"
+    "bcb"
+    "  a"
+  </Recipe>
+  <Recipe Result="DesertEagleBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="ironblock" Description="[0]">
+    " ba"
+    "bab"
+    " a "
+  </Recipe>
+  <Recipe Result="SPAS12Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="rod" b="ironingot" c="planks" d="string" Description="[0]">
+    "ab "
+    "aca"
+    "b d"
+  </Recipe>
+  <Recipe Result="SniperBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironingot" b="rod" c="diamond" d="glass" Description="[0]">
+    " da"
+    "bcb"
+    " a "
+  </Recipe>
+  <Recipe Result="AK47AmmunitionBlock" ResultCount="8" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" Description="[0]">
+    "ab"
+  </Recipe>
+  <Recipe Result="DesertEagleAmmunitionBlock" ResultCount="6" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironblock" b="gunpowder" Description="[0]">
+    "ba"
+    " a"
+  </Recipe>
+  <Recipe Result="SPAS12AmmunitionBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" c="feather" Description="[0]">
+    "a "
+    "bc"
+  </Recipe>
+  <Recipe Result="SniperAmmunitionBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="gunpowder" c="diamond" Description="[0]">
+    "aba"
+    " c "
+  </Recipe>
 <Recipe Result="FlameThrowerBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="copperblock" c="rod" d="planks" Description="[0]">
   " a "
   "bcb"
