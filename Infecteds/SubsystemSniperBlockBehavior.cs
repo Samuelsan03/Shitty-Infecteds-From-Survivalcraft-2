@@ -71,7 +71,6 @@ namespace Game
 
 						float aimDuration = (float)(m_subsystemTime.GameTime - gameTime);
 
-						// ✅ DECLARAR ANTES DEL SWITCH para usar en todos los cases
 						SniperBlock.LoadState loadState = SniperBlock.GetLoadState(data);
 						int ammoCount = SniperBlock.GetAmmoCount(data);
 						ComponentPlayer componentPlayer = componentMiner.ComponentPlayer;
@@ -102,7 +101,6 @@ namespace Game
 										Vector3 eyePosition = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
 										componentPlayer.ComponentAimingSights.ShowAimingSights(eyePosition, aim.Direction);
 
-										// ✅ SOLO mostrar contador si hay munición
 										if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
 										{
 											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
@@ -134,6 +132,12 @@ namespace Game
 									if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
 									{
 										FireShot(aim, componentMiner, num, data, ref num2);
+
+										// Mostrar 0/1 después de disparar
+										if (componentPlayer != null)
+										{
+											componentPlayer.ComponentGui.DisplaySmallMessage($"0/{MaxAmmo}", Color.White, true, false);
+										}
 									}
 									else
 									{
