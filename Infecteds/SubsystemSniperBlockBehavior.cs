@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using Engine.Graphics;
@@ -71,6 +71,7 @@ namespace Game
 
 						float aimDuration = (float)(m_subsystemTime.GameTime - gameTime);
 
+						// ✅ DECLARAR ANTES DEL SWITCH para usar en todos los cases
 						SniperBlock.LoadState loadState = SniperBlock.GetLoadState(data);
 						int ammoCount = SniperBlock.GetAmmoCount(data);
 						ComponentPlayer componentPlayer = componentMiner.ComponentPlayer;
@@ -79,14 +80,12 @@ namespace Game
 						{
 							case AimState.InProgress:
 								{
-									// Fatiga por apuntar largo tiempo
 									if (aimDuration >= 10f)
 									{
 										componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
 										return true;
 									}
 
-									// Activar scope
 									if (componentPlayer != null)
 									{
 										Camera currentCamera = componentPlayer.GameWidget.ActiveCamera;
@@ -100,16 +99,16 @@ namespace Game
 											scopeCamera.Activate(currentCamera);
 										}
 
-										// ✅ MOSTRAR RETÍCULA DEL SCOPE mientras apuntas
-										// Esto se llama cada frame, manteniendo IsSightsVisible = true
 										Vector3 eyePosition = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition;
 										componentPlayer.ComponentAimingSights.ShowAimingSights(eyePosition, aim.Direction);
 
-										// Solo mostrar contador de munición mientras apuntas
-										componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
+										// ✅ SOLO mostrar contador si hay munición
+										if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
+										{
+											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
+										}
 									}
 
-									// Posición del arma
 									ComponentFirstPersonModel componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
 									if (componentFirstPersonModel != null)
 									{
@@ -123,34 +122,27 @@ namespace Game
 								}
 							case AimState.Cancelled:
 								{
-									// Canceló el aim sin disparar
 									RestoreCamera(componentMiner, componentPlayer);
-
 									m_aimStartTimes.Remove(componentMiner);
 									m_savedCameras.Remove(componentMiner);
 									break;
 								}
 							case AimState.Completed:
 								{
-									// BOLT-ACTION: Disparar al soltar el botón
 									RestoreCamera(componentMiner, componentPlayer);
 
 									if (loadState == SniperBlock.LoadState.Loaded && ammoCount > 0)
 									{
-										{
-											FireShot(aim, componentMiner, num, data, ref num2);
-										}
+										FireShot(aim, componentMiner, num, data, ref num2);
 									}
 									else
 									{
-										// Sin munición - sonido y mensaje SOLO al intentar disparar (soltar)
 										if (componentPlayer != null)
 										{
 											string ammoName = LanguageControl.GetBlock("SniperAmmunitionBlock", "DisplayName");
 											string message = LanguageControl.Get("Firearms", 1);
 											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
 										}
-
 										m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 									}
 
