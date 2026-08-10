@@ -101,7 +101,6 @@ namespace Game
 						};
 						aim.Direction = Vector3.Normalize(aim.Direction + v);
 
-						// ✅ DECLARAR ANTES DEL SWITCH
 						SPAS12Block.LoadState loadState = SPAS12Block.GetLoadState(data);
 						int ammoCount = SPAS12Block.GetAmmoCount(data);
 						ComponentPlayer componentPlayer = componentMiner.ComponentPlayer;
@@ -118,7 +117,7 @@ namespace Game
 
 									if (loadState == SPAS12Block.LoadState.Loaded && ammoCount > 0)
 									{
-										// ✅ Solo mostrar contador si hay munición
+										// Mostrar contador si hay munición
 										if (componentPlayer != null)
 										{
 											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
@@ -155,11 +154,16 @@ namespace Game
 											m_subsystemNoise.MakeNoise(vector, 1.2f, 45f);
 
 											int newAmmoCount = ammoCount - 1;
+
+											// ✅ ACTUALIZAR variables locales para el siguiente frame
+											ammoCount = newAmmoCount;
+
 											int newData = SPAS12Block.SetAmmoCount(Terrain.ExtractData(num2), newAmmoCount);
 
 											if (newAmmoCount <= 0)
 											{
 												newData = SPAS12Block.SetLoadState(newData, SPAS12Block.LoadState.Empty);
+												loadState = SPAS12Block.LoadState.Empty;
 											}
 
 											num2 = Terrain.MakeBlockValue(num, 0, newData);
@@ -169,10 +173,18 @@ namespace Game
 											m_firedThisAim[componentMiner] = true;
 										}
 									}
+									else if (alreadyFiredThisAim)
+									{
+										// ✅ Acabas de disparar la última bala - mostrar 0/X
+										if (componentPlayer != null)
+										{
+											componentPlayer.ComponentGui.DisplaySmallMessage($"0/{MaxAmmo}", Color.White, false, false);
+										}
+									}
 									else
 									{
-										// ✅ Sin munición - NO mostrar contador "0/8"
-										if (componentPlayer != null && !alreadyFiredThisAim && timeSinceEmptyMessage >= EmptyMessageCooldown)
+										// Sin munición y no acabas de disparar - mensaje de recarga
+										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
 											string ammoName = LanguageControl.GetBlock("SPAS12AmmunitionBlock", "DisplayName");
 											string message = LanguageControl.Get("Firearms", 1);
@@ -180,11 +192,10 @@ namespace Game
 											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
 										}
 
-										if (!alreadyFiredThisAim && timeSinceEmptySound >= EmptySoundCooldown)
+										if (timeSinceEmptySound >= EmptySoundCooldown)
 										{
 											m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 											m_lastEmptySoundTimes[componentMiner] = m_subsystemTime.GameTime;
-											m_firedThisAim[componentMiner] = true;
 										}
 									}
 
