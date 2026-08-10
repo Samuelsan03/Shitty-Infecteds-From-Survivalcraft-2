@@ -125,11 +125,11 @@ namespace Game
 			{
 				m_componentCreatureModel.AimHandAngleOrder = 3.2f;
 
-				if (m_healerParticleSystem != null)
+				if (m_healerParticleSystem != null && !m_healerParticleSystem.Stopped)
 				{
 					m_healerParticleSystem.BoundingBox = m_componentCreature.ComponentBody.BoundingBox;
 				}
-				if (m_targetParticleSystem != null && m_healingTarget != null)
+				if (m_targetParticleSystem != null && !m_targetParticleSystem.Stopped && m_healingTarget != null)
 				{
 					m_targetParticleSystem.BoundingBox = m_healingTarget.ComponentBody.BoundingBox;
 				}
@@ -323,17 +323,23 @@ namespace Game
 				m_healerParticleSystem = new HealingParticleSystem();
 				m_healerParticleSystem.BoundingBox = m_componentCreature.ComponentBody.BoundingBox;
 				m_subsystemParticles.AddParticleSystem(m_healerParticleSystem, false);
+
+				Vector3 audioPosition = (m_healingTarget != null) ? m_healingTarget.ComponentBody.Position : m_componentCreature.ComponentBody.Position;
+				m_subsystemAudio.PlaySound("Audio/Shapeshift", 1f, 0f, audioPosition, 3f, false);
+			}
+			else if (m_healerParticleSystem.Stopped)
+			{
+				m_healerParticleSystem = new HealingParticleSystem();
+				m_healerParticleSystem.BoundingBox = m_componentCreature.ComponentBody.BoundingBox;
+				m_subsystemParticles.AddParticleSystem(m_healerParticleSystem, false);
 			}
 
-			if (m_healingTarget != null && m_healingTarget != m_componentCreature && m_targetParticleSystem == null)
+			if (m_healingTarget != null && m_healingTarget != m_componentCreature && (m_targetParticleSystem == null || m_targetParticleSystem.Stopped))
 			{
 				m_targetParticleSystem = new HealingParticleSystem();
 				m_targetParticleSystem.BoundingBox = m_healingTarget.ComponentBody.BoundingBox;
 				m_subsystemParticles.AddParticleSystem(m_targetParticleSystem, false);
 			}
-
-			Vector3 audioPosition = (m_healingTarget != null) ? m_healingTarget.ComponentBody.Position : m_componentCreature.ComponentBody.Position;
-			m_subsystemAudio.PlaySound("Audio/Shapeshift", 1f, 0f, audioPosition, 3f, true);
 		}
 
 		private void StopHealingEffects()
@@ -343,7 +349,6 @@ namespace Game
 			if (m_healerParticleSystem != null)
 			{
 				m_healerParticleSystem.Stopped = true;
-				m_healerParticleSystem = null;
 			}
 
 			if (m_targetParticleSystem != null)
