@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using TemplatesDatabase;
@@ -20,13 +20,12 @@ namespace Game
 		private Dictionary<ComponentMiner, double> m_lastFireTimes = new Dictionary<ComponentMiner, double>();
 		private Dictionary<ComponentMiner, double> m_lastEmptySoundTimes = new Dictionary<ComponentMiner, double>();
 		private Dictionary<ComponentMiner, double> m_lastEmptyMessageTimes = new Dictionary<ComponentMiner, double>();
-		private Dictionary<ComponentMiner, bool> m_firedThisAim = new Dictionary<ComponentMiner, bool>(); // NUEVO
+		private Dictionary<ComponentMiner, bool> m_firedThisAim = new Dictionary<ComponentMiner, bool>();
 		private int m_bulletBlockIndex;
 		private int m_spas12BlockIndex;
 		private int m_spas12AmmunitionBlockIndex;
 
-		// Constantes del SPAS-12 - SEMIAUTOMÁTICO REAL
-		private const float FireRate = 0.3f; // Solo controla el mínimo entre clics
+		private const float FireRate = 0.3f;
 		private const int MaxAmmo = 8;
 		private const float EmptySoundCooldown = 0.5f;
 		private const float EmptyMessageCooldown = 0.5f;
@@ -71,10 +70,10 @@ namespace Game
 						{
 							gameTime = m_subsystemTime.GameTime;
 							m_aimStartTimes[componentMiner] = gameTime;
-							m_lastFireTimes[componentMiner] = gameTime - FireRate; // Permitir disparar inmediatamente
+							m_lastFireTimes[componentMiner] = gameTime - FireRate;
 							m_lastEmptySoundTimes[componentMiner] = gameTime - EmptySoundCooldown;
 							m_lastEmptyMessageTimes[componentMiner] = gameTime - EmptyMessageCooldown;
-							m_firedThisAim[componentMiner] = false; // NUEVO: Resetear
+							m_firedThisAim[componentMiner] = false;
 						}
 						float num4 = (float)(m_subsystemTime.GameTime - gameTime);
 
@@ -93,7 +92,6 @@ namespace Game
 						bool alreadyFiredThisAim;
 						m_firedThisAim.TryGetValue(componentMiner, out alreadyFiredThisAim);
 
-						// Dispersión base para escopeta
 						float num5 = (float)MathUtils.Remainder(m_subsystemTime.GameTime, 1000.0);
 						Vector3 v = ((componentMiner.ComponentCreature.ComponentBody.IsCrouching ? 0.02f : 0.04f) + 0.1f * MathUtils.Saturate(num4 / 3f)) * new Vector3
 						{
@@ -102,6 +100,11 @@ namespace Game
 							Z = SimplexNoise.OctavedNoise(num5 + 200f, 2f, 3, 2f, 0.5f, false)
 						};
 						aim.Direction = Vector3.Normalize(aim.Direction + v);
+
+						// ✅ DECLARAR ANTES DEL SWITCH
+						SPAS12Block.LoadState loadState = SPAS12Block.GetLoadState(data);
+						int ammoCount = SPAS12Block.GetAmmoCount(data);
+						ComponentPlayer componentPlayer = componentMiner.ComponentPlayer;
 
 						switch (state)
 						{
@@ -113,69 +116,62 @@ namespace Game
 										return true;
 									}
 
-									SPAS12Block.LoadState loadState = SPAS12Block.GetLoadState(data);
-									int ammoCount = SPAS12Block.GetAmmoCount(data);
-
-									ComponentPlayer componentPlayer = componentMiner.ComponentPlayer;
-
 									if (loadState == SPAS12Block.LoadState.Loaded && ammoCount > 0)
 									{
+										// ✅ Solo mostrar contador si hay munición
 										if (componentPlayer != null)
 										{
 											componentPlayer.ComponentGui.DisplaySmallMessage($"{ammoCount}/{MaxAmmo}", Color.White, false, false);
 										}
 
-										// SEMIAUTOMÁTICO: Solo disparar si NO ha disparado este clic
 										if (!alreadyFiredThisAim && timeSinceLastFire >= FireRate)
 										{
+											Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
+												+ componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
+												- componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f
+												+ aim.Direction * MuzzleOffset;
+											Vector3 vector2 = aim.Direction;
+
+											for (int i = 0; i < PelletCount; i++)
 											{
-												Vector3 vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition
-													+ componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f
-													- componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f
-													+ aim.Direction * MuzzleOffset;
-												Vector3 vector2 = aim.Direction;
+												float spreadX = m_random.Float(-PelletSpread, PelletSpread);
+												float spreadY = m_random.Float(-PelletSpread, PelletSpread);
+												float spreadZ = m_random.Float(-PelletSpread, PelletSpread);
 
-												for (int i = 0; i < PelletCount; i++)
+												Vector3 pelletDirection = Vector3.Normalize(vector2 + new Vector3(spreadX, spreadY, spreadZ));
+
+												int bulletValue = Terrain.MakeBlockValue(m_bulletBlockIndex, 0, FirearmsBulletBlock.SetFirearmsBulletType(0, FirearmsBulletBlock.FirearmsBulletType.SPAS12Bullet));
+												Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + PelletVelocity * pelletDirection;
+
+												Projectile projectile = m_subsystemProjectiles.FireProjectile(bulletValue, vector, velocity, Vector3.Zero, componentMiner.ComponentCreature);
+												if (projectile != null)
 												{
-													float spreadX = m_random.Float(-PelletSpread, PelletSpread);
-													float spreadY = m_random.Float(-PelletSpread, PelletSpread);
-													float spreadZ = m_random.Float(-PelletSpread, PelletSpread);
-
-													Vector3 pelletDirection = Vector3.Normalize(vector2 + new Vector3(spreadX, spreadY, spreadZ));
-
-													int bulletValue = Terrain.MakeBlockValue(m_bulletBlockIndex, 0, FirearmsBulletBlock.SetFirearmsBulletType(0, FirearmsBulletBlock.FirearmsBulletType.SPAS12Bullet));
-													Vector3 velocity = componentMiner.ComponentCreature.ComponentBody.Velocity + PelletVelocity * pelletDirection;
-
-													Projectile projectile = m_subsystemProjectiles.FireProjectile(bulletValue, vector, velocity, Vector3.Zero, componentMiner.ComponentCreature);
-													if (projectile != null)
-													{
-														projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
-													}
+													projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
 												}
-
-												m_subsystemAudio.PlaySound("Audio/Armas/SPAS 12 fuego", 1f, m_random.Float(-0.1f, 0.1f), vector, 12f, true);
-												m_subsystemParticles.AddParticleSystem(new TestGunFireParticleSystem(m_subsystemTerrain, vector, vector2), false);
-												m_subsystemNoise.MakeNoise(vector, 1.2f, 45f);
-
-												int newAmmoCount = ammoCount - 1;
-												int newData = SPAS12Block.SetAmmoCount(Terrain.ExtractData(num2), newAmmoCount);
-
-												if (newAmmoCount <= 0)
-												{
-													newData = SPAS12Block.SetLoadState(newData, SPAS12Block.LoadState.Empty);
-												}
-
-												num2 = Terrain.MakeBlockValue(num, 0, newData);
-												num3 = 1;
-
-												m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
-												m_firedThisAim[componentMiner] = true; // NUEVO: Marcar como ya disparó
 											}
+
+											m_subsystemAudio.PlaySound("Audio/Armas/SPAS 12 fuego", 1f, m_random.Float(-0.1f, 0.1f), vector, 12f, true);
+											m_subsystemParticles.AddParticleSystem(new TestGunFireParticleSystem(m_subsystemTerrain, vector, vector2), false);
+											m_subsystemNoise.MakeNoise(vector, 1.2f, 45f);
+
+											int newAmmoCount = ammoCount - 1;
+											int newData = SPAS12Block.SetAmmoCount(Terrain.ExtractData(num2), newAmmoCount);
+
+											if (newAmmoCount <= 0)
+											{
+												newData = SPAS12Block.SetLoadState(newData, SPAS12Block.LoadState.Empty);
+											}
+
+											num2 = Terrain.MakeBlockValue(num, 0, newData);
+											num3 = 1;
+
+											m_lastFireTimes[componentMiner] = m_subsystemTime.GameTime;
+											m_firedThisAim[componentMiner] = true;
 										}
 									}
 									else
 									{
-										// No tiene munición - también semiautomático
+										// ✅ Sin munición - NO mostrar contador "0/8"
 										if (componentPlayer != null && !alreadyFiredThisAim && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
 											string ammoName = LanguageControl.GetBlock("SPAS12AmmunitionBlock", "DisplayName");
@@ -188,7 +184,7 @@ namespace Game
 										{
 											m_subsystemAudio.PlaySound("Audio/Armas/Empty fire", 1f, m_random.Float(-0.1f, 0.1f), 0f, 0f);
 											m_lastEmptySoundTimes[componentMiner] = m_subsystemTime.GameTime;
-											m_firedThisAim[componentMiner] = true; // NUEVO
+											m_firedThisAim[componentMiner] = true;
 										}
 									}
 
@@ -212,14 +208,14 @@ namespace Game
 								m_lastFireTimes.Remove(componentMiner);
 								m_lastEmptySoundTimes.Remove(componentMiner);
 								m_lastEmptyMessageTimes.Remove(componentMiner);
-								m_firedThisAim.Remove(componentMiner); // NUEVO
+								m_firedThisAim.Remove(componentMiner);
 								break;
 							case AimState.Completed:
 								m_aimStartTimes.Remove(componentMiner);
 								m_lastFireTimes.Remove(componentMiner);
 								m_lastEmptySoundTimes.Remove(componentMiner);
 								m_lastEmptyMessageTimes.Remove(componentMiner);
-								m_firedThisAim.Remove(componentMiner); // NUEVO
+								m_firedThisAim.Remove(componentMiner);
 								break;
 						}
 					}
