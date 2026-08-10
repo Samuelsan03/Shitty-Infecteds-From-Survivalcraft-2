@@ -2,6 +2,12 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="CreatureAI" Description="Permite a la criatura usar su inventario para equipar y disparar armas a distancia de forma automática" Guid="c00b9ef4-d87a-4422-9cdc-ee5884030443" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="e71ba8bb-2176-417e-b087-bbd7170401b2" Value="Game.ComponentCreatureAI" Type="string" />
+  <Parameter Name="CanUseInventory" Description="Determina si la criatura tiene la capacidad de usar armas a distancia desde su inventario" Guid="bda48580-a38c-439d-b033-b37ad0523d41" Value="false" Type="bool" />
+  <Parameter Name="CanItBeMounted" Description="Determina si la criatura tiene la capacidad de buscar y montar criaturas de montura" Guid="d2feec9f-f583-441c-983b-639978800786" Value="false" Type="bool" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="BanditChaseBehavior" Description="Comportamiento de persecución diseñado para bandidos. Ignora y no ataca a criaturas que tengan el componente BanditHerdBehavior con el mismo nombre de manada." Guid="b122e050-2d19-46f6-8874-97967f422a3b" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
     <Parameter Name="Class" Guid="99b16c98-04ed-475a-a866-fe443e83e305" Value="Game.ComponentBanditChaseBehavior" Type="string" />
     <Parameter Name="ChaseWhenAttackedProbability" Description="Probabilidad de perseguir al atacante cuando este bandido recibe daño" Guid="10dc9682-0f8a-4f36-b388-104b747ee188" Value="1" Type="float" />
@@ -74,6 +80,8 @@
   <Parameter Name="ProbabilityOfCuring" Description="Probabilidad de realizar la curación" Guid="9b024886-3f79-4d15-a62a-ea5a06b85887" Value="1" Type="float" />
   <Parameter Name="DoesHealAllies" Description="Determina si puede curar a sus aliados y miembros de la manada" Guid="0ab45437-f942-4bdf-9938-6325688a9ca8" Value="false" Type="bool" />
   <Parameter Name="DoesHealSelf" Description="Determina si puede curarse a sí mismo" Guid="d2b6c2d1-9750-4a55-9d9b-d1611b7f9515" Value="false" Type="bool" />
+  <Parameter Name="CanCureOtherCreatures" Description="Determina si puede curar la gripe y el veneno a otras criaturas" Guid="8651d567-4731-497f-b8d0-d7d200336749" Value="false" Type="bool" />
+  <Parameter Name="CanCureSelf" Description="Determina si puede curar su propia gripe y veneno" Guid="79cc967e-cbe5-4970-bf6e-1d5fc4b84122" Value="false" Type="bool" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="PickableGathererCreature" Description="Allows a creature to automatically collect nearby items of specific categories into its inventory." Guid="5c7ad457-0c45-49af-9ecd-7254d31a564a" InheritanceParent="81a44c6a-c30a-4f53-8d64-0c30aabab8f9">
@@ -105,7 +113,7 @@
   <Parameter Name="SneezeSoundPath" Description="Ruta del directorio o archivo de sonido para el estornudo" Guid="a0a0d298-1e47-4aad-8917-c0d91d441134" Value="" Type="string" />
   <Parameter Name="CoughSoundPath" Description="Ruta del directorio o archivo de sonido para la tos" Guid="722d2259-c86f-423f-9243-9eb080c9bf35" Value="" Type="string" />
   <Parameter Name="FluDuration" Description="Duracion actual de la gripa en la criatura (usado para guardar/cargar el estado)" Guid="af0d8247-c45b-404a-9e5c-04b5f31c3912" Value="0" Type="float" />
-  <Parameter Name="FluIntensity" Description="Intensidad actual de la gripa en la criatura (usado para guardar/cargar el estado)" Guid="b1e9dbd8-b446-4189-ba7d-39d15664b97b" Value="0" Type="float" />
+  <Parameter Name="FluResistance" Description="Resistencia a la gripa de la criatura (0.1 muy debil, 0.9 muy resistente)" Guid="f8d3e9c1-a208-4740-9f70-8208698f1a30" Value="0.5" Type="float" />
   <Parameter Name="Class" Guid="cba2ab32-1825-419e-899c-72b6726cf95e" Value="Game.ComponentCreatureFlu" Type="string" />
 </ComponentTemplate>
 
@@ -248,6 +256,24 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="SubsystemFrozenSnowballBlockBehavior" Guid="cc7ba9a2-3a26-4bb8-bee4-8cd24e514cd9" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="24fdfce2-9931-4d02-af09-8bcb10dd7a90" Value="Game.SubsystemFrozenSnowballBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemFrozenBombBlockBehavior" Guid="ba1be0bc-306e-4963-99c8-54ae17407c93" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="158376e6-33b3-4ab4-a3e3-c1d48ff44c18" Value="Game.SubsystemFrozenBombBlockBehavior" Type="string" />
+  </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemFrozenExplosions" Guid="cccffc1e-f039-4548-b0d4-c3e855647917" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="a50a11ae-142d-4ef3-957c-c1f6cc338a27" Value="Game.SubsystemFrozenExplosions" Type="string" />
+  </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemBossChaseMusic" Guid="3591246a-7c86-4bb9-98ad-89a5a928275b" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="01fb4227-8ccc-439d-88b7-6081c25d3c4d" Value="Game.SubsystemBossChaseMusic" Type="string" />
+  </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemPoisonExplosions" Guid="c2944134-f203-4fe6-ace2-187496a618b6" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="8c2075fc-9190-4827-bc7e-17373104e010" Value="Game.SubsystemPoisonExplosions" Type="string" />
+  </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemPoisonBombBehavior" Guid="2af98a67-b7ae-4a49-996a-36639a384152" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="b1223ba5-9afa-4116-826b-01db7373a366" Value="Game.SubsystemPoisonBombBehavior" Type="string" />
+  </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemSniperBlockBehavior" Guid="fbc2b3c8-cc3b-420e-9d55-769696db8b42" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="e1d2538e-54e9-4302-bfa7-afadad9e5536" Value="Game.SubsystemSniperBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
