@@ -88,8 +88,6 @@ namespace Game
 			if (attacker == null || attacker.ComponentHealth == null || attacker.ComponentHealth.Health <= 0f)
 				return;
 
-			// CORRECCIÓN: Si el atacante es de la misma manada, ignorar la llamada por completo.
-			// Esto evita que se reproduzcan los sonidos de "Idle" y "Attack" al forzar el estado "Chasing".
 			if (m_componentNewHerdBehavior != null && !string.IsNullOrEmpty(m_componentNewHerdBehavior.HerdName))
 			{
 				ComponentNewHerdBehavior attackerHerd = attacker.Entity.FindComponent<ComponentNewHerdBehavior>();
@@ -164,8 +162,6 @@ namespace Game
 
 			float protectionRange = 35f;
 
-			// Si el target actual es un zombie vivo, simplemente forzar los valores correctos
-			// SIN hacer return, SIN hacer pathfinding aquí. Dejar que el estado "Chasing" normal lo haga.
 			if (IsTargetLiveZombie())
 			{
 				m_wasForcedByGreenNight = true;
@@ -179,7 +175,6 @@ namespace Game
 				return;
 			}
 
-			// Si no hay target o el target no es zombie, buscar zombie más cercano
 			Vector3 position = m_componentCreature.ComponentBody.Position;
 			m_componentBodies.Clear();
 			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), protectionRange, m_componentBodies);
@@ -248,7 +243,6 @@ namespace Game
 
 			if (IsActive && m_target != null)
 			{
-				// CORRECCIÓN: Si el objetivo actual es de la misma manada, cancelar el ataque inmediatamente
 				if (m_componentNewHerdBehavior != null && !string.IsNullOrEmpty(m_componentNewHerdBehavior.HerdName))
 				{
 					ComponentNewHerdBehavior targetHerd = m_target.Entity.FindComponent<ComponentNewHerdBehavior>();
@@ -261,7 +255,6 @@ namespace Game
 
 				m_chaseTime -= dt;
 
-				// Mantener chaseTime alto durante Noche Verde si el target es zombie
 				if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsTargetLiveZombie() && m_chaseTime < 5f)
 					m_chaseTime = 10f;
 
@@ -274,7 +267,6 @@ namespace Game
 
 				if (m_componentCreatureModel.IsAttackHitMoment)
 				{
-					// CORRECCIÓN: Doble verificación de manada justo antes de infligir daño
 					if (m_componentNewHerdBehavior != null && !string.IsNullOrEmpty(m_componentNewHerdBehavior.HerdName))
 					{
 						ComponentNewHerdBehavior targetHerd = m_target.Entity.FindComponent<ComponentNewHerdBehavior>();
@@ -297,6 +289,7 @@ namespace Game
 						m_componentMiner.Hit(hitBody, hitPoint, m_componentCreature.ComponentBody.Matrix.Forward);
 						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
 
+						// EMPUJAR AL GOLPEAR
 						if (m_pushVictimOnHit && m_random.Float(0f, 1f) < 0.1f)
 						{
 							Vector3 dir = m_target.ComponentBody.Position - m_componentCreature.ComponentBody.Position;
@@ -314,9 +307,11 @@ namespace Game
 							hitBody.ApplyImpulse(Vector3.Normalize(pushDir + Vector3.UnitY * 0.5f) * 1e+9f);
 						}
 
+						// INVOCAR RAYO AL GOLPEAR
 						if (m_invokeLightningOnHit && m_target != null && m_random.Float(0f, 1f) < 0.1f)
 							m_subsystemSky.MakeLightningStrike(m_target.ComponentBody.Position, false);
 
+						// EXPLOTAR AL GOLPEAR
 						if (m_explodeOnHit && m_target != null && m_random.Float(0f, 1f) < 0.1f)
 						{
 							Vector3 pos = m_target.ComponentBody.Position;
@@ -326,6 +321,7 @@ namespace Game
 				}
 			}
 
+			// DESTRUIR BLOQUES AL ESTAR ATASCADO
 			if (m_destroyBlocksWhenStuck && m_componentPathfinding.IsStuck && !m_hasDestroyedBlocksWhileStuck)
 			{
 				DestroyBlocksInLookDirection();
@@ -496,8 +492,6 @@ namespace Game
 			{
 				ComponentCreature attacker = injury.Attacker;
 
-				// CORRECCIÓN PRINCIPAL: Si es Noche Verde y ya estamos persiguiendo un zombie forzado,
-				// NO dejar que Attack() corrompa los valores (m_wasForcedByGreenNight, m_isPersistent, m_range)
 				if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsTargetLiveZombie() && attacker != null)
 				{
 					ComponentZombieHerdBehavior attackerHerd = attacker.Entity?.FindComponent<ComponentZombieHerdBehavior>();
@@ -529,14 +523,12 @@ namespace Game
 
 			m_stateMachine.AddState("LookingForTarget", delegate
 			{
-				if (!IsActive && m_target == null)
-					m_importanceLevel = 0f;
+				m_importanceLevel = 0f;
+				m_target = null;
 			}, delegate
 			{
 				if (m_isExtremeProtectionActive && m_target == null)
-				{
 					return;
-				}
 
 				if (IsActive)
 				{
@@ -572,7 +564,7 @@ namespace Game
 			{
 				if (m_componentPathfinding.IsStuck || m_componentPathfinding.Destination == null)
 					m_stateMachine.TransitionTo("Chasing");
-				if (!IsActive && m_target == null)
+				if (!IsActive)
 					m_stateMachine.TransitionTo("LookingForTarget");
 			}, delegate
 			{
@@ -587,10 +579,6 @@ namespace Game
 				m_nextUpdateTime = 0.0;
 			}, delegate
 			{
-				// CORRECCIÓN PRINCIPAL: Eliminado el bloque especial de Noche Verde con "return".
-				// Ahora el flujo normal SIEMPRE se ejecuta. UpdateExtremeProtection se encarga
-				// de mantener m_chaseTime, m_importanceLevel, m_isPersistent y m_range correctos.
-
 				if (!IsActive)
 				{
 					m_stateMachine.TransitionTo("LookingForTarget");
@@ -598,8 +586,6 @@ namespace Game
 				}
 				else if (m_chaseTime <= 0f)
 				{
-					// Durante Noche Verde persiguiendo zombie, UpdateExtremeProtection mantiene m_chaseTime alto
-					// Así que esto solo se ejecuta si NO es Noche Verde o el target no es zombie
 					m_autoChaseSuppressionTime = m_random.Float(10f, 60f);
 					m_importanceLevel = 0f;
 				}
@@ -626,9 +612,6 @@ namespace Game
 				}
 				else if (m_isPersistent && m_componentPathfinding.IsStuck)
 				{
-					// Durante Noche Verde, m_isPersistent es true (mantenido por UpdateExtremeProtection)
-					// Así que si se atasca, va a RandomMoving y vuelve. Esto es el comportamiento NORMAL
-					// para criaturas persistentes y funciona correctamente.
 					m_stateMachine.TransitionTo("RandomMoving");
 				}
 				else
