@@ -231,9 +231,15 @@ namespace Game
 							ComponentCreature playerCreature = playerData.ComponentPlayer;
 							if (playerCreature.ComponentHealth.Health > 0f && Vector3.DistanceSquared(position, playerCreature.ComponentBody.Position) < radiusSquared)
 							{
-								// --- CORRECCIÓN DEL BUG: Ignorar jugadores en Creativo o con mecánicas desactivadas ---
 								if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative || !m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled)
 								{
+									// En creativo solo curar salud, NO enfermedades
+									if (m_doesHealAllies && IsCreatureDying(playerCreature))
+									{
+										m_targetNeedsDiseaseCure = false;
+										m_targetNeedsHealthRestore = true;
+										return playerCreature;
+									}
 									continue;
 								}
 								// ----------------------------------------------------------------------------------------
