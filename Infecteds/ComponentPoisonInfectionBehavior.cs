@@ -53,7 +53,6 @@ namespace Game
 				Vector3 hitPoint;
 				ComponentBody hitBody = null;
 
-				// Detecta cuál de los 2 chases posee y obtiene su target
 				ComponentCreature currentTarget = null;
 				if (m_componentNewChase != null)
 				{
@@ -64,14 +63,12 @@ namespace Game
 					currentTarget = m_componentZombieChase.Target;
 				}
 
-				// Si tiene un target válido en su chase, usa el cálculo exacto de los chases
 				if (currentTarget != null && currentTarget.ComponentBody != null)
 				{
 					hitBody = GetHitBody(currentTarget.ComponentBody, out hitPoint);
 				}
 				else
 				{
-					// Fallback directo al frente si el target es nulo en ese frame
 					hitBody = GetHitBodyInAttackRange(out hitPoint);
 				}
 
@@ -172,7 +169,8 @@ namespace Game
 			ComponentInfectedWithPoison infection = targetBody.Entity.FindComponent<ComponentInfectedWithPoison>();
 			if (infection != null)
 			{
-				infection.TryInfect(m_poisonIntensity);
+				string attackerName = m_componentCreature?.DisplayName;
+				infection.TryInfect(m_poisonIntensity, attackerName);
 			}
 		}
 
@@ -184,11 +182,9 @@ namespace Game
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentCreatureModel = Entity.FindComponent<ComponentCreatureModel>(true);
 
-			// Busca cuál de los 2 chases posee la criatura (no requiere tener ambos)
 			m_componentNewChase = Entity.FindComponent<ComponentNewChaseBehavior>();
 			m_componentZombieChase = Entity.FindComponent<ComponentZombieChaseBehavior>();
 
-			// Solo estos 2 parámetros
 			m_poisonIntensity = valuesDictionary.GetValue<float>("PoisonIntensity");
 			m_probabilityOfPoisoning = valuesDictionary.GetValue<float>("ProbabilityOfPoisoning");
 
