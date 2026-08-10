@@ -149,7 +149,6 @@ namespace Game
 					if (reduction > 0f)
 					{
 						remainingPower -= reduction;
-						if (m_subsystemGameInfo.WorldSettings.GameMode != GameMode.Creative)
 						{
 							float damageAmount = reduction / data.Sturdiness * maxDurability + 0.001f;
 							int damageCount = (int)MathF.Floor(damageAmount) + (m_random.Bool(MathUtils.Remainder(damageAmount, 1f)) ? 1 : 0);
