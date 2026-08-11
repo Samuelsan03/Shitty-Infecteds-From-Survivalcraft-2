@@ -86,6 +86,8 @@ namespace Game
 			}
 		}
 
+		private Action<Projectile> m_projectileAddedHandler;
+
 		// Subsystems
 		private SubsystemTime m_subsystemTime;
 		private SubsystemBlockBehaviors m_subsystemBlockBehaviors;
@@ -93,6 +95,7 @@ namespace Game
 		private SubsystemTerrain m_subsystemTerrain;
 		private SubsystemAudio m_subsystemAudio;
 		private SubsystemParticles m_subsystemParticles;
+		private SubsystemProjectiles m_subsystemProjectiles;
 
 		// Components
 		private ComponentCreature m_componentCreature;
@@ -255,6 +258,7 @@ namespace Game
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
 			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
 			m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
+			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
 
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
@@ -268,6 +272,36 @@ namespace Game
 			CurrentMountState = CanItBeMounted ? MountState.Searching : MountState.None;
 
 			InitializeFirearmsList();
+
+			// NUEVO: Suscribirse al evento de adición de proyectiles
+			if (m_subsystemProjectiles != null)
+			{
+				m_projectileAddedHandler = (projectile) =>
+				{
+					// Solo interesa si el proyectil pertenece a esta criatura
+					if (projectile == null || projectile.Owner != m_componentCreature)
+						return;
+
+					int blockIndex = Terrain.ExtractContents(projectile.Value);
+					// Flechas de arco (ArrowBlock) y virotes de ballesta repetidora (RepeatBoltBlock)
+					if (blockIndex == ArrowBlock.Index || blockIndex == RepeatBoltBlock.Index)
+					{
+						// Al detenerse (suelo) desaparecerá en lugar de convertirse en pickable
+						projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+					}
+				};
+				m_subsystemProjectiles.ProjectileAdded += m_projectileAddedHandler;
+			}
+		}
+
+		public override void Dispose()
+		{
+			if (m_subsystemProjectiles != null && m_projectileAddedHandler != null)
+			{
+				m_subsystemProjectiles.ProjectileAdded -= m_projectileAddedHandler;
+				m_projectileAddedHandler = null;
+			}
+			base.Dispose();
 		}
 
 		public void Update(float dt)
