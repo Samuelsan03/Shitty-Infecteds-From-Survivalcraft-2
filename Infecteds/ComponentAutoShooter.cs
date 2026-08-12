@@ -37,35 +37,43 @@ namespace Game
 		private int m_currentBlockIndex;
 		private Random m_random = new Random();
 
+		// Verifica si la criatura que tiene este componente (el tirador) está viva
+		private bool IsShooterAlive()
+		{
+			return m_componentCreature?.ComponentHealth != null && m_componentCreature.ComponentHealth.Health > 0f;
+		}
+
+		// Verifica si un objetivo específico está vivo
+		private bool IsTargetAlive(ComponentCreature target)
+		{
+			return target != null && target.ComponentHealth != null && target.ComponentHealth.Health > 0f;
+		}
+
 		private bool HasActiveTarget()
 		{
-			if (m_zombieChaseBehavior != null && m_zombieChaseBehavior.IsActive && m_zombieChaseBehavior.Target != null)
+			ComponentCreature target = null;
+			if (m_zombieChaseBehavior != null && m_zombieChaseBehavior.IsActive)
 			{
-				if (m_zombieChaseBehavior.Target.ComponentHealth != null && m_zombieChaseBehavior.Target.ComponentHealth.Health > 0f)
-					return true;
+				target = m_zombieChaseBehavior.Target;
+			}
+			else if (m_newChaseBehavior != null && m_newChaseBehavior.IsActive)
+			{
+				target = m_newChaseBehavior.Target;
 			}
 
-			if (m_newChaseBehavior != null && m_newChaseBehavior.IsActive && m_newChaseBehavior.Target != null)
-			{
-				if (m_newChaseBehavior.Target.ComponentHealth != null && m_newChaseBehavior.Target.ComponentHealth.Health > 0f)
-					return true;
-			}
-
-			return false;
+			return IsTargetAlive(target);
 		}
 
 		private ComponentCreature GetActiveTarget()
 		{
-			if (m_zombieChaseBehavior != null && m_zombieChaseBehavior.IsActive && m_zombieChaseBehavior.Target != null)
+			if (m_zombieChaseBehavior != null && m_zombieChaseBehavior.IsActive && IsTargetAlive(m_zombieChaseBehavior.Target))
 			{
-				if (m_zombieChaseBehavior.Target.ComponentHealth != null && m_zombieChaseBehavior.Target.ComponentHealth.Health > 0f)
-					return m_zombieChaseBehavior.Target;
+				return m_zombieChaseBehavior.Target;
 			}
 
-			if (m_newChaseBehavior != null && m_newChaseBehavior.IsActive && m_newChaseBehavior.Target != null)
+			if (m_newChaseBehavior != null && m_newChaseBehavior.IsActive && IsTargetAlive(m_newChaseBehavior.Target))
 			{
-				if (m_newChaseBehavior.Target.ComponentHealth != null && m_newChaseBehavior.Target.ComponentHealth.Health > 0f)
-					return m_newChaseBehavior.Target;
+				return m_newChaseBehavior.Target;
 			}
 
 			return null;
@@ -90,6 +98,10 @@ namespace Game
 
 		private void ShootProjectile()
 		{
+			// Si el tirador murió en este mismo instante, cancelar el disparo
+			if (!IsShooterAlive())
+				return;
+
 			ComponentCreature target = GetActiveTarget();
 			if (target == null || m_componentCreature?.ComponentBody == null)
 				return;
@@ -154,7 +166,8 @@ namespace Game
 
 		public void Update(float dt)
 		{
-			if (m_blockValuesToShoot == null || m_blockValuesToShoot.Length == 0)
+			// Si no hay bloques configurados o si la criatura tiradora está muerta, no actualizar nada
+			if (m_blockValuesToShoot == null || m_blockValuesToShoot.Length == 0 || !IsShooterAlive())
 				return;
 
 			m_stateMachine.Update();
@@ -181,8 +194,8 @@ namespace Game
 			{
 				m_shootCooldown -= m_subsystemTime.GameTimeDelta;
 
-				// Solo dispara si hay objetivo, el cooldown terminó y está en el rango válido
-				if (HasActiveTarget() && m_shootCooldown <= 0f && IsTargetInValidRange())
+				// Solo dispara si el tirador está vivo, hay objetivo, el cooldown terminó y está en el rango válido
+				if (IsShooterAlive() && HasActiveTarget() && m_shootCooldown <= 0f && IsTargetInValidRange())
 				{
 					m_stateMachine.TransitionTo("Shooting");
 				}
@@ -190,8 +203,8 @@ namespace Game
 
 			m_stateMachine.AddState("Shooting", delegate
 			{
-				// Doble seguridad: si por alguna razón se salió del rango en el mismo frame, no dispara
-				if (IsTargetInValidRange())
+				// Doble seguridad: si por alguna razón se salió del rango, murió el tirador o el objetivo en el mismo frame, no dispara
+				if (IsShooterAlive() && IsTargetInValidRange() && HasActiveTarget())
 				{
 					ShootProjectile();
 					m_shootCooldown = m_timeToRelaunch;
@@ -200,8 +213,8 @@ namespace Game
 			{
 				m_shootCooldown -= m_subsystemTime.GameTimeDelta;
 
-				// Si se alejó demasiado mientras se ejecutaba el update, vuelve a Idle instantáneamente
-				if (!IsTargetInValidRange() || !HasActiveTarget())
+				// Si se alejó demasiado, el tirador murió o el objetivo murió/perdió, vuelve a Idle instantáneamente
+				if (!IsShooterAlive() || !HasActiveTarget() || !IsTargetInValidRange())
 				{
 					m_stateMachine.TransitionTo("Idle");
 				}
