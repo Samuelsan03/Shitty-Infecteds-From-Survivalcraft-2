@@ -56,6 +56,14 @@ namespace Game
 
 		private float PoisonEffectiveness => 1f - m_poisonResistance;
 
+		/// <summary>
+		/// Método público para curar el veneno. Limpia todos los efectos de la infección.
+		/// </summary>
+		public void Cure()
+		{
+			ClearAllEffects();
+		}
+
 		public void TryInfect(float attackerIntensity, string poisonSourceName = null)
 		{
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
