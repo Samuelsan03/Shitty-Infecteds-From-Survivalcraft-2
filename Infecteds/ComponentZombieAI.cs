@@ -422,6 +422,24 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
+			if (m_componentCreature != null && m_componentCreature.ComponentHealth != null
+			&& m_componentCreature.ComponentHealth.Health <= 0f
+			&& m_componentRider != null)
+			{
+				ComponentBody riderBody = m_componentCreature.ComponentBody;
+				if (riderBody != null && riderBody.ParentBody != null)
+				{
+					riderBody.Velocity = riderBody.ParentBody.Velocity;
+					riderBody.ParentBody = null;
+					riderBody.ParentBodyPositionOffset = Vector3.Zero;
+					riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+				}
+				m_componentRider.m_isAnimating = false;
+				m_componentRider.m_isDismounting = false;
+				m_currentMount = null;
+				CurrentMountState = MountState.None;
+			}
+
 			UpdateMountingBehavior(dt);
 
 			if (CanWearClothing && m_componentCreatureClothing != null && m_componentMiner?.Inventory != null)
@@ -551,7 +569,9 @@ namespace Game
 				}
 				else
 				{
-					StopMount();
+					// Ya no se desmonta al estar cerca, se mantiene montado y ataca
+					// Simplemente se orienta hacia el objetivo
+					PilotMount(target); // o bien no hacer nada, pero para mantener coherencia se llama a PilotMount
 				}
 			}
 		}
@@ -560,6 +580,30 @@ namespace Game
 		{
 			if (!CanItBeMounted || m_componentRider == null)
 			{
+				CurrentMountState = MountState.None;
+				return;
+			}
+
+			// Si la criatura está muerta, nunca intentar montar
+			if (m_componentCreature.ComponentHealth.Health <= 0f)
+			{
+				if (m_componentRider.Mount != null)
+				{
+					StopMount();
+
+					ComponentBody riderBody = m_componentCreature.ComponentBody;
+					if (riderBody.ParentBody != null)
+					{
+						riderBody.Velocity = riderBody.ParentBody.Velocity;
+						riderBody.ParentBody = null;
+						riderBody.ParentBodyPositionOffset = Vector3.Zero;
+						riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+					}
+
+					m_componentRider.m_isAnimating = false;
+					m_componentRider.m_isDismounting = false;
+					m_currentMount = null;
+				}
 				CurrentMountState = MountState.None;
 				return;
 			}
@@ -581,14 +625,7 @@ namespace Game
 					break;
 
 				case MountState.Mounting:
-					if (m_componentRider.Mount != null)
-					{
-						CurrentMountState = MountState.Mounted;
-					}
-					else
-					{
-						CurrentMountState = MountState.Searching;
-					}
+					CurrentMountState = m_componentRider.Mount != null ? MountState.Mounted : MountState.Searching;
 					break;
 
 				case MountState.Mounted:
@@ -602,7 +639,21 @@ namespace Game
 						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
 						if (mountHealth != null && mountHealth.Health <= 0f)
 						{
-							m_componentRider.StartDismounting();
+							// CORRECCIÓN: Desmonte forzado inmediato cuando la montura muere
+							// (antes usaba StartDismounting que es animado y puede fallar)
+							StopMount();
+
+							ComponentBody riderBody = m_componentCreature.ComponentBody;
+							if (riderBody.ParentBody != null)
+							{
+								riderBody.Velocity = riderBody.ParentBody.Velocity;
+								riderBody.ParentBody = null;
+								riderBody.ParentBodyPositionOffset = Vector3.Zero;
+								riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+							}
+
+							m_componentRider.m_isAnimating = false;
+							m_componentRider.m_isDismounting = false;
 							m_currentMount = null;
 							CurrentMountState = MountState.Dismounting;
 						}
@@ -612,6 +663,25 @@ namespace Game
 				case MountState.Dismounting:
 					if (m_componentRider.Mount == null)
 					{
+						m_currentMount = null;
+						CurrentMountState = MountState.Searching;
+					}
+					else
+					{
+						// Si por alguna razón sigue montado, forzar desmonte
+						StopMount();
+
+						ComponentBody riderBody = m_componentCreature.ComponentBody;
+						if (riderBody.ParentBody != null)
+						{
+							riderBody.Velocity = riderBody.ParentBody.Velocity;
+							riderBody.ParentBody = null;
+							riderBody.ParentBodyPositionOffset = Vector3.Zero;
+							riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+						}
+
+						m_componentRider.m_isAnimating = false;
+						m_componentRider.m_isDismounting = false;
 						m_currentMount = null;
 						CurrentMountState = MountState.Searching;
 					}
@@ -688,38 +758,37 @@ namespace Game
 
 		private void StopMount()
 		{
-			if (m_componentRider == null || m_componentRider.Mount == null)
-				return;
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
 
+			// Detener pathfinding de la montura
 			ComponentPathfinding mountPathfinding = m_componentRider.Mount.Entity.FindComponent<ComponentPathfinding>();
 			if (mountPathfinding != null)
-			{
 				mountPathfinding.Stop();
-			}
 
-			// NUEVO: Asegurarnos de apagar el Pilot al detener la montura
+			// Detener Pilot (si existe)
 			ComponentPilot pilot = Entity.FindComponent<ComponentPilot>(false);
 			if (pilot != null && pilot.Destination != null)
-			{
 				pilot.Stop();
-			}
 
+			// Detener SteedBehaviorImproved (si existe)
 			ComponentSteedBehaviorImproved steedImproved = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehaviorImproved>();
 			if (steedImproved != null)
 			{
+				// Forzar detención (nivel 1 = quieto)
 				steedImproved.m_speedLevel = 1;
-				steedImproved.m_speedChangeFactor = 100f;
 				steedImproved.SpeedOrder = 0;
 				steedImproved.TurnOrder = 0f;
 				steedImproved.JumpOrder = 0f;
+				// Nota: no se puede resetear m_speed directamente, pero con SpeedOrder=0 y nivel=1 se detiene.
 				return;
 			}
 
+			// Detener SteedBehavior normal (igual que en DefensiveAI)
 			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 			if (steedBehavior != null)
 			{
 				steedBehavior.m_speedLevel = 1;
-				steedBehavior.m_speedChangeFactor = 100f;
+				steedBehavior.m_speed = 0f;
 				steedBehavior.SpeedOrder = 0;
 				steedBehavior.TurnOrder = 0f;
 				steedBehavior.JumpOrder = 0f;
