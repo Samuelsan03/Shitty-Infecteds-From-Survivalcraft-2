@@ -500,7 +500,8 @@ namespace Game
 				{
 					SwitchToSlot(meleeSlot);
 					StopRangedCombat(false);
-					if (isMounted) StopMount();
+					// Eliminada la línea: if (isMounted) StopMount();
+					// Ahora no se desmonta, ataca desde la montura si está montado
 				}
 				else
 				{
@@ -740,6 +741,9 @@ namespace Game
 			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 			if (steedBehavior != null)
 			{
+				// CORRECCIÓN: Forzar detención completa (nivel 1 = quieto, velocidad 0)
+				steedBehavior.m_speedLevel = 1;
+				steedBehavior.m_speed = 0f;
 				steedBehavior.SpeedOrder = 0;
 				steedBehavior.TurnOrder = 0f;
 				steedBehavior.JumpOrder = 0f;
