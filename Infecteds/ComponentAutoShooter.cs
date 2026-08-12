@@ -6,205 +6,213 @@ using TemplatesDatabase;
 
 namespace Game
 {
-	public class ComponentAutoShooter : Component, IUpdateable
+	public class ComponentAutoShooter : ComponentBehavior, IUpdateable
 	{
-		public enum ShooterState
-		{
-			Inactive,
-			Shooting
-		}
+		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-		private Dictionary<string, int> m_blocksToShoot = new Dictionary<string, int>();
-		private float m_timeToRelaunch = 1.0f;
-		private Vector2 m_minimumDistanceToAvoid = new Vector2(5f, 0f);
-		private double m_nextFireTime = 0.0;  // Tiempo absoluto para el próximo disparo
-		private Random m_random = new Random();
+		public override float ImportanceLevel => m_importanceLevel;
 
-		private ShooterState m_state = ShooterState.Inactive;
+		public override bool IsActive { get; set; }
+
+		// Campo de rango (X = Mínimo, Y = Máximo). No va al Load(), ya está inicializado aquí.
+		public Vector2 ShootRangeDistance = new Vector2(5f, 100f);
+
+		private string m_blocksToShootString;
+		private float m_timeToRelaunch;
+		private int[] m_blockValuesToShoot;
 
 		private SubsystemProjectiles m_subsystemProjectiles;
 		private SubsystemAudio m_subsystemAudio;
 		private SubsystemTime m_subsystemTime;
-		private SubsystemBodies m_subsystemBodies;
-		private ComponentBody m_componentBody;
+
 		private ComponentCreature m_componentCreature;
-		private ComponentHealth m_componentHealth;
+		private ComponentCreatureModel m_componentCreatureModel;
 
-		private ComponentChaseBehavior m_componentChaseBehavior;
-		private ComponentZombieChaseBehavior m_componentZombieChaseBehavior;
-		private ComponentNewChaseBehavior m_componentNewChaseBehavior;
+		private ComponentZombieChaseBehavior m_zombieChaseBehavior;
+		private ComponentNewChaseBehavior m_newChaseBehavior;
 
-		public UpdateOrder UpdateOrder => UpdateOrder.Default;
-		public ShooterState State => m_state;
+		private StateMachine m_stateMachine = new StateMachine();
+		private float m_importanceLevel;
+		private float m_shootCooldown;
+		private int m_currentBlockIndex;
+		private Random m_random = new Random();
 
-		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
+		private bool HasActiveTarget()
 		{
-			base.Load(valuesDictionary, idToEntityMap);
-
-			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
-			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
-			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
-			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
-			m_componentBody = Entity.FindComponent<ComponentBody>(true);
-			m_componentCreature = Entity.FindComponent<ComponentCreature>(false);
-			m_componentHealth = Entity.FindComponent<ComponentHealth>(false);
-
-			m_componentChaseBehavior = Entity.FindComponent<ComponentChaseBehavior>(false);
-			m_componentZombieChaseBehavior = Entity.FindComponent<ComponentZombieChaseBehavior>(false);
-			m_componentNewChaseBehavior = Entity.FindComponent<ComponentNewChaseBehavior>(false);
-
-			string blocksString = valuesDictionary.GetValue<string>("BlocksToShoot", "");
-			if (!string.IsNullOrEmpty(blocksString))
+			if (m_zombieChaseBehavior != null && m_zombieChaseBehavior.IsActive && m_zombieChaseBehavior.Target != null)
 			{
-				string[] blockNames = blocksString.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-				foreach (string blockName in blockNames)
+				if (m_zombieChaseBehavior.Target.ComponentHealth != null && m_zombieChaseBehavior.Target.ComponentHealth.Health > 0f)
+					return true;
+			}
+
+			if (m_newChaseBehavior != null && m_newChaseBehavior.IsActive && m_newChaseBehavior.Target != null)
+			{
+				if (m_newChaseBehavior.Target.ComponentHealth != null && m_newChaseBehavior.Target.ComponentHealth.Health > 0f)
+					return true;
+			}
+
+			return false;
+		}
+
+		private ComponentCreature GetActiveTarget()
+		{
+			if (m_zombieChaseBehavior != null && m_zombieChaseBehavior.IsActive && m_zombieChaseBehavior.Target != null)
+			{
+				if (m_zombieChaseBehavior.Target.ComponentHealth != null && m_zombieChaseBehavior.Target.ComponentHealth.Health > 0f)
+					return m_zombieChaseBehavior.Target;
+			}
+
+			if (m_newChaseBehavior != null && m_newChaseBehavior.IsActive && m_newChaseBehavior.Target != null)
+			{
+				if (m_newChaseBehavior.Target.ComponentHealth != null && m_newChaseBehavior.Target.ComponentHealth.Health > 0f)
+					return m_newChaseBehavior.Target;
+			}
+
+			return null;
+		}
+
+		private bool IsTargetInValidRange()
+		{
+			ComponentCreature target = GetActiveTarget();
+			if (target == null || m_componentCreature?.ComponentBody == null || target.ComponentBody == null)
+				return false;
+
+			// Calculamos la distancia en 2D (plano XZ) como hace el juego normalmente
+			float distance = Vector2.Distance(
+				new Vector2(m_componentCreature.ComponentBody.Position.X, m_componentCreature.ComponentBody.Position.Z),
+				new Vector2(target.ComponentBody.Position.X, target.ComponentBody.Position.Z)
+			);
+
+			// Si la distancia es menor al mínimo (5), NO lanzamos. 
+			// Si es mayor al máximo (100), también es inválido (cancelamos).
+			return distance >= ShootRangeDistance.X && distance <= ShootRangeDistance.Y;
+		}
+
+		private void ShootProjectile()
+		{
+			ComponentCreature target = GetActiveTarget();
+			if (target == null || m_componentCreature?.ComponentBody == null)
+				return;
+
+			if (m_blockValuesToShoot == null || m_blockValuesToShoot.Length == 0)
+				return;
+
+			int blockValue = m_blockValuesToShoot[m_currentBlockIndex % m_blockValuesToShoot.Length];
+			m_currentBlockIndex++;
+
+			Vector3 shootPosition = m_componentCreature.ComponentBody.Position + new Vector3(0f, m_componentCreature.ComponentBody.BoxSize.Y * 0.8f, 0f);
+			Vector3 targetPosition = target.ComponentBody.Position + new Vector3(0f, target.ComponentBody.BoxSize.Y * 0.5f, 0f);
+			Vector3 direction = Vector3.Normalize(targetPosition - shootPosition);
+
+			Vector3 firePosition;
+			bool canFire = m_subsystemProjectiles.CanFireProjectile(blockValue, shootPosition, direction, m_componentCreature, out firePosition);
+
+			if (canFire)
+			{
+				float speed = m_random.Float(39f, 41f);
+				Vector3 velocity = speed * (direction + m_random.Vector3(0.025f) + new Vector3(0f, 0.05f, 0f));
+
+				Projectile projectile = m_subsystemProjectiles.CreateProjectile(blockValue, firePosition, velocity, Vector3.Zero, m_componentCreature);
+				if (projectile != null)
 				{
-					string trimmedName = blockName.Trim();
-					if (!string.IsNullOrEmpty(trimmedName))
+					// Solo asignamos la entidad dueña, NINGÚN inventario (Creator)
+					projectile.OwnerEntity = Entity;
+
+					m_subsystemProjectiles.FireProjectileFast(projectile);
+					m_subsystemAudio.PlaySound("Audio/Throw", 1f, 0f, shootPosition, 4f, true);
+				}
+			}
+		}
+
+		private int[] ParseBlockNames(string blockNamesString)
+		{
+			if (string.IsNullOrEmpty(blockNamesString))
+				return null;
+
+			string[] names = blockNamesString.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+			List<int> values = new List<int>();
+
+			foreach (string name in names)
+			{
+				string trimmedName = name.Trim();
+				if (!string.IsNullOrEmpty(trimmedName))
+				{
+					int blockIndex = BlocksManager.GetBlockIndex(trimmedName, false);
+					if (blockIndex >= 0 && blockIndex < 1024)
 					{
-						m_blocksToShoot[trimmedName] = 1;
+						values.Add(blockIndex);
+					}
+					else
+					{
+						Log.Warning($"ComponentAutoShooter: Block '{trimmedName}' not found!");
 					}
 				}
 			}
 
-			m_timeToRelaunch = valuesDictionary.GetValue<float>("TimeToRelaunch");
-			if (m_timeToRelaunch < 0f) m_timeToRelaunch = 0f;
-
-			// Inicializamos el próximo disparo para que pueda ocurrir inmediatamente
-			m_nextFireTime = 0.0;
+			return values.Count > 0 ? values.ToArray() : null;
 		}
 
 		public void Update(float dt)
 		{
-			// Salud del dueño
-			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
-			{
-				m_state = ShooterState.Inactive;
+			if (m_blockValuesToShoot == null || m_blockValuesToShoot.Length == 0)
 				return;
-			}
 
-			ComponentBody target = GetChaseTarget();
-			if (target == null || m_blocksToShoot.Count == 0)
-			{
-				m_state = ShooterState.Inactive;
-				return;
-			}
-
-			// Distancia mínima (no disparar si está muy cerca)
-			float distance = Vector3.Distance(m_componentBody.Position, target.Position);
-			if (distance <= m_minimumDistanceToAvoid.X)
-			{
-				m_state = ShooterState.Inactive;
-				return;
-			}
-
-			// Cooldown: solo disparar si ha pasado suficiente tiempo
-			if (m_subsystemTime.GameTime < m_nextFireTime)
-			{
-				m_state = ShooterState.Inactive;
-				return;
-			}
-
-			// Si llegamos aquí, podemos disparar
-			m_state = ShooterState.Shooting;
-			ShootAtTarget(target);
-
-			// Programar el próximo disparo
-			m_nextFireTime = m_subsystemTime.GameTime + m_timeToRelaunch;
+			m_stateMachine.Update();
 		}
 
-		private ComponentBody GetChaseTarget()
+		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
-			if (m_componentNewChaseBehavior != null && m_componentNewChaseBehavior.IsActive && m_componentNewChaseBehavior.Target != null)
-			{
-				ComponentCreature targetCreature = m_componentNewChaseBehavior.Target;
-				if (targetCreature.ComponentHealth != null && targetCreature.ComponentHealth.Health > 0f)
-					return targetCreature.ComponentBody;
-			}
+			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
+			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
+			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 
-			if (m_componentZombieChaseBehavior != null && m_componentZombieChaseBehavior.IsActive && m_componentZombieChaseBehavior.Target != null)
-			{
-				ComponentCreature targetCreature = m_componentZombieChaseBehavior.Target;
-				if (targetCreature.ComponentHealth != null && targetCreature.ComponentHealth.Health > 0f)
-					return targetCreature.ComponentBody;
-			}
+			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
+			m_componentCreatureModel = Entity.FindComponent<ComponentCreatureModel>(true);
 
-			if (m_componentChaseBehavior != null && m_componentChaseBehavior.IsActive && m_componentChaseBehavior.Target != null)
-			{
-				ComponentCreature targetCreature = m_componentChaseBehavior.Target;
-				if (targetCreature.ComponentHealth != null && targetCreature.ComponentHealth.Health > 0f)
-					return targetCreature.ComponentBody;
-			}
+			m_zombieChaseBehavior = Entity.FindComponent<ComponentZombieChaseBehavior>();
+			m_newChaseBehavior = Entity.FindComponent<ComponentNewChaseBehavior>();
 
-			return null;
-		}
+			m_blocksToShootString = valuesDictionary.GetValue<string>("BlocksToShoot");
+			m_timeToRelaunch = valuesDictionary.GetValue<float>("TimeToRelaunch");
 
-		private void ShootAtTarget(ComponentBody target)
-		{
-			// Animación de lanzamiento (similar al código DayZ)
-			if (m_componentCreature != null)
+			m_blockValuesToShoot = ParseBlockNames(m_blocksToShootString);
+
+			m_stateMachine.AddState("Idle", null, delegate
 			{
-				ComponentHumanModel componentHumanModel = m_componentCreature.ComponentCreatureModel as ComponentHumanModel;
-				if (componentHumanModel != null)
+				m_shootCooldown -= m_subsystemTime.GameTimeDelta;
+
+				// Solo dispara si hay objetivo, el cooldown terminó y está en el rango válido
+				if (HasActiveTarget() && m_shootCooldown <= 0f && IsTargetInValidRange())
 				{
-					componentHumanModel.m_handAngles2 = new Vector2(4f, -5f);
-					componentHumanModel.m_handAngles1 = new Vector2(4f, 3f);
+					m_stateMachine.TransitionTo("Shooting");
 				}
-			}
+			}, null);
 
-			string blockName = GetRandomBlockName();
-			if (string.IsNullOrEmpty(blockName)) return;
-
-			int blockIndex = BlocksManager.GetBlockIndex(blockName);
-			if (blockIndex < 0) return;
-
-			int value = blockIndex;
-
-			Vector3 myCenter = m_componentBody.BoundingBox.Center();
-			Vector3 targetCenter = target.BoundingBox.Center();
-			Vector3 direction = targetCenter - myCenter;
-			float dirLength = direction.Length();
-			if (dirLength < 0.001f) return;
-			direction /= dirLength;
-
-			BoundingBox myBox = m_componentBody.BoundingBox;
-			Vector3 halfSize = 0.5f * (myBox.Max - myBox.Min);
-
-			float safeDistance = MathF.Abs(halfSize.X * direction.X) +
-								 MathF.Abs(halfSize.Y * direction.Y) +
-								 MathF.Abs(halfSize.Z * direction.Z) +
-								 0.15f;
-			safeDistance = MathUtils.Max(safeDistance, 1.0f);
-
-			Vector3 shootPos = myCenter + safeDistance * direction;
-
-			Vector3 firePosition;
-			if (!m_subsystemProjectiles.CanFireProjectile(value, shootPos, direction, m_componentCreature, out firePosition))
-				return;
-
-			if (m_componentBody.BoundingBox.Contains(firePosition))
-				return;
-
-			float speed = m_random.Float(39f, 41f);
-			Vector3 velocity = speed * (direction + m_random.Vector3(0.025f) + new Vector3(0f, 0.05f, 0f));
-			Projectile projectile = m_subsystemProjectiles.CreateProjectile(value, firePosition, velocity, Vector3.Zero, null);
-			projectile.OwnerEntity = Entity;
-			m_subsystemProjectiles.FireProjectileFast(projectile);
-			m_subsystemAudio.PlaySound("Audio/Throw", 1f, 0f, new Vector3(shootPos.X, shootPos.Y, shootPos.Z), 4f, true);
-		}
-
-		private string GetRandomBlockName()
-		{
-			if (m_blocksToShoot.Count == 0) return null;
-
-			int index = m_random.Int(0, m_blocksToShoot.Count);
-			int i = 0;
-			foreach (var kvp in m_blocksToShoot)
+			m_stateMachine.AddState("Shooting", delegate
 			{
-				if (i == index) return kvp.Key;
-				i++;
-			}
-			return null;
+				// Doble seguridad: si por alguna razón se salió del rango en el mismo frame, no dispara
+				if (IsTargetInValidRange())
+				{
+					ShootProjectile();
+					m_shootCooldown = m_timeToRelaunch;
+				}
+			}, delegate
+			{
+				m_shootCooldown -= m_subsystemTime.GameTimeDelta;
+
+				// Si se alejó demasiado mientras se ejecutaba el update, vuelve a Idle instantáneamente
+				if (!IsTargetInValidRange() || !HasActiveTarget())
+				{
+					m_stateMachine.TransitionTo("Idle");
+				}
+				else
+				{
+					// Disparo único: pasa a Idle para esperar el cooldown
+					m_stateMachine.TransitionTo("Idle");
+				}
+			}, null);
+
+			m_stateMachine.TransitionTo("Idle");
 		}
 	}
 }
