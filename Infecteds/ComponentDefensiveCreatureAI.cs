@@ -551,12 +551,10 @@ namespace Game
 					}
 					else
 					{
-						// Montura normal de tierra: Frenar definitivamente
-						if (mountBody.Velocity.LengthSquared() > 0.5f)
-							steedBehavior.SpeedOrder = -1;
-						else
-							steedBehavior.SpeedOrder = 0;
-
+						// Montura normal de tierra: Frenar definitivamente (usando la misma lógica que StopMount)
+						steedBehavior.m_speedLevel = 1;
+						steedBehavior.m_speed = 0f;
+						steedBehavior.SpeedOrder = 0;
 						steedBehavior.TurnOrder = 0f;
 						steedBehavior.JumpOrder = 0f;
 					}
@@ -804,6 +802,11 @@ namespace Game
 			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
 			if (steedBehavior != null)
 			{
+				// CORRECCIÓN DEFINITIVA: En el SteedBehavior original, el nivel 0 es -0.33f (retroceso) 
+				// y el nivel 1 es 0f (quieto). Enviar SpeedOrder = -1 bajaba el nivel pero se quedaba atascado en retroceso.
+				// Forzamos directamente el nivel 1 (quieto) y reseteamos la velocidad actual a 0.
+				steedBehavior.m_speedLevel = 1;
+				steedBehavior.m_speed = 0f;
 				steedBehavior.SpeedOrder = 0;
 				steedBehavior.TurnOrder = 0f;
 				steedBehavior.JumpOrder = 0f;
@@ -841,6 +844,36 @@ namespace Game
 					break;
 
 				case MountState.Mounted:
+					// ============================================
+					// CORRECCIÓN BUG 1: Forzar desmonte inmediato cuando el jinete muere
+					// ============================================
+					if (m_componentCreature.ComponentHealth.Health <= 0f)
+					{
+						if (m_componentRider.Mount != null)
+						{
+							StopMount();
+
+							ComponentBody riderBody = m_componentCreature.ComponentBody;
+							if (riderBody.ParentBody != null)
+							{
+								riderBody.Velocity = riderBody.ParentBody.Velocity;
+								riderBody.ParentBody = null;
+								riderBody.ParentBodyPositionOffset = Vector3.Zero;
+								riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+							}
+
+							m_componentRider.m_isAnimating = false;
+							m_componentRider.m_isDismounting = false;
+						}
+						m_currentMount = null;
+						CurrentMountState = MountState.Dismounting;
+						ClearPilotDestination();
+						break;
+					}
+					// ============================================
+					// FIN CORRECCIÓN BUG 1
+					// ============================================
+
 					if (m_componentRider.Mount == null)
 					{
 						m_currentMount = null;
@@ -1672,84 +1705,86 @@ namespace Game
 		{
 			if (m_componentRider == null || m_componentRider.Mount == null) return;
 
-			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
-			if (steedBehavior == null) return;
-
-			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
-			Vector3 targetPos = target.ComponentBody.Position;
-			Vector3 myPos = mountBody.Position;
-			bool isInAir = mountBody.StandingOnValue == null;
-
-			// ==========================================
-			// CONTROL DE VUELO PARA MONTURAS VOLADORAS
-			// ==========================================
-			if (IsOnFlyingMount && isInAir && m_componentPilot != null)
+			// No usar ComponentPilot para monturas terrestres normales, solo SteedBehavior
+			if (!IsOnFlyingMount)
 			{
-				Vector3 dirToTargetXZ = targetPos - myPos;
-				dirToTargetXZ.Y = 0f;
-				float hDist = dirToTargetXZ.Length();
-
-				// Mantener siempre una distancia horizontal mínima de 2.5f 
-				Vector3 pilotDest = myPos;
-				if (hDist > 0.01f)
+				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+				if (steedBehavior != null)
 				{
-					dirToTargetXZ = Vector3.Normalize(dirToTargetXZ);
-					pilotDest = myPos + dirToTargetXZ * MathUtils.Max(hDist, 2.5f);
-				}
-				else
-				{
-					// CAMBIO AQUÍ: Usamos 'fwd' en lugar de 'forward'
-					Vector3 fwd = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
-					if (fwd.LengthSquared() > 0.01f) fwd = Vector3.Normalize(fwd);
-					pilotDest = myPos + fwd * 2.5f;
+					ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
+					Vector3 myPos = mountBody.Position;
+					Vector3 targetPos = target.ComponentBody.Position;
+
+					Vector3 dirToTarget = targetPos - myPos;
+					dirToTarget.Y = 0f;
+					if (dirToTarget.LengthSquared() < 0.01f) return;
+					dirToTarget = Vector3.Normalize(dirToTarget);
+
+					Vector3 forward = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
+					if (forward.LengthSquared() < 0.01f) return;
+					forward = Vector3.Normalize(forward);
+
+					float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
+					float dot = Vector3.Dot(forward, dirToTarget);
+					float angleToTarget = MathF.Atan2(cross, dot);
+					float turnAmount = MathUtils.Clamp(angleToTarget * 3f, -1f, 1f);
+
+					steedBehavior.TurnOrder = turnAmount;
+
+					float distance = Vector3.Distance(myPos, targetPos);
+
+					if (MathF.Abs(angleToTarget) < 0.5f)
+					{
+						if (distance > 15f)
+							steedBehavior.SpeedOrder = 1;
+						else if (distance > 8f)
+							steedBehavior.SpeedOrder = 1;
+						else
+							steedBehavior.SpeedOrder = 0; // Frena cuando se acerca al target
+					}
+					else
+					{
+						steedBehavior.SpeedOrder = 0; // Frena si tiene que girar mucho
+					}
+
+					steedBehavior.JumpOrder = 0f;
 				}
 
-				// Altura objetivo: 3 bloques por encima del enemigo
-				pilotDest.Y = targetPos.Y + 3f;
-
-				m_componentPilot.SetDestination(pilotDest, 1f, 1f, false, false, true, null);
-			}
-			else
-			{
-				// Montura de tierra: apagar el Pilot
+				// Asegurar que el Pilot esté detenido para monturas terrestres (evita bugs)
 				if (m_componentPilot != null && m_componentPilot.Destination != null)
 				{
 					m_componentPilot.Stop();
 				}
+				return;
 			}
 
-			// ==========================================
-			// CONTROL HORIZONTAL (GIRO Y VELOCIDAD)
-			// ==========================================
-			Vector3 dirToTarget = targetPos - myPos;
-			dirToTarget.Y = 0f;
-			if (dirToTarget.LengthSquared() < 0.01f) return;
-			dirToTarget = Vector3.Normalize(dirToTarget);
+			// Lógica original solo para monturas voladoras
+			if (m_componentPilot == null) return;
 
-			Vector3 forward = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
-			if (forward.LengthSquared() < 0.01f) return;
-			forward = Vector3.Normalize(forward);
+			Vector3 targetPosition = target.ComponentBody.Position;
+			float distToTarget = Vector3.Distance(m_componentRider.Mount.ComponentBody.Position, targetPosition);
 
-			float dot = Vector3.Dot(forward, dirToTarget);
-			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
-			float angleToTarget = MathF.Atan2(cross, dot);
-			float turnAmount = MathUtils.Clamp(angleToTarget * 3f, -1f, 1f);
-
-			float distance = Vector3.Distance(myPos, targetPos);
-
-			steedBehavior.TurnOrder = turnAmount;
-
-			if (distance > AttackDistanceRange.Y)
+			if (distToTarget < AttackDistanceRange.X)
 			{
-				steedBehavior.SpeedOrder = 1;
-			}
-			else if (distance > AttackDistanceRange.X)
-			{
-				steedBehavior.SpeedOrder = MathF.Abs(angleToTarget) < 0.5f ? 1 : 0;
+				m_componentPilot.Stop();
+
+				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+				if (steedBehavior != null)
+				{
+					steedBehavior.SpeedOrder = 0;
+					steedBehavior.TurnOrder = 0f;
+					steedBehavior.JumpOrder = 0f;
+				}
 			}
 			else
 			{
-				steedBehavior.SpeedOrder = 0;
+				m_componentPilot.SetDestination(targetPosition, 1f, AttackDistanceRange.X, false, false, true, null);
+
+				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+				if (steedBehavior != null)
+				{
+					steedBehavior.SpeedOrder = 1;
+				}
 			}
 		}
 
