@@ -564,6 +564,32 @@ namespace Game
 				return;
 			}
 
+			// Si la criatura está muerta, nunca intentar montar
+			if (m_componentCreature.ComponentHealth.Health <= 0f)
+			{
+				// Forzar desmonte inmediato si todavía está montado
+				if (m_componentRider.Mount != null)
+				{
+					StopMount();
+
+					ComponentBody riderBody = m_componentCreature.ComponentBody;
+					if (riderBody.ParentBody != null)
+					{
+						riderBody.Velocity = riderBody.ParentBody.Velocity;
+						riderBody.ParentBody = null;
+						riderBody.ParentBodyPositionOffset = Vector3.Zero;
+						riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+					}
+
+					m_componentRider.m_isAnimating = false;
+					m_componentRider.m_isDismounting = false;
+					m_currentMount = null;
+					ClearPilotDestination();
+				}
+				CurrentMountState = MountState.None;
+				return;
+			}
+
 			switch (CurrentMountState)
 			{
 				case MountState.None:
@@ -596,7 +622,23 @@ namespace Game
 						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
 						if (mountHealth != null && mountHealth.Health <= 0f)
 						{
-							m_componentRider.StartDismounting();
+							// CORRECCIÓN: Desmonte forzado inmediato cuando la montura muere
+							// (antes usaba StartDismounting que es animado y puede fallar
+							// si la montura se despawnea antes de completar la animación)
+							StopMount();
+
+							ComponentBody riderBody = m_componentCreature.ComponentBody;
+							if (riderBody.ParentBody != null)
+							{
+								riderBody.Velocity = riderBody.ParentBody.Velocity;
+								riderBody.ParentBody = null;
+								riderBody.ParentBodyPositionOffset = Vector3.Zero;
+								riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+							}
+
+							m_componentRider.m_isAnimating = false;
+							m_componentRider.m_isDismounting = false;
+
 							m_currentMount = null;
 							CurrentMountState = MountState.Dismounting;
 							ClearPilotDestination();
@@ -608,6 +650,29 @@ namespace Game
 					if (m_componentRider.Mount == null)
 					{
 						m_currentMount = null;
+						// CORRECCIÓN: No volver a Searching si la criatura está muerta
+						// (evita que una criatura muerta se remonte)
+						CurrentMountState = MountState.Searching;
+					}
+					else
+					{
+						// Si por alguna razón sigue montado (animación incompleta),
+						// forzar desmonte
+						StopMount();
+
+						ComponentBody riderBody = m_componentCreature.ComponentBody;
+						if (riderBody.ParentBody != null)
+						{
+							riderBody.Velocity = riderBody.ParentBody.Velocity;
+							riderBody.ParentBody = null;
+							riderBody.ParentBodyPositionOffset = Vector3.Zero;
+							riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+						}
+
+						m_componentRider.m_isAnimating = false;
+						m_componentRider.m_isDismounting = false;
+						m_currentMount = null;
+						ClearPilotDestination();
 						CurrentMountState = MountState.Searching;
 					}
 					break;
