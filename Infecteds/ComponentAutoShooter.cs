@@ -37,13 +37,11 @@ namespace Game
 		private int m_currentBlockIndex;
 		private Random m_random = new Random();
 
-		// Verifica si la criatura que tiene este componente (el tirador) está viva
 		private bool IsShooterAlive()
 		{
 			return m_componentCreature?.ComponentHealth != null && m_componentCreature.ComponentHealth.Health > 0f;
 		}
 
-		// Verifica si un objetivo específico está vivo
 		private bool IsTargetAlive(ComponentCreature target)
 		{
 			return target != null && target.ComponentHealth != null && target.ComponentHealth.Health > 0f;
@@ -53,13 +51,9 @@ namespace Game
 		{
 			ComponentCreature target = null;
 			if (m_zombieChaseBehavior != null && m_zombieChaseBehavior.IsActive)
-			{
 				target = m_zombieChaseBehavior.Target;
-			}
 			else if (m_newChaseBehavior != null && m_newChaseBehavior.IsActive)
-			{
 				target = m_newChaseBehavior.Target;
-			}
 
 			return IsTargetAlive(target);
 		}
@@ -67,14 +61,10 @@ namespace Game
 		private ComponentCreature GetActiveTarget()
 		{
 			if (m_zombieChaseBehavior != null && m_zombieChaseBehavior.IsActive && IsTargetAlive(m_zombieChaseBehavior.Target))
-			{
 				return m_zombieChaseBehavior.Target;
-			}
 
 			if (m_newChaseBehavior != null && m_newChaseBehavior.IsActive && IsTargetAlive(m_newChaseBehavior.Target))
-			{
 				return m_newChaseBehavior.Target;
-			}
 
 			return null;
 		}
@@ -85,20 +75,16 @@ namespace Game
 			if (target == null || m_componentCreature?.ComponentBody == null || target.ComponentBody == null)
 				return false;
 
-			// Calculamos la distancia en 2D (plano XZ) como hace el juego normalmente
 			float distance = Vector2.Distance(
 				new Vector2(m_componentCreature.ComponentBody.Position.X, m_componentCreature.ComponentBody.Position.Z),
 				new Vector2(target.ComponentBody.Position.X, target.ComponentBody.Position.Z)
 			);
 
-			// Si la distancia es menor al mínimo (5), NO lanzamos. 
-			// Si es mayor al máximo (100), también es inválido (cancelamos).
 			return distance >= ShootRangeDistance.X && distance <= ShootRangeDistance.Y;
 		}
 
 		private void ShootProjectile()
 		{
-			// Si el tirador murió en este mismo instante, cancelar el disparo
 			if (!IsShooterAlive())
 				return;
 
@@ -127,9 +113,7 @@ namespace Game
 				Projectile projectile = m_subsystemProjectiles.CreateProjectile(blockValue, firePosition, velocity, Vector3.Zero, m_componentCreature);
 				if (projectile != null)
 				{
-					// Solo asignamos la entidad dueña, NINGÚN inventario (Creator)
 					projectile.OwnerEntity = Entity;
-
 					m_subsystemProjectiles.FireProjectileFast(projectile);
 					m_subsystemAudio.PlaySound("Audio/Throw", 1f, 0f, shootPosition, 4f, true);
 				}
@@ -151,13 +135,9 @@ namespace Game
 				{
 					int blockIndex = BlocksManager.GetBlockIndex(trimmedName, false);
 					if (blockIndex >= 0 && blockIndex < 1024)
-					{
 						values.Add(blockIndex);
-					}
 					else
-					{
 						Log.Warning($"ComponentAutoShooter: Block '{trimmedName}' not found!");
-					}
 				}
 			}
 
@@ -166,7 +146,6 @@ namespace Game
 
 		public void Update(float dt)
 		{
-			// Si no hay bloques configurados o si la criatura tiradora está muerta, no actualizar nada
 			if (m_blockValuesToShoot == null || m_blockValuesToShoot.Length == 0 || !IsShooterAlive())
 				return;
 
@@ -194,7 +173,6 @@ namespace Game
 			{
 				m_shootCooldown -= m_subsystemTime.GameTimeDelta;
 
-				// Solo dispara si el tirador está vivo, hay objetivo, el cooldown terminó y está en el rango válido
 				if (IsShooterAlive() && HasActiveTarget() && m_shootCooldown <= 0f && IsTargetInValidRange())
 				{
 					m_stateMachine.TransitionTo("Shooting");
@@ -203,7 +181,14 @@ namespace Game
 
 			m_stateMachine.AddState("Shooting", delegate
 			{
-				// Doble seguridad: si por alguna razón se salió del rango, murió el tirador o el objetivo en el mismo frame, no dispara
+				// Animación idéntica a la lógica del DayZ (生物远程攻击行为)
+				// Asigna el Vector2 completo para dar el efecto de lanzamiento
+				if (m_componentCreatureModel is ComponentHumanModel humanModel)
+				{
+					humanModel.m_handAngles1 = new Vector2(4f, 3f);
+					humanModel.m_handAngles2 = new Vector2(4f, -5f);
+				}
+
 				if (IsShooterAlive() && IsTargetInValidRange() && HasActiveTarget())
 				{
 					ShootProjectile();
@@ -213,14 +198,12 @@ namespace Game
 			{
 				m_shootCooldown -= m_subsystemTime.GameTimeDelta;
 
-				// Si se alejó demasiado, el tirador murió o el objetivo murió/perdió, vuelve a Idle instantáneamente
 				if (!IsShooterAlive() || !HasActiveTarget() || !IsTargetInValidRange())
 				{
 					m_stateMachine.TransitionTo("Idle");
 				}
 				else
 				{
-					// Disparo único: pasa a Idle para esperar el cooldown
 					m_stateMachine.TransitionTo("Idle");
 				}
 			}, null);
