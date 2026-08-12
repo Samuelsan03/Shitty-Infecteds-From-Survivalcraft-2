@@ -205,10 +205,18 @@ public class ShittyInfectedsModLoader : ModLoader
 
 		bool sameNewHerd = ownerNewHerd != null && hitNewHerd != null && ownerNewHerd.HerdName == hitNewHerd.HerdName && !string.IsNullOrEmpty(ownerNewHerd.HerdName);
 		bool sameZombieHerd = ownerZombieHerd != null && hitZombieHerd != null && ownerZombieHerd.HerdName == hitZombieHerd.HerdName && !string.IsNullOrEmpty(ownerZombieHerd.HerdName);
-		bool isPlayerHerd = (ownerNewHerd != null && ownerNewHerd.HerdName == "player") || owner.Entity.FindComponent<ComponentPlayer>() != null;
-		bool isHitPlayerHerd = hitNewHerd != null && hitNewHerd.HerdName == "player";
 
-		if (sameNewHerd || sameZombieHerd || (isPlayerHerd && isHitPlayerHerd))
+		// CORRECCIÓN: Verificar si el dueño es jugador O tiene manada "player"
+		bool isOwnerPlayer = owner.Entity.FindComponent<ComponentPlayer>() != null;
+		bool isOwnerPlayerHerd = ownerNewHerd != null && ownerNewHerd.HerdName == "player";
+		bool isPlayerHerd = isOwnerPlayer || isOwnerPlayerHerd;
+
+		// CORRECCIÓN: Verificar si el objetivo es jugador O tiene manada "player"
+		bool isHitPlayer = hit.Entity.FindComponent<ComponentPlayer>() != null;
+		bool isHitPlayerHerd = hitNewHerd != null && hitNewHerd.HerdName == "player";
+		bool isHitInPlayerGroup = isHitPlayer || isHitPlayerHerd;
+
+		if (sameNewHerd || sameZombieHerd || (isPlayerHerd && isHitInPlayerGroup))
 		{
 			bool isTarget = false;
 			ComponentNewChaseBehavior newChase = owner.Entity.FindComponent<ComponentNewChaseBehavior>();
@@ -244,6 +252,21 @@ public class ShittyInfectedsModLoader : ModLoader
 
 					if (creatureInv != null)
 					{
+						// NUEVA LÓGICA: Verificar si tiene vendaje y la criatura necesita curación
+						int activeBlockIndex = Terrain.ExtractContents(player.ComponentMiner.ActiveBlockValue);
+						bool hasBandage = activeBlockIndex == BlocksManager.GetBlockIndex<BandageSmallBlock>();
+
+						if (hasBandage)
+						{
+							ComponentCreature hitCreature = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreature>();
+							if (hitCreature != null && hitCreature.ComponentHealth != null && hitCreature.ComponentHealth.Health > 0f && hitCreature.ComponentHealth.Health < 1f)
+							{
+								// Si tiene vendaje y la criatura puede curarse, omitimos abrir el inventario
+								// para que el flujo normal continúe y llegue al SubsystemBandageSmallBehavior
+								return;
+							}
+						}
+
 						player.ComponentMiner.Poke(false);
 						player.ComponentGui.ModalPanelWidget = new CreatureInventoryWidget(player.ComponentMiner.Inventory, creatureInv);
 						AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
@@ -255,9 +278,9 @@ public class ShittyInfectedsModLoader : ModLoader
 		}
 
 		int activeBlockValue = player.ComponentMiner.ActiveBlockValue;
-		int activeBlockIndex = Terrain.ExtractContents(activeBlockValue);
+		int activeBlockIndex2 = Terrain.ExtractContents(activeBlockValue);
 
-		if (activeBlockIndex == BlocksManager.GetBlockIndex<GreenNightRemoteControlBlock>())
+		if (activeBlockIndex2 == BlocksManager.GetBlockIndex<GreenNightRemoteControlBlock>())
 		{
 			SubsystemGreenNightSky subsystemGreenNight = player.Project.FindSubsystem<SubsystemGreenNightSky>(true);
 
@@ -596,14 +619,17 @@ public class ShittyInfectedsModLoader : ModLoader
 			ownerZombieHerd.HerdName == hitZombieHerd.HerdName &&
 			!string.IsNullOrEmpty(ownerZombieHerd.HerdName);
 
-		bool isPlayerHerd = (ownerNewHerd != null && ownerNewHerd.HerdName == "player") ||
-			owner.Entity.FindComponent<ComponentPlayer>() != null;
+		// CORRECCIÓN: Incluir verificación directa de ComponentPlayer
+		bool isOwnerPlayer = owner.Entity.FindComponent<ComponentPlayer>() != null;
+		bool isOwnerPlayerHerd = ownerNewHerd != null && ownerNewHerd.HerdName == "player";
+		bool isPlayerHerd = isOwnerPlayer || isOwnerPlayerHerd;
 
+		bool isHitPlayer = hit.Entity.FindComponent<ComponentPlayer>() != null;
 		bool isHitPlayerHerd = hitNewHerd != null && hitNewHerd.HerdName == "player";
+		bool isHitInPlayerGroup = isHitPlayer || isHitPlayerHerd;
 
-		if (sameNewHerd || sameZombieHerd || (isPlayerHerd && isHitPlayerHerd))
+		if (sameNewHerd || sameZombieHerd || (isPlayerHerd && isHitInPlayerGroup))
 		{
-			// Permitir daño SI el objetivo es el target actual del chase
 			bool isTarget = false;
 
 			ComponentNewChaseBehavior newChase = owner.Entity.FindComponent<ComponentNewChaseBehavior>();
@@ -617,7 +643,6 @@ public class ShittyInfectedsModLoader : ModLoader
 					isTarget = true;
 			}
 
-			// Si NO es el target, ignorar (no dañar aliados)
 			if (!isTarget) return true;
 		}
 
