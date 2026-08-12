@@ -468,7 +468,7 @@ namespace Game
 					{
 						CancelAim();
 						m_componentMiner.Inventory.ActiveSlotIndex = meleeSlot;
-						if (isMounted) StopMount();
+						if (isMounted) PilotMount(target);   // ← CORREGIDO: Seguir pilotando hacia el objetivo
 					}
 					else
 					{
