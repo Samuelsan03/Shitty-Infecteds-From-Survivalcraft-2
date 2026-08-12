@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -14,7 +16,10 @@ namespace Game
 		private const float FluEffectCheckInterval = 5f;
 		private const float DefaultFluDuration = 900f;
 
+		// Salud mínima que la gripe puede causar (no mata)
 		private const float MinimumHealthFromFlu = 0.1f;
+
+		// Factor mínimo de velocidad durante gripe (0.5 = mitad de velocidad)
 		private const float MinimumSpeedFactor = 0.5f;
 
 		private float m_fluResistance;
@@ -41,6 +46,7 @@ namespace Game
 
 		private Random m_random = new Random();
 
+		// Velocidades originales para restaurar después de la gripe
 		private float m_originalWalkSpeed;
 		private float m_originalLadderSpeed;
 		private float m_originalFlySpeed;
@@ -56,7 +62,28 @@ namespace Game
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
+		/// <summary>
+		/// Calcula la efectividad de la gripe basándose en la resistencia.
+		/// </summary>
 		private float FluEffectiveness => 1f - m_fluResistance;
+
+		/// <summary>
+		/// Método público para curar la gripe. Limpia todos los efectos de la enfermedad.
+		/// </summary>
+		public void Cure()
+		{
+			m_fluDuration = 0f;
+			m_coughDuration = 0f;
+			m_sneezeDuration = 0f;
+
+			if (m_speedsStored)
+			{
+				RestoreOriginalSpeeds();
+			}
+
+			m_lastEffectTime = -1000.0;
+			m_lastCoughTime = -1000.0;
+		}
 
 		public void TryInfect(float attackerIntensity)
 		{
@@ -78,21 +105,9 @@ namespace Game
 			m_fluDuration = duration;
 		}
 
-		// MÉTODO NUEVO: Para limpiar la gripe al domesticar
-		public void Cure()
-		{
-			m_fluDuration = 0f;
-			m_coughDuration = 0f;
-			m_sneezeDuration = 0f;
-			m_lastEffectTime = -1000.0;
-			m_lastCoughTime = -1000.0;
-
-			if (m_speedsStored)
-			{
-				RestoreOriginalSpeeds();
-			}
-		}
-
+		/// <summary>
+		/// Guarda las velocidades originales de locomoción la primera vez
+		/// </summary>
 		private void StoreOriginalSpeeds()
 		{
 			if (m_speedsStored || m_componentLocomotion == null)
@@ -107,6 +122,9 @@ namespace Game
 			m_speedsStored = true;
 		}
 
+		/// <summary>
+		/// Restaura las velocidades originales de locomoción
+		/// </summary>
 		private void RestoreOriginalSpeeds()
 		{
 			if (!m_speedsStored || m_componentLocomotion == null)
@@ -121,6 +139,9 @@ namespace Game
 			m_speedsStored = false;
 		}
 
+		/// <summary>
+		/// Actualiza las velocidades de locomoción basándose en la efectividad de la gripe
+		/// </summary>
 		private void UpdateLocomotionSpeeds()
 		{
 			if (m_componentLocomotion == null)
@@ -197,8 +218,10 @@ namespace Game
 		{
 			m_lastEffectTime = m_subsystemTime.GameTime;
 
+			// Calcular daño base escalado con efectividad
 			float damageToApply = HealthDamagePerFlu * FluEffectiveness;
 
+			// VERIFICACIÓN: No dañar si ya está en el mínimo de salud por gripe
 			if (m_componentHealth != null && m_componentHealth.Health > MinimumHealthFromFlu)
 			{
 				float maxSafeDamage = m_componentHealth.Health - MinimumHealthFromFlu;
@@ -221,15 +244,23 @@ namespace Game
 				}
 			}
 
+			// ============================================
+			// CORRECCIÓN: Secuencia Cough -> Sneeze
+			// ============================================
+
 			float coughChance = 0.3f + 0.5f * FluEffectiveness;
 
+			// Primero verificar si puede toser
 			if (m_coughDuration == 0f && (m_subsystemTime.GameTime - m_lastCoughTime > 40.0 || m_random.Bool(coughChance)))
 			{
+				// Tose
 				Cough();
 
+				// Programar estornudo DESPUÉS de que termine la tos
 				float coughEndTime = (float)m_lastCoughTime + CoughDuration;
 				m_subsystemTime.QueueGameTimeDelayedExecution(coughEndTime, delegate
 				{
+					// Verificar que sigue vivo, con gripe, y no está ya estornudando
 					if (m_sneezeDuration == 0f
 						&& m_fluDuration > 0f
 						&& m_componentHealth != null
@@ -241,6 +272,7 @@ namespace Game
 			}
 			else if (m_sneezeDuration == 0f)
 			{
+				// Si no tosió, estornuda directamente
 				Sneeze();
 			}
 		}
@@ -250,6 +282,7 @@ namespace Game
 			if (!HasActiveSymptoms)
 				return;
 
+			// Limpiar tos/estornudo si muere
 			if (m_componentHealth != null && m_componentHealth.Health <= 0f)
 			{
 				m_coughDuration = 0f;
@@ -306,8 +339,10 @@ namespace Game
 			{
 				m_fluDuration = MathUtils.Max(m_fluDuration - dt, 0f);
 
+				// ACTUALIZAR VELOCIDADES DE LOCOMOCIÓN
 				UpdateLocomotionSpeeds();
 
+				// Solo aplicar daño si está por encima del mínimo
 				if (m_componentHealth != null && m_componentHealth.Health > MinimumHealthFromFlu)
 				{
 					if (m_subsystemTime.PeriodicGameTimeEvent(FluEffectCheckInterval, -0.01f)
