@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -19,11 +20,22 @@ namespace Game
 			get { return m_importanceLevel; }
 		}
 
+		private struct HealingTargetData
+		{
+			public ComponentHealth Health;
+			public Entity Entity;
+			public ComponentBody Body;
+			public bool NeedsHealthHeal;
+			public bool NeedsDiseaseCure;
+		}
+
 		public void Update(float dt)
 		{
 			if (m_componentCreature.ComponentHealth.Health <= 0f) return;
 
 			m_dt = dt;
+
+			bool isHealingActive = m_healingTimer > 0f || m_messageTimer > 0f;
 
 			// 1. LÓGICA DEL TEMPORIZADOR Y ANIMACIÓN
 			if (m_healingTimer > 0f)
@@ -44,79 +56,131 @@ namespace Game
 						m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 					}
 
-					// Lógica de curación de salud
-					if (m_needsHealthHeal && m_healingTarget != null && m_healingTarget.Health > 0f)
-					{
-						m_healingTarget.Heal(100f);
-					}
+					// Aplicar curación a todos los objetivos al mismo tiempo
+					ApplyHealingToAllTargets();
 
-					// Lógica de curación de enfermedades
-					if (m_needsDiseaseCure && m_healingTargetEntity != null)
-					{
-						CureDiseases(m_healingTargetEntity);
-					}
+					// Iniciar temporizador para mostrar mensaje DESPUÉS de que las partículas se disipen
+					m_messageTimer = 0.5f;
+				}
+			}
 
-					if (m_healingTargetBody != null)
-					{
-						ComponentPlayer targetPlayer = m_healingTargetBody.Entity.FindComponent<ComponentPlayer>();
-						if (targetPlayer != null)
-						{
-							m_subsystemAudio.PlaySound("Audio/classic intro smb melee", 1f, 0f, m_healingTargetBody.Position, 3f, true);
-
-							// Mostrar mensajes de curación al jugador
-							if (targetPlayer.ComponentGui != null)
-							{
-								string healerName = m_componentCreature.DisplayName;
-
-								// Mensaje de curación de enfermedad (verde)
-								if (m_needsDiseaseCure)
-								{
-									string diseaseMessage = string.Format(LanguageControl.Get(fName, 1), healerName);
-									targetPlayer.ComponentGui.DisplaySmallMessage(diseaseMessage, new Color(100, 255, 150), true, false);
-								}
-
-								// Mensaje de restauración de salud (rojo claro)
-								if (m_needsHealthHeal)
-								{
-									string healthMessage = string.Format(LanguageControl.Get(fName, 2), healerName);
-									targetPlayer.ComponentGui.DisplaySmallMessage(healthMessage, new Color(255, 150, 150), true, false);
-								}
-							}
-						}
-
-						m_healingTargetBody = null;
-						m_healingTarget = null;
-						m_healingTargetEntity = null;
-						m_needsHealthHeal = false;
-						m_needsDiseaseCure = false;
-					}
-
-					// Detenemos y LIMPIAMOS las partículas de la memoria
-					if (m_particleSystem != null)
-					{
-						m_particleSystem.Stopped = true;
-						m_particleSystem = null;
-					}
+			// 1.5 LÓGICA DEL MENSAJE (aparece después de las partículas)
+			if (m_messageTimer > 0f)
+			{
+				m_messageTimer -= dt;
+				if (m_messageTimer <= 0f)
+				{
+					ShowHealingMessages();
 				}
 			}
 
 			// 2. LÓGICA DE PARTÍCULAS (Estructura del Shapeshifter)
-			if (m_healingTargetBody != null)
+			if (isHealingActive)
 			{
-				if (m_particleSystem == null)
+				// Crear sistemas de partículas para cada objetivo si no existen
+				if (m_particleSystems.Count == 0)
 				{
-					m_particleSystem = new HealingParticleSystem();
-					m_subsystemParticles.AddParticleSystem(m_particleSystem, false);
+					foreach (var target in m_healingTargetsList)
+					{
+						if (target.Body != null)
+						{
+							HealingParticleSystem ps = new HealingParticleSystem();
+							m_subsystemParticles.AddParticleSystem(ps, false);
+							m_particleSystems.Add(ps);
+						}
+					}
 				}
-				// Actualizamos la posición de las partículas al cuerpo del objetivo CADA frame
-				m_particleSystem.BoundingBox = m_healingTargetBody.BoundingBox;
+
+				// Actualizar posición de cada sistema de partículas al cuerpo de su objetivo CADA frame
+				int index = 0;
+				foreach (var target in m_healingTargetsList)
+				{
+					if (target.Body != null && index < m_particleSystems.Count)
+					{
+						m_particleSystems[index].BoundingBox = target.Body.BoundingBox;
+					}
+					index++;
+				}
+			}
+			else if (m_particleSystems.Count > 0)
+			{
+				// Detenemos y limpiamos todos los sistemas de partículas de la memoria
+				foreach (HealingParticleSystem ps in m_particleSystems)
+				{
+					ps.Stopped = true;
+				}
+				m_particleSystems.Clear();
 			}
 
 			// 3. Máquina de estados bloqueada mientras se cura
-			if (m_healingTargetBody == null)
+			if (!isHealingActive)
 			{
 				m_stateMachine.Update();
 			}
+		}
+
+		private void ApplyHealingToAllTargets()
+		{
+			foreach (var target in m_healingTargetsList)
+			{
+				if (target.Health == null || target.Health.Health <= 0f) continue;
+
+				// Lógica de curación de salud
+				if (target.NeedsHealthHeal)
+				{
+					target.Health.Heal(100f);
+				}
+
+				// Lógica de curación de enfermedades
+				if (target.NeedsDiseaseCure && target.Entity != null)
+				{
+					CureDiseases(target.Entity);
+				}
+			}
+		}
+
+		private void ShowHealingMessages()
+		{
+			if (m_healingTargetsList.Count == 0) return;
+
+			string healerName = m_componentCreature.DisplayName;
+			bool playedSound = false;
+
+			foreach (var target in m_healingTargetsList)
+			{
+				if (target.Entity == null) continue;
+
+				ComponentPlayer targetPlayer = target.Entity.FindComponent<ComponentPlayer>();
+				if (targetPlayer != null)
+				{
+					// Reproducir sonido solo una vez
+					if (!playedSound && target.Body != null)
+					{
+						m_subsystemAudio.PlaySound("Audio/classic intro smb melee", 1f, 0f, target.Body.Position, 3f, true);
+						playedSound = true;
+					}
+
+					if (targetPlayer.ComponentGui != null)
+					{
+						// Mensaje de curación de enfermedad (verde)
+						if (target.NeedsDiseaseCure)
+						{
+							string diseaseMessage = string.Format(LanguageControl.Get(fName, 1), healerName);
+							targetPlayer.ComponentGui.DisplaySmallMessage(diseaseMessage, new Color(100, 255, 150), true, false);
+						}
+
+						// Mensaje de restauración de salud (rojo claro)
+						if (target.NeedsHealthHeal)
+						{
+							string healthMessage = string.Format(LanguageControl.Get(fName, 2), healerName);
+							targetPlayer.ComponentGui.DisplaySmallMessage(healthMessage, new Color(255, 150, 150), true, false);
+						}
+					}
+				}
+			}
+
+			// Limpiar lista después de mostrar los mensajes
+			m_healingTargetsList.Clear();
 		}
 
 		private void CureDiseases(Entity targetEntity)
@@ -129,7 +193,6 @@ namespace Game
 			if (targetPlayer != null)
 			{
 				// Si es jugador en modo Creativo o con mecánicas de supervivencia deshabilitadas, no curar enfermedades
-				// ya que en esos modos no puede enfermarse
 				if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ||
 					!m_subsystemGameInfo.WorldSettings.AreAdventureSurvivalMechanicsEnabled)
 				{
@@ -181,7 +244,6 @@ namespace Game
 				}
 
 				// Para jugadores, solo curar si está habilitado curar a otras criaturas
-				// (los jugadores se consideran "otros" aliados cuando están en la misma manada)
 				if (!m_canCureOtherCreatures)
 				{
 					return false;
@@ -231,10 +293,12 @@ namespace Game
 
 			m_stateMachine.AddState("Idle", null, delegate
 			{
-				m_healingTarget = FindCriticalAlly();
-				m_importanceLevel = (m_healingTarget != null) ? 100f : 0f;
+				m_healingTargetsList.Clear();
+				FindAllCriticalAllies();
 
-				if (IsActive && m_healingTarget != null)
+				m_importanceLevel = (m_healingTargetsList.Count > 0) ? 100f : 0f;
+
+				if (IsActive && m_healingTargetsList.Count > 0)
 				{
 					m_stateMachine.TransitionTo("Healing");
 				}
@@ -242,26 +306,16 @@ namespace Game
 
 			m_stateMachine.AddState("Healing", delegate
 			{
-				m_healingTarget = FindCriticalAlly();
-
-				if (m_healingTarget == null || m_random.Float() > m_probabilityOfCuring)
+				if (m_healingTargetsList.Count == 0 || m_random.Float() > m_probabilityOfCuring)
 				{
 					m_importanceLevel = 0f;
-					m_needsHealthHeal = false;
-					m_needsDiseaseCure = false;
+					m_healingTargetsList.Clear();
 					m_stateMachine.TransitionTo("Idle");
 					return;
 				}
 
-				// Iniciamos el proceso.
-				m_healingTargetBody = m_healingTarget.Entity.FindComponent<ComponentBody>(true);
-				m_healingTargetEntity = m_healingTarget.Entity;
+				// Iniciamos el proceso para todos los objetivos al mismo tiempo
 				m_healingTimer = 1.5f;
-
-				// ELIMINADO: m_importanceLevel = 0f; 
-				// Si lo pones en 0, el motor mata el Update y las partículas nunca se dibujan.
-				// Al no tocarlo, se mantiene en 100f, el Update sigue corriendo, y el if(m_healingTargetBody == null) 
-				// de más abajo evita que la máquina de estados se reinicie sola.
 
 				m_stateMachine.TransitionTo("Idle");
 			}, null, null);
@@ -269,31 +323,33 @@ namespace Game
 			m_stateMachine.TransitionTo("Idle");
 		}
 
-		private ComponentHealth FindCriticalAlly()
+		private void FindAllCriticalAllies()
 		{
 			Vector3 position = m_componentCreature.ComponentBody.Position;
-			ComponentHealth result = null;
-			bool foundLowHealth = false;
-			bool foundDisease = false;
-
-			// Resetear flags
-			m_needsHealthHeal = false;
-			m_needsDiseaseCure = false;
 
 			// Verificar uno mismo - salud baja
 			if (m_doesHealSelf && m_componentCreature.ComponentHealth.Health <= 0.2f && m_componentCreature.ComponentHealth.Health > 0f)
 			{
-				result = m_componentCreature.ComponentHealth;
-				foundLowHealth = true;
-				m_needsHealthHeal = true;
+				m_healingTargetsList.Add(new HealingTargetData
+				{
+					Health = m_componentCreature.ComponentHealth,
+					Entity = Entity,
+					Body = m_componentCreature.ComponentBody,
+					NeedsHealthHeal = true,
+					NeedsDiseaseCure = HasDisease(Entity, true)
+				});
 			}
-
-			// Verificar uno mismo - enfermedades
-			if (!foundLowHealth && m_canCureSelf && HasDisease(Entity, true))
+			// Verificar uno mismo - enfermedades (solo si no fue añadido por salud baja)
+			else if (m_canCureSelf && HasDisease(Entity, true))
 			{
-				result = m_componentCreature.ComponentHealth;
-				foundDisease = true;
-				m_needsDiseaseCure = true;
+				m_healingTargetsList.Add(new HealingTargetData
+				{
+					Health = m_componentCreature.ComponentHealth,
+					Entity = Entity,
+					Body = m_componentCreature.ComponentBody,
+					NeedsHealthHeal = false,
+					NeedsDiseaseCure = true
+				});
 			}
 
 			if (m_doesHealAllies && !string.IsNullOrEmpty(m_componentHerdBehavior.HerdName))
@@ -307,24 +363,21 @@ namespace Game
 							ComponentHealth playerHealth = playerData.ComponentPlayer.ComponentHealth;
 							float distance = Vector3.Distance(position, playerData.ComponentPlayer.ComponentBody.Position);
 
-							if (distance < m_healingRadius)
+							if (distance < m_healingRadius && playerHealth.Health > 0f)
 							{
-								// Verificar salud baja primero (prioridad)
-								if (!foundLowHealth && playerHealth.Health <= 0.2f && playerHealth.Health > 0f)
+								bool needsHealthHeal = playerHealth.Health <= 0.2f;
+								bool needsDiseaseCure = HasDisease(playerData.ComponentPlayer.Entity, false);
+
+								if (needsHealthHeal || needsDiseaseCure)
 								{
-									result = playerHealth;
-									foundLowHealth = true;
-									m_needsHealthHeal = true;
-									// También verificar si tiene enfermedades
-									m_needsDiseaseCure = HasDisease(playerData.ComponentPlayer.Entity, false);
-								}
-								// Luego verificar enfermedades
-								else if (!foundLowHealth && !foundDisease && HasDisease(playerData.ComponentPlayer.Entity, false))
-								{
-									result = playerHealth;
-									foundDisease = true;
-									m_needsHealthHeal = false;
-									m_needsDiseaseCure = true;
+									m_healingTargetsList.Add(new HealingTargetData
+									{
+										Health = playerHealth,
+										Entity = playerData.ComponentPlayer.Entity,
+										Body = playerData.ComponentPlayer.ComponentBody,
+										NeedsHealthHeal = needsHealthHeal,
+										NeedsDiseaseCure = needsDiseaseCure
+									});
 								}
 							}
 						}
@@ -338,36 +391,31 @@ namespace Game
 						ComponentHealth creatureHealth = creature.ComponentHealth;
 						ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
 
-						if (herd != null && herd.HerdName == m_componentHerdBehavior.HerdName)
+						if (herd != null && herd.HerdName == m_componentHerdBehavior.HerdName && creatureHealth.Health > 0f)
 						{
 							float distance = Vector3.Distance(position, creature.ComponentBody.Position);
 
 							if (distance < m_healingRadius)
 							{
-								// Verificar salud baja primero (prioridad)
-								if (!foundLowHealth && creatureHealth.Health <= 0.2f && creatureHealth.Health > 0f)
+								bool needsHealthHeal = creatureHealth.Health <= 0.2f;
+								bool needsDiseaseCure = HasDisease(creature.Entity, false);
+
+								if (needsHealthHeal || needsDiseaseCure)
 								{
-									result = creatureHealth;
-									foundLowHealth = true;
-									m_needsHealthHeal = true;
-									// También verificar si tiene enfermedades
-									m_needsDiseaseCure = HasDisease(creature.Entity, false);
-								}
-								// Luego verificar enfermedades
-								else if (!foundLowHealth && !foundDisease && HasDisease(creature.Entity, false))
-								{
-									result = creatureHealth;
-									foundDisease = true;
-									m_needsHealthHeal = false;
-									m_needsDiseaseCure = true;
+									m_healingTargetsList.Add(new HealingTargetData
+									{
+										Health = creatureHealth,
+										Entity = creature.Entity,
+										Body = creature.ComponentBody,
+										NeedsHealthHeal = needsHealthHeal,
+										NeedsDiseaseCure = needsDiseaseCure
+									});
 								}
 							}
 						}
 					}
 				}
 			}
-
-			return result;
 		}
 
 		private SubsystemTime m_subsystemTime;
@@ -390,14 +438,10 @@ namespace Game
 		private bool m_canCureOtherCreatures;
 		private bool m_canCureSelf;
 
-		private ComponentHealth m_healingTarget;
-		private Entity m_healingTargetEntity;
-		private HealingParticleSystem m_particleSystem;
-		private ComponentBody m_healingTargetBody;
+		private List<HealingTargetData> m_healingTargetsList = new List<HealingTargetData>();
+		private List<HealingParticleSystem> m_particleSystems = new List<HealingParticleSystem>();
 		private float m_healingTimer;
+		private float m_messageTimer;
 		private float m_healingRadius;
-
-		private bool m_needsHealthHeal;
-		private bool m_needsDiseaseCure;
 	}
 }
