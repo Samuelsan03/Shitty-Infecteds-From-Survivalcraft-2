@@ -1,231 +1,1704 @@
 {
+  "ComponentFirearmsShooters": {
+    "0": "HEALED!",
+    "1": "RELOADING!",
+    "2": "LOADED!"
+},
+  "SubsystemBanditInvasion": {
+    "0": "The Cartel Leader has arrived!\nPrepare for the final battle!"
+  },
+  "ComponentAimep3Evolution": {
+    "0": "{0} evolved to level {1}. The pandemic only makes things worse.",
+    "1": "{0} evolved to level {1}. There is no turning back now; it's a killing machine."
+},
+  "GreenNightWarConflictDialog": {
+    "1": "WARNING!",
+    "2": "You have activated the War Against Drug Traffickers during\n Green Night!\n\nThis means that the INFECTED and the DRUG TRAFFICKERS\n hate you so much\nthat they have decided to join forces to take you down.\n\nADVANTAGES:\n• You will level up faster (if you survive).\n• More valuable loot (completely useless if you're dead).\n• Extreme combat experience (for your next life).\n\nDISADVANTAGES:\n• Double the number of enemies.\n• Chance of death: HIGH.\n• Your allies will probably die too.\n• Life insurance does not cover this.\n\nYou are on {0} difficulty!\nYou have literally chosen the worst possible combination.\nThe developers recommend praying before continuing.\n\nDo you really want to continue, or would you rather live to tell the tale?",
+    "3": "You are on {0} difficulty!\nYou have literally chosen the worst possible combination.\nThe developers recommend praying before continuing.\n\n",
+    "4": "Do you really want to continue, or would you rather live to tell the tale?",
+    "5": "Continue",
+    "6": "Cancel"
+  },
+  "ExtremeCompletionDialog": {
+    "0": "Congratulations, Survivor!",
+    "1": "You have managed to overcome the highest difficulty known\nso far.",
+    "2": "You have proven yourself to be an exceptional survivor.\nYour effort and perseverance have brought you this far.",
+    "3": "A New Challenge Awaits",
+    "4": "You have unlocked a challenge that will test everything you have\nlearned.\nThose who have seen you survive consider you a legend,\nbut some say you have not yet seen the true darkness.\n\nThey say there is a level where even the smallest mistake has\npermanent\nconsequences. Where every decision matters and every move\ncould be your last.\n\nIf you believe you are ready, accept the challenge.\nBut be warned: there is no turning back.",
+    "5": "By accepting, the Green Night waves will be reset from the\nbeginning,\nand you will have to prove your worth once again.",
+    "6": "Accept",
+    "7": "Decline",
+    "8": "You have declined the challenge. The mode remains locked.",
+    "9": "You have accepted the new challenge. The waves have been reset."
+  },
+  "InfiniteChallengeWidget": {
+    "0": "Infinite The Jackal",
+    "1": "Challenge",
+    "2": "I have been watching you from the shadows.",
+    "3": "My family needs another warrior. Not a follower who hides behind allies — a true lone wolf.",
+    "4": "Fight me. One on one. No companions, no summoned creatures, no outside help.",
+    "5": "If you win, you will be honored as part of my family. If you lose... you will remain here, waiting for someone strong enough to defeat me.",
+    "6": "Do you accept the challenge?",
+    "7": "Accept",
+    "8": "Reject"
+  },
+  "ComponentInfiniteChallenge": {
+    "0": "The duel against Infinite has begun!",
+    "1": "You have proven your strength! Infinite now joins your family."
+  },
+  "MountLock": {
+    "0": "You cannot mount this infected mount"
+},
+  "AchievementsWidget": {
+    "0": "Shitty Creatures Ruining Evolution",
+    "1": "Close",
+    "2": "COMPLETED",
+    "3": "PENDING",
+    "4": "Reward: {0} nuclear coins",
+    "5": "Claim",
+    "6": "Fire a Tank without severance pay",
+  "7": "Terminate a Tank's employment contract with any weapon",
+  "8": "Permanently cure an Infected",
+  "9": "Offer eternal rest to an Infected with any weapon",
+  "10": "Rehabilitate a Bandit in an irreversible way",
+  "11": "Remove a Bandit from the criminal job market",
+  "12": "Perform an express exorcism on a Ghost",
+  "13": "Process the permanent termination of any Ghost",
+  "14": "Didn't Learn the First Time",
+  "15": "Remind a Ghost Tank why it died the first time.",
+  "16": "First Green Night",
+  "17": "Survive your first wave",
+  "18": "King of the Green Night",
+  "19": "Complete all the Green Night waves",
+  "20": "Staff Reduction",
+"21": "Survive the drug trafficker invasion. The meeting ended earlier than expected.",
+  "22": "Least Likely Candidate",
+  "23": "Avoid Your Funeral for 5 Days",
+  "24": "Death Is Busy",
+  "25": "Survive 10 Days Without Signing the Certificate",
+  "26": "You're Still Here Somehow",
+  "27": "Survive 25 Days Against All Odds",
+  "28": "The Grim Reaper Is Getting Frustrated",
+  "29": "Survive 75 Days and Ruin the Statistics",
+  "30": "Your File Is Back on the Desk",
+  "31": "Survive 100 Days and Raise Suspicions",
+  "32": "Officially Hard to Bury",
+  "33": "Survive 300 Days and Become an Urban Legend",
+"34": "The Final Paperwork",
+"35": "Make sure any special boss signs their own death certificate (Tanks and their muscular cousins don't count)",
+  "36": "Outbreak Control",
+"37": "Eliminate 10 standard infected. The quarantine seems to be working.",
+"38": "Permanent Social Distancing",
+"39": "Eliminate 50 common infected. They won't be infecting anyone anymore.",
+"40": "Epidemiological Miracle",
+"41": "Eliminate 100 basic infected. Infection statistics have never looked this good.",
+  "42": "Funeral Apprentice",
+"43": "Send 10 special bosses to their eternal rest",
+"44": "Morgue Director",
+"45": "Fill the records with 50 fewer special bosses",
+"46": "Professional Extinction",
+"47": "Make 100 special bosses permanently leave the roster of the living",
+"48": "Tank Bonebreaker",
+"49": "Make 10 Tanks reconsider their existence",
+"50": "Tank Destroyer",
+"51": "Lay off 50 Tanks without severance pay",
+"52": "Tank Nightmare",
+"53": "Send 100 Tanks to the gym in the afterlife",
+"54": "Paranormal Problems",
+"55": "Eliminate 10 ghosts. Apparently, the afterlife isn't permanent either.",
+"56": "Putting Spirits Out of Work",
+"57": "Eliminate 50 ghosts. You've significantly reduced the population of the afterlife.",
+"58": "Crisis in the Underworld",
+"59": "Eliminate 100 ghosts. Specters are already considering moving to another dimension.",
+"60": "Exorcism Problem",
+"61": "Make 10 Ghost Tanks discover that there really is a second death",
+"62": "Cemetery Closure",
+"63": "Convince 50 Ghost Tanks to go back to their graves",
+"64": "Underworld Auditor",
+"65": "Send 100 Ghost Tanks to claim a refund on death",
+"66": "Business Interruption",
+"67": "Eliminate 10 drug traffickers. Their customers will need to find a new supplier.",
+"68": "Cartel Collapse",
+"69": "Eliminate 50 drug traffickers. Organization meetings are getting noticeably shorter.",
+"70": "Market Crash",
+"71": "Eliminate 100 drug traffickers. You've caused a human resources crisis in organized crime.",
+"72": "Unfinished Business",
+  "73": "Heal yourself or an ally 10 times. The grave will have to wait.",
+  "74": "Supernatural Interference",
+  "75": "Heal yourself or an ally 50 times. You've thwarted too many fates.",
+  "76": "Death's Nemesis",
+  "77": "Heal yourself or an ally 100 times. Death no longer knocks on your door; it files complaints.",
+"78": "A paycheck for every bullet",
+"79": "Hire your first mercenary to take the bullets for you",
+"80": "Davy Jones' Recruiter",
+"81": "Send 10 pirates to a new crew beneath the sea.",
+"82": "Captain of Absences",
+"83": "Make 50 pirates miss roll call indefinitely.",
+"84": "Piracy Auditor",
+"85": "Reduce the pirate population by 100 members.",
+"86": "Privateer Sponsor",
+"87": "Buy any item from the Pirata Hostil Comerciante and strengthen the maritime crime economy.",
+"88": "Market Crash",
+"89": "Kill the Pirata Hostil Comerciante and bring down the archipelago's black market.",
+"90": "Change of Flag",
+"91": "Kill the Capitan Pirata and carry out a coup d'état in international waters.",
+"92": "Air Traffic Controller",
+"93": "Give 10 flying creatures a permanent landing",
+"94": "Flight Canceller",
+"95": "Make 25 flying creatures lose their itinerary",
+"96": "No-Fly Zone",
+"97": "Convince 50 flying creatures to leave the skies",
+"98": "Master of the Airspace",
+"99": "Send 100 flying creatures on their final flight",
+"100": "Bloated and Burst",
+"101": "You've blown up 10 Boomers. Like balloons, but much nastier.",
+"102": "Safe Distance",
+"103": "You've blown up 25 Boomers. You still ignore the concept of cover.",
+"104": "Professional Kaboom",
+"105": "You've blown up 55 Boomers. Physics has officially taken notice of you.",
+"106": "Master of the Big Bang",
+"107": "You've blown up 100 Boomers. If it moves, it'll probably explode too.",
+"108": "Direct Line Disconnected",
+"109": "Survive all waves of a Green Night on \"Failed to Load Sanity\" difficulty. You tried calling the therapist, but he was running too.",
+  "110": "Friend of the Undead",
+  "111": "Tame 10 infected. Isn't that like... betraying your own species? Well, they don't seem to mind.",
+  "112": "Lord of Plagues",
+  "113": "Tame 25 infected. Your enemies are now your pets. Shock therapy at its finest.",
+  "114": "The Infected Shepherd",
+  "115": "Tame 50 infected. Your base looks like a post-apocalyptic zoo.",
+  "116": "Certified Epidemiologist",
+  "117": "Tame 100 infected. Are you a beastmaster or planning a silent invasion?",
+  "118": "Nightmare Tamer",
+  "119": "Tame 10 bosses. How are you still alive? Bosses are supposed to be your enemies, not your servants.",
+  "120": "Titan Collector",
+  "121": "Tame 25 bosses. Your personal army would make any apocalypse tremble... including your own.",
+  "122": "The Impossible Tamer",
+  "123": "Tame 50 bosses. There's no turning back now, you're the villain. Survivors fear you more than the zombies.",
+  "124": "King of Monsters",
+  "125": "Tame 100 bosses. The apocalypse belongs to you. Mwahaha! What's next? Taming God?",
+  "126": "Ghostbuster (Dark Edition)",
+  "127": "Tame 10 ghosts. At this point, the Ghostbusters would sue you for stealing spirits.",
+  "128": "Lord of Souls",
+  "129": "Tame 25 ghosts. Your spectral army lurks in the shadows... and in your living room.",
+  "130": "Professional Necromancer",
+  "131": "Tame 50 ghosts. Who needs living minions when you have an army of the dead obeying your every command?",
+  "132": "Emperor of the Afterlife",
+  "133": "Tame 100 ghosts. You've turned the afterlife into your private property. Even death fears you now.",
+  "134": "False God",
+"135": "Infinite believed he was invincible. Turns out all he needed was an urgent ego check.",
+"136": "Praying Worked",
+"137": "Survive a Drug Traffickers War during a Green Night. Right now, even the developers have no idea what happened.",
+"138": "The Dough Has Awakened",
+"139": "You fed Aimep3 some bread and something inexplicable happened. Scientists are still debating whether it was the gluten.",
+"140": "Error: God Detected",
+"141": "Aimep3 has reached its maximum power. It can now defeat any developer with a loaf of bread. Do not approach.",
+"142": "The creator regrets it",
+"143": "You have proven that there are no limits to human suffering. The developer no longer knows what else to invent. You deserve an award for your stubbornness.",
+"144": "Case closed",
+  "145": "The case of the continent's most wanted female drug trafficker has been resolved. Don't ask how, don't ask why. Just take the coins and forget you ever saw anything. The government thanks you.",
+  "146": "Dr. Death (or something like that)",
+  "147": "You have healed allies and creatures 50 times. The medical board has revoked your license for practicing without ethics, but at least they haven't bitten your face off... yet. Healer or butcher? The line gets blurry when there are coins involved."
+  },
+  "TypesOfAchievements": {
+    "0": "Type",
+    "1": "War Crimes",
+    "2": "Accidental Survivor",
+    "3": "Animal Stockholm Syndrome",
+    "4": "Unlicensed Doctor",
+    "5": "Savage Capitalism",
+    "6": "Psychological Issues"
+},
+  "AchievementsMessages": {
+    "0": "ACHIEVEMENT {0} UNLOCKED!",
+    "1": "Loot {0} nuclear coins. Redeem them on the achievement board!",
+    "2": "Not enough inventory space!",
+    "3": "Reward claimed!",
+    "4": "ACHIEVEMENTS COMPLETED!",
+    "5": "You've unlocked all achievements!\n Now relax—creatures need a break too.\n Time to dance, for fuck's sake!",
+    "6": "Journey",
+    "7": "Trophies",
+    "8": "No. Simply no. Turn that off and enjoy the show; it's not every day that fireworks are falling from the sky."
+  },
+  "BaseWatermelonBlock": {
+    "1": "Watermelon",
+    "2": "{0} Watermelon",
+    "3": "{0} {1} Watermelon",
+    "4": "Rotten",
+    "5": "Unripe"
+  },
+  "Healing": {
+    "0": "You have been healed by {0}.",
+    "1": "{0} has cured you of the flu.",
+    "2": "{0} has cured you of poison."
+  },
+  "CameraManage": {
+    "Game.FreeCamera": "Free camera"
+  },
+  "Coordinates": {
+    "0": "Coordinates: X: {0:F1}  Y: {1:F1}  Z: {2:F1}"
+  },
+  "SubsystemDoubleMusketBlockBehavior": {
+    "0": "The double musket is not loaded!"
+  },
+  "UnlockedItems": {
+  "CraftingLocked": "You must survive all waves first!",
+  "Unlocked": "Remote Control unlocked!",
+  "UnlockedInfo": "You can now craft the Remote Control to manage the Green Nights.",
+  "ChestMessage": "A MYSTERIOUS CHEST HAS APPEARED!",
+  "ChestInfo": "Search for the chest that has appeared near you."
+},
+  "ComponentNewSleep": {
+    "CantSleepGreenNight": "You can't sleep during the Green Night.",
+    "CantSleepBanditInvasion": "You can't sleep during the drug trafficker war!"
+  },
+  "ComponentNewVitalStats": {
+    "AlreadyNotThirsty": "You are already fully hydrated",
+    "DrankBoiledWater": "You hydrated yourself",
+    "Dehydrating": "You are getting dehydrated!",
+    "DrankDrinkableWater": "You partially hydrated yourself",
+    "DrankRotten": "The drink was spoiled. It upset your stomach.",
+    "AteFruit": "You ate a fruit and feel a bit more hydrated",
+    "HalfThirsty": "You are starting to feel thirsty",
+    "DrankAntidote": "Nausea and illness have been cured!",
+    "DrankAntiflu": "The flu has been cured!"
+},
+  "ShittyCreaturesAbout": {
+    "AboutButton": "About The Mod",
+    "Title": "About Shitty Creatures MOD:",
+    "Description": "This mod was originally born in October 2025 when the creator tested his mod to explore the world of modding. It wasn't until November 3rd that he resumed it, giving birth to what we know today.\n\nThis mod, more than being shitty and humorous, lets you mess with creatures on your path, fight them or seek allies. Oh wait, the infected will be your worst enemies, so you can tame them to have them as guards in the middle of a strange chaotic world. Characters based on the creator's imagination as well as popular ones, especially from anime, series and others. Feel free to play it and steal my codes and textures if you want to learn like I did.",
+    "CreatorTitle": "Mod Creator:",
+    "CreatorName": "Samuelsan03 (programmer, texture designer and more)",
+    "SocialTitle": "Social Media:",
+    "YoutubeLabel": "YouTube: ",
+    "TwitterLabel": "Twitter: ",
+    "DiscordLabel": "Discord: ",
+    "BiliBiliLabel": "BiliBili: ",
+    "ModPageLabel": "Mod page: ",
+    "FinalMessage": "If you have problems, bugs or suggestions, feel free to contact the author on his Discord.",
+    "ExitButton": "Exit"
+  },
+  "ShittyCreaturesLog": {
+    "Line1_0_6_1": "• Free Camera has been added. This mode is only available in Peaceful (Harmless), Survival (Survival), Challenging (Challenging), Cruel (Cruel), and Adventure (Adventure); it does not work in Creative mode. Its behavior is similar to the debug camera, allowing you to move freely around the world to observe the environment and creatures without restrictions.",
+    "Line1_0_6_2": "• Added the special event \"Green Night\". You can enable or disable it, configure how often it occurs (in days), and choose between seven Mental States: Early Retirement, Therapy Waiting List, Monday Morning, Structural Damage, The Last Architect, Sanity Load Error, and a seventh secret state. Each Mental State changes enemy spawn rates, aggression, environmental destruction capabilities, and tactical behavior. The event takes place at night according to the configured interval.",
+    "Line1_0_6_3:": "A thirst mechanic has been introduced to create a more realistic experience. You will now need to find sources of water, such as buckets or containers. However, drinking untreated water may cause nausea, especially if it comes from unsafe sources. To avoid negative effects, it is recommended to boil water before consuming it.",
+    "Line1_0_6_4": "• New Digimons and bandits have been added. Currently, there are 4 unique bandits that players can hire using nuclear coins.",
+    "Line1_0_6_5": "• Added trading and hiring system.",
+    "Line1_0_6_6": "• New unlockable event: after surviving all the waves of the Green Night (yes, all of them, including the one where you cried in the shower), a suspiciously convenient chest will appear near you. It contains a letter. It’s not spam, it’s not a Viagra offer, it’s an invitation. If you accept it… well, let’s just say the nights will stop being boring. We won’t say exactly what happens (spoilers), but it involves shady-looking guys, questionable life choices, and the feeling that maybe you should have stayed in bed. If you refuse… they’ll ask you again. And again. And again. The letter has a lot of patience. Or a mean streak. You decide.",
+    "Line1_0_6_7": "• Shitty Creatures settings have been added, accessible from the main menu through a dedicated button. All options are automatically saved to an XML file, preserving your settings between game sessions.",
+    "Line1_0_6_8": "• New weapons have been added: firearms, freezing bomb, and double-barrel musket.",
+    "Line1_0_6_9": "• New tools have been introduced: thin-head hammer (mines faster than standard pickaxes).",
+    "Line1_0_6_10": "• A flu system for creatures has been implemented.",
+    "Line1_0_6_11": "• A healing system has been added, compatible with both creatures and players, including treatment for nausea, poison, and flu, as well as healing for low-health creatures.",
+    "Line1_0_6_12": "• The trident now summons lightning when it hits a target.",
+    "Line1_0_6_13": "• Translations have been fixed, polished, and improved.",
+    "Line1_0_6_14": "• The creatures' artificial intelligence has been improved. They can now use any type of weapon, including melee, ranged, thrown, and firearms. If they have a melee weapon in their inventory while using a ranged, thrown, or firearm weapon, they will automatically switch to the melee weapon once they are close enough to their target. Additionally, they can now equip clothing and armor just like the player, as well as ride mounts.",
+    "Line1_0_6_15": "• A bleeding system for creatures has been added. It allows players to see when they are close to death and how long their corpse remains before disappearing.",
+    "Line1_0_5_1": "• Added new weapons: Flamethrower, Scythe, Trident, Repeating Crossbow, Poison Bomb, Item Cannon",
+    "Line1_0_5_2": "• Added new NPCs: Digimon, Alliance members, Muerte members, Pirates, Infected (zombies)",
+    "Line1_0_5_3": "• Added music system (background music, chase music for enemies)",
+    "Line1_0_5_4": "• Added new items: Xiaomi refrigerator, air conditioner, Command Stick, zombie necklace",
+    "Line1_0_5_5": "• Improved pack and pursuit system; infected can now use ranged weapons",
+    "Line1_0_5_6": "• BetelGammamon now appears only in autumn/winter",
+    "Line1_0_5_7": "• New wallpapers and improved textures for Ricardo, Carl Johnson, Ballestadora Musculosa",
+    "Line1_0_5_8": "• Fixed bugs: music button disappearing, air conditioner shadow, door interaction, etc.",
+    "Line1_0_5_9": "• Added poisoning mechanic and old stone/wood/lava weapons/tools",
+    "Line1_0_4_1": "• Added Headcrab Bloody Human, El Arquero",
+    "Line1_0_4_2": "• Improved Carl Johnson, El Marihuanero, El Marihuanero Mamón designs",
+    "Line1_0_4_3": "• Improved Ricardo's texture (fixed unpainted edges)",
+    "Line1_0_4_4": "• Added shooting behavior: El Arquero, El Ballestero, El Marihuanero Mamón now use their own ammo",
+    "Line1_0_3_1": "• Added new characters: Conker, Beavis and Butt‑head, Hombre Lava, Hombre Agua",
+    "Line1_0_3_2": "• Modified El Marihuanero Mamón's shirt to reflect Rastafarian essence",
+    "Line1_0_2_1": "• Added GTA characters: Claude Speed, Tommy Vercetti",
+    "Line1_0_2_2": "• Added 4 beings from the afterlife",
+    "Line1_0_2_3": "• Added full moon/new moon transformation for Lider Caláverico Supremo",
+    "Line1_0_2_4": "• Improved NPC sounds (La Muerte X, El Marihuanero Mamón)",
+    "Line1_0_2_5": "• Claude, Tommy and El Marihuanero Mamón now have items/weapons",
+    "Line1_0_2_6": "• Changed audio route for Paco (now uses its own name)",
+    "Line1_0_1_1": "• Added Tank model (from dayzmod)",
+    "Line1_0_1_2": "• New character: Fumador Químico and his muscular version (Tank)",
+    "Line1_0_1_3": "• Full moon/new moon transformation for Fumador Químico → Brawny (allied)",
+    "Line1_0_1_4": "• Added new sounds to NPCs",
+    "Line1_0_0_1": "• Added 4 humans",
+    "Line1_0_0_2": "• Models, textures, and audios from dayzmod mod",
+    "Line1_0_0_3": "• Compatible with 2.3 and 2.4"
+  },
+  "ShittyCreaturesSettings": {
+    "ScreenTitle": "Shitty Creatures Settings",
+    "GhostDescription": "Enable/disable music when ghosts chase you",
+    "TankDescription": "Enable/disable music when tanks chase you",
+    "SpawnDescription": "Enable/disable spawning of NPCs when one dies",
+    "ThirstDescription": "Enable/disable thirst simulation",
+    "CoordinateDisplay": "Show coordinates",
+    "PunchCommandDescription": "Allies will attack and chase any NPC you hit, regardless of the type of attack",
+    "CreativeDefenseDescription": "In Creative mode, when a creature hits the player, allies will attack the attacker",
+    "FreeCameraDescription": "Enable/disable free camera mode (only in non-creative modes)",
+    "BleedingDescription": "Toggle bleeding on wounded creatures",
+    "HealthBarDescription": "Show health bars on creatures",
+    "SkeletonSpawnDescription": "Allows skeletons to spawn during normal nights.",
+    "SpiderSpawnDescription": "Allows infected spiders to spawn during normal nights (including caves).",
+    "FastMeleeDescription": "Enable rapid consecutive melee attacks when clicking/tapping quickly on the same target",
+    "InGameMusicDescription": "Show a button in-game to play random music tracks while playing"
+},
+  "SpecialThanksScreen": {
+  "0": "Special Thanks",
+  "1": "If you want to appear in the special thanks list, you can contact the author to provide ideas, bugs or more. Don't forget to include your nickname and the reason.",
+  "2": "Quotemante",
+  "3": "With his idea of adding Rayman as a new character.",
+  "4": "Richard Survivalcraft",
+  "5": "Because of the idea of ​​including characters from Sonic The Hedgehog",
+  "6": "Heptagunn",
+  "7": "For choosing the PlayStation 1 cover for the final version of the mod's cover"
+},
+  "AntidoteBucket": {
+    "NPCCured": "The NPC has been cured of poison and sickness!"
+  },
+  "AntifluBucket": {
+    "FluNPCCured": "The NPC's flu has been cured!"
+  },
+  "ZombiesSpawn": {
+  "WaveMessage": "You are in wave {0}!",
+  "TheyComeTonight": "They are coming…",
+  "TheyComeInXDays": "They come in {0} days",
+  "TheyComeIn1Day": "They arrive in 1 day",
+  "CurrentDifficulty": "Mental State: {0}",
+  "FinalWave": "Final Wave has begun!",
+  "BossAppeared": "{0} has appeared!",
+  "CombinedWave": "Get ready for the combined invasion!"
+},
+  "HealthBar": {
+    "HP": "HP"
+  },
+  "InGameMusic": {
+    "MusicEnabled": "Music enabled",
+    "MusicDisabled": "Music disabled",
+    "MusicToggleButton": "Music\n",
+    "MusicOn": "On",
+    "MusicOff": "Off",
+    "NowPlaying": "Now playing: ",
+    "UnknownTrack": "Unknown track",
+    "MusicTrack": "Music track",
+    "MusicFileNotFound": "Music file not found",
+    "MusicPlayError": "Error playing music"
+  },
+  "ItemsLauncher": {
+    "YouNeedAmmunition": "You need ammunition to fire the item launcher"
+  },
+  "GreenNightSky": {
+    "GreenMoonBegins": "The Green Night has begun!",
+    "GreenMoonEnds": "The Green Night has ended."
+  },
+  "LargeFirstAidKit": {
+    "PlayerHealed": "You have completely restored your health!",
+    "NPCHealedFormat": "The health of {0} has been completely restored!"
+  },
+  "MediumFirstAidKit": {
+    "PlayerHealed": "¡You have partially restored your health!",
+    "NPCHealedFormat": "The health of {0} has been partially restored!"
+  },
+  "EditTemperatureDialog": {
+  "Settings": "Air Conditioner - Settings",
+  "Ok": "OK",
+  "Cancel": "Cancel",
+  "Off": "Off",
+  "CoverageRadius": "Coverage radius"
+  },
+  "Injury": {
+    "Poisoned": "Poisoned",
+    "FrozenToDeath": "Frozen to Death",
+    "Dehydration": "Dehydration",
+    "FrozenVomit": "Frozen by icy vomit",
+    "FireVomit": "Burned by fiery vomit",
+    "BloodVomit": "Died from vomiting blood"
+  },
   "Database": {
     "DisplayName": {
+      "LaBandida": "La Bandida",
+      "InfectedSpiderTamed": "Infected Spider Ally",
+      "InfectedSpider": "Infected Spider",
+      "SonicTheHedgehog": "Sonic The Hedgehog",
+      "MilesTailsPrower": "Miles \"Tails\" Prower",
+      "KnucklesTheEchidna": "Knuckles The Echidna",
+      "FangTheSniper": "Fang The Sniper",
+      "InfiniteTheJackal": "Infinite The Jackal",
+      "Rayman": "Rayman",
+      "FirearmsDealer": "Firearms Dealer",
       "Aimep3": "Aimep3",
-      "InfectedNormal1": "Infected Normal I",
-      "InfectedNormal2": "Infected Normal II",
-      "InfectedNormalTamed1": "Infected Normal Tamed I",
-      "InfectedNormalTamed2": "Infected Normal Tamed II",
-      "InfectedFast1": "Infected Fast I",
-      "InfectedFastTamed1": "Infected Fast Tamed I",
-      "InfectedFast2": "Infected Fast II",
-      "InfectedFastTamed2": "Infected Fast Tamed II",
-      "InfectedMuscle1": "Infected Muscle I",
-      "InfectedMuscleTamed1": "Infected Muscle Tamed I",
-      "InfectedMuscle2": "Infected Muscle II",
-      "InfectedMuscleTamed2": "Infected Muscle Tamed II"
-  },
-  "Description": {
-    "InfectedNormal1": "Appears from Wave 1. This infected is one of the most common threats of the plague, but it should never be underestimated. It constantly roams in search of prey and is capable of detecting, chasing, and attacking both survivors and other creatures. It can travel great distances to reach its target, cooperate with nearby infected, and respond to their calls for help when one of them enters combat. It can pick up weapons, tools, and clothing found along its path, using them to improve its chances of survival. If an obstacle blocks its way, it will attempt to destroy it and continue forward. Its distinctive glowing green eyes remain visible even in complete darkness. During the Green Night, its behavior becomes far more aggressive: it abandons any intention of retreating, focuses entirely on survivors, and pursues them with relentless determination. Even after being attacked, it can remember its aggressor and continue the chase for a long time. It can be tamed using a Collar, becoming a loyal guardian that will fight by your side. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form.",
-    "InfectedFast1": "Appears from Wave 2. This fast variant stands out for its extraordinary mobility and aggression. It can cover great distances in a very short time, leap over obstacles with ease, and rapidly change direction while pursuing its prey. Like other plague-infected creatures, it can detect, chase, and attack both survivors and other creatures, while also coordinating with nearby infected and responding to their calls for assistance. If barriers stand in its way, it will attempt to destroy them to continue the pursuit. Its glowing green eyes are often the last thing seen by those who try to escape. During the Green Night, it becomes an especially dangerous threat, abandoning all caution to focus entirely on hunting survivors. Its superior speed allows it to close distances quickly and maintain pursuits for extended periods. Although it possesses remarkable physical resilience, it is more vulnerable to poison than most infected. It can be tamed using a Collar, becoming a swift guardian capable of fighting alongside its owner. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form."
-    }
-  },
-  "Blocks": {
-    "ImprovedMusketBlock:0": {
-    "DisplayName": "Improved Musket",
-    "Description": "A redesigned musket that eliminates the cumbersome process of loading gunpowder and wads separately. It allows you to insert up to 2 pellets directly into the chamber. Unlike the original musket, it will not misfire if you submerge in water, and its sturdy mechanism prevents it from losing durability with each shot.",
-    "CRDescription:0": "Upgrade a standard musket by reinforcing it with iron blocks and rods."
-  },
-  "AntiTankPelletBlock:0": {
-    "DisplayName": "Anti-Tank Pellet",
-    "Description": "A special ammunition for the Improved Musket. It cuts through water without losing speed and shatters on impact without leaving a ricochet. It's a surprise pellet that will help us later...",
-    "CRDescription:0": "Craft mysterious pellets using iron blocks, feathers, and sulphur."
-  },
-  "RepeatCrossbowBlock:0": {
-    "DisplayName": "Repeat Crossbow",
-    "Description": "A repeating crossbow with a magazine that holds up to 8 bolts. Draw the string, load bolts, and fire in quick succession.",
-    "CRDescription:0": "Craft from rods, iron ingots, string, and a standard crossbow"
-  },
-  "RepeatBoltBlock:0": {
-    "DisplayName": "Repeat Copper Bolt",
-    "Description": "A basic copper bolt for the repeating crossbow. Low power but cheap to make.",
-    "CRDescription:0": "Craft from a copper ingot, a rod, and a feather"
-  },
-  "RepeatBoltBlock:1": {
-    "DisplayName": "Repeat Iron Bolt",
-    "Description": "A sturdy iron bolt with good armor penetration and damage.",
-    "CRDescription:1": "Craft from an iron ingot, a rod, and a feather"
-  },
-  "RepeatBoltBlock:2": {
-    "DisplayName": "Repeat Diamond Bolt",
-    "Description": "A diamond-tipped bolt that pierces through the toughest armor with ease. Its aerodynamic design allows it to travel through water without losing speed.",
-    "CRDescription:2": "Reinforce an iron bolt with a diamond"
-},
-  "RepeatBoltBlock:3": {
-    "DisplayName": "Repeat Explosive Bolt",
-    "Description": "A bolt packed with gunpowder that detonates on impact, damaging nearby creatures and terrain.",
-    "CRDescription:3": "Combine gunpowder with a copper bolt"
-  },
-  "RepeatBoltBlock:4": {
-    "DisplayName": "Repeat Fire Bolt",
-    "Description": "A bolt that ignites targets and leaves a trail of fire. Very effective against flammable enemies.",
-    "CRDescription:4": "Combine a sulphur chunk with a copper bolt"
-  },
-  "RepeatBoltBlock:5": {
-    "DisplayName": "Repeat Poison Bolt",
-    "Description": "A bolt coated with a mild toxin that poisons the target over time.",
-    "CRDescription:5": "Coat a copper bolt with toxin"
-  },
-  "RepeatBoltBlock:6": {
-    "DisplayName": "Repeat Severely Poisonous Bolt",
-    "Description": "A bolt laced with a highly concentrated toxin, capable of inflicting fatal poisoning quickly.",
-    "CRDescription:6": "Reinforce a poison bolt with an extra dose of toxin"
-  },
-    "CopperSharpHammerBlock:0": {
-      "DisplayName": "Copper Sharp Hammer",
-      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. When used, the hammer will gradually lose its durability and eventually fail. Hammers made of better materials will last longer and cause significantly more damage.",
-      "CRDescription:0": "Make a copper heavy hammer"
+      "Bandit17": "Bandit 17",
+      "Bandit16": "Bandit 16",
+      "Bandit15": "Bandit 15",
+      "Bandit14": "Bandit 14",
+      "Bandit13": "Bandit 13",
+      "Bandit12": "Bandit 12",
+      "Bandit11": "Bandit 11",
+      "Bandit10": "Bandit 10",
+      "Bandit9": "Bandit 9",
+      "Bandit8": "Bandit 8",
+      "Bandit7": "Bandit 7",
+      "Bandit6": "Bandit 6",
+      "Bandit5": "Bandit 5",
+      "Bandit4": "Bandit 4",
+      "InfectedFreezer": "Infected Freezer",
+      "InfectedFreezerTamed": "Infected Freezer Ally",
+      "HumanoidSkeleton": "Humanoid Skeleton",
+      "HumanoidSkeletonTamed": "Humanoid Skeleton Ally",
+      "PredatoryChameleon": "Predatory Chameleon",
+      "PredatoryChameleonTamed": "Predatory Chameleon Ally",
+      "InfectedBird": "Infected Bird",
+      "InfectedBirdTamed": "Infected Bird Ally",
+      "InfectedWildboar": "Infected Wild Boar",
+      "InfectedWildboarTamed": "Infected Wild Boar Ally",
+      "InfectedBearTamed": "Infected Bear Ally",
+      "InfectedBear": "Infected Bear",
+      "InfectedHyena": "Infected Hyena",
+      "InfectedHyenaTamed": "Infected Hyena Ally",
+      "InfectedWerewolfTamed": "Infected Werewolf Ally",
+      "InfectedWerewolf": "Infected Werewolf",
+      "InfectedWolfTamed": "Infected Wolf Ally",
+      "InfectedWolf": "Infected Wolf",
+      "MachineGunInfectedTamed": "Machine Gun Infected Ally",
+      "MachineGunInfected": "Machine Gun Infected",
+      "Bandit3": "Bandit 3",
+      "Bandit2": "Bandit 2",
+      "Bandit1": "Bandit 1",
+      "FrozenTankGhost": "Frozen Tank Ghost",
+      "FrozenTankGhostTamed": "Frozen Tank Ghost Ally",
+      "FrozenTank": "Frozen Tank",
+      "FrozenTankTamed": "Frozen Tank Ally",
+      "TankGhost1": "Ghost Tank",
+      "TankGhost2": "Burning Ghost Tank",
+      "TankGhost3": "Poisonous Ghost Tank",
+      "TankGhostTamed1": "Ghost Tank Ally",
+      "TankGhostTamed2": "Allied Burning Ghost Tank",
+      "TankGhostTamed3": "Allied Poisonous Ghost Tank",
+      "GhostChargerTamed": "Ghost Charger Ally",
+      "GhostCharger": "Ghost Charger",
+      "GhostBoomerTamed1": "Ghost Boomer Ally",
+      "GhostBoomer1": "Ghost Boomer",
+      "GhostBoomer2": "Fiery Ghost Boomer",
+      "GhostBoomer3": "Poisonous Ghost Boomer",
+      "BoomerFrozen": "Frozen Boomer",
+      "FrozenGhost": "Frozen Ghost",
+      "FrozenGhostBoomer": "Frozen Ghost Boomer",
+      "FrozenGhostBoomerTamed": "Frozen Ghost Boomer Ally",
+      "FrozenGhostTamed": "Frozen Ghost Ally",
+      "BoomerFrozenTamed": "Frozen Boomer Ally",
+      "GhostBoomerTamed2": "Fiery Ghost Boomer Ally",
+      "GhostBoomerTamed3": "Poisonous Ghost Boomer Ally",
+      "PoisonousGhostTamed": "Ghost Poisonous Ally",
+      "PoisonousGhost": "Ghost Poisonous",
+      "GhostFastTamed": "Ghost Fast Ally",
+      "GhostFast": "Ghost Fast",
+      "GhostNormalTamed": "Ghost Ally",
+      "GhostNormal": "Ghost",
+      "Tank1": "Tank",
+      "Tank2": "Burning Tank",
+      "Tank3": "Poisonous Tank",
+      "TankTamed1": "Tank Ally",
+        "TankTamed2": "Burning Tank Ally",
+      "TankTamed3": "Poisonous Tank Ally",
+      "ChargerTamed2": "Charger Ally 2",
+      "Charger2": "Charger 2",
+      "ChargerTamed1": "Charger Ally 1",
+      "Charger1": "Charger 1",
+      "BoomerTamed3": "Poisonous Boomer Ally",
+      "Boomer3": "Poisonous Boomer",
+      "BoomerTamed1": "Boomer Ally",
+      "BoomerTamed2": "Fiery Boomer Ally",
+      "Boomer2": "Fiery Boomer",
+      "Boomer1": "Normal Boomer",
+      "FlyingInfectedBossTamed": "Flying Infected Boss Ally",
+      "FlyingInfectedBoss": "Flying Infected Boss",
+      "InfectedFlyTamed3": "Flying Infected Ally 3",
+      "InfectedFly3": "Flying Infected 3",
+      "InfectedFlyTamed2": "Flying Infected Ally 1",
+      "InfectedFly2": "Flying Infected 2",
+      "InfectedFlyTamed1": "Flying Infected Ally 1",
+      "InfectedFly1": "Flying Infected 1",
+      "PoisonousInfectedTamed2": "Infected Normal Ally 4",
+      "PoisonousInfectedTamed1": "Infected Normal Ally 3",
+      "PoisonousInfected2": "Infected Normal 4",
+      "PoisonousInfected1": "Infected Normal 3",
+      "InfectedMuscleTamed2": "Infected Muscle Ally 2",
+      "InfectedMuscle2": "Infected Muscle 2",
+      "InfectedMuscleTamed1": "Infected Muscle Ally 1",
+      "InfectedMuscle1": "Infected Muscle 1",
+      "InfectedFastTamed2": "Infected Faster Ally 2",
+      "InfectedFast2": "Infected Faster 2",
+      "InfectedFastTamed1": "Infected Faster Ally 1",
+      "InfectedFast1": "Infected Faster 1",
+      "InfectedNormalTamed2": "Infected Normal Ally 2",
+      "InfectedNormal2": "Infected Normal 2",
+      "InfectedNormalTamed1": "Infected Normal Ally 1",
+      "InfectedNormal1": "Infected Normal 1",
+      "PirataNormal": "Pirata Normal",
+      "PirataElite": "Pirata Élite",
+      "CapitanPirata": "Capitán Pirata",
+      "PirataHostilComerciante": "Pirata Hostil Comerciante",
+      "PirataEliteAliado": "Pirata Élite Aliado",
+      "PirataNormalAliado": "Pirata Normal Aliado",
+      "Naomi": "Naomi",
+      "Ricardo": "Ricardo",
+      "Paco": "Paco",
+      "Barack": "Barack",
+      "ElMarihuanero": "El Marihuanero",
+      "ElMarihuaneroMamon": "El Marihuanero Mamón",
+      "FumadorQuimico": "Fumador Químico",
+      "FumadorQuimicoBrawny": "Fumador Químico Brawny",
+      "TommyVercetti": "Tommy Vercetti",
+      "ClaudeSpeed": "Claude Speed",
+      "CarlJohnson": "Carl Johnson",
+      "LaMuerteX": "La Muerte X",
+      "ElSenorDeLasTumbasMoradas": "El Señor de las Tumbas Moradas",
+      "LiderCalavericoSupremo": "Líder Calavérico Supremo",
+      "LiderCalavericoSupremoAlfa": "Líder Calavérico Supremo Alfa",
+      "Sparkster": "Sparkster",
+      "ElArquero": "El Arquero",
+      "ElBallestador": "El Ballestador",
+      "ArqueroPrisionero": "Arquero Prisionero",
+      "BallestadoraMusculosa": "Ballestadora Musculosa",
+      "Conker": "Conker",
+      "Beavis": "Beavis",
+      "Butt-Head": "Butt-Head",
+      "HombreLava": "Hombre Lava",
+      "HombreAgua": "Hombre Agua",
+      "Shoutmon": "Shoutmon",
+      "Veemon": "Veemon",
+      "Gaomon": "Gaomon",
+      "Agumon": "Agumon",
+      "Impmon": "Impmon",
+      "Gumdramon": "Gumdramon",
+      "Guilmon": "Guilmon",
+      "BetelGammamon": "BetelGammamon",
+      "Hawkmon": "Hawkmon",
+      "Gabumon": "Gabumon",
+      "HeadcrabBloodyHuman": "Headcrab Bloody Human",
+      "Tulio": "Tulio",
+      "Brayan": "Brayan",
+      "AladinaCorrupta": "Aladina Corrupta",
+      "ElGuerrillero": "El Guerrillero",
+      "ElGuerrilleroTenebroso": "El Guerrillero Tenebroso",
+      "WalterZombie": "Walter Zombie",
+      "WalterZombieMamadisimo": "Walter Zombie Mamadísimo",
+      "ZombieRepetidor": "Zombie Repetidor",
+      "CamisasMorenas": "Camisas Morenas",
+      "Richard": "Richard"
     },
-    "IronSharpHammerBlock:0": {
-      "DisplayName": "Iron Sharp Hammer",
-      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. When used, the hammer will gradually lose its durability and eventually fail. Hammers made of better materials will last longer and cause significantly more damage.",
-      "CRDescription:0": "Make an iron heavy hammer"
-    },
-    "DiamondSharpHammerBlock:0": {
-      "DisplayName": "Diamond Sharp Hammer",
-      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. When used, the hammer will gradually lose its durability and eventually fail. Hammers made of better materials will last longer and cause significantly more damage.",
-      "CRDescription:0": "Add diamonds to forge an incredibly powerful hammer"
-    },
-    "LavaSharpHammerBlock:0": {
-      "DisplayName": "Lava Sharp Hammer",
-      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. Forged in the intense heat of magma, this hammer boasts unmatched durability and catastrophic destructive power.",
-      "CRDescription:0": "Smelt a diamond hammer with magma to unleash its full potential"
-  },
-      "WoodenLongspearBlock:0": {
-      "DisplayName": "Wooden Longspear",
-      "Description": "A longer variant of the spear designed to keep enemies at a safer distance. It can be thrown or used for melee, but will eventually lose its sharpness. Thrown longspears stick in soft materials.",
-      "CRDescription:0": "Make a long wooden weapon"
-    },
-    "StoneLongspearBlock:0": {
-      "DisplayName": "Stone Longspear",
-      "Description": "A longer variant of the spear designed to keep enemies at a safer distance. It can be thrown or used for melee, but will eventually lose its sharpness. Thrown longspears stick in soft materials.",
-      "CRDescription:0": "Make a long stone weapon with cobblestone",
-      "CRDescription:1": "Make a long stone weapon with chunks"
-    },
-    "CopperLongspearBlock:0": {
-      "DisplayName": "Copper Longspear",
-      "Description": "A sturdy longspear with a copper tip, offering improved durability and reach over wooden variants. It is effective both thrown and in melee combat before it eventually dulls.",
-      "CRDescription:0": "Make a long copper weapon"
-    },
-    "IronLongspearBlock:0": {
-      "DisplayName": "Iron Longspear",
-      "Description": "A heavy and reliable longspear with an iron head. Its superior material allows it to deal significant damage and withstand more use in melee or when thrown.",
-      "CRDescription:0": "Make a long iron weapon"
-    },
-    "DiamondLongspearBlock:0": {
-      "DisplayName": "Diamond Tip Longspear",
-      "Description": "An exceptionally lethal longspear featuring a diamond tip. It offers unmatched durability and piercing power, making it devastating both in melee and when thrown from afar.",
-      "CRDescription:0": "Add diamonds to the cutting edge of the long weapon"
-    },
-    "LavaLongspearBlock:0": {
-      "DisplayName": "Lava Longspear",
-      "Description": "A terrifying longspear forged with molten magma. It possesses extreme reach and devastating burning power, easily piercing through defenses when thrown or wielded in close combat.",
-      "CRDescription:0": "Imbue the long weapon with the heat of magma"
-    },
-    "FlameThrowerBlock:0": {
-  "DisplayName": "Flamethrower",
-  "Description": "A flamethrower that fires incendiary or poisonous projectiles depending on the loaded ammunition. Reloads with special ammo.",
-  "CRDescription:0": "Craft a flamethrower using iron ingots, copper ingots, rods, and wooden planks."
-},
-"FlameBulletBlock:0": {
-  "DisplayName": "Fire Bullet",
-  "Description": "Incendiary ammunition for the flamethrower. Sets enemies and the surrounding area on fire upon impact.",
-  "CRDescription:0": "Craft fire bullets using iron ingots and gunpowder."
-},
-"FlameBulletBlock:1": {
-  "DisplayName": "Poison Bullet",
-  "Description": "Toxic ammunition for the flamethrower. Poisons enemies on impact, dealing continuous damage.",
-  "CRDescription:1": "Craft poison bullets using toxin and fire bullets."
-}
-},
-  "ContentWidgets": {
-  "CreatureInventoryWidget": {
-    "1": "Creature Inventory",
-    "2": "Inventory"
-  },
-  "RepeatCrossbowWidget": {
-    "0": "Draw the string",
-    "1": "{0}/8 Bolts",
-    "2": "Insert bolts",
-    "3": "Repeat Crossbow",
-    "4": "Inventory"
-  },
-  "ImprovedMusketWidget": {
-    "0": "Improved Musket",
-    "1": "Inventory",
-    "2": "No ammo",
-    "3": "Ammo: {0}/2"
-  },
-  "FlameThrowerWidget": {
-  "0": "Flamethrower",
-  "1": "Inventory",
-  "2": "Insert a bullet to load",
-  "3": "{ammo}/15 {type}",
-  "4": "Fire",
-  "5": "Poison"
-},
-"SubsystemInfectedEggBlockBehavior": {
-    "0": "Failed to spawn infected creature"
-},
-"BestiaryInfectedScreen": {
-    "1": "Infected Bestiary"
+    "Description": {
+      "LaBandida": "La Bandida is the founder and absolute leader of the Cartel de los Bandidos (Bandits' Cartel), a criminal organization that has spread terror across the entire continent. For years, everyone believed the mastermind behind the cartel was a cold and calculating male warlord. But the truth was very different: the one pulling the strings was her, a woman who rose from the slums by eliminating her rivals with a level of cunning and ferocity no one expected. Her true identity remained hidden until the war erupted, and when the chaos reached its peak, she finally revealed herself to settle the score. Unlike the other drug traffickers in her cartel, who are merely enforcers, she is the final boss: the true objective of the invasion. Her appearance is not tied to a kill count; instead, she emerges at midnight during the combined war between the bandits and the infected, when the Green Night coincides with the final wave. At the stroke of midnight, she steps out of the shadows to take command personally. When this happens, she arrives wearing state-of-the-art bulletproof military gear: helmet, body armor, tactical pants, and combat boots. This armor makes her virtually immune to conventional gunfire; normal bullets simply bounce off as if they were nothing. To break through her defenses and damage her, you will need high-powered weapons capable of penetrating her armor: the Minigun, the AK-48, the Sniper, or, if you want to be certain, the Double Musket loaded with its exclusive anti-tank rounds. These are the only weapons capable of breaking her protection and leaving her vulnerable. In combat, her endurance is immense and her melee attacks are devastating; do not make the mistake of underestimating her because of her gender. To defeat her, you will need to stay mobile, exploit any opening, and, above all, avoid wasting ammunition on her armor. She has survived every kind of ambush and knows how to anticipate your movements. Facing her head-on is the true end of the war.",
+      "InfectedSpider": "An infected spider that lurks in the depths and emerges during the night. It appears starting from wave 8, and can also be found in caves independently of the waves. Extremely aggressive, it attacks anything that moves regardless of the time of day. It possesses a highly potent venom capable of severely poisoning its prey. Its speed and jumping ability make it a formidable hunter. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It is resistant to poison. Upon death, it drops rotten flesh.",
+      "InfectedNormal1": "Appears from Wave 1. This infected is one of the most common threats of the plague, but it should never be underestimated. It constantly roams in search of prey and is capable of detecting, chasing, and attacking both survivors and other creatures. It can travel great distances to reach its target, cooperate with nearby infected, and respond to their calls for help when one of them enters combat. It can pick up weapons, tools, and clothing found along its path, using them to improve its chances of survival. If an obstacle blocks its way, it will attempt to destroy it and continue forward. Its distinctive glowing green eyes remain visible even in complete darkness. During the Green Night, its behavior becomes far more aggressive: it abandons any intention of retreating, focuses entirely on survivors, and pursues them with relentless determination. Even after being attacked, it can remember its aggressor and continue the chase for a long time. It can be tamed using a Collar, becoming a loyal guardian that will fight by your side. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form.",
+      "InfiniteTheJackal": "Infinite the Jackal is a legendary mercenary jackal inspired by the warrior who first appeared in Sonic Forces (2017). Former leader of the feared Jackal Squad, he earned fame as the Supreme Mercenary thanks to his extraordinary strength and his obsession with overcoming any sign of weakness. In this world, he wanders the deserts during the darkest nights, far from civilization, seeking to perfect his skills and find worthy rivals. Although he is usually loyal and peaceful toward those who have earned his respect, he never refuses a combat challenge. His speed, endurance, and fighting abilities far surpass those of most creatures, making him a figure both feared and admired. Those who manage to defeat him in a fair duel will earn the recognition of a true legend. Tip: When the duel begins, do not give him time to regain the initiative. Fighters capable of chaining together rapid melee strikes and maintaining constant pressure can test even Infinite's remarkable endurance. However, defeating him is not the only way to earn his respect; demonstrating courage, honor, and unwavering determination throughout the battle may lead him to acknowledge your strength and accept becoming your ally.",
+      "KnucklesTheEchidna": "Knuckles the Echidna is a powerful red warrior who first appeared in Sonic the Hedgehog 3 (1994). As the last known descendant of the Echidna clan and the guardian of the Master Emerald, he has devoted his life to protecting one of the most important treasures in his world. His immense strength, determination, and strong sense of duty have made him both a rival and an ally to Sonic throughout many adventures. In this world, he only appears during winter in the highest and most remote mountains, as if he were still watching over some ancient forgotten secret from above. He is rarely seen, but those who manage to find him encounter a formidable fighter whose strength is as legendary as his loyalty.",
+      "SonicTheHedgehog": "Sonic the Hedgehog is a blue anthropomorphic hedgehog created by Naoto Ohshima, Yuji Naka, and Hirokazu Yasuhara for SEGA. He made his official debut in 1991 in Sonic the Hedgehog for the Sega Mega Drive/Genesis and has since become one of the most recognizable characters in the video game industry. Thanks to his incredible speed, capable of surpassing the speed of sound, Sonic has starred in numerous video games, animated series, comics, and films, battling Dr. Eggman while protecting his friends and his world. In this world, he can be found roaming the surface during the spring and summer seasons. He is an extremely fast and agile creature, capable of performing great jumps, using inventory, equipping clothing, and cooperating with his allies. Although he normally avoids unnecessary conflicts, he will respond aggressively when provoked or attacked, while also assisting nearby members of his group. His physical endurance allows him to withstand powerful impacts and long pursuits, making him a brave and reliable companion for any adventure.",
+      "MilesTailsPrower": "A young two-tailed fox known as Sonic's best friend. He appears from the second day onward and is much more likely to be found near him. Fast, resilient, and extraordinarily intelligent, he can use equipment, collect items, and come to the aid of his allies whenever danger approaches.",
+      "FangTheSniper": "Fang the Sniper, also known as Nack the Weasel, is a bounty hunter skilled in sniping and ambush tactics. He debuted in Sonic Triple Trouble (1994) and later appeared in Sonic the Fighters (1996). After disappearing for so long, some fans began to joke that SEGA had buried him in the middle of the desert along with his royalties. Yet here he is, still alive: he can only be found in hot, dry deserts, standing on sand, far from the coast, in broad daylight, and near the surface. Rare to encounter and even harder to catch, Fang continues to survive where almost everyone had already given him up for lost.",
+      "Rayman": "Rayman is a unique mountain-dwelling survivor inspired by the famous hero who debuted in 1995. He spawns only during the day and exclusively within the highest mountain ranges, where his presence is strongly favored over other creatures. Unlike ordinary survivors, he can equip clothing, use tools and weapons, manage an inventory, and even be mounted. His high resilience allows him to endure harsh environments and dangerous encounters. Despite his usefulness, caution is advised when defeating him, as infected creatures may emerge from his corpse. Rayman is always encountered alone, making every sighting a distinctive event among the mountain peaks.",
+      "FrozenTankGhost": "The spectral and frozen version of the Tank, a ghostly nightmare that terrifies even the bravest. It first appears in Wave 20. It throws spectral frozen boulders, combining the cold with the supernatural. It possesses nearly infinite health and resistances, destroys blocks in its path, and its attacks are lethal. Its appearance is semi-transparent and icy. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. In Wave 22, this frozen specter joins the army of bosses in the worst nightmare imaginable.",
+      "FrozenTank": "The frozen version of the Tank, an imposing boss that brings absolute cold. It first appears in Wave 16. It throws frozen boulders that slow and damage its enemies. It possesses extremely high health and resistances, destroys blocks in its path, and its melee attack is devastating. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. In Wave 22, this colossal creature fights alongside other Tanks and ghostly variants in a freezing battle that extinguishes all hope.",
+      "FrozenGhostBoomer": "The spectral and frozen version of the Boomer. It appears starting from Wave 13. When it explodes, it releases a spectral wave of cold that freezes enemies. Its appearance is ghostly and semi-transparent. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. Resistant to flu and poison.",
+      "BoomerFrozen": "A frozen variant of the Boomer. It appears starting from Wave 13. When it explodes, it releases a wave of cold that freezes nearby enemies. It spits icy projectiles from a distance. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It is resistant to flu and poison.",
+      "FrozenGhost": "A spectral and frozen version of the common infected. It appears starting from Wave 1. It spits spectral ice projectiles from a distance. Its body is semi-transparent and ghostly. Extremely aggressive, it attacks regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It is resistant to fire and flu. Upon death, it has a high chance of summoning a normal ghost.",
+      "FirearmsDealer": "A neutral firearms dealer. Sells weapons and ammunition in exchange for payment. If you are tired or prefer to save time searching for expensive materials, this is the option.",
+      "Aimep3": "Aimep3 is a Mexican content creator from Ciudad Nezahualcóyotl, known on the internet for her videos on platforms such as YouTube, where she shares unconventional recipes, moments from her daily life, and spontaneous content that eventually went viral. Her direct, eccentric, and unfiltered style made her a widely discussed figure within the Spanish-speaking internet community, attracting both followers and criticism while becoming a frequent source of memes and online discussions. In this mod, Aimep3 is represented as a summonable ally that appears exclusively on Day 3, regardless of the time. She has an aggressive and highly effective combat behavior, constantly attacking and pursuing enemies while cooperating with the player and allied creatures. She possesses exceptional durability and survivability, making her a difficult companion to defeat. She can also collect tools and weapons to better adapt to different situations. Additionally, she features a special evolution system activated by consuming bread. She can evolve up to four times, greatly increasing her attack power and resilience with each transformation while also recovering part of her health during the process. Each evolution is accompanied by special visual effects that showcase her growth. Starting from her first evolution, she unlocks a fire ability that periodically ignites nearby hostile creatures, dealing prolonged damage and becoming more dangerous as her evolution level increases. This ability does not affect allies, members of her own herd, or creatures associated with the player. Upon reaching her maximum evolution, she develops powerful bullet resistance, significantly reducing damage taken from firearms and making her an even more resilient fighter in the most dangerous battles.",
+      "InfectedFreezer": "An infected creature that exhales a piercing cold. It appears starting from Wave 1. It spits icy projectiles that slow and damage its enemies from a distance. Extremely aggressive, it attacks regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It is vulnerable to fire but resistant to flu. Upon death, it has a high chance of spawning a ghost. It can destroy snow, ice, and crystal blocks.",
+      "HumanoidSkeleton": "A wandering skeleton that roams during normal nights (it is the only infected that appears during regular nights), spawning from wave 1 onward. Extremely aggressive, it attacks anything that moves regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. Its primary melee attack is performed with a club or machete. It can equip clothing and pick up items. Upon death, it has a high chance of summoning a normal ghost.",
+      "PredatoryChameleon": "A humanoid hybrid with chameleon traits, the result of a mutation that fused a human and a lizard. It appears from wave 6 onward. Although it lost its camouflage ability, its strength and aggressiveness have been greatly enhanced. Extremely aggressive, it attacks anything that moves regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It destroys glass blocks in its path. It is resistant to poison.",
+      "InfectedBird": "An infected bird that soars through the skies in search of prey. It appears from wave 1 onward. Extremely aggressive, it attacks anything that moves regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It is highly vulnerable to poison. Upon death, it drops raw poultry meat and feathers, and if it dies while burning, it drops cooked meat. It has the unique trait that common world birds (pigeons, crows, ducks, and seagulls) can transform into this creature upon death.",
+      "InfectedWildboar": "The Infected Boar, like other animals, emerges when a boar is killed by an infected creature, resulting in an enhanced version of its former self. This creature is another mini-boss, possessing a moderate level of difficulty. Its unique ability is a powerful shoving attack; upon striking, it will forcefully push both players and other creatures, much like the Charger, but it only utilizes this ability 50% of the time. During the Green Night, the Infected Boar becomes even more relentless, pursuing players to the death. However, all is not lost. The Infected Boar can be tamed using a Zombie Collar, turning it into a loyal companion ready to do your bidding.",
+      "InfectedBear": "A large infected bear with immense brute strength. It appears from wave 11 onward. Extremely aggressive, it attacks anything that moves regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. On higher difficulties, infected creatures can ride this beast, making them even more dangerous. Upon death, it drops hide, rotten flesh, and nuclear coins. Normal bears in the world (polar, brown, or black bears) have a small chance of transforming into this nightmare when they die.",
+      "InfectedHyena": "An infected hyena, fierce and extremely agile. It appears from wave 5 onward. It attacks relentlessly regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It is capable of howling to call other members of its pack and fixing its intimidating gaze on its prey. Upon death, it drops rotten flesh and leather. Common hyenas in the world have a chance to transform into this creature when they die.",
+      "InfectedWerewolf": "An infected werewolf, a bipedal beast with superhuman strength and relentless ferocity. It appears from wave 6 onward. Extremely aggressive, it attacks anything that moves regardless of the time of day. It possesses a howl that can intimidate its prey and a piercing stare. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It is resistant to poison and fire. Upon death, it drops rotten flesh and leather. Original werewolves in the world can transform into this nightmare when they die.",
+"InfectedWolf": "A wild wolf transformed by the infection, much faster and deadlier than its normal counterpart. It appears from wave 5 onward. Extremely aggressive, it attacks anything that moves regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It is resistant to poison and fire. Upon death, it drops rotten flesh, leather, and nuclear coins. Normal wolves in the world (including coyotes) can transform into this creature when they die.",
+      "MachineGunInfected": "A unique boss wielding a machine gun, based on the iconic miniboss Hambone from the CarnEvil arcade game (Midway, 1998). Appears starting from wave 21. It carries a fixed machine gun in its inventory, which it uses to attack at range with great accuracy and rate of fire. Extremely aggressive, it attacks anything that moves regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. Highly resistant to poison, fire, and all types of physical damage. Upon death, it may drop machine gun ammunition.",
+      "GhostCharger": "The spectral and ghostly version of the Charger. It appears starting from Wave 13. It retains the same speed and charging ability as its normal counterpart, but with a semi-transparent appearance. Extremely aggressive, it attacks regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. Resistant to poison and fire. Its spectral presence makes it harder to detect in the darkness.",
+      "TankGhost1": "The spectral version of the already terrifying Tank. It first appears in Wave 17, followed by its more powerful variants in Waves 18 and 19. There are three ghostly versions: the basic one (throws giant rocks), the fiery one (throws burning rocks), and the toxic one (throws poisonous rocks). It possesses brutal strength, extreme health and resistances, destroys blocks in its path, and its melee attack is devastating. Its appearance is semi-transparent and ghostly. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. In advanced waves such as Wave 22, multiple Ghost Tanks confront the player in an almost impossible battle.",
+      "GhostBoomer1": "A spectral and explosive variant of the infected. Appears starting from wave 10. There are three ghostly variants: the normal one (standard explosion, from wave 10), the fiery one (fire explosion, from wave 11), and the toxic one (poison explosion, from wave 12). Extremely aggressive, it attacks anything that moves regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. Highly resistant to poison. Upon death, it explodes, dealing area damage. Its appearance is ghostly and semi-transparent.",
+      "PoisonousGhost": "A spectral and toxic version of the infected. It appears starting from Wave 8. It spits acid from a distance to weaken its prey before attacking in melee combat. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. Resistant to poison. Upon death, it may drop toxin.",
+"GhostFast": "A spectral and extremely fast version of the infected. It appears starting from Wave 9. Its agility allows it to run and jump much faster than a normal ghost. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It can equip clothing and destroy blocks in its path. Vulnerable to poison.",
+      "Bandit1": "A bandit is a dangerous human you never know what you’ll run into. It’s a serious mistake to underestimate them or assume they might help you, because if they spot you, they can kill you instantly. There are two types: those armed with firearms and those wielding melee weapons. Both are deadly, but if you manage to defeat them, you can loot their weapons and use them as your own. However, not all are hostile: some may offer you a deal to become your guards, and if you accept, they can protect you.",
+      "GhostNormal": "A spectral version of the common infected, with a ghostly and semi-transparent appearance. It appears starting from Wave 10. Extremely aggressive, it attacks anything that moves regardless of the time of day. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. It can equip clothing and destroy blocks in its path. Vulnerable to poison.",
+      "Tank1": "The supreme boss of the apocalypse, a walking nightmare that challenges even the most experienced players. It first appears in wave 13, but its most terrifying peak is unleashed in wave 22, where together with its variants and other bosses it forms an unstoppable army. There are three versions: the basic Tank (throws giant rocks), the fiery Tank (throws flaming rocks), and the toxic Tank (throws poisonous rocks). It possesses tremendous brute strength, extremely high health and resistances, destroys blocks in its path, and its melee attacks are lethal. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. Facing it is an almost impossible battle.",
+      "Charger1": "A fast and heavily built infected designed to ram its enemies. It appears starting from Wave 8. Extremely aggressive, it attacks anything that moves regardless of the time of day. Its acceleration and speed are very high, although it turns poorly, making it especially dangerous in a straight line. It can jump and crush its prey with its weight. It can be tamed with a collar, transforming into a docile version that protects its owner and can be ridden. During the Green Night, its aggressiveness increases, prioritizing attacks on players. Resistant to poison and fire. Upon death, it has a small chance of turning into a Ghost Charger.",
+      "Boomer1": "The Boomer is another type of infected, known for its massive size and grotesque appearance. Its most distinctive trait is that upon death it explodes, making it a deadly threat: kill it too close, and you’ll be blown to pieces. Yet legend says that with the zombie collar it can become an ally. If you manage to tame it, the Boomer will serve as your guardian. You will gain control over it and can take advantage of its abilities, though there is always the risk of it dying in an explosion. Try it at your own risk, but never near other zombies or allies, as they could perish in the blast.",
+      "FlyingInfectedBoss": "The three-headed flying boss, a winged nightmare that rules the skies. It first appears in Wave 12. It spits fire and poison from a distance with a high chance of inflicting damage, and its aggression is absolute regardless of the time of day. It possesses nearly infinite health and resistances, along with a deadly flight speed. It can be tamed with a collar, transforming into a docile version that can be ridden and will protect its owner. During the Green Night, its aggressiveness increases, prioritizing attacks on players. In Wave 22, this beast fights alongside multiple Tanks and other variants in an apocalyptic battle that will test even the most battle-hardened players.",
+      "InfectedFly1": "A flying variant of the infected. It appears from wave 1 onward. Extremely aggressive, it attacks anything that moves regardless of the time of day. It can be ridden by other infected and can also be tamed with a collar, transforming into a docile version that protects its owner and can be mounted. There are two additional variants that appear later in the mod: a toxic one that spits acid (from wave 5 onward) and a fiery one that spits fire (from wave 7 onward). During the Green Night, its aggressiveness increases, prioritizing attacks on players. Resistant to poison. Upon death, it drops rotten flesh.",
+      "PoisonousInfected1": "A toxic variant of the common infected. Appears in wave 4. Extremely aggressive, it attacks anything that moves regardless of the time of day. It spits acid from a distance to weaken its prey before engaging in melee combat. It can be tamed with a collar, turning into a docile version that protects its owner. During the Green Night, its aggression increases, prioritizing attacks on players. Resistant to damage and fire. Upon death, it has a small chance of becoming a toxic ghost. It can be ridden and destroys blocks as it moves.",
+      "InfectedMuscle1": "A muscular and dangerous variant of the common infected. Extremely aggressive, it attacks anything that moves regardless of the time of day. It appears in wave number 3. It can be tamed with a collar, transforming into a docile version that protects its owner. During the Green Night, its aggression increases, prioritizing attacks on players. Vulnerable to poison. Upon death, it has a small chance of becoming a ghost. It can be ridden and destroys blocks in its path.",
+      "InfectedFast1": "Appears from Wave 2. This fast variant stands out for its extraordinary mobility and aggression. It can cover great distances in a very short time, leap over obstacles with ease, and rapidly change direction while pursuing its prey. Like other plague-infected creatures, it can detect, chase, and attack both survivors and other creatures, while also coordinating with nearby infected and responding to their calls for assistance. If barriers stand in its way, it will attempt to destroy them to continue the pursuit. Its glowing green eyes are often the last thing seen by those who try to escape. During the Green Night, it becomes an especially dangerous threat, abandoning all caution to focus entirely on hunting survivors. Its superior speed allows it to close distances quickly and maintain pursuits for extended periods. Although it possesses remarkable physical resilience, it is more vulnerable to poison than most infected. It can be tamed using a Collar, becoming a swift guardian capable of fighting alongside its owner. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form.",
+      "PirataNormal": "The Pirata Normal is a common pirate that begins appearing after day 5. They are usually found near shores, beaches, oceans, and other water areas during the daytime. These pirates often travel in groups of 3 to 5, making them dangerous when fighting together. Although weaker than higher-ranked pirates, they are aggressive, unpredictable, and always armed with rusty swords, knives, or improvised weapons. Loyal to the Capitán Pirata, they attack anything that crosses their path and enjoy spreading chaos across coastal lands. Their true strength comes from numbers, so underestimating them can quickly become fatal.",
+  "PirataElite": "The Pirata Élite is a highly dangerous pirate warrior that starts appearing after day 15. They can be found near coasts, beaches, and water areas during daylight hours, usually traveling in groups of 3 to 5. Trained directly by the Capitán Pirata, these elite fighters possess superior combat skills, greater resilience, and unwavering loyalty to their captain. Covered in battle scars and feared by other pirates, the Pirata Élite fights with deadly precision and will never retreat from combat. Facing an entire group of them is extremely risky, even for experienced adventurers.",
+  "PirataHostilComerciante": "The Pirata Hostil Comerciante is a rare pirate merchant that begins appearing alone after day 35 near shores, beaches, and water areas during the daytime. Unlike ordinary pirates, he is capable of trading valuable and unusual items, including weapons, ammunition, toxins, and other rare supplies collected from dangerous journeys across the seas. Although armed and extremely dangerous, he does not normally attack players unless provoked first. However, if threatened, attacked, or angered, he becomes highly hostile and will defend himself with deadly force. The merchant also reacts to whistle sounds and can be summoned from long distances. Because he may appear alongside other pirates and can accidentally attack nearby players during battles, many adventurers recommend using a whistle to lure him away from pirate groups before attempting to trade. Calling him to a safer location greatly reduces the risk of ambushes, crossfire, or sudden death while trading.",
+  "CapitanPirata": "The Capitán Pirata is the feared leader of the pirate crew and the most dangerous pirate of them all. He begins appearing alone after day 55 near coasts, oceans, and other water areas during the day. Every pirate serves him with absolute loyalty, including the feared Pirata Élite. His covered eye symbolizes years of brutal battles and unmatched experience across the seas. Unlike ordinary pirates, the captain possesses incredible strength, resilience, and combat skill, making him one of the deadliest enemies a player can encounter. When angered or challenged, he personally enters battle with overwhelming power and relentless aggression. Defeating the Capitán Pirata is an enormous challenge that only the strongest adventurers can survive, but those who succeed may obtain legendary rewards.",
+      "PirataEliteAliado": "The Pirata Élite Aliado was once part of the crew of the Capitan Pirata, but unlike other sailors, he survived thanks to his greater endurance and strength. With 350 HP, he is far more difficult to defeat and has earned a reputation as a relentless fighter. During battles in the Caribbean waters, he proved capable of withstanding blows that would have ended any other pirate, allowing him to escape deadly situations and remain alive. The Pirata Élite Aliado does not belong to the factions of the Alliance, Death, or Pirates, but he can become an ally of the player, offering constant protection day and night. His presence is rarer than that of the Pirata Normal Aliado, but also more valuable due to his power and resilience. It is said he keeps a small arsenal of improvised weapons for combat, showing his ingenuity and preparation. The Pirata Élite Aliado is without doubt a formidable guardian, turning any home into a fortress. Players who encounter the Pirata Hostil Comerciante may occasionally purchase an egg containing a Pirata Élite Aliado for 25 Nuclear Coins.",
+  "PirataNormalAliado": "The Pirata Normal Aliado was once part of the crew of the Capitan Pirata, where the treatment of sailors was far from ideal. He was mistreated if he failed to follow orders, and at times food was denied without reason. During a war in the waters of the Caribbean, a careless moment caused him to fall from the ship of the Capitan Pirata, allowing the captain and some crew members to escape while others were left behind. The Pirata Normal Aliado managed to swim to another island in search of help. Despite his appearance, this pirate does not belong to the factions of the Alliance, Death, or Pirates. However, he can become an ally of the player, protecting them day and night. Loyal and dependable, he will defend nearby players against hostile creatures and enemies. Players who encounter the Pirata Hostil Comerciante may occasionally purchase an egg containing a Pirata Normal Aliado for 25 Nuclear Coins.",
+      "Naomi": "Naomi (ナオミ). A mystery to solve. She is Japanese, but… is she truly human or robotic? How did she arrive on the island of Survivalcraft 2? A tremendous mystery. It begins in Kyoto, with an inventor named Takachi (高智). In 1999, Naomi was created because Takachi needed an automatic assistant for biological scientific research. The prototype tests went well, and the final result looked human. Since then, the robot has been successful in performing both complex and simple tasks. One day, Takachi received a research project from Kyoto University to investigate new species and rare places outside of Japan. Needing companionship, he chose Naomi as his partner. Halfway across the sea, Takachi accidentally dropped his humanoid robot Naomi into the water, causing panic. He feared the robot was damaged due to its electrical components, but what he didn’t know was that Naomi was water-resistant. This led Naomi to a mysterious island or large continent. From that day, her life as a humanoid robot changed. How will she survive without resources? Previously, she had practiced survival skills during their research trips. Will she need the player’s help? You’ll find out in the game!",
+      "Ricardo": "Ricardo is an ordinary civilian from Tlatelolco, born on June 4, 1998. Since childhood, he enjoyed walking like a playful dog and felt a deep connection to nature, always dreaming of traveling to islands. In 2021, the University of Tlatelolco offered him a place in a scientific-biological research program to explore islands outside of Mexico. He seized the opportunity and joined the expedition. During the journey across the Pacific Ocean, violent waves and strong winds endangered the crew. Ricardo was swept away by the wind into the water, and his companions, seeing him far away without a lifebuoy, believed he had drowned. Yet fortune favored him: the currents carried him to an unknown island, one not marked on the Pacific maps. Awakening there, Ricardo had to find ways to survive. One night, while exploring, he encountered Naomi, a humanoid robot who had faced a similar fate. From that moment, they became friends.",
+      "Paco": "What the hell did that man come out of, it seems that the aliens brought him. This was a phrase said by a human who saw him in a city somewhere in Mexico. Paco is a human-alien created by a Martian race in 1968, when the Soviet Union launched another expedition to compete against the United States. During that mission, some crew members saw a red light coming from another planet and traveled to investigate beyond the Moon. What they discovered was the creation of a being almost human but with alien traits, possessing intelligence superior to a normal human. Things changed in 2001, when Russia (no longer the USSR after its dissolution in 1991) entered into war with the United States due to a misunderstanding: supposed terrorists had destroyed one of their ships near Mars. A solar conflict erupted, reminiscent of Star Wars, and Paco’s alien creators saw their home planet under attack. Fearing destruction, they armed themselves, and both nations also had to face them. In a mishap, Russia shot an alien holding a ship’s control device, breaking it and injuring the alien. This caused the ship to drift away automatically, carrying Paco and his two clones. They eventually arrived on Earth, landing on a mysterious, unidentified island in the Pacific Ocean—the same island where Naomi and Ricardo had fallen. There, they sought ways to survive. Later, Paco encountered Naomi and Ricardo. At first, they thought each other threats, but they became friends after Paco demonstrated survival skills far more advanced than theirs.",
+      "Barack": "Barack, as some Russians and Americans affirmed after the alien war of 2001, was said to be a twin brother similar to Paco. Unlike Paco, Barack was a devoted follower of Barack Obama, who would later become President of the United States in 2008 and take office in January 2009. In the game’s world, you can hear references to Obama, showing that Barack is his number one fan. Barack, Paco’s twin brother, arrived on one of the mysterious islands where Paco had fallen, though his origin dates back to July 7, 1980. He was created by the same alien race as Paco, but the reason he was brought to Earth was different: the aliens sought to recover their lost child, yet instead they remained. This forged a deep connection between Barack and Paco. Like Paco, Barack had to survive on the unknown island, facing the same trials of nature and destiny. Eventually, he too encountered Naomi and Ricardo, and although suspicion marked their first meeting, they became allies after proving their survival skills and intelligence. As a curiosity, Barack later founded the group 'Alianza', dedicated to searching for survivors who fall onto the mysterious Pacific islands, while scientists—especially Russians and Americans—investigate obsessively what these islands are called and where they are located.",
+      "ElMarihuanero": "Known as 'El Marihuanero', he is remembered as Paco’s missing link brother, a mysterious survivor whose origins trace back to the same alien experiments that created Paco. His strength is moderate compared to Paco’s, but his cunning and adaptability make him a formidable presence on the islands. The nickname 'El Marihuanero' was not given lightly: during his wanderings across the Pacific islands, he discovered wild cannabis plants growing in hidden valleys. Fascinated by their properties, he began cultivating them and claimed they gave him clarity, endurance, and a strange bond with nature. This obsession eventually tied him symbolically to Mexico, where cannabis culture and folklore became part of his identity. Over time, he also embraced the Rastafari movement, adopting its philosophy of unity, resistance, and spiritual connection, and looked to Jamaica as a cultural homeland. Legends say that he carried seeds wherever he traveled, planting them as markers of his journey. Though at first distrusted by Naomi, Ricardo, and Paco, he proved his loyalty and resourcefulness, showing survival skills that rivaled his brother’s. His blows were not as strong as Paco’s, but his strategies and resilience often turned the tide in desperate situations. Over time, El Marihuanero became a figure of curiosity and myth, remembered not only for his alien-human heritage but also for the plants, the Rastafari ideals, and the Jamaican spirit that defined his name and destiny on the mysterious Pacific islands.",
+      "ElMarihuaneroMamon": "Another missing link brother of Paco and twin brother of El Marihuanero, this one is more muscular and physically imposing. His raw attack power is lower than Paco’s, but his endurance and brute strength make him a dangerous opponent. Unlike his twin, he dedicated himself to mastering the musket. His story begins when he discovered an abandoned colonial outpost on one of the mysterious Pacific islands. Inside, he found old weapon crates and manuals left behind by explorers and soldiers from centuries past. Fascinated, he spent years studying the mechanisms of the musket, practicing its loading, aiming, and firing until he became an expert marksman. His discipline and patience turned him into a skilled hunter and defender, able to strike with precision even under harsh conditions. Survivors who encountered him learned to fear his musket more than his fists, for his shots could tear enemies apart within seconds. Legends say he carried the musket everywhere, treating it as both weapon and symbol of survival. Eventually, he crossed paths with Paco, Naomi, and Ricardo, and though suspicion marked their first meetings, his mastery of firearms earned him respect among the group.",
+      "FumadorQuimico": "Her outfit suggests she has experience in chemical and toxic environments. Although she looks threatening, she is part of the Alianza group meaning she supports her team when attacked or harmed by enemies. She possesses a mysterious hidden power: during a full moon or new moon, she transforms into a giant muscular mutant (similar to a Tank), gaining enhanced strength, greater resistance, and other abilities.",
+      "FumadorQuimicoBrawny": "More powerful, stronger than its original form, it will only be available on a full moon or new moon",
+      "TommyVercetti": "A violent and ambitious figure in the criminal world, known for his rise from the Forelli family in Liberty City. Originally of Italian descent, he now resides in Vice City, Florida, where he built his own empire after a failed drug deal in 1986. Despite his reputation, he is also part of the Alliance group, supporting and defending his allies when threatened by rival gangs or hostile forces.",
+      "ClaudeSpeed": "A silent and ruthless criminal, known for his efficiency and lack of mercy. Born in Liberty City, he rose through the ranks of the criminal underworld, becoming a feared figure in the city. Despite his violent nature, he is part of the Alliance group, supporting and defending his allies when threatened by rival gangs or hostile forces.",
+      "LaMuerteX": "La Muerte X emerged from the violet infernal shadows, with skin and behavior forged in darkness. He is far from friendly his hostile nature drives him to destroy anything in his path. Approach him, and he will hunt you relentlessly… until death. His powers range from moderately strong physical strikes to deadly flame attacks; if you try to escape, he will launch fireballs at you. In the worst case, he hurls magical rocks that inflict devastating damage.",
+      "ElSenorDeLasTumbasMoradas": "What a surprise, I suppose. El Señor De Las Tumbas Moradas is the closest companion of La Muerte X they’re always together, always helping one another. But El Señor De Las Tumbas Moradas has received some mysterious upgrades beyond his friend. What kind of power does he hide? What attacks might he unleash? Could he summon something darker when threatened? That’s for you to find out. (Let’s just say you’ll understand once you face him yourself.) But be warned: if you strike him, he won’t forgive you. He’ll drag you down into the purple tombs and from that moment on, you’ll become his eternal slave in the shadows. He won’t be your friend not because he hates you, but because friendship was never part of his design.",
+      "LiderCalavericoSupremo": "Who is the true ruler of darkness and tombs? It's none other than Líder Calavérico Supremo the highest and most fearsome leader of this world. At first glance, he may seem underwhelming, with attacks that appear weak... but don't be fooled. His speed rivals that of a cheetah, and when the full moon or new moon rises, he transforms into a monstrous force of nature. His mutated form might remind you of a Tank. Could he be a worthy rival to Fumador Químico Brawny in terms of brute strength, raw impact, and sheer chaos? That's a question only battle can answer.",
+      "LiderCalavericoSupremoAlfa": "He’s not just a threat he’s a declaration of war. Líder Calavérico Supremo Alfa is the mid-tier juggernaut of the tomb realm, a refined beast forged from chaos and vengeance. Stronger than most, faster than many, and meaner than you’d expect, he’s the kind of enemy that doesn’t wait for introductions. His attacks? Heavy and relentless. His speed? Almost unnatural. And when the moon shifts be it full or new he mutates into something far more dangerous. Some say his form resembles a Tank. Others wonder if he’s meant to rival Fumador Químico Brawny in raw strength, impact, and destruction. Want to know for sure? Then set the stage and watch them clash. Just don’t try it in Creative Mode—that’s like watching a storm from behind bulletproof glass. Líder Calavérico Supremo Alfa is not your ally. He’s not here to talk, negotiate, or join your cause. He is your enemy. And if you’re not ready… he’ll make sure you never get the chance to be.",
+      "Conker": "Conker is a squirrel with a cute appearance but a cynical, opportunistic, and shameless personality. While most people know him from Conker’s Bad Fur Day, his origin was very different: he first appeared in 1997 as a child-friendly character and starred in a beta project called Twelve Tales: Conker 64, originally designed as a colorful game for kids. That concept was later scrapped and radically transformed. The result is a character who drinks, insults, manipulates, and acts purely out of self-interest. He doesn’t seek justice, adventure, or redemption he survives simply because he does, with no clear purpose, no ethics, and no empathy. His speech is crude and mocking, and his attitude reflects total indifference to the chaos around him. Conker isn’t a hero or a villain; he’s a survivor who crawls forward for his own gain, completely at odds with his cartoonish design.",
+      "Beavis": "Beavis is a teenage boy with a nervous laugh, broken speech, and a volatile personality. He’s impulsive, emotionally unstable, and easily distracted, often triggered by fire, violence, or loud music. He speaks in short, repetitive phrases and acts without thinking, showing no awareness of consequences. Controversially, Beavis became the focus of criticism after the episode 'Comedians' aired in 1993, when his fascination with fire was linked by commentators and comedians to real-life incidents, sparking debates about whether the show irresponsibly glorified dangerous behavior or simply reflected absurd teenage impulses. Though he often follows Butt-Head, he’s not just a sidekick; he has unpredictable outbursts, especially when he transforms into his hyperactive alter ego 'Cornholio,' obsessing over toilet paper and speaking incoherently. Beavis doesn’t seek meaning, control, or purpose. He survives simply because he does, unaware of the damage he causes or the world around him.",
+      "Butt-Head": "Butt-Head is a teenage boy with a deep, slow laugh, slurred speech, and a smug personality. He’s lazy, sarcastic, and often cruel, showing little empathy or intelligence. He speaks in short, mocking phrases and usually manipulates situations to amuse himself, rarely thinking beyond the moment. Controversially, Butt-Head became the center of debate after the episode 'Comedians' aired in 1993, when critics and comedians argued whether his character represented sharp satire of teenage apathy or simply glorified stupidity and crude humor, raising questions about comedy’s responsibility in shaping youth culture. Though he often leads Beavis, he’s not just a leader; he has his own reckless impulses, especially when he provokes chaos for amusement, laughing at pain or destruction. Butt-Head doesn’t seek meaning, growth, or responsibility. He exists simply to ridicule, unaware of the harm he causes or the emptiness of his actions.",
+      "HombreLava": "Hombre Lava is a powerful creature that blends into the crowd until provoked. If you get too close, expect to be burned by his melee strikes. Try to run, and you’ll be hunted down by fireballs hurled with deadly precision. He belongs to the Muerte faction, so if you're part of Alianza, you'd better gear up with weapons beyond standard Survivalcraft 2 gear unless you're packing a musket, explosives, or an explosive crossbow, you're likely toast. Fire and magma are his allies; burning him only fuels his rage. His one true weakness is water submersion slows him, weakens his flame core, and eventually extinguishes his power. He avoids rivers, panics in rain, and takes heavy damage from splash-based weapons. If you want to survive an encounter, lure him into wet terrain and strike fast before he reignites.",
+      "HombreAgua": "Hombre Agua is calm but deadly. He hides in rivers and rain, striking with freezing bursts and crushing waves. Fire heals him. Explosives barely scratch him. His body flows like liquid—hard to hit, harder to stop. He’s part of Muerte, and fights beside his best brother, Hombre Lava. Together, they cover land and water, burning and drowning anything in their way. If you’re Alianza, bring lightning, frost, or stay far away. Wet terrain is his home. Dry ground is your only chance.",
+      "ElBallestador": "l Ballestador isn’t the strongest fighter, but don’t let that fool you—his cursed bow never leaves his side. He’s not part of your Alianza and belongs to Muerte, standing out as the only human in his faction wielding a possessed weapon. His arrows are fast, silent, and unforgiving. Confront him or try to escape—either way, you’re already dead. If he sees you, he fires. If you move, he hits. His diamond arrows pierce almost everything, except the rhino, beluga, and orca, who can endure more hits if they fight back. To survive, use terrain to break his line of sight. Zigzag when running, jump unpredictably, and never stay still. If you’re solo, bait his shot and rush in before he reloads. In a group, flank while one teammate draws fire. Splash damage or shock can disrupt his aim, but timing is everything. If you hear the click of his bow, it might already be too late. They say his bow was forged in silence, bound to him after he survived a betrayal that left him voiceless. Since then, it’s been his only companion—never speaks, never misses, never leaves. That’s why he trusts it more than any ally. He appears only at night starting from day 5, and during these nights players can set traps to capture his bows and ammunition, turning his own arsenal into a valuable resource.",
+      "HeadcrabBloodyHuman": "A more aggressive and blood-soaked variant of the standard headcrab. The Bloody Headcrab features torn exoskeletal tissue, soaked in hemolymph and exposed muscle fibers, likely caused by radiation or failed bioweapon experiments. It moves faster, jumps farther, and attaches to hosts with brutal force, triggering near-instant zombification. Its screech is sharper, and its presence often signals high-contamination zones. Not recommended for low-tier encounters.",
+      "ElArquero": "Twin brother of El Ballestador, El Arquero excels in pinpoint accuracy and rapid-fire archery using reinforced bows. Both share tactical agility, night vision, and synchronized patrol behavior, but El Arquero favors elevated ambushes and silent strikes. His armor is lighter, allowing swift movement across high structures. He communicates through optical signals and rarely misses a shot. Like El Ballestador, he is highly dangerous—provoking him will result in a lethal barrage of arrows. Upon death, he drops usable bow-grade arrows, ideal if you're low on resources. To survive, use cover, bait his shots, and flank from blind angles to avoid direct line-of-sight. Curiously, El Arquero began using his bow after witnessing his brother fire a bow for the first time. Wanting to defend himself equally, he stole a bow and arrows from a weapons shop—giving rise to a hostile Robin Hood of the high ground. He appears only at night starting from day 10, making his encounters rarer but significantly more threatening as the world grows darker.",
+    "ArqueroPrisionero": "Born as the twin brother of El Arquero, the Prisoner Archer carries a past scarred by the Nazi era. Surviving the horrors of the Holocaust, he emerged with resilience and a newfound purpose. Unlike his brother and El Ballestador, who aligned with a malevolent faction, the Prisoner Archer chose the path of the Alliance, determined to oppose tyranny rather than serve it. His weapon of choice is the bow, adopted after witnessing his brother’s skill and vowing to defend himself and others with equal precision. During captivity, he secretly crafted crude fire arrows, though Nazi control forbade prisoners from wielding such weapons. This defiance became the seed of his mastery: when freedom came, he refined his skill into silent, lethal archery. Now, he stands as a guardian—swift, vigilant, and unyielding. If he sees his allies or the Alliance under attack, he will not hesitate to unleash a storm of arrows. His armor is light, built for speed and survival, allowing him to move across ruins and high structures with ease. He communicates through subtle signals, preferring silence over words, and rarely misses a shot. Upon defeat, he drops usable arrows, a reminder of his resourcefulness and the hardships he endured. Though his past is marked by sorrow, the Prisoner Archer fights forward with determination, embodying a hostile Robin Hood of the high ground. His story is one of survival, rebellion, and the relentless pursuit of justice—proof that even in the aftermath of tragedy, one can rise to protect others and continue the struggle for freedom.",
+    "Veemon": "Veemon first appeared in Digimon Adventure 02 (2000), introduced as Davis Motomiya’s partner and quickly recognized for his playful yet courageous nature. Although aligned with the Alliance group, Veemon can also ally with the player, offering versatile support in battle through his unique ability to Armor Digivolve using Digi-Eggs. This makes him adaptable to multiple combat situations, from Flamedramon’s fiery offense to Magnamon’s miraculous defense. Veemon was originally designed by Kenji Watanabe, the illustrator behind many Digimon species, whose creative vision drew inspiration from the letter V (symbolizing victory) and the manga magazine V-Jump where Digimon V-Tamer 01 was serialized. His design reflects both a dragon motif and a youthful, energetic personality that resonated with fans worldwide. Beyond his origins, Veemon embodies loyalty, optimism, and resilience. He is mischievous yet deeply committed to protecting his allies, often charging headfirst into danger with a smile. In gameplay, he rarely hesitates to fight for justice, and his presence reassures companions that courage and friendship can overcome any obstacle. Ultimately, Veemon is more than a fighter—he is a symbol of hope, proving that even in the toughest battles, goodness and determination will always shine through.",
+    "Shoutmon": "Shoutmon first appeared in Digimon Xros Wars (2010), quickly becoming known as the energetic and determined partner of Taiki Kudo. Although aligned with the Alliance group, Shoutmon can also ally with the player, bringing his fiery spirit and powerful voice-based attacks to the battlefield. His ability to DigiFuse with other Digimon makes him highly versatile, adapting to both offensive and defensive strategies. Shoutmon was originally designed by Kenji Watanabe, the illustrator responsible for many Digimon species, whose creativity emphasized Shoutmon’s microphone motif and his dream of becoming the Digimon King. His design reflects both musical energy and heroic ambition, resonating strongly with fans. Beyond his origins, Shoutmon embodies courage, leadership, and optimism. He inspires allies with his determination, often charging into danger with unshakable confidence. In gameplay, he rarely hesitates to fight for justice, and his presence assures companions that unity and friendship can overcome any obstacle. Ultimately, Shoutmon is more than a fighter—he is a symbol of hope and perseverance, proving that even in the toughest battles, goodness and determination will always shine through.",
+    "BallestadoraMusculosa": "Ballestadora Musculosa is stronger and more muscular than El Ballestador. They met on a training range where she was practicing with a simple bow and he was testing a crossbow; he noticed her discipline, offered direct guidance, and they started working together on distance shots. That cooperation became a relationship, and he taught her step by step: stances, timing, wind reading, and precision, moving from bow drills to crossbow routines. When he chose a dark path and joined a hostile faction, she ended the relationship and set clear goals: train harder, add muscle, and surpass him in strength and accuracy. She kept the lessons of precision and claimed the second crossbow that had been prepared as a backup, now her main weapon. She joined the Alliance and targets his faction without hesitation. Her shots are powerful and accurate, her endurance high, and her focus strict. What remains from the past is methodical ranged combat and the decision to be better than her former partner. Ballestadora Musculosa fights with muscle and conviction, stands as a loyal ally, and does not turn back to evil.",
+    "Agumon": "Agumon first appeared in Digital Monster Ver.1 (1997) and later became widely recognized in Digimon Adventure (1999) as Tai Kamiya’s loyal partner. Designed by Kenji Watanabe, Agumon was created with a reptile-like form resembling a small dinosaur, symbolizing growth and the potential to evolve into stronger Digimon such as Greymon. Aligned with the Alliance group, Agumon can also ally with the player, offering balanced combat support through his fiery Baby Flame attack. His design emphasizes both simplicity and ferocity, making him a central figure in the Digimon franchise across anime, games, and merchandise. Beyond his origins, Agumon embodies loyalty, courage, and resilience. He stands as a dependable partner who fights with determination, reminding allies that even in difficult battles, friendship and bravery can lead to victory.",
+    "Guilmon": "Guilmon first appeared in Digimon Tamers (2002), introduced as the Rookie partner of Takato Matsuda. Designed by Kenji Watanabe, Guilmon was created with a youthful dinosaur-like form marked by the Digital Hazard symbol, representing both great destructive potential and the possibility of protecting the Digital World if guided by trust. Although aligned with the Alliance group, Guilmon can also ally with the player, offering strong support through his fire-based attacks such as Pyro Sphere and his ability to evolve into powerful forms like Growmon and Dukemon. His design emphasizes raw energy and instinct balanced by loyalty, making him a fan favorite across anime and games. Beyond his origins, Guilmon embodies curiosity, courage, and friendship. He often charges into battle with determination, learning and growing alongside his allies. In gameplay, Guilmon provides versatile offense and dependable resilience, assuring companions that unity and trust can overcome any challenge. Ultimately, Guilmon is more than a fighter—he is a symbol of potential, showing that even great power can be used for good when guided by bonds of friendship.",
+    "Gumdramon": "Gumdramon first appeared in Digimon Xros Wars: The Young Hunters Who Leapt Through Time (2011), introduced as the Rookie partner of Tagiru Akashi. Designed by Kenji Watanabe, Gumdramon was created with a dragon-like form featuring a powerful tail weapon, symbolizing both his mischievous personality and his explosive combat style. Aligned with the Alliance group, Gumdramon can also ally with the player, offering versatile support through his signature attack Jamming Strike and his ability to evolve into stronger forms such as Arresterdramon. His design emphasizes agility, energy, and rebellious charm, making him stand out among Rookie Digimon. Beyond his origins, Gumdramon embodies determination, independence, and loyalty. He often rushes into battle with bold confidence, learning to balance his playful nature with responsibility. In gameplay, Gumdramon offers fast offense and adaptable strategies, assuring companions that courage and persistence can overcome any obstacle. Ultimately, Gumdramon is more than a fighter—he is a symbol of growth, proving that even youthful recklessness can transform into strength when guided by trust and friendship.",
+    "BetelGammamon": "BetelGammamon first appeared in Digimon Ghost Game (2021), introduced as the Champion evolution of Gammamon, the Rookie partner of Hiro Amanokawa. Designed by Kenji Watanabe, BetelGammamon was created with a humanoid warrior-like form, symbolizing fiery energy, speed, and close-combat strength. Aligned with the Alliance group, BetelGammamon can also ally with the player, offering powerful support through his signature attack Betel G Shout and his ability to evolve into stronger forms such as Canoweissmon and Siriusmon. His design emphasizes agility, courage, and heroic ambition, making him a standout Champion Digimon recognized for his determination. Beyond his origins, BetelGammamon embodies bravery, loyalty, and the drive to protect others. He often charges into battle with unwavering confidence, balancing youthful spirit with growing responsibility. In gameplay, BetelGammamon provides fast offense and versatile strategies, assuring companions that unity and courage can overcome any challenge. Ultimately, BetelGammamon is more than a fighter—he is a symbol of heroic growth, proving that true strength shines brightest when guided by trust and friendship.",
+    "Gaomon": "Gaomon first appeared in Digimon Savers (2006), introduced as the Rookie partner of Thomas H. Norstein. Designed by Kenji Watanabe, Gaomon was created with a canine-like form wearing red boxing gloves, symbolizing discipline, loyalty, and his martial arts-inspired combat style. Aligned with the Alliance group, Gaomon can also ally with the player, offering reliable support through his signature attacks such as Double Backhand and Rolling Upper, while evolving into stronger forms like Gaogamon and MachGaogamon. His design emphasizes speed, precision, and determination, making him a distinctive Rookie Digimon recognized for his fighting spirit. Beyond his origins, Gaomon embodies loyalty, courage, and resilience. He often enters battle with calm focus, balancing obedience with independent strength. In gameplay, Gaomon provides fast offense and dependable defense, assuring companions that discipline and teamwork can overcome any challenge. Ultimately, Gaomon is more than a fighter—he is a symbol of trust, proving that true strength comes from loyalty and unity.",
+    "Impmon": "Impmon first appeared in Digimon Tamers (2001) as a Rookie Digimon created by Kenji Watanabe, designed with a mischievous demon-like form, purple body, red scarf, and gloves. In the anime he was portrayed as a troublemaker and sometimes antagonist, reflecting resentment and loneliness, but in this mod he belongs to the Alliance group and can befriend the player, standing equal to other Digimon of the same subgroup. Known for his signature attack Night of Fire, Impmon embodies agility, cunning, and fiery offense, while his evolution path leads to Beelzemon. Ultimately, Impmon is more than a villain—he is a symbol of loyalty and unity when given trust.",
+    "Hawkmon": "Hawkmon first appeared in Digimon Adventure 02 (2000) as a Rookie-level Digimon created by Kenji Watanabe, designed with avian traits, a red feathered body, and a ceremonial headpiece symbolizing wisdom and discipline. Unlike Digimon from the Alliance group, Hawkmon belongs directly to the player, representing loyalty and companionship. In this mod, Hawkmon emerges during the summer season at any time, day or night, providing constant support. Known for its signature attack Beak Pierce, Hawkmon embodies agility, vigilance, and aerial precision. Its evolutionary path leads to Aquilamon and beyond, reflecting growth through trust and partnership. Ultimately, Hawkmon is not just a fighter it is a steadfast ally who strengthens the bond between Digimon and player.",
+    "Gabumon": "Gabumon first appeared in Digimon Adventure (1999) as a Rookie-level reptile Digimon created by Kenji Watanabe. Recognizable by its yellow bipedal body covered with Garurumon’s pelt and a rune-marked horn, it embodies shyness and loyalty. Unlike Digimon from the Alliance group, Gabumon belongs directly to the player, representing trust and companionship. In this mod, Gabumon emerges as a steadfast ally in any season, providing constant support. Its signature attack is Blue Blaster, combining precision with fiery power. Its evolutionary path leads to Garurumon and beyond, reflecting growth through friendship and cooperation. Ultimately, Gabumon is more than a fighter—it is a loyal partner who strengthens the bond between Digimon and player.",
+    "WalterZombie": "Walter Zombie is a product of a catastrophic chemical mutation caused by the company CONASUPO, which was initially known for its dairy products. After accidentally consuming radioactive milk in 1986, the incident originated from the fallout of the Chernobyl disaster. Following the explosion in April 1986, radioactive material spread across Europe, resulting in acid rain that contaminated pastures in Ireland. Cows grazed on this tainted grass, leading to the production of radioactive milk, which was subsequently exported to Mexico. Defying the odds of death, Walter transformed into a hostile creature rather than succumbing to the effects of the radiation. However, unlike traditional zombies, he retained a measure of his intelligence and consciousness. In his quest to regain his human life, Walter allied himself with the Alianza group, seeking both redemption and a cure for his condition. Despite his aspirations, a second chemical treatment was administered to him, intended to end his existence as a zombie. Instead, it triggered an unexpected transformation into a Mamón (Tank) form, enhancing his physical prowess. This transformation occurs only during full or new moons, with a mere 0.5% chance of shifting into this formidable state. In this form, Walter becomes a more powerful adversary, capable of withstanding significant damage while still holding onto the hope of one day reclaiming his humanity. As he navigates this duality, Walter Zombie embodies the struggle between his monstrous instincts and the remnants of the man he once was.",
+    "WalterZombieMamadisimo": "Walter Zombie Tank Form is an extreme mutation that only manifests during full or new moons with a 0.5% chance, meaning sometimes he transforms and other times he remains in his normal state. If provoked or if his Alianza group is attacked, and the player moves away around 10 blocks, he will relentlessly throw bombs until the enemy is destroyed, even sacrificing his own allies to eliminate those who threaten him. To defeat him, it is recommended to use a musket and a crossbow with explosive arrows, avoiding combat in his base or home since there is a high risk of him blowing up everything and ruining the player's effort. It is safer to retreat and find shelters to protect yourself from the explosions, while setting traps such as spikes to limit his mobility and increase the chances of survival.",
+    "AladinaCorrupta": "Aladina Corrupta was once a benevolent figure during the Arab Middle Ages, known for helping the poor and those in need. As the modern era arrived, she was excluded by the changing Arab system in Libya around the late 1800s, when the region was still under Ottoman control. Her decline worsened in the 20th century: by the 1990s Libya was under Muammar Gaddafi’s dictatorship, and her abilities weakened, no longer resembling her medieval strength. The fall of Gaddafi in 2011 brought further chaos instead of improvement. Witnessing civilians fighting for power, Aladina Corrupta reflected on years of suffering and began adopting techniques inspired by Arab militant groups, such as suicide attacks and bombings, though she never formally joined them. Ultimately, she aligned herself with the faction known as Muerte, driven by vengeance for the pain and mistreatment she endured. Now she feels a grim relief after joining Muerte. Unlike other members of the group, she has a distinctive attack: when an NPC or player targets her or her allies, she ignites a medium incendiary barrel. Distance does not matter—she will charge directly at the attacker, light the barrel, and give only five seconds to escape. Failure to flee results in being torn apart and blasted into the air. In her fury she even sacrifices her own companions, and herself, whenever the group is under attack.",
+    "CarlJohnson": "Carl 'CJ' Johnson, born in Los Santos, San Andreas, United States, currently lives in his hometown where he controls the streets; he became the central figure in the infamous 'Hot Coffee' controversy from Grand Theft Auto: San Andreas in 2005, a hidden minigame that sparked moral panic, lawsuits, and forced Rockstar Games to reclassify the title; despite his criminal path, CJ shares an unbreakable friendship with Tommy Vercetti and Claude Speed, together forming the group 'Alliance' to dominate the criminal underworld.",
+    "ElGuerrillero": "Pepito Omencio Del Moreno, known as El Guerrillero, was born in Arauca, Colombia on June 7, 1997. Once a kind man who loved the countryside and dreamed of joining the Colombian military to fight against narcotrafficking, his life changed at the age of 23. After enduring abuse from his parents, bullying for revealing his dream, poverty, and the violent conflict in Arauca, he abandoned his home and allied with the FARC. There he adopted their techniques and found a new family, turning ruthless in the process. Rumors spread that El Espectador, Noticias Caracol, RCN, Canal Uno and others named him among the most wanted, alongside leaders of the FARC and ELN. After years of practice, he left the FARC not to betray them but to follow his own path of survival, eventually joining the group Muerte. From that moment he became happier yet more evil, renowned for his mastery of the traditional musket. If he sees you, you are doomed. He may appear in groups of two or three, applying tactics learned during his FARC era. He can emerge at any time, day or night, and will appear on day 16.00",
+    "ElGuerrilleroTenebroso": "Alejandro Risaraldo Castillo, born into a guerrilla family within the FARC, chose to join them at the age of 8 by his own will. He gained experience until he met El Guerrillero, forming a special friendship. At 23 he retired without sadness, but sensed something was wrong. Disguised, he left the camp after hearing gunfire he mistook for pistols but were muskets, and discovered his friend allied with Muerte, fighting Alianza. El Guerrillero was wounded and his group lost, so Alejandro fled. Seeking sect ritual refuge, he asked a shaman to restore his friendship in exchange for his soul. The shaman set conditions: join Alianza and inform only a few of El Guerrillero’s closest friends and selected countryside comrades—never the entire group—to prevent a far worse conflict. He must also keep secret that he is aligned with Alianza, which is not police or armed forces, and reveal instead that El Guerrillero traded their friendship for another within Muerte, especially with the one who became most special to him. Alejandro accepted, deciding to hunt his friend to recover who he once was, while maintaining guerrilla tactics. It is said that he will appear on day 17 only at night.",
+    "CamisasMorenas": "Camisas Morenas was born in Zacatecas, Mexico, from a humble family. He moved to Mexico City seeking better economic opportunities, where cartel wars still rage over territory. There he entered the world of the street markets, and on his birthday his uncle, the brother of his father, gifted him a stone machete. He kept it as a weapon of defense, to be used only if provoked to the extreme or if his belongings were stolen. He ran a stall selling shirts, but eventually abandoned the tianguis business when he joined a local gang, not part of the cartels but rooted in Mexico City itself. After many years of experience, the gang encountered a faction called Muerte and accepted their offer to unite. Camisas Morenas became hardened, using his machete as both symbol and weapon, and his reputation grew as someone who defended his group fiercely. Though he once dreamed of a simple life, his path led him deeper into conflict, and his loyalty to Muerte marked him as a dangerous figure. It is said that he will appear on day 21 at night.",
+    "ZombieRepetidor": "Zombie Repetidor was once a human who lived in the Marshall Islands, especially on Bikini Atoll. He was of Ecuadorian origin, known as Elver Gonzalo Samboni, who traveled there seeking a new life. A skilled farmer, he specialized in fruits and vegetables, dedicating himself to his harvests. Everything changed drastically in 1954 when the United States detonated nuclear bombs on the islands. Residents were forced to abandon their homes to avoid death from the experiments, but Elver refused, believing it was all lies, and hid underground. When the explosions occurred, everyone thought he had died. The islands became desolate, uninhabitable due to radiation. Yet, against all odds, Elver survived. His skin became burned and rotten over the years, and he transformed into a zombie. This was partly due to a strange enchanted eggplant salad he had created, designed to revive him after explosions though only as a zombie. Despite his transformation, he remained alive and devised a way to return to Ecuador. He infiltrated a luxury boat bound for Ecuador, arriving in Atacames, and later returned to his hometown of Quito. There, he began eating junk food, which made him obese but also increased his muscular strength. One day, he decided to steal a Ballesta Repetidora to practice shooting, since he had no legal permits to own a firearm and stealing one could have cost him his life. He trained relentlessly until he became an expert marksman. Although he may look like just another common zombie, do not be fooled if he sees you, he will start shooting. Eventually, he allied himself with the group Muerte, becoming another deadly shooter. He will appear on day 13 at night.",
+    "Sparkster": "Sparkster is the opossum Rocket Knight hero created by Konami, first appearing in Rocket Knight Adventures (1993) and continuing in Sparkster (1994) and later entries. Armed with a sword and a rocket pack, he defends the Kingdom of Zephyrus with courage and agility. Midway in his lore here, Sparkster aligns with the Alianza, a protective group dedicated to defending allies and resisting corruption — he is non-hostile by default and only retaliates when provoked. Recognizable by his blue-and-red armor, Sparkster is brave, loyal, and resilient, excelling at fast movement and precise strikes while inspiring those around him. He will appear on Day 2 at any hour.",
+    "Tulio": "Born in Santiago de Chile in 1995, during the post-Pinochet era, he grew up fascinated by fashion trends—jeans and striped shirts defined his style—and his curiosity about the world only grew stronger. At the age of 18, he chose not to attend the University of Santiago, preferring instead to dedicate himself to uncovering the truth behind the mysterious, unidentified Pacific islands. He had seen reports on TVN describing these islands, places that neither the United States nor Russia had managed to investigate despite their obsession. Rumors spread that only certain living beings could enter, and only they could learn the islands’ true origin. Determined, he sought illegal means to reach them, traveling to Easter Island in hopes of finding an abandoned boat to continue his journey. Fate intervened when violent winds and hurricanes struck, throwing him into the ocean. Yet nature itself seemed to protect him, carrying him safely to the very islands he sought. There he encountered both humans and non-humans—Naomi, Paco, El Marihuanero, El Marihuanero Mamón, and Ricardo. Together they formed a family, bound by survival and mystery. Eventually, he joined the group known as Alianza, dedicated to searching for survivors and uncovering the secrets of the Pacific islands. His journey became not only a quest for knowledge but also a testament to resilience, curiosity, and the strange destiny that united him with others on the islands.",
+    "Brayan": "Brayan was born on January 12, 2000, in London, England. From a young age he dedicated himself to studying physics and biology, inspired by figures such as Charles Darwin and Isaac Newton. At the age of 25, he received a special voucher to travel to Alaska, United States, to further his studies of nature and frozen physics. He accepted, but during the journey an unexpected accident changed his life: the pilot fainted due to a natural cause, the plane lost control, and it crashed. Brayan survived thanks to the winds of nature, which carried him away from drowning and guided him to a mysterious island in the Pacific. From that moment, he began to survive using the knowledge he had acquired in his studies, applying physics and biology to endure the harsh environment. One day he met Tulio, who was impressed by Brayan’s survival methods and offered him the chance to join the group known as Alianza. This group was formed by people of good spirit, dedicated to protecting each other while collecting information about the unknown and mysterious islands. Brayan accepted, and from then on he became part of a family on the island, while keeping alive his hope of one day returning to England.",
+    "Richard": "Richard is the twin brother of Ricardo. Unlike him, Richard was born in South Africa in 2004, during the post-apartheid era. When he turned 18, he began his life as an adventurer, driven by curiosity and a desire to explore the unknown. Later, he met Ricardo during a scientific journey in Mexico, and despite their different origins, they bonded deeply and became brothers in spirit. When Ricardo departed for the mysterious Pacific islands, Richard decided to undertake the same expedition, but with a unique difference: he designed and built a machine capable of traveling anywhere without the need for ships, boats, or conventional vehicles. His invention was a success, and he used it to embark on his journey, eventually arriving at the same destination as Ricardo. Upon reaching the island, Ricardo welcomed him as his true brother and introduced him to the companions he had met there. From that moment, Richard became part of the family and joined the group known as Alianza. His arrival brought new energy to the team, as his inventive mind and adventurous spirit complemented Ricardo’s resilience. Richard’s machine, though damaged during the voyage, became a symbol of hope for the group, showing that human ingenuity could rival even the mysteries of the islands. Together with Naomi, Paco, and the others, Richard contributed to the survival and exploration of the unknown land, strengthening the bonds of Alianza and keeping alive the dream of one day uncovering the secrets of the Pacific islands."
   }
 },
-  "BestiaryInfectedDescriptionScreen": {
-    "1": "Infected Details",
-    "2": "Drops:",
-    "resilience": "Resilience",
-    "attack": "Attack",
-    "herding": "Herding",
-    "mount": "Mount",
-    "speed": "Speed",
-    "jump": "Jump",
-    "weight": "Weight",
-    "egg": "Egg",
-    "speed_unit": "km/h",
-    "length_unit": "m",
-    "weight_unit": "kg",
-    "range": "{0}-{1}",
-    "probability": " ({0}%)"
-  },
-"CameraManage": {
-  "Game.FreeCamera": "Cámara libre"
+  "Blocks": {
+    "WatermelonSeedBlock:0": {
+  "DisplayName": "Watermelon Seed",
+  "Description": "Watermelon seeds are used to grow watermelons. They require suitable soil and enough light to reach full size.",
+  "CRDescription:0": "Extract seeds from a watermelon slice"
 },
-"SubsystemFlameThrowerBlockBehavior": {
-  "0": "FlameThrower is empty"
+    "BlueberrySeedBlock:0": {
+    "DisplayName": "Blueberry Seeds",
+    "Description": "Blueberry seeds are used to plant blueberry bushes. Plant them on suitable soil and provide enough light for healthy growth. Young bushes start as small sprouts and mature over time into full blueberry bushes.",
+    "CRDescription:0": "Extract seeds from blueberries"
 },
-"SubsystemImprovedMusketBlockBehavior": {
-    "0": "Not loaded!"
+    "LetterWarBlock:0": {
+  "DisplayName": "Mysterious Letter",
+  "Description": "A sealed envelope with no sender name. It seems important... Reading it might lead to something dangerous. You can find this letter inside a chest that appears near you after surviving all green night waves."
 },
-  "SubsystemRepeatCrossbowBlockBehavior": {
-    "0": "Not fully drawn!",
-    "1": "No bolts loaded!"
+    "DoubleMusketBlock:0": {
+    "DisplayName": "Double Musket",
+    "Description": "A double-barreled musket that can fire two shots before reloading. It can use standard bullets or powerful Anti-Tanks rounds that deal massive damage and penetrate armor. Crafted with a musket, iron ingot, and planks.",
+    "CRDescription:0": "Craft a double musket from a musket, iron ingot, and planks"
   },
-  "SubsystemCreatureHealthBars": {
-    "1": "{0} HP: {1}"
+  "AppleSaplingBlock:0": {
+    "DisplayName": "Apple Sapling",
+    "Description": "A young apple tree sapling. When planted in suitable soil with enough light and proper temperature, it will grow into a full apple tree bearing delicious apples. Apple trees thrive best in temperate climates with moderate humidity.",
+    "CRDescription:0": "Grow apple sapling from apple leaves"
+  },
+  "PearSaplingBlock:0": {
+    "DisplayName": "Pear Sapling",
+    "Description": "A young pear tree sapling. Plant it in rich soil under open sky and it will mature into a pear tree with sweet, juicy pears. Pear trees prefer slightly warmer temperatures and higher humidity than apple trees.",
+    "CRDescription:0": "Grow pear sapling from pear leaves"
+  },
+  "CherrySaplingBlock:0": {
+    "DisplayName": "Cherry Sapling",
+    "Description": "A young cherry tree sapling. When placed in fertile ground with plenty of sunlight, it will grow into a beautiful cherry tree full of small red cherries. Cherry trees favor cooler climates and moderate humidity.",
+    "CRDescription:0": "Grow cherry sapling from cherry leaves"
+  },
+  "OrangeSaplingBlock:0": {
+    "DisplayName": "Orange Sapling",
+    "Description": "A young orange tree sapling. Plant it in warm soil with good sunlight exposure and it will develop into an orange tree producing juicy oranges. Orange trees require the warmest temperatures and high humidity among fruit trees.",
+    "CRDescription:0": "Grow orange sapling from orange leaves"
+  },
+  "BlueberryBushBlock:0": {
+  "DisplayName": "Blueberry Bush",
+  "Description": "A wild bush that grows in cool environments with moderate humidity. You can harvest fresh blueberries from it, which are a good source of hydration."
 },
-  "ShittyInfectedsMod": {
-    "1": "X: {0}, Y: {1}, Z: {2}",
-    "exitGame": "Exit"
+  "PearWoodBlock:0": {
+    "DisplayName": "Pear Wood",
+    "Description": "Wood obtained from pear trees. Useful for building and crafting."
   },
-  "ShittyInfectedsSettingsScreen": {
-    "1": "Shitty Infecteds Settings",
-    "2": "When hitting a creature, your herd allies will attack it",
-    "3": "When a creature hits you in creative, your allies will attack it",
-    "4": "Show player coordinates on screen",
-    "5": "Show creature health bars",
-    "6": "Enable creature bleeding",
-    "7": "Enables a free camera in non-creative modes"
+  "PearLeavesBlock:0": {
+    "DisplayName": "Pear Leaves",
+    "Description": "Leaves from a pear tree. They may occasionally drop pears."
   },
-  "GreenNightActivationDialog": {
-    "1": "Green Night Management",
-    "2": "Enable Green Night",
-    "3": "The world maintains its usual balance\nwith limited detection ranges and\nshort pursuits.",
-    "4": "The world enters a state of\nuncontrolled aggression. Creatures\ndrastically expand their detection\nrange, unleash relentless pursuits that\ndo not stop because of obstacles or\nloss of visual contact,\nprioritizing the hunt above all else.",
-    "5": "Days & Suffering Settings",
-    "6": "Cancel",
-    "7": "Accept",
-    "8": "Green Night enabled.",
-    "9": "Green Night disabled."
+
+  "OrangeWoodBlock:0": {
+    "DisplayName": "Orange Wood",
+    "Description": "Wood obtained from orange trees. Durable and useful for crafting."
+  },
+  "OrangeLeavesBlock:0": {
+    "DisplayName": "Orange Leaves",
+    "Description": "Leaves from an orange tree. They can sometimes drop oranges."
+  },
+
+  "CherryWoodBlock:0": {
+    "DisplayName": "Cherry Wood",
+    "Description": "Wood obtained from cherry trees. It has a decorative and elegant appearance."
+  },
+  "CherryLeavesBlock:0": {
+    "DisplayName": "Cherry Leaves",
+    "Description": "Leaves from a cherry tree. They may occasionally drop cherries."
+  },
+    "AppleWoodBlock:0": {
+    "DisplayName": "Apple Wood",
+    "Description": "Wood obtained from apple trees. Can be used for building and crafting."
+  },
+  "AppleLeavesBlock:0": {
+    "DisplayName": "Apple Leaves",
+    "Description": "Leaves from an apple tree. Sometimes they can drop apples."
+  },
+  "RottenAppleBlock:0": {
+  "DisplayName": "Rotten Apple",
+  "Description": "A decayed apple covered in brown spots and mold. Eating it may cause food poisoning and offers no nutritional value."
+},
+"RottenPearBlock:0": {
+  "DisplayName": "Rotten Pear",
+  "Description": "This pear has turned mushy and foul-smelling. Consuming it could make you sick and provides little to no sustenance."
+},
+"RottenOrangeBlock:0": {
+  "DisplayName": "Rotten Orange",
+  "Description": "A shriveled orange with a bitter, fermented odor. Eating it risks stomach pain and nausea."
+},
+"RottenCherryBlock:0": {
+  "DisplayName": "Rotten Cherry",
+  "Description": "Wrinkled and leaking sticky juice, this cherry is well past its prime. Ingesting it may lead to illness."
+},
+"RottenSliceOfWatermelonBlock:0": {
+  "DisplayName": "Rotten Watermelon Slice",
+  "Description": "A soggy, discolored slice of watermelon that smells like sour yeast. Likely to cause digestive distress."
+},
+"RottenBananaBlock:0": {
+  "DisplayName": "Rotten Banana",
+  "Description": "A blackened, soft banana with a pungent alcoholic scent. Eating it can make you nauseous and drain your energy."
+},
+"RottenBlueberryBlock:0": {
+  "DisplayName": "Rotten Blueberries",
+  "Description": "These berries are moldy and have a fermented taste. Not safe for consumption unless you want to get sick."
+},
+    "AppleBlock:0": {
+    "DisplayName": "Apple",
+    "Description": "A fresh and juicy fruit that restores a small amount of hunger and slightly reduces thirst. Grows in temperate climates with moderate humidity."
+  },
+  "PearBlock:0": {
+    "DisplayName": "Pear",
+    "Description": "A sweet and soft fruit that provides moderate nutrition and contributes to hydration. Found in temperate zones with high humidity."
+  },
+  "OrangeBlock:0": {
+    "DisplayName": "Orange",
+    "Description": "A citrus fruit rich in juice that restores hunger and provides a good amount of hydration. Grows in warm, humid tropical areas."
+  },
+  "CherryBlock:0": {
+    "DisplayName": "Cherry",
+    "Description": "A small and sweet fruit that offers low nutrition but a slight hydration effect. Thrives in cooler climates with low humidity."
+  },
+  "SliceOfWatermelonBlock:0": {
+    "DisplayName": "Watermelon Slice",
+    "Description": "A very refreshing fruit with high water content that significantly reduces thirst."
+  },
+  "BananaBlock:0": {
+  "DisplayName": "Banana",
+  "Description": "An energy-rich fruit that restores a good amount of hunger and provides decent hydration. Grows on banana trees in warm, humid climates."
+},
+"BananaWoodBlock:0": {
+  "DisplayName": "Banana Wood",
+  "Description": "A lightweight, fibrous wood obtained from banana trees. Not as strong as oak, but useful for basic construction and crafting."
+},
+"BananaLeavesBlock:0": {
+  "DisplayName": "Banana Leaves",
+  "Description": "Large, broad leaves from banana trees. They provide shade and can be used as a natural canopy or decorative element."
+},
+"BananaSaplingBlock:0": {
+  "DisplayName": "Banana Sapling",
+  "Description": "A young banana tree that will grow into a full banana tree over time. Plant it on soil in warm environments and wait for it to mature.",
+  "CRDescription:0": "Obtained by crafting with Banana Leaves."
+},
+  "BlueberryBlock:0": {
+    "DisplayName": "Blueberry",
+    "Description": "A small and nutritious fruit that offers little energy but slightly helps with thirst."
+  },
+    "BoiledWaterBucketBlock:0": {
+  "DisplayName": "Bucket of Boiled Water",
+  "Description": "A bucket filled with boiled water. Drinking it safely restores hydration.",
+  "CRDescription:0": "Clean boiled water stored in a bucket."
+},
+    "AK48Block:0": {
+  "DisplayName": "AK-48 Assault Rifle",
+  "Description": "A powerful assault rifle with high rate of fire and large magazine. Uses 7.62mm rounds.",
+  "CRDescription:0": "Crudely crafted but deadly assault rifle"
+},
+"AK48BulletBlock:0": {
+  "DisplayName": "AK-48 Cartridges",
+  "Description": "Ammunition for the AK-48 assault rifle. Large caliber rounds with excellent penetration power.",
+  "CRDescription:0": "7.62mm assault rifle cartridges"
+},
+"Master308Block:0": {
+  "DisplayName": "Master 308",
+  "Description": "Precision .308 caliber sniper rifle. Robust design and excellent stability for long-range shots.",
+  "CRDescription:0": "Long-range precision rifle"
+},
+"Master308BulletBlock:0": {
+  "DisplayName": "Master 308 Cartridges",
+  "Description": ".308 caliber ammunition for sniper rifle. High-precision rounds with great stopping power.",
+  "CRDescription:0": "Sniper rifle cartridges"
+},
+    "FreezeBombBlock:0": {
+      "DisplayName": "Freeze Bomb",
+      "Description": "A specialized explosive bomb filled with cryogenic compounds. Upon detonation, it releases a freezing blast that lowers temperatures, inflicts cold damage, and can cause creatures to catch a cold. Affected targets move slower and periodically cough or sneeze.",
+      "CRDescription:0": "Upon explosion, it releases a wave of cold that reduces temperature, causes freezing damage, and can give creatures a cold, slowing their movement."
+    },
+    "FreezingSnowballBlock:0": {
+  "DisplayName": "Freezing Snowball",
+  "Description": "A snowball infused with freezing energy. When thrown, it leaves a frosty trail and upon impact rapidly lowers the target's body temperature (player: reduces to 6°C, then 3°C, then 1°C, then 0.1°C), causes knockback (increasing with each hit), and after four hits induces hypothermia and death. Affected creatures are knocked back and may catch a cold (645s flu). Obtained only by defeating Infected Freezers that spawn in cold biomes or during winter, or by purchasing from the Pirata Hostil Comerciante for 20 Nuclear Coins (stack up to 40)."
+    },
+    "RemoteControlBlock:0": {
+      "DisplayName": "Remote Control",
+      "Description": "Use to manage Green Night. Opens the control interface. Can only be crafted after completing all waves.",
+      "CRDescription:0": "Opens Green Night controls."
+    },
+    "NuclearCoinBlock:0": {
+      "DisplayName": "Nuclear Coin",
+      "Description": "A coin forged in a post-apocalyptic world. It cannot be crafted, but can be obtained by killing mobs, completing achievements, and claiming their rewards. Used to trade with the Pirata Hostil Comerciante and for other purposes such as hiring and more, depending on the player's needs."
+    },
+    "ToxinBlock:0": {
+      "DisplayName": "Toxin",
+      "Description": "An extremely poisonous material saturated with lethal toxins. It cannot be crafted and is mainly obtained as loot from venomous creatures such as Infected Normal 3, Infected Normal 4, Boomer 3, Flying Infected 2, Flying Infected Boss, Tank 3, and Tank Ghost 3. Alternatively, it can be purchased from shops or traded with Pirata Hostil Comerciante"
+    },
+    "MediumFirstAidKitBlock:0": {
+    "DisplayName": "Medium First Aid Kit",
+    "Description": "A medical kit designed to treat injuries by restoring a significant portion of health. Heals the target up to about half of their maximum health. Can be used on yourself or on other nearby creatures.",
+    "CRDescription:0": "A basic medical kit that heals wounds up to 50% or 100% if above half health."
+  },
+  "LargeFirstAidKitBlock:0": {
+    "DisplayName": "Large First Aid Kit",
+    "Description": "A powerful medical kit capable of fully restoring health. Instantly heals the target to maximum health. Can be used on yourself or on other nearby creatures.",
+    "CRDDescription:0": "An advanced medical kit that always heals to 100% regardless of current health."
+  },
+    "AntidoteBucketBlock:0": {
+    "DisplayName": "Antidote Bucket",
+    "Description": "A bucket containing a powerful medicinal antidote made from antiflu tea and purple flowers. Drinking it removes poison and sickness from the body, stopping their harmful effects. It can be used on yourself or on other infected creatures. Also restores some thirst.",
+    "CRDescription:0": "Brew a medicinal antidote by combining antiflu tea with purple flowers. Removes poison and sickness."
+  },
+"TeaAntifluBucketBlock:0": {
+  "DisplayName": "Anti-Flu Tea Bucket",
+  "Description": "A bucket filled with medicinal tea. Drinking it cures influenza and relieves its symptoms. It can also be used to treat infected creatures. Also restores some thirst.",
+  "CRDescription:0": "Prepare anti-flu tea by heating a bucket of water with tall grass. Cures influenza."
+},
+"BoiledWaterBowlBlock:0": {
+    "DisplayName": "Bowl of Boiled Water",
+    "Description": "A bowl filled with boiled water. Safe to drink and restores thirst.",
+    "CRDescription:0": "Boil a bowl of water"
+  },
+  "CactusJuiceBowlBlock:0": {
+    "DisplayName": "Bowl of Cactus Juice",
+    "Description": "A bowl of cactus juice. Refreshing and restores some thirst.",
+    "CRDescription:0": "Boil water with cactus"
+  },
+  "WatermelonBlock:0": {
+  "DisplayName": "Watermelon",
+  "Description": "A juicy watermelon that grows on the ground in warm climates. When fully ripe, it drops watermelon slices."
+},
+"RottenWatermelonBlock:0": {
+  "DisplayName": "Rotten Watermelon",
+  "Description": "This watermelon has gone bad. Better not eat it."
+},
+  "AntidoteBowlBlock:0": {
+    "DisplayName": "Bowl of Antidote",
+    "Description": "A medicinal bowl that cures poison and sickness.",
+    "CRDescription:0": "Boil anti-flu tea with purple flowers"
+  },
+  "TeaAntifluBowlBlock:0": {
+    "DisplayName": "Bowl of Anti-Flu Tea",
+    "Description": "A warm herbal tea that cures flu.",
+    "CRDescription:0": "Boil water with tall grass"
+  },
+  "WaterBowlBlock:0": {
+    "DisplayName": "Bowl of Water",
+    "Description": "A bowl filled with water. It may not be safe to drink."
+  },
+  "EmptyBowlBlock:0": {
+    "DisplayName": "Empty Bowl",
+    "Description": "An empty bowl. Useful for holding liquids.",
+    "CRDescription:0": "Shape dirt into a bowl"
+  },
+"WoodenLongspearBlock:0": {
+    "DisplayName": "Wooden Longspear",
+    "Description": "A longspear is an extended wooden polearm that provides excellent reach. It can be thrown or used in melee combat. Thrown longspears will stick into soft surfaces. The wooden construction is basic but effective.",
+    "CRDescription:0": "Craft a wooden longspear using planks, a stick, and a wooden spear."
+  },
+  "StoneLongspearBlock:0": {
+    "DisplayName": "Stone Longspear",
+    "Description": "A longspear with a stone tip, offering better durability and damage than its wooden counterpart. Its extended reach makes it effective against foes from a distance. Thrown spears can embed deeply into targets.",
+    "CRDescription:0": "Craft a stone longspear using cobblestone, a stick, and a stone spear."
+  },
+  "CopperLongspearBlock:0": {
+    "DisplayName": "Copper Longspear",
+    "Description": "A copper-headed longspear that balances reach and striking power. Copper provides improved sharpness and longevity. Ideal for hunters and warriors seeking a reliable polearm.",
+    "CRDescription:0": "Craft a copper longspear using a copper ingot, a stick, and a copper spear."
+  },
+  "IronLongspearBlock:0": {
+    "DisplayName": "Iron Longspear",
+    "Description": "An iron longspear with formidable durability and piercing capability. Its weight and balance make it a fearsome weapon in both melee and thrown attacks. A staple for seasoned fighters.",
+    "CRDescription:0": "Craft an iron longspear using an iron ingot, a stick, and an iron spear."
+  },
+  "DiamondLongspearBlock:0": {
+    "DisplayName": "Diamond Longspear",
+    "Description": "The diamond longspear is a masterwork weapon, combining exceptional sharpness, durability, and reach. It glistens with lethal elegance and can penetrate even the toughest hides.",
+    "CRDescription:0": "Craft a diamond longspear using a diamond, a stick, and a diamond spear."
+  },
+  "LavaLongspearBlock:0": {
+    "DisplayName": "Lava Longspear",
+    "Description": "A longspear forged with the essence of magma, radiating intense heat. It can sear wounds on impact and is incredibly durable. Only the bravest warriors dare wield this molten weapon.",
+    "CRDescription:0": "Smelt a Lava Spear with an Iron Hammer to create a Lava Longspear."
+  },
+    "CopperSharpHammerBlock:0": {
+    "DisplayName": "Copper Sharp Hammer",
+    "Description": "A hammer with a sharpened copper head, designed for both blunt force and cutting. It delivers devastating strikes that can crush armor and wound flesh alike.",
+    "CRDescription:0": "Smith a copper sharp hammer using a copper machete and an iron hammer."
+  },
+  "IronSharpHammerBlock:0": {
+    "DisplayName": "Iron Sharp Hammer",
+    "Description": "An iron hammer with a keen edge, balancing weight and sharpness perfectly. Its powerful swings can break bones and slice through protections with ease.",
+    "CRDescription:0": "Smith an iron sharp hammer using an iron machete and an iron hammer."
+  },
+  "DiamondSharpHammerBlock:0": {
+    "DisplayName": "Diamond Sharp Hammer",
+    "Description": "A masterfully crafted hammer with a diamond-sharpened head. It combines incredible hardness with razor edges, capable of shattering the toughest defenses.",
+    "CRDescription:0": "Smith a diamond sharp hammer using a diamond machete and an iron hammer."
+  },
+  "LavaSharpHammerBlock:0": {
+    "DisplayName": "Lava Sharp Hammer",
+    "Description": "A legendary hammer infused with molten fury. Its sharp edge glows with heat, searing wounds on contact while delivering crushing blows that few can survive.",
+    "CRDescription:0": "Smith a lava sharp hammer using a lava machete and an iron hammer."
+  },
+    "CopperThinHammerBlock:0": {
+  "DisplayName": "Copper Thin Hammer",
+  "Description": "A lightweight hammer with a slender head. Faster than standard hammers, making it ideal for quick excavation and mining.",
+  "CRDescription:0": "Smelt a copper pickaxe with an iron hammer."
+},
+"IronThinHammerBlock:0": {
+  "DisplayName": "Iron Thin Hammer",
+  "Description": "A durable thin-headed hammer that balances speed and strength. Excellent for large digging projects.",
+  "CRDescription:0": "Smelt an iron pickaxe with an iron hammer."
+},
+"DiamondThinHammerBlock:0": {
+  "DisplayName": "Diamond Thin Hammer",
+  "Description": "An incredibly fast and resilient thin hammer. Its diamond head cuts through terrain with ease.",
+  "CRDescription:0": "Smelt a diamond pickaxe with an iron hammer."
+},
+"LavaThinHammerBlock:0": {
+  "DisplayName": "Lava Thin Hammer",
+  "Description": "A blazing hot thin hammer that melts through soft materials. Extremely fast and long-lasting.",
+  "CRDescription:0": "Smelt a lava pickaxe with an iron hammer."
+},
+    "TargetStickBlock:0": {
+  "DisplayName": "Targeting Stick",
+  "Description": "A specialized stick used to command allied creatures. When pointed at an enemy, it signals all nearby player-allied creatures to focus their attacks on the target. Useful for coordinating attacks and managing your creature army in battle.",
+  "CRDescription:0": "Useful for selecting an attack target so your allied creatures focus on the chosen enemy."
+},
+    "PoisonBombBlock:0": {
+  "DisplayName": "Poison Bomb",
+  "Description": "A green bomb that releases poisonous gas upon explosion. Perfect for poisoning areas and weakening enemies from a distance.",
+  "CRDescription:0": "Toxic bomb that releases poisonous gas instead of explosive force."
+},
+    "BigStonePoisonChunk:0": {
+      "DisplayName": "Poisonous Giant Rock",
+      "Description": "A giant rock imbued with toxic properties. Upon impact, it releases a poisonous cloud that slowly weakens its victims. While the initial damage is moderate, the lingering poison effect can be deadly over time. Like the rare giant rock, it cannot be crafted and can only be obtained through special means."
+    },
+    "BigStoneFlameChunk:0": {
+  "DisplayName": "Flaming Giant Rock",
+  "Description": "A flaming rock that creates fire on impact. The fire lasts for 30 seconds. Can kill instantly and sets area ablaze."
+},
+    "PoisonBulletBlock:0": {
+  "DisplayName": "Poison Bullet",
+  "Description": "Similar to a musket round, but it cannot be used as musket ammunition and is not available for crafting."
+    },
+    "CollarBlock:0": {
+  "DisplayName": "Zombie Collar",
+  "Description": "A specialized collar used to tame hostile infected creatures. When applied, it transforms them into loyal companions that will defend and assist you. Particularly useful for controlling dangerous enemies and turning them into powerful allies.",
+  "CRDescription:0": "Used to tame hostile infected creatures and turn them into allies."
+},
+    "RefrigeratorXiaomiBlock:0": {
+      "DisplayName": "Xiaomi Refrigerator",
+      "Description": "A Xiaomi refrigerator is a household appliance designed for cooling and storing food. It is defined as a smart refrigerator that provides efficient preservation of perishable goods. In the mod it is useful as an object that represents a modern appliance and expands building options. Its main utility is to preserve food if you are tired of it spoiling quickly, both raw and cooked, giving more durability time. Note: the refrigerator requires energy such as a battery, lever, or another electrical source, otherwise it will not work.",
+      "CRDescription:0": "Useful for storing raw or cooked food if you're tired of it spoiling quickly."
+    },
+    "AirConditionerBlock:0": {
+      "DisplayName": "Air Conditioner",
+      "Description": "A climate control device that adjusts ambient temperature. Configurable via interface, can cool water and melt ice within an adjustable radius.",
+      "CRDescription:0": "To control the temperature in your beautiful home"
+    },
+    "BigStoneChunk:0": {
+  "DisplayName": "Rare Giant Rock",
+  "Description": "A strange rock, seemingly unearthed from the Paleolithic era its true origin remains a mystery. Oh no! What makes it most alarming is its deadly power: a single throw can kill any person instantly. Even worse, the thought of Tanks wielding it as a throwable weapon is a dire omen. Beware if one of these massive stones is hurled your way, you are already as good as dead. As a note, this rare giant rock cannot be crafted; only Tanks will possess it. Unless you resort to cheats such as using Creative mode or similar methods to obtain one but it’s not recommended."
+    },
+    "TridentBlock:0": {
+  "DisplayName": "Trident",
+  "Description": "A legendary three-pronged spear historically associated with sea deities like Poseidon in Greek mythology, symbolizing dominion over the oceans. In ancient times, it was both a divine symbol and a formidable weapon used by warriors and sea gods alike. Forged from rare materials found in the deepest ocean trenches, this Trident channels the power of the tides. While it can be crafted using extremely expensive resources including iron blocks and enchanted marine crystals, the more direct method to obtain it is by defeating Hombre Agua in battle. Wield it to command respect on both land and sea.",
+  "CRDescription:0": "A historical weapon, a symbol of Poseidon and Neptune, that does so much damage?"
+    },  
+  "ScyteBlock:0": {
+  "DisplayName": "Scythe",
+  "Description": "The Scythe is a long, curved-bladed weapon originally designed as a farming tool for cutting crops, but in dark fantasy it is seen as a weapon of death, often wielded by demons, skeletons, and reapers. In this world, the Scythe cannot be crafted because it has no recipe and is extremely difficult to obtain. The only way to acquire the Scythe is by killing El Señor De Las Tumbas Moradas. Be careful: its lethality is extreme, capable of killing you with a single strike."
+    },  
+  "WoodAxeBlock:0": {
+      "DisplayName": "Wood Axe",
+      "Description": "Back to basics - like the old days",
+      "CRDescription:0": "Back to basics - like the old days"
+    },
+    "WoodMacheteBlock:0": {
+      "DisplayName": "Wood Machete",
+      "Description": "Classic tool from version 2.0",
+      "CRDescription:0": "Classic tool from version 2.0"
+    },
+    "WoodPickaxeBlock:0": {
+      "DisplayName": "Wood Pickaxe",
+      "Description": "Nostalgic mining - pre-2.1 era",
+      "CRDescription:0": "Nostalgic mining - pre-2.1 era"
+    },
+    "WoodShovelBlock:0": {
+      "DisplayName": "Wood Shovel",
+      "Description": "Simple digging - back when life was easier",
+      "CRDescription:0": "Simple digging - back when life was easier"
+    },
+    "StoneShovelBlock:0": {
+      "DisplayName": "Stone Shovel",
+      "Description": "Stone age technology revived",
+      "CRDescription:0": "Stone age technology revived"
+    },
+    "StoneAxeOriginalBlock:0": {
+      "DisplayName": "Stone Axe (Original)",
+      "Description": "Primitive but effective - pre-2.2",
+      "CRDescription:0": "Primitive but effective - pre-2.2"
+    },
+    "StoneMacheteBlock:0": {
+      "DisplayName": "Stone Machete",
+      "Description": "Back when stone could cut - version 2.0 memories",
+      "CRDescription:0": "Back when stone could cut - version 2.0 memories"
+    },
+    "StoneRakeBlock:0": {
+      "DisplayName": "Stone Rake",
+      "Description": "Ancient farming tool - back to roots",
+      "CRDescription:0": "Ancient farming tool - back to roots"
+    },
+    "StonePickaxeBlock:0": {
+      "DisplayName": "Stone Pickaxe",
+      "Description": "How could I forget the old days, bro? :\")",
+      "CRDescription:0": "How could I forget the old days, bro? :\")"
+    },
+    "LavaSpearBlock:0": {
+      "DisplayName": "Lava Spear",
+      "Description": "Forged in magma - burns through anything",
+      "CRDescription:0": "Forged in magma - burns through anything"
+    },
+    "LavaMacheteBlock:0": {
+      "DisplayName": "Lava Machete",
+      "Description": "Molten blade that dismembers with burning precision",
+      "CRDescription:0": "Molten blade that dismembers with burning precision"
+    },
+    "LavaPickaxeBlock:0": {
+      "DisplayName": "Lava Pickaxe",
+      "Description": "Mines ores with molten power",
+      "CRDescription:0": "Mines ores with molten power"
+    },
+    "LavaShovelBlock:0": {
+      "DisplayName": "Lava Shovel",
+      "Description": "Digs through earth like it's butter - hot butter",
+      "CRDescription:0": "Digs through earth like it's butter - hot butter"
+    },
+    "LavaHammerBlock:0": {
+      "DisplayName": "Lava Hammer",
+      "Description": "Smashes rocks with volcanic force",
+      "CRDescription:0": "Smashes rocks with volcanic force"
+    },
+    "LavaAxeBlock:0": {
+      "DisplayName": "Lava Axe",
+      "Description": "Chops wood with burning fury",
+      "CRDescription:0": "Chops wood with burning fury."
+    },
+    "LavaRakeBlock:0": {
+      "DisplayName": "Lava Rake",
+      "Description": "Tills soil with volcanic efficiency",
+      "CRDescription:0": "Tills soil with volcanic efficiency"
+    },
+    "ItemsLauncherBlock:0": {
+      "DisplayName": "Items Launcher",
+      "Description": "Launches any type of block or object. Although expensive to craft, it's a powerful weapon like the musket. Be careful!",
+      "CRDescription:0": "Launches any block or item. Expensive but powerful, similar to the musket."
+    },
+    "FlameThrowerBlock:0": {
+      "DisplayName": "Flamethrower",
+      "Description": "The flamethrower is an incendiary weapon designed to project controlled fire. It was invented by Richard Fiedler in 1901 and first used in combat by the German army in 1915 during World War I. It works by using a fuel tank (usually thickened gasoline or oil) and compressed gas to propel the burning stream through a nozzle with ignition. To use it, the operator must insert Flame Bullets as ammunition, then pull the trigger to unleash fire against enemy fortifications or groups of soldiers. The advantage is that it supports up to 15 rounds (15/15), giving the player sustained firepower before reloading. The Flame Bullet is the secondary ammunition: incendiary projectiles that complement the flamethrower, useful for ranged attacks and maintaining pressure on the enemy.",
+      "CRDescription:0": "Improved musket with fuel tank and ignition system. Uses incendiary projectile or poison gas projectiles."
+    },
+    "FlameBulletBlock:0": {
+  "DisplayName": "Incendiary Projectile",
+  "Description": "Fire-based projectile for the flamethrower. On impact, it ignites terrain and creatures, may trigger explosions at high speed, and inflicts burn damage.",
+  "CRDescription:0": "Incendiary ammo for flamethrower. Burns on impact."
+},
+"FlameBulletBlock:1": {
+  "DisplayName": "Poison Gas Projectile",
+  "Description": "Chemical projectile for the flamethrower. Releases toxic gas that infects creatures with poison or disease, weakening them over time and dealing additional damage.",
+  "CRDescription:1": "Poisonous ammunition for the flamethrower. Infects targets on impact."
+},
+    "RepeatCrossbowBlock:0": {
+      "DisplayName": "Repeating Crossbow",
+      "Description": "An advanced version of the standard crossbow, optimized for sustained ranged fire. Unlike the normal crossbow which fires a single bolt before reloading, the Repeating Crossbow features an internal 8-bolt magazine and progressive tension system allowing continuous fire. It deals slightly less damage per shot than the normal crossbow but has a higher fire rate and faster reload. Compatible with special bolts: Copper, Iron, Diamond, Explosive, and Poison.",
+      "CRDescription:0": "Automatic crossbow with 8-arrow magazine - complex mechanical design"
+    },
+    "RepeatArrowBlock:0": {
+      "DisplayName": "Repeating Copper Bolt",
+      "Description": "Lightweight bolt for repeating crossbows, made of copper. Provides moderate damage and high stability during rapid firing. Optimized to maintain accuracy in sustained automatic fire.",
+      "CRDescription:0": "Copper bolt for repeating crossbows. Moderate damage and high stability."
+    },
+    "RepeatArrowBlock:1": {
+      "DisplayName": "Repeating Iron Bolt",
+      "Description": "Reinforced iron bolt for repeating crossbows. Deals higher damage and better armor penetration than standard iron bolts while maintaining accuracy in sustained bursts.",
+      "CRDescription:1": "Iron bolt for repeating crossbows. Higher damage and better armor penetration."
+    },
+    "RepeatArrowBlock:2": {
+  "DisplayName": "Repeating Diamond Bolt",
+  "Description": "A high-tier bolt tipped with diamond, designed for advanced repeating crossbows. It delivers exceptional armor penetration and consistently high damage. Its reinforced construction prevents breakage on impact and retains much of its velocity while traveling through water.",
+  "CRDescription:2": "Diamond bolt for repeating crossbows. Does not break on impact and retains its velocity in water."
+},
+    "RepeatArrowBlock:3": {
+      "DisplayName": "Repeating Explosive Bolt",
+      "Description": "Explosive bolt for repeating crossbows. Creates small explosions on impact. While individual damage is lower than standard explosive bolts, it allows rapid explosive bursts, ideal for crowd control and area denial.",
+      "CRDescription:3": "Explosive bolt for repeating crossbows. Rapid explosive bursts for crowd control."
+    },
+    "RepeatArrowBlock:4": {
+      "DisplayName": "Repeating Poison Bolt",
+      "Description": "Low-lethality poison bolt. Deals low initial damage but applies poison for 30 seconds. Ideal for weakening enemies without killing them instantly.",
+      "CRDescription:4": "Poisonous bolt for repeating crossbows. Low damage but applies poison effect."
+    },
+    "RepeatArrowBlock:5": {
+      "DisplayName": "Repeating Severe Poison Bolt",
+      "Description": "Highly toxic bolt for repeating crossbows. Applies a severe poison effect for 100 seconds. Designed to weaken entire groups through rapid status application.",
+      "CRDescription:5": "Highly poisonous bolt for repeating crossbows. Applies severe poison effect."
+    },
+    "AA12Block:0": {
+  "DisplayName": "Atchisson AA-12 Auto Shotgun",
+  "Description": "A gas-operated, magazine-fed automatic shotgun with an open-bolt design. Originally designed by Maxwell Atchisson in 1972 for military and law enforcement applications, it fires 12-gauge shotgun shells at a rate of 300 RPM with a magazine capacity of 8 to 20 rounds depending on the magazine. Its bullpup configuration and improved recoil system significantly reduce felt recoil, allowing controllable automatic fire even with powerful ammunition. In this mod, it uses AA12Bullet cartridges and fires 8 pellets per shell, being devastating at close to medium range.",
+  "CRDescription:0": "Fully automatic shotgun with low recoil. Fires 12-gauge shells with multiple pellets for devastating close-range damage."
+},
+"M249Block:0": {
+      "DisplayName": "M249 SAW",
+      "Description": "The M249 Squad Automatic Weapon (SAW) is a belt-fed light machine gun that provides sustained automatic fire for infantry squads. Fires 5.56×45mm NATO rounds at a rate of 750-1000 RPM. Has a 100-round belt capacity and uses intermediate cartridges for manageable recoil during automatic fire. Requires M249 ammunition blocks for reloading.",
+      "CRDescription:0": "Belt-fed light machine gun for sustained automatic fire. Uses 5.56×45mm NATO rounds with manageable recoil."
+    },
+    "NewG3Block:0": {
+      "DisplayName": "G3 Assault Rifle",
+      "Description": "A modern assault rifle with advanced polymer construction and enhanced accuracy. Designed for versatile combat situations, it provides a balanced mix of firepower and handling, making it suitable for mid to long-range engagements.",
+      "CRDescription:0": "Modern assault rifle with improved accuracy and handling for versatile combat."
+    },
+    "NewG3Bullet:0": {
+      "DisplayName": "7.62×51mm NATO Magazine",
+      "Description": "A 10-round magazine containing 7.62×51mm NATO ammunition for the G3 rifle. Provides reliable penetration and stopping power against armored targets.",
+      "CRDescription:0": "High-caliber ammo for the G3 rifle, ideal for penetrating armor and engaging targets at medium to long range."
+    },
+    "MP5SSDBlock:0": {
+      "DisplayName": "MP5SD Submachine Gun",
+      "Description": "A suppressed submachine gun designed for stealth operations. Its integrated suppressor reduces muzzle flash and noise, making it ideal for covert missions and close-quarters combat.",
+      "CRDescription:0": "Suppressed submachine gun for stealth and close-quarters combat."
+    },
+    "MP5SSDBulletBlock:0": {
+      "DisplayName": "9×19mm Parabellum Magazine",
+      "Description": "A 12-round magazine with subsonic 9×19mm Parabellum rounds for the MP5SD. Optimized for quiet, effective engagements without sacrificing stopping power.",
+      "CRDescription:0": "Subsonic ammo for MP5SD, ideal for stealth and close-quarters combat."
+    },
+    "MendozaBlock:0": {
+      "DisplayName": "Mendoza Rifle",
+      "Description": "A semi-automatic rifle renowned for its excellent accuracy and reliability. Ideal for marksmen who require precision at medium to long ranges without the need for full-auto fire.",
+      "CRDescription:0": "High-precision semi-automatic rifle for medium to long-range engagements."
+    },
+    "MendozaBulletBlock:0": {
+      "DisplayName": ".308 Winchester Rounds",
+      "Description": "8 rounds of .308 Winchester ammunition, designed for precision shooting. Offers high accuracy and penetration, suitable for hunting and tactical engagements.",
+      "CRDescription:0": "Precision ammunition for the Mendoza rifle, ideal for medium to long-range engagements."
+    },
+    "GrozaBlock:0": {
+      "DisplayName": "Groza Bullpup Assault Rifle",
+      "Description": "A bullpup assault rifle featuring an integrated grenade launcher system. Compact yet powerful, it excels in close to medium-range combat with high versatility and firepower.",
+        "CRDescription:0": "Compact bullpup assault rifle with integrated grenade launcher for versatile combat."
+    },
+    "GrozaBulletBlock:0": {
+      "DisplayName": "9×39mm Subsonic Ammunition",
+      "Description": "10 rounds of special 9×39mm subsonic ammunition for the Groza rifle. Designed for stealth operations with reduced noise and effective armor penetration.",
+      "CRDescription:0": "Special subsonic ammo for the Groza, ideal for stealth and close-quarters combat."
+    },
+    "M249BulletBlock:0": {
+      "DisplayName": "M249 Ammunition",
+      "Description": "Ammunition box containing 5.56×45mm NATO rounds for the M249 SAW. Each box provides 100 rounds of belt-fed ammunition. Insert into the M249 to fully reload the weapon to its maximum capacity.",
+      "CRDescription:0": "100 rounds of 5.56×45mm NATO ammunition for the M249 SAW. Provides sustained firepower for extended engagements."
+    },
+    "BaseballBatBlock:0": {
+  "DisplayName": "Baseball Bat",
+  "Description": "A simple melee weapon with solid impact damage. Reliable, durable, and effective at close range.",
+  "CRDescription:0": "A classic blunt weapon, perfect for bashing enemies at close range."
+    },
+    "AKBlock:0": {
+    "DisplayName": "AK-47",
+    "Description": "Legendary assault rifle firing 7.62×39mm rounds. Good accuracy, moderate recoil. Uses AK47Bullet ammunition. Fires at ~350 RPM.",
+    "CRDescription:0": "Reliable Russian assault rifle, perfect for beginners in automatic weapons"
+  },
+  "BK43Block:0": {
+  "DisplayName": "BK-43 Double-Barrel Shotgun",
+  "Description": "A simple and reliable double-barrel shotgun. Holds two rounds and is highly effective at close range due to pellet spread.",
+  "CRDescription:0": "Double-barreled shotgun for close combat"
+},
+"BK43BulletBlock:0": {
+  "DisplayName": "BK-43 Shotgun Shells",
+  "Description": "Ammunition used by the BK-43. Effective at close range with strong stopping power and wide spread.",
+  "CRDescription:0": "12-gauge shells for BK 43 shotgun"
+},
+  "KABlock:0": {
+    "DisplayName": "KA",
+    "Description": "Advanced assault rifle that fires 5.56x45mm rounds. Unlike the AK-47, the KA offers superior accuracy, minimal recoil, and a 40-round magazine. Uses ammunition specifically designed for the KA."
+  },
+  "KABulletBlock:0": {
+    "DisplayName": "KA 5.56x45mm Ammunition",
+    "Description": "5.56x45mm ammunition specifically designed for the KA rifle. Offers higher muzzle velocity, improved ballistics compared to standard ammunition, and a 40-round magazine capacity."
+  },
+  "AUGBlock:0": {
+    "DisplayName": "Steyr AUG",
+    "Description": "Bullpup assault rifle with low recoil. Uses 5.56×45mm NATO. Cycles through 6 different bullet types automatically. Integrated optical sight.",
+    "CRDescription:0": "Austrian bullpup assault rifle with low recoil and integrated sight"
+  },
+  "FamasBlock:0": {
+    "DisplayName": "FAMAS F1",
+    "Description": "French bullpup with high rate of fire (~667 RPM). Uses NuevaBala4 projectiles. Compact design with good controllability.",
+    "CRDescription:0": "French bullpup assault rifle with high rate of fire and compact design"
+  },
+  "G3Block:0": {
+    "DisplayName": "FX05 Xiuhcoatl",
+    "Description": "Mexican assault rifle (FX05 Xiuhcoatl) firing powerful rounds. Uses NuevaBala projectiles. Good rate of fire and accuracy.",
+    "CRDescription:0": "Mexican assault rifle with good accuracy and power"
+  },
+  "Izh43Block:0": {
+    "DisplayName": "IZH-43 Shotgun",
+    "Description": "Double-barrel shotgun firing 8 pellets per shot. Devastating close-range. 2-round capacity, uses Izh43Bullet.",
+    "CRDescription:0": "Russian double-barreled shotgun with high damage at close range"
+  },
+  "M4Block:0": {
+    "DisplayName": "M4 Carbine",
+    "Description": "5.56×45mm carbine firing 3-round bursts. Uses NuevaBala2 projectiles. 22-round magazine, excellent modularity.",
+    "CRDescription:0": "American M4 carbine with better accuracy than AK-47"
+  },
+  "Mac10Block:0": {
+    "DisplayName": "MAC-10",
+    "Description": "Compact machine pistol with extreme rate of fire (~600 RPM). Uses NuevaBala3 projectiles. Intense recoil, 30-round magazine.",
+    "CRDescription:0": "Compact .45 ACP machine pistol with high rate of fire"
+  },
+  "MinigunBlock:0": {
+    "DisplayName": "Minigun",
+    "Description": "Rotary machine gun firing NuevaBala6 projectiles at ~750 RPM. 100-round capacity, devastating suppression weapon.",
+    "CRDescription:0": "Gatling-style minigun with devastating firepower"
+  },
+  "P90Block:0": {
+    "DisplayName": "FN P90",
+    "Description": "Bullpup PDW with 900 RPM rate of fire. Cycles through 6 bullet types. 50-round magazine, 5.7×28mm rounds.",
+    "CRDescription:0": "Compact bullpup PDW with high rate of fire and large magazine"
+  },
+  "RevolverBlock:0": {
+    "DisplayName": "Revolver",
+    "Description": "Classic revolver firing powerful single shots. Uses NuevaBala4 projectiles. 6-round cylinder, high stopping power.",
+    "CRDescription:0": "Classic .357 Magnum revolver with excellent stopping power"
+  },
+  "SCARBlock:0": {
+    "DisplayName": "FN SCAR",
+    "Description": "Modular battle rifle with excellent accuracy. Cycles through 6 bullet types. 600 RPM, 30-round magazine.",
+    "CRDescription:0": "Versatile battle rifle with excellent accuracy and modular design"
+  },
+  "SniperBlock:0": {
+    "DisplayName": "Sniper Rifle",
+    "Description": "Bolt-action precision rifle for extreme long-range engagements. Equipped with high-magnification scope. Delivers single-shot kills with proper aim. Requires steady positioning and patience.",
+    "CRDescription:0": "High-powered bolt-action sniper rifle with scope for long-range precision"
+  },
+  "SPAS12Block:0": {
+    "DisplayName": "SPAS-12 Combat Shotgun",
+    "Description": "Combat shotgun firing 8 pellets per shot. 8-round capacity. Can fire in pump or semi-auto modes.",
+    "CRDescription:0": "Italian combat shotgun with pump-action and semi-auto modes"
+  },
+  "SWM500Block:0": {
+    "DisplayName": "Desert Eagle",
+    "Description": "Desert Eagle .50 caliber pistol with tremendous stopping power. Single-shot, uses NuevaBala4 projectiles. 5-round magazine.",
+    "CRDescription:0": ".50 AE Desert Eagle hand cannon with massive stopping power"
+  },
+  "UziBlock:0": {
+    "DisplayName": "Uzi",
+    "Description": "Iconic submachine gun with high rate of fire (~750 RPM). Uses NuevaBala2 projectiles. 30-round magazine.",
+    "CRDescription:0": "Israeli submachine gun with better stability than Mac-10"
+  },
+"AA12BulletBlock:0": {
+  "DisplayName": "12-Gauge AA-12 Cartridge",
+  "Description": "8-round 12-gauge magazine for the AA-12 shotgun. Each shell contains 8 pellets that spread when fired, being especially effective against groups of enemies at close range. The ammunition is shotgun-type, specifically designed for the AA-12 feeding system.",
+  "CRDescription:0": "12-gauge shells for the AA-12 shotgun, containing 8 pellets each for devastating close-range damage."
+},
+  "AKBullet:0": {
+    "DisplayName": "7.62×39mm AK Magazine",
+    "Description": "30-round magazine for AK-47 rifle. Contains 7.62×39mm ammunition.",
+    "CRDescription:0": "7.62×39mm ammunition for the AK-47"
+  },
+  "M4Bullet:0": {
+    "DisplayName": "5.56×45mm STANAG Magazine",
+    "Description": "22-round magazine for M4 carbine. Contains 5.56×45mm NATO ammunition.",
+    "CRDescription:0": "5.56×45mm NATO standard ammunition"
+  },
+  "SPAS12BulletBlock:0": {
+    "DisplayName": "SPAS-12 12 Gauge Shells",
+    "Description": "8-round box of 12 gauge shells specifically for the SPAS-12 shotgun.",
+    "CRDescription:0": "Craft a box of 8, 12-gauge shells specifically for the SPAS-12."
+  },
+  "Mac10Bullet:0": {
+    "DisplayName": ".45 ACP Magazine",
+    "Description": "30-round magazine for MAC-10. Contains .45 ACP ammunition.",
+    "CRDescription:0": ".45 ACP ammunition for the MAC-10 machine pistol"
+  },
+  "UziBullet:0": {
+    "DisplayName": "9×19mm Uzi Magazine",
+    "Description": "32-round magazine for Uzi submachine gun. Contains 9×19mm Parabellum rounds.",
+    "CRDescription:0": "9×19mm Parabellum ammunition for the Uzi submachine gun"
+  },
+  "G3Bullet:0": {
+    "DisplayName": "5.56×45mm FX05 Magazine",
+    "Description": "30-round magazine for FX05 Xiuhcoatl rifle. Contains 5.56×45mm NATO rounds.",
+    "CRDescription:0": "5.56×45mm NATO ammunition for the FX05 Xiuhcoatl assault rifle"
+  },
+  "MinigunBullet:0": {
+    "DisplayName": "7.62×51mm Minigun Ammo Box",
+    "Description": "100-round ammunition box for Minigun. Contains linked 7.62×51mm NATO belts.",
+    "CRDescription:0": "100 rounds of 7.62×51mm NATO ammunition for the Minigun"
+  },
+  "Izh43Bullet:0": {
+    "DisplayName": "IZH-43 12 Gauge Double Shells",
+    "Description": "2-round set of 12 gauge double shells specifically for the IZH-43 shotgun.",
+    "CRDescription:0": "Craft a set of 2, 12-gauge double shells specifically for the IZH-43."
+  },
+  "SWM500Bullet:0": {
+    "DisplayName": ".50 AE Desert Eagle Magazine",
+    "Description": "7-round magazine for Desert Eagle pistol. Contains .50 Action Express rounds.",
+    "CRDescription:0": ".50 Action Express ammunition for the Desert Eagle pistol"
+  },
+  "SniperBullet:0": {
+    "DisplayName": "7.62×51mm Sniper Rounds",
+    "Description": "5-round stripper clip for sniper rifle. Contains 7.62×51mm match-grade ammunition.",
+    "CRDescription:0": "5 rounds of 7.62×51mm match-grade ammunition for the sniper rifle"
+  },
+  "AUGBullet:0": {
+    "DisplayName": "5.56×45mm AUG Magazine",
+    "Description": "30-round translucent magazine for Steyr AUG. Contains 5.56×45mm NATO rounds.",
+    "CRDescription:0": "5.56×45mm NATO ammunition for the Steyr AUG assault rifle"
+  },
+  "P90BulletBlock:0": {
+    "DisplayName": "5.7×28mm P90 Magazine",
+    "Description": "50-round top-mounted magazine for FN P90. Contains 5.7×28mm rounds.",
+    "CRDescription:0": "5.7×28mm ammunition for the FN P90 PDW"
+  },
+  "SCARBulletBlock:0": {
+    "DisplayName": "7.62×51mm SCAR Magazine",
+    "Description": "20-round magazine for FN SCAR-H. Contains 7.62×51mm NATO ammunition.",
+    "CRDescription:0": "7.62×51mm NATO ammunition for the FN SCAR battle rifle"
+  },
+  "RevolverBulletBlock:0": {
+    "DisplayName": ".357 Magnum Revolver Rounds",
+    "Description": "6-round speedloader for revolver. Contains .357 Magnum ammunition.",
+    "CRDescription:0": ".357 Magnum rounds for reliable penetration"
+  },
+  "FamasBulletBlock:0": {
+    "DisplayName": "5.56×45mm FAMAS Magazine",
+    "Description": "25-round magazine for FAMAS rifle. Contains 5.56×45mm NATO rounds.",
+    "CRDescription:0": "5.56×45mm NATO rounds optimized for bullpup design"
+  },
+  "ClothingBlock:39": {
+    "DisplayName": "T-Shirt Digimon",
+    "Description": "A cool t-shirt featuring Digimon designs. Perfect for fans of the series who want to show off their love for these digital monsters.",
+    "CRDescription:0": "A cool t-shirt featuring Digimon designs. Perfect for fans of the series who want to show off their love for these digital monsters."
+  },
+    "ClothingBlock:40": {
+      "DisplayName": "Lava Armor Helmet",
+      "Description": "A helmet forged from molten rock. Provides great protection and warmth, shielding the head from both attacks and cold.",
+      "CRDescription:0": "A helmet forged from molten rock. Provides great protection and warmth, shielding the head from both attacks and cold."
+    },
+    "ClothingBlock:41": {
+      "DisplayName": "Lava Armor Chestplate",
+      "Description": "A chestplate imbued with volcanic energy. Offers durable defense and insulation, keeping the torso warm in extreme climates.",
+      "CRDescription:0": "A chestplate imbued with volcanic energy. Offers durable defense and insulation, keeping the torso warm in extreme climates."
+    },
+    "ClothingBlock:42": {
+      "DisplayName": "Lava Armor Leggings",
+      "Description": "Leggings forged from volcanic stone. Reinforce the legs with the strength of lava and provide warmth against the cold.",
+      "CRDescription:0": "Leggings forged from volcanic stone. Reinforce the legs with the strength of lava and provide warmth against the cold."
+    },
+    "ClothingBlock:43": {
+      "DisplayName": "Lava Armor Boots",
+      "Description": "Boots crafted from hardened lava. Improve endurance and speed while keeping the feet warm in freezing conditions.",
+      "CRDescription:0": "Boots crafted from hardened lava. Improve endurance and speed while keeping the feet warm in freezing conditions."
+    },
+    "ClothingBlock:44": {
+      "DisplayName": "Bulletproof Helmet",
+      "Description": "Tired of diamond armor failing against gunfire? This bulletproof metal helmet is built with lightweight materials, providing strong protection against armed NPCs and bandits without reducing mobility.",
+      "CRDescription:0": "Tired of diamond armor failing against gunfire? This bulletproof metal helmet is built with lightweight materials, providing strong protection against armed NPCs and bandits without reducing mobility."
+    },
+    "ClothingBlock:45": {
+      "DisplayName": "Bulletproof Vest",
+      "Description": "Despite being made of metal, this bulletproof vest uses a lightweight structure that does not hinder movement. The ultimate solution when diamond armor fails against firearms.",
+      "CRDescription:0": "Despite being made of metal, this bulletproof vest uses a lightweight structure that does not hinder movement. The ultimate solution when diamond armor fails against firearms."
+    },
+    "ClothingBlock:46": {
+      "DisplayName": "Bulletproof Leggings",
+      "Description": "Metal bulletproof leggings designed to be surprisingly lightweight. They withstand firearm impacts without slowing you down, solving the weakness of diamond armor against bullets.",
+      "CRDescription:0": "Metal bulletproof leggings designed to be surprisingly lightweight. They withstand firearm impacts without slowing you down, solving the weakness of diamond armor against bullets."
+    },
+    "ClothingBlock:47": {
+      "DisplayName": "Bulletproof Boots",
+      "Description": "Lightweight metal bulletproof boots that offer full protection without sacrificing speed. They complete the ideal set for facing armed bandits.",
+      "CRDescription:0": "Lightweight metal bulletproof boots that offer full protection without sacrificing speed. They complete the ideal set for facing armed bandits."
+    },
+    "ClothingBlock:48": {
+      "DisplayName": "Speed Boots",
+      "Description": "Inspired by the classic speed of Survivalcraft 2. These boots let you move incredibly fast, perfect for exploration, escaping danger, or reliving the original gameplay feel.",
+      "CRDescription:0": "Inspired by the classic speed of Survivalcraft 2. These boots let you move incredibly fast, perfect for exploration, escaping danger, or reliving the original gameplay feel."
+    },
+    "ClothingBlock:49": {
+      "DisplayName": "Super Speed Boots",
+      "Description": "Speed taken to the extreme, Survivalcraft 2 style. With these boots, you’ll cross the world at absurd speeds, ideal for fun, extreme exploration, or pure chaos.",
+      "CRDescription:0": "Speed taken to the extreme, Survivalcraft 2 style. With these boots, you’ll cross the world at absurd speeds, ideal for fun, extreme exploration, or pure chaos."
+    },
+    "ClothingBlock:50": {
+      "DisplayName": "Normal Jeans",
+      "Description": "Simple and comfortable pants. They don’t offer special advantages, but they get the job done for everyday survival.",
+      "CRDescription:0": "Simple and comfortable pants. They don’t offer special advantages, but they get the job done for everyday survival."
+    },
+    "AntiTanksBulletBlock:0": {
+    "DisplayName": "Anti-Tanks Bullet",
+    "Description": "A special ammunition that will help us later. Use it wisely and only in emergencies if musket or shotgun bullets are ineffective in applying the necessary damage.",
+    "CRDescription:0": "Use it wisely if powerful heavy bosses have you surrounded and musket balls are ineffective."
+},
+"ClothingBlock:51": {
+  "DisplayName": "Bulletproof Military Helmet",
+  "Description": "A state-of-the-art ballistic military helmet. It cannot be crafted and can only be obtained by defeating La Bandida."
+},
+"ClothingBlock:52": {
+  "DisplayName": "Military Bulletproof Vest",
+  "Description": "Military-grade ballistic vest. Cannot be crafted; can only be obtained by defeating La Bandida."
+},
+"ClothingBlock:53": {
+  "DisplayName": "Military Bulletproof Pants",
+  "Description": "Military pants with ballistic protection. Cannot be crafted; can only be obtained by defeating La Bandida."
+},
+"ClothingBlock:54": {
+  "DisplayName": "Military Bulletproof Boots",
+  "Description": "Reinforced tactical boots with ballistic protection. Cannot be crafted; can only be obtained by defeating La Bandida."
+},
+"InfectedSpawnEggBlock:0": {
+  "DisplayName": "Common Infected Spawn Egg",
+  "Description": "Summons an infected creature when thrown against a solid object. The resulting being displays standard aggressive tendencies, with some variations capable of delivering poison or freezing effects through their attacks."
+},
+"InfectedSpawnEggBlock:1": {
+  "DisplayName": "Boomer Spawn Egg",
+  "Description": "Creates an unstable infected upon impact with a hard surface. This volatile entity detonates in a devastating explosion at the moment of death, producing a powerful shockwave that destroys terrain and inflicts massive damage to anything nearby."
+},
+"InfectedSpawnEggBlock:2": {
+  "DisplayName": "Special Infected Spawn Egg",
+  "Description": "Generates an exceptionally powerful boss-class infected when shattered. These formidable opponents possess immense durability and strength, demanding superior weaponry and tactics to overcome in combat."
+},
+"InfectedSpawnEggBlock:3": {
+  "DisplayName": "Flying Infected Spawn Egg",
+  "Description": "Releases an airborne infected upon destruction against any surface. The resulting creature takes to the skies, granting it the ability to bypass ground-level obstacles and assault players from elevated positions."
+},
+"InfectedSpawnEggBlock:4": {
+  "DisplayName": "Animal Infected Spawn Egg",
+  "Description": "Spawns a bestial infected after being thrown and broken. Drawing from animalistic traits, this variant relies on raw speed and ferocity rather than supernatural abilities to overwhelm its prey."
+},
+"InfectedSpawnEggBlock:5": {
+  "DisplayName": "Ghost Infected Spawn Egg",
+  "Description": "Conjures an ethereal infected when smashed. These spectral entities move with unnatural swiftness and possess a degree of intangibility, enabling them to slip through attacks and strike with ghostly precision."
 }
+},
+      "ContentWidgets": {
+        "BestiaryInfectedScreen": {
+    "1": "Infected Bestiary"
+},
+"BestiaryInfectedDescriptionScreen": {
+    "1": "Infected Description",
+    "2": "Loot:"
+}
+,
+        "LetterWarDialog": {
+    "Title": "WAR LETTER",
+    "AcceptButton": "ACCEPT",
+    "RejectButton": "REJECT",
+    "Message": "From the Cartel of Los Bandidos (Cartel de Los Bandidos):\nAfter surviving the Green Night, you proved that at least\nyou could make it through the green nights, from the easiest\nto the hardest.\nHowever, we want to declare war on you as a new\nchallenge. We want to know if you can survive once again.\nIf you accept, tomorrow at dawn we’re gonna beat the hell out of you.\nBut if you manage to win the war against us, we’ll leave you alone\nforever. Not a single bullet anymore.\nIf you refuse, you’ll still be able to read this letter for now.\nBut everyone will know you’re a damn coward hiding\nbefore a real fight.\nThe Cartel never forgives. Choose carefully, for your own damn sake.\nSigned: The Council of Bandidos",
+    "AcceptMessage": "You accepted the war, idiot. The Cartel is gonna crush you at dawn. You already signed your own sentence.",
+    "AcceptBeforeGreenNightMessage": "You accepted the war right before the Green Night falls. Infected and narcos are going to hit you from all sides at the same time. Tonight you won't sleep, you'll pray. Enjoy hell, you bastard!",
+    "RejectMessage": "You rejected the challenge, coward. The letter will stay here, but don’t think we forgot about you. The Cartel always comes back."
+  },
+        "RefrigeratorXiaomi": {
+    "RefrigeratorLabel": "Refrigerator",
+    "InventoryLabel": "Inventory",
+    "CoolingStatus": "Cooling...",
+    "NoPowerStatus": "No Power"
+  },
+        "GreenNightToggleDialog": {
+  "Title": "Green Night Settings",
+  "CheckboxText": "Enable Green Night",
+  "OkButton": "OK",
+  "CancelButton": "Cancel",
+  "DaysButton": "Days...",
+  "EnableExplanation": "The world becomes more hostile. Dangerous creatures appear periodically and enemies are relentless.",
+  "DisableExplanation": "The world is peaceful. Nights pass normally without special threats.",
+  "EnabledNotification": "Green Night enabled",
+  "DisabledNotification": "Green Night disabled",
+  "IntervalLabel": "Set Green Night interval:",
+  "IntervalHintLabel": "(How many days between each Green Night)"
+},
+"GreenNightIntervalDialog": {
+  "1": "Green Night Settings",
+  "2": "How often would you like Green Night to occur?",
+  "3": "Days of sanity remaining:",
+  "4": "Accept",
+  "5": "Cancel",
+  "6": "Green Night is already part of your routine.",
+  "7": "Enough rest to forget why you were running.",
+  "8": "A reasonable amount of time to prepare defenses and bad excuses.",
+  "9": "The calm lasts so long that it starts to become unsettling.",
+  "10": "If you'd rather not choose, simply cancel.\nGreen Night will occur every 4 days with the \"Monday Morning\" mental state by default.",
+  "11": "Green Night has been set to {0} every {1} days.",
+  "12": "{0} days",
+  "DifficultyLabel": "Mental State",
+  "DifficultyPlaceholder": "Choose how bad you're doing"
+},
+"GreenNightDifficulty": {
+  "VeryEasy_Name": "Early Retirement",
+  "VeryEasy_Desc": "\"Grandpa vs. the World\" mode. The infected look at you with pity, and their attacks feel more like a massage than a hit. They don't touch your structures, can't even ride a foal, and their explosions are as disappointing as a damp firecracker that doesn't even attract other infected. They wander around so carefree that it never even occurs to them to protect themselves (no armor). Build your empire without fear. Perfect for anyone who wants to feel invincible without breaking a sweat.",
+  "Easy_Name": "Therapy Waiting List",
+  "Easy_Desc": "A walk in the park, even if the park is full of angry infected. They still respect your walls, but their punches are starting to hurt for real. Explosions are noticeable but won't level everything, and barely manage to catch the attention of the zombies around the corner. The infected are so clumsy they can't even remember how to open doors. Their protection is practically nonexistent (they almost never wear armor). Great for warming up before life really starts hitting back.",
+  "Normal_Name": "Monday Morning",
+  "Normal_Desc": "The average survivor's daily routine. Hits that hurt just enough, normal toughness, no structure damage, no mounts, no surprises. Explosions are the usual: flashy but manageable, temporarily attracting infected to come and take a look. The infected wear no protection, so they go down fairly easily. Your base is safe... for now. Think of it as an ordinary day before your boss (the apocalypse) decides to test you.",
+  "Medium_Name": "Structural Damage",
+  "Medium_Desc": "Now the real party begins. The infected learn how to use their hands to tear down your walls, and as if that wasn't enough, they can open doors too. You're not even safe in the bathroom! Explosions are no longer a joke, and their loud echo draws more infected to the impact site than you'd like. Some of them have even had the brilliant idea of putting on armor (medium chance), making them much tougher. Therapy won't help anymore.",
+  "Hard_Name": "The Last Architect",
+  "Hard_Desc": "Welcome to hell. The infected ride beasts, flank you from every side, use ranged weapons, and some have even managed to get their hands on firearms (though rarely). Your buildings are like houses of cards: one gentle touch and they're gone. Explosions wipe out everything in their path, and the brutal din attracts every infected in the area to investigate the disaster. Most of them now wear armor (high chance), making them much harder to kill. Whoever built your shelter should probably start looking for a new job... or a coffin.",
+  "Extreme_Name": "Sanity Load Error",
+  "Extreme_Desc": "You've lost your mind. The infected are killing machines: faster, stronger, hungrier. They tear down everything they touch, their explosions flatten entire city blocks, and if you're not careful, they'll surround you with no escape. Almost all of them wear full armor (very high chance), turning them into walking tanks. On top of that, many have learned to use ranged weapons, and it's not uncommon to see them carrying firearms. The deafening sound of their explosions is a lethal magnet that makes hordes sprint from far away towards the epicenter. There's no safe corner, no plan that works. Beat this, and you'll earn either madness... or a gravestone with your name on it.",
+  "Impossible_Name": "No Second Chances",
+  "Impossible_Desc": "Think you've hit rock bottom? Think again. There are no second chances here. This mode only unlocks after surviving absolute insanity. The infected are practically gods: not even Creative Mode can save you from a single hit. Their explosions erase the landscape, and to make matters worse, your allies become completely useless. They won't attack the infected, won't help you when you're under attack, ignore your orders, and pretend nothing's happening when the Green Night falls. Nearly all of the infected wear the best armor available, making every blow you land feel like punching solid rock. The devastating roar of the Boomers is a death sentence that summons every creature on the map straight to your position. You're completely alone. This isn't a game. It's a death sentence. And no, there's no going back."
+},
+        "VehicleInventoryWidget": {
+          "1": "Vehicle",
+          "2": "Inventory"
+        },
+        "ShittyCreaturesReleasesScreen": {
+    "0": "Shitty Creatures - Version History"
+  },
+        "DoubleMusketWidget": {
+    "0": "Not loaded. Drag bullets to load (max 2).",
+    "1": "Double-Barrel Musket",
+    "2": "Inventory",
+    "3": "Loaded ({0} shot(s) left)"
+  },
+        "Trader": {
+    "BuyButton": "Buy",
+    "CoinSlotHint": "Coin",
+    "SelectItemFirst": "Select an item first to purchase.",
+    "SlotEmpty": "This slot is empty.",
+    "InfoLabelFormat": "Price: {0} nuclear coins",
+    "ItemNoLongerAvailable": "This item is no longer available.",
+    "ItemCannotBeBought": "This item cannot be purchased.",
+    "InsufficientCoins": "You need {0} nuclear coins to buy {1}.",
+    "NotEnoughSpace": "Not enough inventory space.",
+    "PurchaseSuccessful": "Purchase successful! Thank you for your purchase!"
+},
+        "HireWidget": {
+        "Title": "HIRE MERCENARY",
+        "HireButton": "HIRE",
+        "LoreText": "Before you kill me or run away, know that I am not like those bandits who kill everything. I used to be one of them, but I rebelled against their ways. If you want proof that I'm different, the only way is to pay me {0} Nuclear Coins. Then you can give me weapons, distance, and fire. I swear I will be your loyal companion. If you don't want to, no problem – I'll still be here until you change your mind.",
+        "InfoText": "Hire for {0} Nuclear Coins?",
+        "DeadMessage": "This person is dead and cannot be hired.",
+        "NeedCoinsMessage": "You need {0} Nuclear Coins to hire this person.",
+        "SuccessMessage": "You have hired this person! They will now follow you."
+    },
+    "PirateTraderWidget": {
+    "Title": "Pirate Trader",
+    "Inventory": "Inventory"
+},
+"GunsTraderWidget": {
+    "Title": "Guns Trader",
+    "Inventory": "Inventory"
+},
+        "AutoCannonWidget": {
+    "Title": "Auto-Cannon",
+    "InventoryTitle": "Inventory",
+    "ProjectileSpeed": "Projectile Speed",
+    "ShotsPerSecond": "Shots Per Second",
+    "ProjectileSpread": "Projectile Spread",
+    "Fuel": "Fuel",
+    "HelpTitle": "Use Auto-Cannon",
+    "HelpText": "Authors\nFire Dragon\nKike\n----------\nThis weapon uses the first slot of the hotbar or the first available slot with an object. To save any changes, you must press 'Accept', or 'X' to discard. The spread and velocity settings determine the direction and distance of the projectiles.\n\nTo use it, simply hold right click if you are on PC, or hold the screen if you are on a mobile device, and it will automatically fire the times per second you have configured. Useful for shooting spawn eggs and generating creatures in large quantities in a short time.\n\nYou can also have fun launching fireworks or any other object.\n\n\nShitty code stolen by Samuelsan03, so do whatever you want with this code xd"
+  },
+    "CreatureInventoryWidget": {
+      "0": "Creature Inventory",
+      "1": "Farmer",
+      "2": "Farmer (N/A)"
+    },
+    "FlameThrowerWidget": {
+    "1": "Flamethrower",
+    "2": "Inventory",
+    "3": "Load fire or poison bullets to be able to shoot.",
+    "4": "Prepare to spray fire {0}/15",
+    "5": "Prepare to spray poison {0}/15"
+},
+    "RepeatCrossbowWidget": {
+      "1": "Repeating Crossbow",
+      "2": "Inventory",
+      "3": "Pull back to load",
+      "4": "Insert bolts",
+      "5": "Bolts: {0}/8",
+      "6": "First pull back the crossbow!",
+      "7": "First load an bolt!"
+    }
+  },
+  "Messages": {
+    "TooCloseToAim": "Too close to aim.",
+    "NeedAmmo": "Needs {0} to shoot.",
+    "CollarTamedInfectedSpiderMessage": "You have tamed an Infected Spider!\nIts venomous webs will trap and poison your enemies!",
+    "CollarTamedBoomerFrozenMessage": "You have tamed a Frozen Boomer!\nIts chilling explosion will freeze nearby enemies solid!",
+  "CollarTamedFrozenGhostMessage": "You have tamed a Frozen Ghost!\nIts spectral icy touch will freeze your foes!",
+  "CollarTamedFrozenGhostBoomerMessage": "You have tamed a Frozen Ghost Boomer!\nIts icy explosions will freeze your enemies!",
+    "CollarTamedInfectedFreezerMessage": "You have tamed a Infected Freezer! Its icy snowballs will slow and freeze your enemies!",
+    "CollarTamedHumanoidSkeletonMessage": "You have tamed a Humanoid Skeleton! Its bony bow will now fight for you!",
+    "CollarTamedPredatoryChameleonMessage": "You have tamed a Predatory Chameleon! Its lethal hunting instincts are now yours to command!",
+    "CollarTamedInfectedBirdMessage": "You have tamed an Infected Bird! Your loyal flying guardian will watch the skies!",
+    "CollarTamedInfectedWildboarMessage": "You have tamed an Infected Wildboar! Its powerful shoves will push your enemies away!",
+    "CollarTamedInfectedBearMessage": "You have tamed an Infected Bear! Its brute strength will protect you.",
+    "CollarTamedInfectedHyenaMessage": "You have tamed an infected hyena! Its pack instincts will protect you.",
+    "CollarTamedInfectedWolfMessage": "You have tamed an infected wolf! It will now fight for you.",
+    "CollarTamedInfectedWerewolfMessage": "You have tamed an infected werewolf! Its savage strength is now yours to command.",
+    "CollarTamedMachineGunMessage": "You have tamed a Machine Gun Infected!\nIts devastating minigun is now under your command!\nUnleash a hailstorm of bullets upon your enemies!",
+    "CollarTamedGhostBoomerMessage": "You have tamed a Ghost Boomer!\nIts spectral explosions will haunt your enemies!\nA ghostly explosive guardian is now yours!",
+    "CollarTamedGhostChargerMessage": "You have tamed a Ghost Charger!\nIts phantom force will push enemies from beyond!\nA spectral brute is now under your command!",
+    "CollarTamedGhostTankMessage": "You have tamed a Ghost Tank!\nThe spectral terror of bosses is now your phantom slave!\nIts ghostly brute force will guard you from the shadows!",
+    "CollarTamedGhostMessage": "You have tamed a Ghost!\n Its invisibility is now in your hands!",
+    "AntiTankCriticalHit": "Anti-Tank bullet critical hit",
+    "CollarTamedTankMessage": "You have tamed the Tank!\n The most feared boss of bosses is now your slave!\n Take advantage of its brute force as your guardian!",
+    "CollarTamedChargerMessage": "You have tamed a Charger!\n Its brute force to push enemies strongly will now be your tool!\n Use it well and wisely!",
+    "CollarTamedBoomerMessage": "You have tamed a Boomer!\nNow you can use it as an explosive guardian slave.\nUse it wisely in emergency cases!",
+    "CollarTamedBossMessage": "You have tamed the Flying Infected Boss, use it wisely for emergency cases",
+    "CollarTamedMessage": "You have tamed a hostile Infected!\n Now it will be your guardian!",
+    "CollarTamedFrozenTankMessage": "You have tamed a Frozen Tank!\nIts icy brute force will freeze and crush your enemies!\nA frozen guardian is now under your command!",
+    "CollarTamedFrozenTankGhostMessage": "You have tamed a Frozen Ghost Tank!\nA spectral icy terror now serves you from beyond!\nIts frozen phantom wrath will haunt your foes!"
+  },
+  "Usual": {
+    "ok": "OK",
+    "cancel": "X"
+  }
 }
