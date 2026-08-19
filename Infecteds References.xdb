@@ -166,7 +166,7 @@
   <Parameter Name="Class" Guid="679a1448-f272-4565-b774-6f5a62d0e41f" Value="Game.ComponentZombieAI" Type="string" />
   <Parameter Name="CanUseInventory" Description="Permite al zombie acceder y usar armas de su inventario" Guid="4aafbac5-4b4a-4087-96ec-e2d81461f504" Value="false" Type="bool" />
   <Parameter Name="CanWearClothing" Description="Permite a la criatura vestirse con la ropa del inventario" Guid="a356ddc4-862e-4115-97c0-482a0a29284a" Value="false" Type="bool" />
-  <Parameter Name="CanItBeMounted" Description="Permite a la criatura buscar y montar criaturas montables cercanas (caballos, camellos, burros)" Guid="1597774b-bcc0-4517-88f2-3192bc4a10b8" Value="false" Type="bool" />
+  <Parameter Name="CanItBeMounted" Description="Permite a la criatura buscar y montar criaturas montables cercanas" Guid="1597774b-bcc0-4517-88f2-3192bc4a10b8" Value="false" Type="bool" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="DefensiveCreatureAI" Description="Inteligencia artificial defensiva para criaturas" Guid="4f686fb8-0650-4dd9-8281-1247d07a28a7" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
@@ -256,6 +256,12 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="SubsystemBandageLargeBehavior" Guid="e00bffc3-1067-40ad-890f-b143d792244f" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="d7547284-40d9-4339-878b-57a1bb04ec0a" Value="Game.SubsystemBandageLargeBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemBandageSmallBehavior" Guid="f77caedc-ed02-4c7d-bf0b-df3102d9d5d6" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+  <Parameter Name="Class" Guid="6aa0bd42-a658-4c69-a302-5989028c82e0" Value="Game.SubsystemBandageSmallBehavior" Type="string" />
+  </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemFrozenSnowballBlockBehavior" Guid="cc7ba9a2-3a26-4bb8-bee4-8cd24e514cd9" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="24fdfce2-9931-4d02-af09-8bcb10dd7a90" Value="Game.SubsystemFrozenSnowballBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
