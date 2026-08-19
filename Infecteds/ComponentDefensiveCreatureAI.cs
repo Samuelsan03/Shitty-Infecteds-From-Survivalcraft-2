@@ -11,6 +11,9 @@ namespace Game
 	{
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
+		// === NUEVO: Suscripción a heridas de la montura ===
+		private Action<Injury> m_mountInjuredHandler;
+		private ComponentHealth m_subscribedMountHealth;
 		public enum FirearmReloadState
 		{
 			None,
@@ -346,6 +349,27 @@ namespace Game
 
 		public void Update(float dt)
 		{
+			if (m_componentCreature != null && m_componentCreature.ComponentHealth != null
+	&& m_componentCreature.ComponentHealth.Health <= 0f
+	&& m_componentRider != null)
+			{
+				UnsubscribeFromMountInjuries(); // NUEVO: Limpiar suscripción al morir
+
+				ComponentBody riderBody = m_componentCreature.ComponentBody;
+				if (riderBody != null && riderBody.ParentBody != null)
+				{
+					riderBody.Velocity = riderBody.ParentBody.Velocity;
+					riderBody.ParentBody = null;
+					riderBody.ParentBodyPositionOffset = Vector3.Zero;
+					riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+				}
+				m_componentRider.m_isAnimating = false;
+				m_componentRider.m_isDismounting = false;
+				m_currentMount = null;
+				CurrentMountState = MountState.None;
+				ClearPilotDestination();
+			}
+
 			UpdateMountingBehavior(dt);
 			UpdateTamingBehavior(dt);
 
@@ -819,6 +843,36 @@ namespace Game
 		{
 			if (!CanItBeMounted || m_componentRider == null)
 			{
+				if (CurrentMountState == MountState.Mounted || m_subscribedMountHealth != null)
+				{
+					UnsubscribeFromMountInjuries(); // NUEVO: Limpiar si se desactiva
+				}
+				CurrentMountState = MountState.None;
+				return;
+			}
+
+			// Si la criatura está muerta, nunca intentar montar
+			if (m_componentCreature.ComponentHealth.Health <= 0f)
+			{
+				if (m_componentRider.Mount != null)
+				{
+					UnsubscribeFromMountInjuries(); // NUEVO
+					StopMount();
+
+					ComponentBody riderBody = m_componentCreature.ComponentBody;
+					if (riderBody.ParentBody != null)
+					{
+						riderBody.Velocity = riderBody.ParentBody.Velocity;
+						riderBody.ParentBody = null;
+						riderBody.ParentBodyPositionOffset = Vector3.Zero;
+						riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+					}
+
+					m_componentRider.m_isAnimating = false;
+					m_componentRider.m_isDismounting = false;
+					m_currentMount = null;
+					ClearPilotDestination();
+				}
 				CurrentMountState = MountState.None;
 				return;
 			}
@@ -841,16 +895,28 @@ namespace Game
 
 				case MountState.Mounting:
 					CurrentMountState = m_componentRider.Mount != null ? MountState.Mounted : MountState.Searching;
+					if (CurrentMountState == MountState.Mounted)
+					{
+						SubscribeToMountInjuries(); // NUEVO: Suscribirse cuando se monta
+					}
 					break;
 
 				case MountState.Mounted:
-					// ============================================
-					// CORRECCIÓN BUG 1: Forzar desmonte inmediato cuando el jinete muere
-					// ============================================
-					if (m_componentCreature.ComponentHealth.Health <= 0f)
+					if (m_componentRider.Mount == null)
 					{
-						if (m_componentRider.Mount != null)
+						UnsubscribeFromMountInjuries(); // NUEVO
+						m_currentMount = null;
+						CurrentMountState = MountState.Searching;
+						ClearPilotDestination();
+					}
+					else
+					{
+						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
+						if (mountHealth != null && mountHealth.Health <= 0f)
 						{
+							UnsubscribeFromMountInjuries(); // NUEVO: Limpiar antes de forzar desmonte
+
+							// CORRECCIÓN: Desmonte forzado inmediato cuando la montura muere
 							StopMount();
 
 							ComponentBody riderBody = m_componentCreature.ComponentBody;
@@ -864,28 +930,6 @@ namespace Game
 
 							m_componentRider.m_isAnimating = false;
 							m_componentRider.m_isDismounting = false;
-						}
-						m_currentMount = null;
-						CurrentMountState = MountState.Dismounting;
-						ClearPilotDestination();
-						break;
-					}
-					// ============================================
-					// FIN CORRECCIÓN BUG 1
-					// ============================================
-
-					if (m_componentRider.Mount == null)
-					{
-						m_currentMount = null;
-						CurrentMountState = MountState.Searching;
-						ClearPilotDestination();
-					}
-					else
-					{
-						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
-						if (mountHealth != null && mountHealth.Health <= 0f)
-						{
-							m_componentRider.StartDismounting();
 							m_currentMount = null;
 							CurrentMountState = MountState.Dismounting;
 							ClearPilotDestination();
@@ -897,6 +941,28 @@ namespace Game
 					if (m_componentRider.Mount == null)
 					{
 						m_currentMount = null;
+						CurrentMountState = MountState.Searching;
+					}
+					else
+					{
+						// Si por alguna razón sigue montado, forzar desmonte
+						UnsubscribeFromMountInjuries(); // NUEVO
+
+						StopMount();
+
+						ComponentBody riderBody = m_componentCreature.ComponentBody;
+						if (riderBody.ParentBody != null)
+						{
+							riderBody.Velocity = riderBody.ParentBody.Velocity;
+							riderBody.ParentBody = null;
+							riderBody.ParentBodyPositionOffset = Vector3.Zero;
+							riderBody.ParentBodyRotationOffset = Quaternion.Identity;
+						}
+
+						m_componentRider.m_isAnimating = false;
+						m_componentRider.m_isDismounting = false;
+						m_currentMount = null;
+						ClearPilotDestination();
 						CurrentMountState = MountState.Searching;
 					}
 					break;
@@ -951,6 +1017,8 @@ namespace Game
 		{
 			if (CurrentMountState == MountState.Mounted && m_componentRider != null)
 			{
+				UnsubscribeFromMountInjuries(); // NUEVO
+
 				m_componentRider.StartDismounting();
 				CurrentMountState = MountState.Dismounting;
 				ClearPilotDestination();
@@ -1705,87 +1773,92 @@ namespace Game
 		{
 			if (m_componentRider == null || m_componentRider.Mount == null) return;
 
-			// No usar ComponentPilot para monturas terrestres normales, solo SteedBehavior
-			if (!IsOnFlyingMount)
+			ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
+			if (steedBehavior == null) return;
+
+			ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
+			Vector3 myPos = mountBody.Position;
+			Vector3 targetPos = target.ComponentBody.Position;
+			float distance = Vector3.Distance(myPos, targetPos);
+
+			// Si está muy cerca, no necesita moverse más
+			if (distance < AttackDistanceRange.X)
 			{
-				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
-				if (steedBehavior != null)
-				{
-					ComponentBody mountBody = m_componentRider.Mount.ComponentBody;
-					Vector3 myPos = mountBody.Position;
-					Vector3 targetPos = target.ComponentBody.Position;
-
-					Vector3 dirToTarget = targetPos - myPos;
-					dirToTarget.Y = 0f;
-					if (dirToTarget.LengthSquared() < 0.01f) return;
-					dirToTarget = Vector3.Normalize(dirToTarget);
-
-					Vector3 forward = new Vector3(mountBody.Matrix.Forward.X, 0f, mountBody.Matrix.Forward.Z);
-					if (forward.LengthSquared() < 0.01f) return;
-					forward = Vector3.Normalize(forward);
-
-					float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
-					float dot = Vector3.Dot(forward, dirToTarget);
-					float angleToTarget = MathF.Atan2(cross, dot);
-					float turnAmount = MathUtils.Clamp(angleToTarget * 3f, -1f, 1f);
-
-					steedBehavior.TurnOrder = turnAmount;
-
-					float distance = Vector3.Distance(myPos, targetPos);
-
-					if (MathF.Abs(angleToTarget) < 0.5f)
-					{
-						if (distance > 15f)
-							steedBehavior.SpeedOrder = 1;
-						else if (distance > 8f)
-							steedBehavior.SpeedOrder = 1;
-						else
-							steedBehavior.SpeedOrder = 0; // Frena cuando se acerca al target
-					}
-					else
-					{
-						steedBehavior.SpeedOrder = 0; // Frena si tiene que girar mucho
-					}
-
-					steedBehavior.JumpOrder = 0f;
-				}
-
-				// Asegurar que el Pilot esté detenido para monturas terrestres (evita bugs)
-				if (m_componentPilot != null && m_componentPilot.Destination != null)
-				{
-					m_componentPilot.Stop();
-				}
+				// Solo girar hacia el objetivo, mantener velocidad baja para ajustar posición
+				steedBehavior.TurnOrder = CalculateTurnAmount(mountBody, targetPos);
+				steedBehavior.SpeedOrder = 0; // Nivel 1 = quieto, para ajustar posición
+				steedBehavior.JumpOrder = 0f;
 				return;
 			}
 
-			// Lógica original solo para monturas voladoras
-			if (m_componentPilot == null) return;
+			// Calcular y aplicar giro
+			float turnAmount = CalculateTurnAmount(mountBody, targetPos);
+			steedBehavior.TurnOrder = turnAmount;
 
-			Vector3 targetPosition = target.ComponentBody.Position;
-			float distToTarget = Vector3.Distance(m_componentRider.Mount.ComponentBody.Position, targetPosition);
-
-			if (distToTarget < AttackDistanceRange.X)
+			// === CLAVE: Mantener velocidad máxima mientras persigue ===
+			// Si el ángulo es razonable, ir a máxima velocidad
+			if (MathF.Abs(turnAmount) < 0.6f)
 			{
-				m_componentPilot.Stop();
-
-				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
-				if (steedBehavior != null)
-				{
-					steedBehavior.SpeedOrder = 0;
-					steedBehavior.TurnOrder = 0f;
-					steedBehavior.JumpOrder = 0f;
-				}
+				steedBehavior.SpeedOrder = 1; // Velocidad máxima
+			}
+			else if (MathF.Abs(turnAmount) < 1.0f)
+			{
+				steedBehavior.SpeedOrder = 1; // Seguir rápido incluso girando un poco
 			}
 			else
 			{
-				m_componentPilot.SetDestination(targetPosition, 1f, AttackDistanceRange.X, false, false, true, null);
-
-				ComponentSteedBehavior steedBehavior = m_componentRider.Mount.Entity.FindComponent<ComponentSteedBehavior>();
-				if (steedBehavior != null)
-				{
-					steedBehavior.SpeedOrder = 1;
-				}
+				steedBehavior.SpeedOrder = 0; // Frenar solo si gira mucho
 			}
+
+			// Saltar si hay obstáculos adelante
+			if (steedBehavior.m_componentPathfinding != null && steedBehavior.m_componentPathfinding.IsStuck)
+			{
+				steedBehavior.JumpOrder = 1f;
+			}
+			else
+			{
+				steedBehavior.JumpOrder = 0f;
+			}
+
+			// Usar Pilot para monturas voladoras (control de altura)
+			if (IsOnFlyingMount && m_componentPilot != null)
+			{
+				Vector3 flyTarget = targetPos;
+				float heightDiff = targetPos.Y - myPos.Y;
+
+				// Ajustar destino vertical para que el Steed volador suba o baje
+				if (heightDiff > 1f)
+					flyTarget.Y += 5f;
+				else if (heightDiff < -1f)
+					flyTarget.Y -= 5f;
+
+				m_componentPilot.SetDestination(flyTarget, 1f, AttackDistanceRange.X, false, false, true, null);
+			}
+			else
+			{
+				// Monturas de tierra no necesitan Pilot
+				if (m_componentPilot != null && m_componentPilot.Destination != null)
+					m_componentPilot.Stop();
+			}
+		}
+
+		/// Calcula el ángulo de giro necesario hacia un objetivo
+		private float CalculateTurnAmount(ComponentBody body, Vector3 targetPos)
+		{
+			Vector3 dirToTarget = targetPos - body.Position;
+			dirToTarget.Y = 0f;
+			if (dirToTarget.LengthSquared() < 0.01f) return 0f;
+			dirToTarget = Vector3.Normalize(dirToTarget);
+
+			Vector3 forward = new Vector3(body.Matrix.Forward.X, 0f, body.Matrix.Forward.Z);
+			if (forward.LengthSquared() < 0.01f) return 0f;
+			forward = Vector3.Normalize(forward);
+
+			float dot = Vector3.Dot(forward, dirToTarget);
+			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
+			float angleToTarget = MathF.Atan2(cross, dot);
+
+			return MathUtils.Clamp(angleToTarget * 2.5f, -1f, 1f);
 		}
 
 		private void HandleAutomaticFirearm(Ray3 firearmRay, FirearmData firearm)
@@ -1877,6 +1950,89 @@ namespace Game
 					ApplyAimVisualSettings(false, false, false, true);
 				}
 			}
+		}
+
+		// === NUEVO: Lógica para perseguir cuando golpean a la montura ===
+		private void SubscribeToMountInjuries()
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
+
+			ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
+			if (mountHealth == null) return;
+
+			// Evitar suscribirse dos veces a la misma montura
+			if (m_subscribedMountHealth == mountHealth) return;
+
+			// Desuscribirse de la montura anterior si existe
+			if (m_subscribedMountHealth != null && m_mountInjuredHandler != null)
+			{
+				m_subscribedMountHealth.Injured = (Action<Injury>)Delegate.Remove(m_subscribedMountHealth.Injured, m_mountInjuredHandler);
+			}
+
+			if (m_mountInjuredHandler == null)
+			{
+				m_mountInjuredHandler = new Action<Injury>(OnMountInjured);
+			}
+
+			mountHealth.Injured = (Action<Injury>)Delegate.Combine(mountHealth.Injured, m_mountInjuredHandler);
+			m_subscribedMountHealth = mountHealth;
+		}
+
+		private void UnsubscribeFromMountInjuries()
+		{
+			if (m_subscribedMountHealth != null && m_mountInjuredHandler != null)
+			{
+				m_subscribedMountHealth.Injured = (Action<Injury>)Delegate.Remove(m_subscribedMountHealth.Injured, m_mountInjuredHandler);
+				m_subscribedMountHealth = null;
+			}
+		}
+
+		private void OnMountInjured(Injury injury)
+		{
+			ComponentCreature attacker = injury.Attacker;
+			if (attacker == null) return;
+
+			// No reaccionar si el atacante es nosotros mismos
+			if (attacker.Entity == Entity) return;
+
+			// No reaccionar si el atacante es nuestra propia montura (caso raro)
+			if (m_componentRider != null && m_componentRider.Mount != null && attacker.Entity == m_componentRider.Mount.Entity) return;
+
+			// === NUEVO: Verificar alianza con el atacante ===
+			ComponentNewHerdBehavior myHerd = m_componentCreature.Entity.FindComponent<ComponentNewHerdBehavior>();
+
+			// No atacar si somos de la manada "player" y el atacante es un jugador
+			if (myHerd != null && myHerd.HerdName == "player" && attacker.Entity.FindComponent<ComponentPlayer>() != null)
+				return;
+
+			// No atacar si el atacante es de la misma manada que nosotros
+			if (myHerd != null && !string.IsNullOrEmpty(myHerd.HerdName))
+			{
+				ComponentNewHerdBehavior attackerHerd = attacker.Entity.FindComponent<ComponentNewHerdBehavior>();
+				if (attackerHerd != null && attackerHerd.HerdName == myHerd.HerdName)
+					return;
+			}
+
+			// No atacar si el atacante es un jugador y nosotros protegemos jugadores
+			// (verificación adicional por seguridad)
+			if (myHerd != null && myHerd.HerdName == "player")
+			{
+				// Verificar si el atacante está montando una criatura de nuestra manada
+				ComponentRider attackerRider = attacker.Entity.FindComponent<ComponentRider>();
+				if (attackerRider != null && attackerRider.Mount != null)
+				{
+					ComponentNewHerdBehavior mountHerd = attackerRider.Mount.Entity.FindComponent<ComponentNewHerdBehavior>();
+					if (mountHerd != null && mountHerd.HerdName == myHerd.HerdName)
+						return;
+				}
+			}
+			// === FIN NUEVO ===
+
+			ComponentNewChaseBehavior chaseBehavior = m_componentCreature.Entity.FindComponent<ComponentNewChaseBehavior>();
+			if (chaseBehavior == null) return;
+
+			// Usar CallRangeHelp para una respuesta agresiva y persistente
+			chaseBehavior.CallRangeHelp(attacker);
 		}
 	}
 }
