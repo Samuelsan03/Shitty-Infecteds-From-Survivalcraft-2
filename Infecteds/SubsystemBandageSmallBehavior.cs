@@ -55,7 +55,6 @@ namespace Game
 			health.Heal(healAmount);
 			componentMiner.Inventory?.RemoveSlotItems(componentMiner.Inventory.ActiveSlotIndex, 1);
 
-			// false para silenciar el sonido por defecto (Audio/UI/Message)
 			componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
 				message,
 				Color.Yellow,
@@ -63,7 +62,6 @@ namespace Game
 				false
 			);
 
-			// Tu sonido personalizado
 			m_subsystemAudio?.PlaySound("Audio/cured", 1f, 0f, soundPosition, 2f, false);
 
 			return true;
@@ -86,11 +84,12 @@ namespace Game
 
 				if (creature != null && creature.ComponentHealth != null)
 				{
+					string message = string.Format(LanguageControl.Get("SubsystemBandageBehavior", 1), creature.DisplayName);
 					return TryHeal(
 						creature.ComponentHealth,
 						creature.Entity.Id,
 						componentMiner,
-						$"Curaste a {creature.DisplayName} parcialmente",
+						message,
 						hitBody.Position
 					);
 				}
@@ -102,7 +101,7 @@ namespace Game
 					componentMiner.ComponentCreature.ComponentHealth,
 					componentMiner.Entity.Id,
 					componentMiner,
-					"Te has curado parcialmente",
+					LanguageControl.Get("SubsystemBandageBehavior", 2),
 					componentMiner.ComponentCreature.ComponentBody.Position
 				);
 			}
