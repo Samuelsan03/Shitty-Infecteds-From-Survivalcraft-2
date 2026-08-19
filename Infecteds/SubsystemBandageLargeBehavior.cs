@@ -1,0 +1,94 @@
+using System;
+using Engine;
+using GameEntitySystem;
+using TemplatesDatabase;
+
+namespace Game
+{
+	public class SubsystemBandageLargeBehavior : SubsystemBlockBehavior
+	{
+		private SubsystemAudio m_subsystemAudio;
+		private SubsystemBodies m_subsystemBodies;
+
+		public override int[] HandledBlocks
+		{
+			get
+			{
+				return new int[] { BlocksManager.GetBlock<LargeBandageBlock>().BlockIndex };
+			}
+		}
+
+		public override void Load(ValuesDictionary valuesDictionary)
+		{
+			base.Load(valuesDictionary);
+			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
+			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
+		}
+
+		private bool TryHeal(ComponentHealth health, int entityId, ComponentMiner componentMiner, string message, Vector3 soundPosition)
+		{
+			if (health.Health <= 0f || health.Health >= 1f)
+				return false;
+
+			float healAmount = 1f - health.Health;
+
+			if (healAmount <= 0f)
+				return false;
+
+			health.Heal(healAmount);
+			componentMiner.Inventory?.RemoveSlotItems(componentMiner.Inventory.ActiveSlotIndex, 1);
+
+			componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+				message,
+				Color.Yellow,
+				true,
+				false
+			);
+
+			m_subsystemAudio?.PlaySound("Audio/cured", 1f, 0f, soundPosition, 2f, false);
+
+			return true;
+		}
+
+		public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
+		{
+			if (componentMiner?.ComponentCreature == null)
+				return false;
+
+			float reach = 5f;
+			Vector3 end = ray.Position + ray.Direction * reach;
+
+			BodyRaycastResult? bodyRaycastResult = m_subsystemBodies.Raycast(ray.Position, end, 0.35f, (ComponentBody body, float dist) => body.Entity != componentMiner.Entity);
+
+			if (bodyRaycastResult.HasValue && bodyRaycastResult.Value.ComponentBody != null)
+			{
+				ComponentBody hitBody = bodyRaycastResult.Value.ComponentBody;
+				ComponentCreature creature = hitBody.Entity.FindComponent<ComponentCreature>();
+
+				if (creature != null && creature.ComponentHealth != null)
+				{
+					return TryHeal(
+						creature.ComponentHealth,
+						creature.Entity.Id,
+						componentMiner,
+						$"Curaste por completo a {creature.DisplayName}",
+						hitBody.Position
+					);
+				}
+			}
+
+			if (componentMiner.ComponentCreature.ComponentHealth != null)
+			{
+				return TryHeal(
+					componentMiner.ComponentCreature.ComponentHealth,
+					componentMiner.Entity.Id,
+					componentMiner,
+					"Te has curado por completo",
+					componentMiner.ComponentCreature.ComponentBody.Position
+				);
+			}
+
+			return false;
+		}
+	}
+}
