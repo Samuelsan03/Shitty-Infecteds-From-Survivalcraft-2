@@ -254,15 +254,13 @@ public class ShittyInfectedsModLoader : ModLoader
 					{
 						// NUEVA LÓGICA: Verificar si tiene vendaje y la criatura necesita curación
 						int activeBlockIndex = Terrain.ExtractContents(player.ComponentMiner.ActiveBlockValue);
-						bool hasBandage = activeBlockIndex == BlocksManager.GetBlockIndex<BandageSmallBlock>();
+						bool hasBandage = activeBlockIndex == BlocksManager.GetBlockIndex<BandageSmallBlock>() || activeBlockIndex == BlocksManager.GetBlockIndex<LargeBandageBlock>();
 
 						if (hasBandage)
 						{
 							ComponentCreature hitCreature = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreature>();
 							if (hitCreature != null && hitCreature.ComponentHealth != null && hitCreature.ComponentHealth.Health > 0f && hitCreature.ComponentHealth.Health < 1f)
 							{
-								// Si tiene vendaje y la criatura puede curarse, omitimos abrir el inventario
-								// para que el flujo normal continúe y llegue al SubsystemBandageSmallBehavior
 								return;
 							}
 						}
