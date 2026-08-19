@@ -9,6 +9,9 @@ namespace Game
 {
 	public class ComponentZombieAI : Component, IUpdateable
 	{
+		// === NUEVO: Suscripción a heridas de la montura ===
+		private Action<Injury> m_mountInjuredHandler;
+		private ComponentHealth m_subscribedMountHealth;
 		private SubsystemTime m_subsystemTime;
 		private SubsystemProjectiles m_subsystemProjectiles;
 		private SubsystemTerrain m_subsystemTerrain;
@@ -426,6 +429,8 @@ namespace Game
 			&& m_componentCreature.ComponentHealth.Health <= 0f
 			&& m_componentRider != null)
 			{
+				UnsubscribeFromMountInjuries(); // NUEVO
+
 				ComponentBody riderBody = m_componentCreature.ComponentBody;
 				if (riderBody != null && riderBody.ParentBody != null)
 				{
@@ -580,6 +585,10 @@ namespace Game
 		{
 			if (!CanItBeMounted || m_componentRider == null)
 			{
+				if (CurrentMountState == MountState.Mounted || m_subscribedMountHealth != null)
+				{
+					UnsubscribeFromMountInjuries(); // NUEVO
+				}
 				CurrentMountState = MountState.None;
 				return;
 			}
@@ -589,6 +598,7 @@ namespace Game
 			{
 				if (m_componentRider.Mount != null)
 				{
+					UnsubscribeFromMountInjuries(); // NUEVO
 					StopMount();
 
 					ComponentBody riderBody = m_componentCreature.ComponentBody;
@@ -626,11 +636,16 @@ namespace Game
 
 				case MountState.Mounting:
 					CurrentMountState = m_componentRider.Mount != null ? MountState.Mounted : MountState.Searching;
+					if (CurrentMountState == MountState.Mounted)
+					{
+						SubscribeToMountInjuries(); // NUEVO
+					}
 					break;
 
 				case MountState.Mounted:
 					if (m_componentRider.Mount == null)
 					{
+						UnsubscribeFromMountInjuries(); // NUEVO
 						m_currentMount = null;
 						CurrentMountState = MountState.Searching;
 					}
@@ -639,8 +654,7 @@ namespace Game
 						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
 						if (mountHealth != null && mountHealth.Health <= 0f)
 						{
-							// CORRECCIÓN: Desmonte forzado inmediato cuando la montura muere
-							// (antes usaba StartDismounting que es animado y puede fallar)
+							UnsubscribeFromMountInjuries(); // NUEVO
 							StopMount();
 
 							ComponentBody riderBody = m_componentCreature.ComponentBody;
@@ -668,7 +682,7 @@ namespace Game
 					}
 					else
 					{
-						// Si por alguna razón sigue montado, forzar desmonte
+						UnsubscribeFromMountInjuries(); // NUEVO
 						StopMount();
 
 						ComponentBody riderBody = m_componentCreature.ComponentBody;
@@ -751,6 +765,7 @@ namespace Game
 		{
 			if (CurrentMountState == MountState.Mounted && m_componentRider != null)
 			{
+				UnsubscribeFromMountInjuries(); // NUEVO
 				m_componentRider.StartDismounting();
 				CurrentMountState = MountState.Dismounting;
 			}
@@ -1870,6 +1885,81 @@ namespace Game
 					ApplyAimVisualSettings(false, false, false, true);
 				}
 			}
+		}
+
+		// === NUEVO: Lógica para perseguir cuando golpean a la montura ===
+		private void SubscribeToMountInjuries()
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
+
+			ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
+			if (mountHealth == null) return;
+
+			// Evitar suscribirse dos veces a la misma montura
+			if (m_subscribedMountHealth == mountHealth) return;
+
+			// Desuscribirse de la montura anterior si existe
+			if (m_subscribedMountHealth != null && m_mountInjuredHandler != null)
+			{
+				m_subscribedMountHealth.Injured = (Action<Injury>)Delegate.Remove(m_subscribedMountHealth.Injured, m_mountInjuredHandler);
+			}
+
+			if (m_mountInjuredHandler == null)
+			{
+				m_mountInjuredHandler = new Action<Injury>(OnMountInjured);
+			}
+
+			mountHealth.Injured = (Action<Injury>)Delegate.Combine(mountHealth.Injured, m_mountInjuredHandler);
+			m_subscribedMountHealth = mountHealth;
+		}
+
+		private void UnsubscribeFromMountInjuries()
+		{
+			if (m_subscribedMountHealth != null && m_mountInjuredHandler != null)
+			{
+				m_subscribedMountHealth.Injured = (Action<Injury>)Delegate.Remove(m_subscribedMountHealth.Injured, m_mountInjuredHandler);
+				m_subscribedMountHealth = null;
+			}
+		}
+
+		private void OnMountInjured(Injury injury)
+		{
+			ComponentCreature attacker = injury.Attacker;
+			if (attacker == null) return;
+
+			// No reaccionar si el atacante es nosotros mismos
+			if (attacker.Entity == Entity) return;
+
+			// No reaccionar si el atacante es nuestra propia montura (caso raro)
+			if (m_componentRider != null && m_componentRider.Mount != null && attacker.Entity == m_componentRider.Mount.Entity) return;
+
+			// === VERIFICACIÓN DE MANADA ZOMBIE ===
+			// Obtener nuestra manada
+			ComponentZombieHerdBehavior myHerd = m_componentCreature.Entity.FindComponent<ComponentZombieHerdBehavior>();
+
+			if (myHerd != null && !string.IsNullOrEmpty(myHerd.HerdName))
+			{
+				// Verificar si el atacante es un zombie aliado (misma manada)
+				ComponentZombieHerdBehavior attackerHerd = attacker.Entity.FindComponent<ComponentZombieHerdBehavior>();
+				if (attackerHerd != null && attackerHerd.HerdName == myHerd.HerdName)
+					return;
+
+				// Verificar si el atacante está montando una criatura aliada
+				ComponentRider attackerRider = attacker.Entity.FindComponent<ComponentRider>();
+				if (attackerRider != null && attackerRider.Mount != null)
+				{
+					ComponentZombieHerdBehavior mountHerd = attackerRider.Mount.Entity.FindComponent<ComponentZombieHerdBehavior>();
+					if (mountHerd != null && mountHerd.HerdName == myHerd.HerdName)
+						return;
+				}
+			}
+			// === FIN VERIFICACIÓN ===
+
+			ComponentZombieChaseBehavior chaseBehavior = m_componentChaseBehavior;
+			if (chaseBehavior == null) return;
+
+			// Usar Attack con parámetros persistentes para persecución agresiva
+			chaseBehavior.Attack(attacker, 30f, 60f, true);
 		}
 	}
 }
