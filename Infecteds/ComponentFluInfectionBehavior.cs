@@ -43,17 +43,15 @@ namespace Game
 				return;
 			}
 
-			// Si no hay comportamiento de persecución hostil, la criatura está domesticada
-			// Por lo tanto, no debe aplicar gripe a nadie
-			if (m_componentNewChase == null && m_componentZombieChase == null)
+			// CORRECCIÓN: Solo tener importancia cuando hay un golpe pendiente
+			if (m_hasPendingHit && m_pendingHitBody != null)
+			{
+				m_importanceLevel = 5f;
+			}
+			else
 			{
 				m_importanceLevel = 0f;
-				m_hasPendingHit = false;
-				m_pendingHitBody = null;
-				return;
 			}
-
-			m_importanceLevel = 10f;
 
 			if (m_componentCreatureModel != null
 				&& m_componentCreatureModel.IsAttackHitMoment
@@ -72,11 +70,13 @@ namespace Game
 					currentTarget = m_componentZombieChase.Target;
 				}
 
-				// Solo aplicar gripe si hay un objetivo hostil específico del chase behavior
-				// NO usar fallback para evitar dar gripe sin razón
 				if (currentTarget != null && currentTarget.ComponentBody != null)
 				{
 					hitBody = GetHitBody(currentTarget.ComponentBody, out hitPoint);
+				}
+				else
+				{
+					hitBody = GetHitBodyInAttackRange(out hitPoint);
 				}
 
 				if (hitBody != null && hitBody.Entity != null && hitBody.Entity != Entity)
@@ -108,12 +108,26 @@ namespace Game
 
 			BodyRaycastResult? result = m_componentMiner.Raycast<BodyRaycastResult>(ray, RaycastMode.Interaction, true, true, true, null);
 
-			// VALIDACIÓN: Verificar que lo impactado ES el objetivo, igual que ComponentChaseBehavior
-			if (result != null
-				&& result.Value.Distance < MaxAttackRange
-				&& (result.Value.ComponentBody == target
-					|| result.Value.ComponentBody.IsChildOfBody(target)
-					|| target.IsChildOfBody(result.Value.ComponentBody)))
+			if (result != null && result.Value.Distance < MaxAttackRange)
+			{
+				hitPoint = result.Value.HitPoint();
+				return result.Value.ComponentBody;
+			}
+
+			hitPoint = default(Vector3);
+			return null;
+		}
+
+		public ComponentBody GetHitBodyInAttackRange(out Vector3 hitPoint)
+		{
+			Vector3 eye = m_componentCreatureModel.EyePosition;
+			Vector3 forward = m_componentCreatureModel.EyeRotation.GetForwardVector();
+			Ray3 ray = new Ray3(eye, forward);
+
+			BodyRaycastResult? result = m_componentMiner.Raycast<BodyRaycastResult>(
+				ray, RaycastMode.Interaction, true, true, true, MaxAttackRange);
+
+			if (result != null && result.Value.Distance < MaxAttackRange)
 			{
 				hitPoint = result.Value.HitPoint();
 				return result.Value.ComponentBody;
