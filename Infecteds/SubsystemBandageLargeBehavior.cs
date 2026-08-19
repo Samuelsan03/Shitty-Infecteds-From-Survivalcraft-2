@@ -67,11 +67,12 @@ namespace Game
 
 				if (creature != null && creature.ComponentHealth != null)
 				{
+					string message = string.Format(LanguageControl.Get("SubsystemBandageBehavior", 3), creature.DisplayName);
 					return TryHeal(
 						creature.ComponentHealth,
 						creature.Entity.Id,
 						componentMiner,
-						$"Curaste por completo a {creature.DisplayName}",
+						message,
 						hitBody.Position
 					);
 				}
@@ -83,7 +84,7 @@ namespace Game
 					componentMiner.ComponentCreature.ComponentHealth,
 					componentMiner.Entity.Id,
 					componentMiner,
-					"Te has curado por completo",
+					LanguageControl.Get("SubsystemBandageBehavior", 4),
 					componentMiner.ComponentCreature.ComponentBody.Position
 				);
 			}
