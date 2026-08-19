@@ -86,6 +86,10 @@ namespace Game
 			}
 		}
 
+		// === NUEVO: Suscripción a heridas de la montura ===
+		private Action<Injury> m_mountInjuredHandler;
+		private ComponentHealth m_subscribedMountHealth;
+
 		private Action<Projectile> m_projectileAddedHandler;
 
 		// Subsystems
@@ -561,6 +565,10 @@ namespace Game
 		{
 			if (!CanItBeMounted || m_componentRider == null)
 			{
+				if (CurrentMountState == MountState.Mounted || m_subscribedMountHealth != null)
+				{
+					UnsubscribeFromMountInjuries(); // NUEVO
+				}
 				CurrentMountState = MountState.None;
 				return;
 			}
@@ -568,9 +576,9 @@ namespace Game
 			// Si la criatura está muerta, nunca intentar montar
 			if (m_componentCreature.ComponentHealth.Health <= 0f)
 			{
-				// Forzar desmonte inmediato si todavía está montado
 				if (m_componentRider.Mount != null)
 				{
+					UnsubscribeFromMountInjuries(); // NUEVO
 					StopMount();
 
 					ComponentBody riderBody = m_componentCreature.ComponentBody;
@@ -609,11 +617,16 @@ namespace Game
 
 				case MountState.Mounting:
 					CurrentMountState = m_componentRider.Mount != null ? MountState.Mounted : MountState.Searching;
+					if (CurrentMountState == MountState.Mounted)
+					{
+						SubscribeToMountInjuries(); // NUEVO
+					}
 					break;
 
 				case MountState.Mounted:
 					if (m_componentRider.Mount == null)
 					{
+						UnsubscribeFromMountInjuries(); // NUEVO
 						m_currentMount = null;
 						CurrentMountState = MountState.Searching;
 						ClearPilotDestination();
@@ -623,9 +636,7 @@ namespace Game
 						ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
 						if (mountHealth != null && mountHealth.Health <= 0f)
 						{
-							// CORRECCIÓN: Desmonte forzado inmediato cuando la montura muere
-							// (antes usaba StartDismounting que es animado y puede fallar
-							// si la montura se despawnea antes de completar la animación)
+							UnsubscribeFromMountInjuries(); // NUEVO
 							StopMount();
 
 							ComponentBody riderBody = m_componentCreature.ComponentBody;
@@ -639,7 +650,6 @@ namespace Game
 
 							m_componentRider.m_isAnimating = false;
 							m_componentRider.m_isDismounting = false;
-
 							m_currentMount = null;
 							CurrentMountState = MountState.Dismounting;
 							ClearPilotDestination();
@@ -651,14 +661,11 @@ namespace Game
 					if (m_componentRider.Mount == null)
 					{
 						m_currentMount = null;
-						// CORRECCIÓN: No volver a Searching si la criatura está muerta
-						// (evita que una criatura muerta se remonte)
 						CurrentMountState = MountState.Searching;
 					}
 					else
 					{
-						// Si por alguna razón sigue montado (animación incompleta),
-						// forzar desmonte
+						UnsubscribeFromMountInjuries(); // NUEVO
 						StopMount();
 
 						ComponentBody riderBody = m_componentCreature.ComponentBody;
@@ -728,6 +735,7 @@ namespace Game
 		{
 			if (CurrentMountState == MountState.Mounted && m_componentRider != null)
 			{
+				UnsubscribeFromMountInjuries(); // NUEVO
 				m_componentRider.StartDismounting();
 				CurrentMountState = MountState.Dismounting;
 				ClearPilotDestination();
@@ -1428,5 +1436,79 @@ namespace Game
 		}
 
 		#endregion
+
+		// === NUEVO: Lógica para perseguir cuando golpean a la montura ===
+		private void SubscribeToMountInjuries()
+		{
+			if (m_componentRider == null || m_componentRider.Mount == null) return;
+
+			ComponentHealth mountHealth = m_componentRider.Mount.Entity.FindComponent<ComponentHealth>();
+			if (mountHealth == null) return;
+
+			// Evitar suscribirse dos veces a la misma montura
+			if (m_subscribedMountHealth == mountHealth) return;
+
+			// Desuscribirse de la montura anterior si existe
+			if (m_subscribedMountHealth != null && m_mountInjuredHandler != null)
+			{
+				m_subscribedMountHealth.Injured = (Action<Injury>)Delegate.Remove(m_subscribedMountHealth.Injured, m_mountInjuredHandler);
+			}
+
+			if (m_mountInjuredHandler == null)
+			{
+				m_mountInjuredHandler = new Action<Injury>(OnMountInjured);
+			}
+
+			mountHealth.Injured = (Action<Injury>)Delegate.Combine(mountHealth.Injured, m_mountInjuredHandler);
+			m_subscribedMountHealth = mountHealth;
+		}
+
+		private void UnsubscribeFromMountInjuries()
+		{
+			if (m_subscribedMountHealth != null && m_mountInjuredHandler != null)
+			{
+				m_subscribedMountHealth.Injured = (Action<Injury>)Delegate.Remove(m_subscribedMountHealth.Injured, m_mountInjuredHandler);
+				m_subscribedMountHealth = null;
+			}
+		}
+
+		private void OnMountInjured(Injury injury)
+		{
+			ComponentCreature attacker = injury.Attacker;
+			if (attacker == null) return;
+
+			// No reaccionar si el atacante es nosotros mismos
+			if (attacker.Entity == Entity) return;
+
+			// No reaccionar si el atacante es nuestra propia montura (caso raro)
+			if (m_componentRider != null && m_componentRider.Mount != null && attacker.Entity == m_componentRider.Mount.Entity) return;
+
+			// === VERIFICACIÓN DE MANADA NORMAL (ComponentHerdBehavior) ===
+			ComponentHerdBehavior myHerd = m_componentCreature.Entity.FindComponent<ComponentHerdBehavior>();
+
+			if (myHerd != null && !string.IsNullOrEmpty(myHerd.HerdName))
+			{
+				// Verificar si el atacante es de la misma manada
+				ComponentHerdBehavior attackerHerd = attacker.Entity.FindComponent<ComponentHerdBehavior>();
+				if (attackerHerd != null && attackerHerd.HerdName == myHerd.HerdName)
+					return;
+
+				// Verificar si el atacante está montando una criatura aliada
+				ComponentRider attackerRider = attacker.Entity.FindComponent<ComponentRider>();
+				if (attackerRider != null && attackerRider.Mount != null)
+				{
+					ComponentHerdBehavior mountHerd = attackerRider.Mount.Entity.FindComponent<ComponentHerdBehavior>();
+					if (mountHerd != null && mountHerd.HerdName == myHerd.HerdName)
+						return;
+				}
+			}
+			// === FIN VERIFICACIÓN ===
+
+			ComponentChaseBehavior chaseBehavior = m_componentChaseBehavior;
+			if (chaseBehavior == null) return;
+
+			// Usar Attack con parámetros persistentes para persecución agresiva
+			chaseBehavior.Attack(attacker, 30f, 60f, true);
+		}
 	}
 }
