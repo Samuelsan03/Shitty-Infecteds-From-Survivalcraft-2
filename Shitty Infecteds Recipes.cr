@@ -1,4 +1,16 @@
 <Recipes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="CraftingRecipes.xsd">
+<Recipe Result="AntidotePillBlock" ResultCount="3" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="canvas" b="redflower" c="whiteflower" Description="[0]">
+  "a"
+  "b"
+  "c"
+</Recipe>
+<Recipe Result="BandageSmallBlock" ResultCount="2" RequiredHeatLevel="0" a="canvas" Description="[0]">
+    "a"
+</Recipe>
+<Recipe Result="LargeBandageBlock" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
+    "aa"
+    "aa"
+</Recipe>
 <Recipe Result="FrozenSnowballBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="snowball" b="ice" Description="[0]">
   "a"
   "b"
