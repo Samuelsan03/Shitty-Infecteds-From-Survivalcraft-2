@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Engine;
 using Engine.Graphics;
 using Engine.Input;
@@ -24,9 +24,14 @@ namespace Game
 		private const float MaxZoomLevel = 1.0f;
 		private const float ZoomSpeed = 1.5f;
 		private const float BaseFOV = 80f;
+		private const float ZoomThreshold = 0.95f;
 
 		private float m_scopeVignetteAlpha;
 		private float m_targetScopeVignetteAlpha;
+
+		// Para bloquear posición
+		private bool m_positionLocked = false;
+		private Vector3 m_lockedPosition;
 
 		public float ZoomLevel
 		{
@@ -53,6 +58,7 @@ namespace Game
 			m_targetZoomLevel = MaxZoomLevel;
 			m_scopeVignetteAlpha = 0f;
 			m_targetScopeVignetteAlpha = 0f;
+			m_positionLocked = false;
 		}
 
 		public override void Update(float dt)
@@ -62,7 +68,6 @@ namespace Game
 				return;
 			}
 
-			// Usar ComponentCreature en lugar de ComponentPlayer
 			ComponentCreature target = base.GameWidget.Target;
 
 			if (target != null)
@@ -92,6 +97,29 @@ namespace Game
 
 			m_targetZoomLevel = MathUtils.Clamp(m_targetZoomLevel, MinZoomLevel, MaxZoomLevel);
 			m_zoomLevel = MathUtils.Lerp(m_zoomLevel, m_targetZoomLevel, 1f - MathF.Pow(0.001f, dt));
+
+			// BLOQUEAR POSICIÓN AL HACER ZOOM
+			if (m_zoomLevel < ZoomThreshold && target != null)
+			{
+				ComponentBody body = target.ComponentBody;
+				if (body != null)
+				{
+					// Guardar posición cuando recién entra en zoom
+					if (!m_positionLocked)
+					{
+						m_lockedPosition = body.Position;
+						m_positionLocked = true;
+					}
+					// Forzar posición bloqueada (ignora movimiento horizontal)
+					body.Position = new Vector3(m_lockedPosition.X, body.Position.Y, m_lockedPosition.Z);
+					// Anular velocidad horizontal
+					body.Velocity = new Vector3(0f, body.Velocity.Y, 0f);
+				}
+			}
+			else
+			{
+				m_positionLocked = false;
+			}
 
 			if (m_zoomLevel < 0.5f)
 			{
