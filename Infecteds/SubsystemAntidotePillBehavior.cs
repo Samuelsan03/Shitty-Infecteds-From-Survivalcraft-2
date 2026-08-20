@@ -24,7 +24,6 @@ namespace Game
 			m_subsystemCreatureSpawn = Project.FindSubsystem<SubsystemCreatureSpawn>(true);
 		}
 
-		// MÉTODO RESTAURADO para evitar el error de referencia
 		public void CureCreatureWithMessage(ComponentPlayer player, ComponentCreature creature)
 		{
 			if (creature == null || creature.ComponentHealth == null || creature.ComponentHealth.Health <= 0f)
@@ -48,77 +47,88 @@ namespace Game
 
 			if (creatureCured)
 			{
-				// Ahora también muestra el nombre de la criatura específica aquí
-				player.ComponentGui.DisplaySmallMessage(
-					new RainbowMessage(string.Format("¡Has curado a {0} de la enfermedad!", creature.DisplayName)),
-					true
-				);
+				string message = string.Format(LanguageControl.Get("SubsystemAntidotePillBehavior", "2"), creature.DisplayName);
+				// false = NO reproducir sonido por defecto del mensaje
+				player.ComponentGui.DisplaySmallMessage(new RainbowMessage(message), false);
 			}
 		}
 
 		public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
 		{
-			if (m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative)
-			{
-				return false;
-			}
-
 			ComponentPlayer componentPlayer = componentMiner.ComponentPlayer;
 			if (componentPlayer == null)
 			{
 				return false;
 			}
 
-			ComponentFlu componentFlu = componentPlayer.ComponentFlu;
-			ComponentSickness componentSickness = componentPlayer.ComponentSickness;
+			bool isCreative = m_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative;
+			bool playerCured = false;
 
-			bool hadFlu = componentFlu.HasFlu;
-			bool wasSick = componentSickness.IsSick;
+			// Solo intentar curar al jugador si NO está en modo creativo
+			if (!isCreative)
+			{
+				ComponentFlu componentFlu = componentPlayer.ComponentFlu;
+				ComponentSickness componentSickness = componentPlayer.ComponentSickness;
 
-			// Obtener la lista de nombres de criaturas curadas
+				bool hadFlu = componentFlu.HasFlu;
+				bool wasSick = componentSickness.IsSick;
+
+				if (hadFlu || wasSick)
+				{
+					if (hadFlu)
+					{
+						componentFlu.m_fluDuration = 0f;
+						componentFlu.m_fluOnset = 0f;
+						componentFlu.m_coughDuration = 0f;
+						componentFlu.m_sneezeDuration = 0f;
+						componentFlu.m_blackoutDuration = 0f;
+						componentFlu.m_blackoutFactor = 0f;
+					}
+
+					if (wasSick)
+					{
+						componentSickness.m_sicknessDuration = 0f;
+						componentSickness.m_greenoutDuration = 0f;
+						componentSickness.m_greenoutFactor = 0f;
+						componentSickness.m_pukeParticleSystem = null;
+					}
+
+					// Tu sonido personalizado
+					m_subsystemAudio.PlaySound("Audio/consumo antidoto", 1f, 0f, componentPlayer.ComponentBody.Position, 2f, false);
+					// false = NO reproducir sonido por defecto "Audio/UI/Message"
+					componentPlayer.ComponentGui.DisplaySmallMessage(
+						new RainbowMessage(LanguageControl.Get("SubsystemAntidotePillBehavior", "1")),
+						false
+					);
+					playerCured = true;
+				}
+			}
+
+			// Siempre intentar curar criaturas (funciona en creativo y no creativo)
 			List<string> curedCreatureNames = CureNearbyCreatures(componentPlayer);
 
-			if (!hadFlu && !wasSick && curedCreatureNames.Count == 0)
+			// Si no se curó nada (ni jugador en supervivencia, ni criaturas), bloquear sin mensaje
+			if (!playerCured && curedCreatureNames.Count == 0)
 			{
-				componentPlayer.ComponentGui.DisplaySmallMessage("No estás enfermo", Color.White, true, true);
 				return false;
 			}
 
-			if (hadFlu)
-			{
-				componentFlu.m_fluDuration = 0f;
-				componentFlu.m_fluOnset = 0f;
-				componentFlu.m_coughDuration = 0f;
-				componentFlu.m_sneezeDuration = 0f;
-				componentFlu.m_blackoutDuration = 0f;
-				componentFlu.m_blackoutFactor = 0f;
-			}
-
-			if (wasSick)
-			{
-				componentSickness.m_sicknessDuration = 0f;
-				componentSickness.m_greenoutDuration = 0f;
-				componentSickness.m_greenoutFactor = 0f;
-				componentSickness.m_pukeParticleSystem = null;
-			}
-
-			m_subsystemAudio.PlaySound("Audio/consumo antidoto", 1f, 0f, componentPlayer.ComponentBody.Position, 2f, false);
-
-			if (hadFlu || wasSick)
-			{
-				componentPlayer.ComponentGui.DisplaySmallMessage(
-					new RainbowMessage("¡Antídoto consumido! Te has curado"),
-					true
-				);
-			}
-
-			// Mostrar mensaje con los nombres de todas las criaturas curadas
+			// Mostrar mensaje de criaturas curadas si hay alguna
 			if (curedCreatureNames.Count > 0)
 			{
 				string creatureNames = string.Join(", ", curedCreatureNames);
+				string message = string.Format(LanguageControl.Get("SubsystemAntidotePillBehavior", "2"), creatureNames);
+
+				// Tu sonido personalizado (solo si no se reprodujo ya)
+				if (!playerCured)
+				{
+					m_subsystemAudio.PlaySound("Audio/consumo antidoto", 1f, 0f, componentPlayer.ComponentBody.Position, 2f, false);
+				}
+
+				// false = NO reproducir sonido por defecto "Audio/UI/Message"
 				componentPlayer.ComponentGui.DisplaySmallMessage(
-					new RainbowMessage(string.Format("¡Has curado a {0} de la enfermedad!", creatureNames)),
-					true
+					new RainbowMessage(message),
+					false
 				);
 			}
 
@@ -127,9 +137,6 @@ namespace Game
 			return true;
 		}
 
-		/// <summary>
-		/// Cura a las criaturas cercanas y devuelve una lista con los nombres de las criaturas curadas
-		/// </summary>
 		private List<string> CureNearbyCreatures(ComponentPlayer componentPlayer)
 		{
 			List<string> curedCreatureNames = new List<string>();
@@ -169,7 +176,6 @@ namespace Game
 
 				if (creatureCured)
 				{
-					// Agregar el DisplayName de la criatura a la lista
 					curedCreatureNames.Add(componentCreature.DisplayName);
 				}
 			}
