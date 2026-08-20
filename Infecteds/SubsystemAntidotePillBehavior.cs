@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -23,6 +24,7 @@ namespace Game
 			m_subsystemCreatureSpawn = Project.FindSubsystem<SubsystemCreatureSpawn>(true);
 		}
 
+		// MÉTODO RESTAURADO para evitar el error de referencia
 		public void CureCreatureWithMessage(ComponentPlayer player, ComponentCreature creature)
 		{
 			if (creature == null || creature.ComponentHealth == null || creature.ComponentHealth.Health <= 0f)
@@ -46,7 +48,11 @@ namespace Game
 
 			if (creatureCured)
 			{
-				player.ComponentGui.DisplaySmallMessage(new RainbowMessage("¡Has curado a la criatura!"), true);
+				// Ahora también muestra el nombre de la criatura específica aquí
+				player.ComponentGui.DisplaySmallMessage(
+					new RainbowMessage(string.Format("¡Has curado a {0} de la enfermedad!", creature.DisplayName)),
+					true
+				);
 			}
 		}
 
@@ -69,9 +75,10 @@ namespace Game
 			bool hadFlu = componentFlu.HasFlu;
 			bool wasSick = componentSickness.IsSick;
 
-			int creaturesCured = CureNearbyCreatures(componentPlayer);
+			// Obtener la lista de nombres de criaturas curadas
+			List<string> curedCreatureNames = CureNearbyCreatures(componentPlayer);
 
-			if (!hadFlu && !wasSick && creaturesCured == 0)
+			if (!hadFlu && !wasSick && curedCreatureNames.Count == 0)
 			{
 				componentPlayer.ComponentGui.DisplaySmallMessage("No estás enfermo", Color.White, true, true);
 				return false;
@@ -105,10 +112,12 @@ namespace Game
 				);
 			}
 
-			if (creaturesCured > 0)
+			// Mostrar mensaje con los nombres de todas las criaturas curadas
+			if (curedCreatureNames.Count > 0)
 			{
+				string creatureNames = string.Join(", ", curedCreatureNames);
 				componentPlayer.ComponentGui.DisplaySmallMessage(
-					new RainbowMessage(string.Format("¡Has curado a {0} criatura{1}!", creaturesCured, creaturesCured > 1 ? "s" : "")),
+					new RainbowMessage(string.Format("¡Has curado a {0} de la enfermedad!", creatureNames)),
 					true
 				);
 			}
@@ -118,9 +127,12 @@ namespace Game
 			return true;
 		}
 
-		private int CureNearbyCreatures(ComponentPlayer componentPlayer)
+		/// <summary>
+		/// Cura a las criaturas cercanas y devuelve una lista con los nombres de las criaturas curadas
+		/// </summary>
+		private List<string> CureNearbyCreatures(ComponentPlayer componentPlayer)
 		{
-			int curedCount = 0;
+			List<string> curedCreatureNames = new List<string>();
 			Vector3 playerPosition = componentPlayer.ComponentBody.Position;
 			float cureRadiusSquared = CureRadius * CureRadius;
 
@@ -157,11 +169,12 @@ namespace Game
 
 				if (creatureCured)
 				{
-					curedCount++;
+					// Agregar el DisplayName de la criatura a la lista
+					curedCreatureNames.Add(componentCreature.DisplayName);
 				}
 			}
 
-			return curedCount;
+			return curedCreatureNames;
 		}
 	}
 }
