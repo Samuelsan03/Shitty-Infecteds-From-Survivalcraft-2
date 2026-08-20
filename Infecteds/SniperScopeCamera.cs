@@ -2,6 +2,7 @@ using System;
 using Engine;
 using Engine.Graphics;
 using Engine.Input;
+using GameEntitySystem;
 
 namespace Game
 {
@@ -9,6 +10,7 @@ namespace Game
 	{
 		public override bool UsesMovementControls
 		{
+			// NUNCA devolver true aquí, porque bloquea el Look (puntero)
 			get { return false; }
 		}
 
@@ -23,13 +25,13 @@ namespace Game
 		private const float MinZoomLevel = 0.2f;
 		private const float MaxZoomLevel = 1.0f;
 		private const float ZoomSpeed = 1.5f;
+		private const float StickZoomSpeed = 2.0f;
 		private const float BaseFOV = 80f;
 		private const float ZoomThreshold = 0.95f;
 
 		private float m_scopeVignetteAlpha;
 		private float m_targetScopeVignetteAlpha;
 
-		// Para bloquear posición
 		private bool m_positionLocked = false;
 		private Vector3 m_lockedPosition;
 
@@ -77,28 +79,61 @@ namespace Game
 				base.SetupPerspectiveCamera(matrix.Translation, matrix.Forward, matrix.Up);
 			}
 
-			if (Keyboard.IsKeyDown(Key.W))
+			// ============================================
+			// DETECTAR TIPO DE CONTROL Y OBTENER INPUT
+			// ============================================
+			bool isTouchControl = false;
+			float stickZoomInput = 0f;
+
+			if (target is ComponentPlayer player)
 			{
-				m_targetZoomLevel -= ZoomSpeed * dt;
-			}
-			if (Keyboard.IsKeyDown(Key.S))
-			{
-				m_targetZoomLevel += ZoomSpeed * dt;
+				ComponentInput componentInput = player.Entity.FindComponent<ComponentInput>();
+				if (componentInput != null)
+				{
+					isTouchControl = componentInput.IsControlledByTouch;
+
+					// CameraCrouchMove.Z: positivo = adelante, negativo = atrás
+					// Para zoom: adelante = más zoom (reducir level)
+					stickZoomInput = -componentInput.PlayerInput.CameraCrouchMove.Z;
+				}
 			}
 
-			if (Keyboard.IsKeyDown(Key.UpArrow))
+			// ============================================
+			// APLICAR INPUT DE ZOOM SEGÚN DISPOSITIVO
+			// ============================================
+			if (isTouchControl)
 			{
-				m_targetZoomLevel -= ZoomSpeed * dt;
+				// MÓVIL: Usar joystick para zoom
+				m_targetZoomLevel += stickZoomInput * StickZoomSpeed * dt;
 			}
-			if (Keyboard.IsKeyDown(Key.DownArrow))
+			else
 			{
-				m_targetZoomLevel += ZoomSpeed * dt;
+				// PC: Teclado W/S y flechas
+				bool keyboardZoomIn = Keyboard.IsKeyDown(Key.W) || Keyboard.IsKeyDown(Key.UpArrow);
+				bool keyboardZoomOut = Keyboard.IsKeyDown(Key.S) || Keyboard.IsKeyDown(Key.DownArrow);
+
+				if (keyboardZoomIn)
+				{
+					m_targetZoomLevel -= ZoomSpeed * dt;
+				}
+				if (keyboardZoomOut)
+				{
+					m_targetZoomLevel += ZoomSpeed * dt;
+				}
+
+				// GAMEPAD: Usar stick si no hay input de teclado
+				if (!keyboardZoomIn && !keyboardZoomOut && Math.Abs(stickZoomInput) > 0.01f)
+				{
+					m_targetZoomLevel += stickZoomInput * StickZoomSpeed * dt;
+				}
 			}
 
 			m_targetZoomLevel = MathUtils.Clamp(m_targetZoomLevel, MinZoomLevel, MaxZoomLevel);
 			m_zoomLevel = MathUtils.Lerp(m_zoomLevel, m_targetZoomLevel, 1f - MathF.Pow(0.001f, dt));
 
-			// BLOQUEAR POSICIÓN AL HACER ZOOM
+			// ============================================
+			// BLOQUEAR SOLO POSICIÓN (NO ROTACIÓN) AL HACER ZOOM
+			// ============================================
 			if (m_zoomLevel < ZoomThreshold && target != null)
 			{
 				ComponentBody body = target.ComponentBody;
@@ -110,9 +145,9 @@ namespace Game
 						m_lockedPosition = body.Position;
 						m_positionLocked = true;
 					}
-					// Forzar posición bloqueada (ignora movimiento horizontal)
+					// Forzar posición bloqueada (solo horizontal)
 					body.Position = new Vector3(m_lockedPosition.X, body.Position.Y, m_lockedPosition.Z);
-					// Anular velocidad horizontal
+					// Anular velocidad horizontal (mantener gravedad)
 					body.Velocity = new Vector3(0f, body.Velocity.Y, 0f);
 				}
 			}
@@ -121,6 +156,9 @@ namespace Game
 				m_positionLocked = false;
 			}
 
+			// ============================================
+			// VIÑETA DEL SCOPE
+			// ============================================
 			if (m_zoomLevel < 0.5f)
 			{
 				m_targetScopeVignetteAlpha = MathUtils.Saturate((0.5f - m_zoomLevel) / 0.3f);
@@ -139,9 +177,7 @@ namespace Game
 			ViewWidget viewWidget = base.GameWidget.ViewWidget;
 			float aspectRatio = viewWidget.ActualSize.X / viewWidget.ActualSize.Y;
 
-			Matrix result = Matrix.CreatePerspectiveFieldOfView(MathUtils.DegToRad(fov), aspectRatio, 0.1f, 2048f);
-
-			return result;
+			return Matrix.CreatePerspectiveFieldOfView(MathUtils.DegToRad(fov), aspectRatio, 0.1f, 2048f);
 		}
 
 		public float GetZoomMultiplier()
