@@ -11,12 +11,43 @@ namespace Game
 
 		private SubsystemAudio m_subsystemAudio;
 		private SubsystemGameInfo m_subsystemGameInfo;
+		private SubsystemCreatureSpawn m_subsystemCreatureSpawn;
+
+		private const float CureRadius = 5f;
 
 		public override void Load(ValuesDictionary valuesDictionary)
 		{
 			base.Load(valuesDictionary);
 			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
 			m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
+			m_subsystemCreatureSpawn = Project.FindSubsystem<SubsystemCreatureSpawn>(true);
+		}
+
+		public void CureCreatureWithMessage(ComponentPlayer player, ComponentCreature creature)
+		{
+			if (creature == null || creature.ComponentHealth == null || creature.ComponentHealth.Health <= 0f)
+				return;
+
+			bool creatureCured = false;
+
+			ComponentCreatureFlu creatureFlu = creature.Entity.FindComponent<ComponentCreatureFlu>();
+			if (creatureFlu != null && creatureFlu.HasFlu)
+			{
+				creatureFlu.Cure();
+				creatureCured = true;
+			}
+
+			ComponentInfectedWithPoison creaturePoison = creature.Entity.FindComponent<ComponentInfectedWithPoison>();
+			if (creaturePoison != null && creaturePoison.IsInfected)
+			{
+				creaturePoison.Cure();
+				creatureCured = true;
+			}
+
+			if (creatureCured)
+			{
+				player.ComponentGui.DisplaySmallMessage(new RainbowMessage("¡Has curado a la criatura!"), true);
+			}
 		}
 
 		public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
@@ -38,7 +69,9 @@ namespace Game
 			bool hadFlu = componentFlu.HasFlu;
 			bool wasSick = componentSickness.IsSick;
 
-			if (!hadFlu && !wasSick)
+			int creaturesCured = CureNearbyCreatures(componentPlayer);
+
+			if (!hadFlu && !wasSick && creaturesCured == 0)
 			{
 				componentPlayer.ComponentGui.DisplaySmallMessage("No estás enfermo", Color.White, true, true);
 				return false;
@@ -64,15 +97,71 @@ namespace Game
 
 			m_subsystemAudio.PlaySound("Audio/consumo antidoto", 1f, 0f, componentPlayer.ComponentBody.Position, 2f, false);
 
-			// Mensaje arcoíris usando el sistema existente
-			componentPlayer.ComponentGui.DisplaySmallMessage(
-				new RainbowMessage("¡Antídoto consumido! Te has curado"),
-				true
-			);
+			if (hadFlu || wasSick)
+			{
+				componentPlayer.ComponentGui.DisplaySmallMessage(
+					new RainbowMessage("¡Antídoto consumido! Te has curado"),
+					true
+				);
+			}
+
+			if (creaturesCured > 0)
+			{
+				componentPlayer.ComponentGui.DisplaySmallMessage(
+					new RainbowMessage(string.Format("¡Has curado a {0} criatura{1}!", creaturesCured, creaturesCured > 1 ? "s" : "")),
+					true
+				);
+			}
 
 			componentMiner.RemoveActiveTool(1);
 
 			return true;
+		}
+
+		private int CureNearbyCreatures(ComponentPlayer componentPlayer)
+		{
+			int curedCount = 0;
+			Vector3 playerPosition = componentPlayer.ComponentBody.Position;
+			float cureRadiusSquared = CureRadius * CureRadius;
+
+			foreach (ComponentCreature componentCreature in m_subsystemCreatureSpawn.Creatures)
+			{
+				if (componentCreature.Entity == componentPlayer.Entity)
+					continue;
+
+				if (componentCreature.ComponentBody == null)
+					continue;
+
+				float distanceSquared = Vector3.DistanceSquared(playerPosition, componentCreature.ComponentBody.Position);
+				if (distanceSquared > cureRadiusSquared)
+					continue;
+
+				if (componentCreature.ComponentHealth != null && componentCreature.ComponentHealth.Health <= 0f)
+					continue;
+
+				bool creatureCured = false;
+
+				ComponentCreatureFlu creatureFlu = componentCreature.Entity.FindComponent<ComponentCreatureFlu>();
+				if (creatureFlu != null && creatureFlu.HasFlu)
+				{
+					creatureFlu.Cure();
+					creatureCured = true;
+				}
+
+				ComponentInfectedWithPoison creaturePoison = componentCreature.Entity.FindComponent<ComponentInfectedWithPoison>();
+				if (creaturePoison != null && creaturePoison.IsInfected)
+				{
+					creaturePoison.Cure();
+					creatureCured = true;
+				}
+
+				if (creatureCured)
+				{
+					curedCount++;
+				}
+			}
+
+			return curedCount;
 		}
 	}
 }
