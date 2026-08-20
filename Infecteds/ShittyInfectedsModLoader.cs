@@ -265,6 +265,27 @@ public class ShittyInfectedsModLoader : ModLoader
 							}
 						}
 
+						bool hasAntidote = activeBlockIndex == BlocksManager.GetBlockIndex<AntidotePillBlock>();
+
+						if (hasAntidote)
+						{
+							ComponentCreature hitCreature = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreature>();
+							if (hitCreature != null && hitCreature.ComponentHealth != null && hitCreature.ComponentHealth.Health > 0f)
+							{
+								ComponentCreatureFlu creatureFlu = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureFlu>();
+								ComponentInfectedWithPoison creaturePoison = bodyResult.ComponentBody.Entity.FindComponent<ComponentInfectedWithPoison>();
+
+								if ((creatureFlu != null && creatureFlu.HasFlu) || (creaturePoison != null && creaturePoison.IsInfected))
+								{
+									SubsystemAntidotePillBehavior subsystem = player.Project.FindSubsystem<SubsystemAntidotePillBehavior>();
+									subsystem?.CureCreatureWithMessage(player, hitCreature);
+									player.ComponentMiner.RemoveActiveTool(1);
+									handled = true;
+									return;
+								}
+							}
+						}
+
 						player.ComponentMiner.Poke(false);
 						player.ComponentGui.ModalPanelWidget = new CreatureInventoryWidget(player.ComponentMiner.Inventory, creatureInv);
 						AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
