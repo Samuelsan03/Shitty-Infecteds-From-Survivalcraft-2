@@ -1,4 +1,41 @@
 <Recipes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="CraftingRecipes.xsd">
+<Recipe Result="BK93Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="rod" b="ironingot" c="planks" d="copperingot" Description="[0]">
+  "ab "
+  "dcd"
+  " a "
+</Recipe>
+<Recipe Result="BK93AmmunitionBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" c="feather" Description="[0]">
+  "ab "
+  " c "
+</Recipe>
+<Recipe Result="UziBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="ironblock" c="rod" Description="[0]">
+  "ab "
+  "bcb"
+  " a "
+</Recipe>
+<Recipe Result="UziAmmunitionBlock" ResultCount="16" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" c="copperingot" Description="[0]">
+  "ab "
+  "cbc"
+  " a "
+</Recipe>
+<Recipe Result="M4Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="rod" c="semiconductorblock" d="planks" Description="[0]">
+  "ab "
+  "dcd"
+  " a "
+</Recipe>
+<Recipe Result="M4AmmunitionBlock" ResultCount="10" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" Description="[0]">
+  "ab"
+  "ab"
+</Recipe>
+<Recipe Result="Mac10Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="ironblock" c="planks" Description="[0]">
+  "ab "
+  "bcb"
+  " a "
+</Recipe>
+<Recipe Result="Mac10AmmunitionBlock" ResultCount="12" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="copperingot" b="gunpowder" Description="[0]">
+  "ab"
+  "ab"
+</Recipe>
 <Recipe Result="IZH43Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="planks" c="rod" Description="[0]">
   "ab "
   "cbc"
