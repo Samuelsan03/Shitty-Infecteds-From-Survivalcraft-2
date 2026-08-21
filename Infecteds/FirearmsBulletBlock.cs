@@ -143,7 +143,8 @@ namespace Game
 			DesertEagleBullet,
 			SPAS12Bullet,
 			SniperBullet,
-			RevolverBullet
+			RevolverBullet,
+			IZH43Bullet
 		}
 
 		public static FirearmsBulletType GetFirearmsBulletType(int data)
@@ -170,6 +171,8 @@ namespace Game
 					return new Color(180, 180, 190);
 				case FirearmsBulletType.RevolverBullet:
 					return new Color(200, 180, 100);
+				case FirearmsBulletType.IZH43Bullet:
+					return new Color(180, 140, 60);
 				default:
 					return Color.White;
 			}
@@ -192,6 +195,8 @@ namespace Game
 					return 150f;
 				case FirearmsBulletType.RevolverBullet:
 					return 45f;
+				case FirearmsBulletType.IZH43Bullet:
+					return 15f;
 				default:
 					return 10f;
 			}
@@ -213,6 +218,8 @@ namespace Game
 				case FirearmsBulletType.SniperBullet:
 					return 1;
 				case FirearmsBulletType.RevolverBullet:
+					return 1;
+				case FirearmsBulletType.IZH43Bullet:
 					return 1;
 				default:
 					return 1;
@@ -236,6 +243,8 @@ namespace Game
 					return 0.99f;
 				case FirearmsBulletType.RevolverBullet:
 					return 0.96f;
+				case FirearmsBulletType.IZH43Bullet:
+					return 0.88f;
 				default:
 					return 0.8f;
 			}
