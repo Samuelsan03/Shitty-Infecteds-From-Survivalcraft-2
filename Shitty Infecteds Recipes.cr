@@ -1,4 +1,12 @@
 <Recipes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="CraftingRecipes.xsd">
+<Recipe Result="IZH43Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="planks" c="rod" Description="[0]">
+  "ab "
+  "cbc"
+  " a "
+</Recipe>
+<Recipe Result="Izh43AmmunitionBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="ironingot" b="gunpowder" Description="[0]">
+  "ab"
+</Recipe>
 <Recipe Result="AntidotePillBlock" ResultCount="3" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="canvas" b="redflower" c="whiteflower" Description="[0]">
   "a"
   "b"
@@ -35,6 +43,15 @@
     "bab"
     " a "
   </Recipe>
+  <Recipe Result="RevolverBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="ironblock" c="planks" Description="[0]">
+  "ba"
+  "bc"
+  " a"
+</Recipe>
+<Recipe Result="RevolverAmmunitionBlock" ResultCount="6" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironblock" b="gunpowder" Description="[0]">
+  "ba"
+  " a"
+</Recipe>
   <Recipe Result="SPAS12Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="rod" b="ironingot" c="planks" d="string" Description="[0]">
     "ab "
     "aca"
@@ -163,7 +180,25 @@
       "bab"
       " a "
     </Recipe>
+        <Recipe Result="CopperThinHammerBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick" b="copperingot" c="copperpickaxe" Description="[0]">
+      " b"
+      "bcb"
+      " a "
+    </Recipe>
+    <Recipe Result="IronThinHammerBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="copperthinhammer" b="ironingot" Description="[0]">
+      "b"
+      "a"
+      "b"
+    </Recipe>
+    <Recipe Result="DiamondThinHammerBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironthinhammer" b="diamond" Description="[0]">
+      "b"
+      "a"
+      "b"
+    </Recipe>
     <Smelting>
+    <Recipe Result="LavaThinHammerBlock" ResultCount="1" RequiredHeatLevel="2" RequiredPlayerLevel="5" a="magmabucket" b="diamondthinhammer" Description="[0]">
+      "ba"
+    </Recipe>
     <Recipe Result="LavaSharpHammerBlock" ResultCount="1" RequiredHeatLevel="2" RequiredPlayerLevel="5" a="magmabucket" b="diamondsharphammer" Description="[0]">
       "ba"
     </Recipe>
