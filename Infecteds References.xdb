@@ -256,6 +256,15 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="SubsystemIZH43BlockBehavior" Guid="27ccd42d-9d08-48eb-b7f4-c76eef881db9" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="fe47fb37-cb19-4d4f-9a9a-c0ff8a870739" Value="Game.SubsystemIZH43BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemRevolverBlockBehavior" Guid="4c2b2fb4-428c-4221-b400-5c71e0816122" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="381414a5-8ed2-4629-b775-bf5ddb4f0a1f" Value="Game.SubsystemRevolverBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemAntidotePillBehavior" Guid="5aa290f7-8ace-4cd8-b29c-449bc408f8b9" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="e51f8ab1-e1c2-4d6a-9ef9-f7a3cd21720a" Value="Game.SubsystemAntidotePillBehavior" Type="string" />
+        </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemBandageLargeBehavior" Guid="e00bffc3-1067-40ad-890f-b143d792244f" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
           <Parameter Name="Class" Guid="d7547284-40d9-4339-878b-57a1bb04ec0a" Value="Game.SubsystemBandageLargeBehavior" Type="string" />
         </MemberSubsystemTemplate>
