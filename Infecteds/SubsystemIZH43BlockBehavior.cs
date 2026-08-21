@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using TemplatesDatabase;
@@ -186,7 +186,7 @@ namespace Game
 										// Sin munición y no acabas de disparar - mensaje de recarga
 										if (componentPlayer != null && timeSinceEmptyMessage >= EmptyMessageCooldown)
 										{
-											string ammoName = LanguageControl.GetBlock("IZH43AmmunitionBlock", "DisplayName");
+											string ammoName = LanguageControl.GetBlock("Izh43AmmunitionBlock", "DisplayName");
 											string message = LanguageControl.Get("Firearms", 1);
 											componentPlayer.ComponentGui.DisplaySmallMessage(string.Format(message, ammoName), Color.White, true, false);
 											m_lastEmptyMessageTimes[componentMiner] = m_subsystemTime.GameTime;
