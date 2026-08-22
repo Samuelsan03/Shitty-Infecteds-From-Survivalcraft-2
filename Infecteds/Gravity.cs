@@ -5,79 +5,63 @@ using TemplatesDatabase;
 
 namespace Game
 {
-	/// <summary>
-	/// Comportamiento que añade un efecto de empuje al golpear a una víctima,
-	/// usando dos parámetros simples: probabilidad de empuje y fuerza de empuje.
-	/// Soporta los tres comportamientos de persecución: ComponentChaseBehavior,
-	/// ComponentNewChaseBehavior y ComponentZombieChaseBehavior.
-	/// </summary>
 	public class Gravity : ComponentBehavior, IUpdateable
 	{
-		// Propiedades requeridas por ComponentBehavior e IUpdateable
 		public override float ImportanceLevel => 0f;
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
-		// Máquina de estados
 		private StateMachine m_stateMachine = new StateMachine();
 
-		// Subsystems
 		private SubsystemTime m_subsystemTime;
 		private SubsystemBodies m_subsystemBodies;
 
-		// Componentes propios
 		private ComponentCreature m_componentCreature;
 		private ComponentCreatureModel m_componentCreatureModel;
 		private ComponentBody m_componentBody;
+		private ComponentMiner m_componentMiner;
 
-		// Referencia al comportamiento de persecución
 		private ComponentBehavior m_chaseBehavior;
 
-		// LOS DOS PARÁMETROS SIMPLES QUE PEDISTE
 		private float m_pushProbability = 0f;
 		private float m_pushForce = 0f;
 
-		// Variable para evitar aplicar empuje múltiples veces en el mismo golpe
 		private bool m_pushAppliedThisHit = false;
+		private Random m_random = new Random();
 
-		// ---------------------------------------------------------------------
-		// Carga de la plantilla
-		// ---------------------------------------------------------------------
+		private const float MaxAttackRange = 1.75f;
+
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
-			// Obtener subsystems
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 
-			// Obtener componentes propios
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentCreatureModel = Entity.FindComponent<ComponentCreatureModel>(true);
 			m_componentBody = Entity.FindComponent<ComponentBody>(true);
+			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 
-			// Buscar el comportamiento de persecución que esté presente (original, new o zombie)
 			m_chaseBehavior = Entity.FindComponent<ComponentChaseBehavior>();
 			if (m_chaseBehavior == null)
 				m_chaseBehavior = Entity.FindComponent<ComponentNewChaseBehavior>();
 			if (m_chaseBehavior == null)
 				m_chaseBehavior = Entity.FindComponent<ComponentZombieChaseBehavior>();
 
-			// Cargar los dos parámetros simples
-			m_pushProbability = valuesDictionary.GetValue<float>("PushProbability", 0.1f);
-			m_pushForce = valuesDictionary.GetValue<float>("PushForce", 10f);
+			m_pushProbability = valuesDictionary.GetValue<float>("PushProbability", 0.3f);
+			m_pushForce = valuesDictionary.GetValue<float>("PushForce", 15f);
 
-			// Configurar la máquina de estados con dos estados: Idle y Chasing
 			m_stateMachine.AddState("Idle",
-				enter: null,
-				update: () =>
+				null,
+				() =>
 				{
 					if (IsChaseActive())
 						m_stateMachine.TransitionTo("Chasing");
 				},
-				leave: null
+				null
 			);
 
 			m_stateMachine.AddState("Chasing",
-				enter: () => { m_pushAppliedThisHit = false; },
-				update: () =>
+				() => { m_pushAppliedThisHit = false; },
+				() =>
 				{
 					if (!IsChaseActive())
 					{
@@ -90,7 +74,12 @@ namespace Game
 						ComponentCreature target = GetTargetFromChase();
 						if (target != null && target.ComponentHealth.Health > 0f)
 						{
-							ApplyPush(target);
+							Vector3 hitPoint;
+							ComponentBody hitBody = GetHitBody(target.ComponentBody, out hitPoint);
+							if (hitBody != null)
+							{
+								ApplyPush(target, hitBody, hitPoint);
+							}
 							m_pushAppliedThisHit = true;
 						}
 					}
@@ -98,23 +87,16 @@ namespace Game
 					if (!m_componentCreatureModel.IsAttackHitMoment)
 						m_pushAppliedThisHit = false;
 				},
-				leave: null
+				null
 			);
 
 			m_stateMachine.TransitionTo("Idle");
 		}
 
-		// ---------------------------------------------------------------------
-		// Método de actualización (IUpdateable)
-		// ---------------------------------------------------------------------
 		public void Update(float dt)
 		{
 			m_stateMachine.Update();
 		}
-
-		// ---------------------------------------------------------------------
-		// Métodos auxiliares
-		// ---------------------------------------------------------------------
 
 		private bool IsChaseActive()
 		{
@@ -144,38 +126,33 @@ namespace Game
 			return null;
 		}
 
-		private void ApplyPush(ComponentCreature target)
+		private ComponentBody GetHitBody(ComponentBody target, out Vector3 hitPoint)
+		{
+			Vector3 vector = m_componentCreature.ComponentBody.BoundingBox.Center();
+			Vector3 v = target.BoundingBox.Center();
+			Ray3 ray = new Ray3(vector, Vector3.Normalize(v - vector));
+			BodyRaycastResult? bodyRaycastResult = m_componentMiner.Raycast<BodyRaycastResult>(ray, RaycastMode.Interaction, true, true, true, null);
+			if (bodyRaycastResult != null && bodyRaycastResult.Value.Distance < MaxAttackRange && (bodyRaycastResult.Value.ComponentBody == target || bodyRaycastResult.Value.ComponentBody.IsChildOfBody(target) || target.IsChildOfBody(bodyRaycastResult.Value.ComponentBody)))
+			{
+				hitPoint = bodyRaycastResult.Value.HitPoint();
+				return bodyRaycastResult.Value.ComponentBody;
+			}
+			hitPoint = default(Vector3);
+			return null;
+		}
+
+		private void ApplyPush(ComponentCreature target, ComponentBody hitBody, Vector3 hitPoint)
 		{
 			if (m_pushProbability <= 0f || m_pushForce <= 0f) return;
+			if (m_random.Float(0f, 1f) > m_pushProbability) return;
 
-			Random random = new Random();
-			if (random.Float(0f, 1f) > m_pushProbability) return;
+			Vector3 hitDirection = m_componentBody.Matrix.Forward;
 
-			Vector3 attackerPos = m_componentBody.Position;
-			Vector3 targetPos = target.ComponentBody.Position;
-			Vector3 direction = targetPos - attackerPos;
-			float horizontalDist = new Vector2(direction.X, direction.Z).Length();
+			m_componentMiner.Hit(hitBody, hitPoint, hitDirection);
 
-			if (horizontalDist < 0.01f)
-			{
-				direction = m_componentBody.Matrix.Forward;
-				direction.Y = 0f;
-				if (direction.LengthSquared() < 0.01f)
-					direction = Vector3.UnitZ;
-			}
-			else
-			{
-				direction = new Vector3(direction.X, 0f, direction.Z);
-			}
-
-			direction = Vector3.Normalize(direction);
-			Vector3 pushDir = direction + Vector3.UnitY * 0.5f;
+			Vector3 pushDir = hitDirection + Vector3.UnitY * 0.5f;
 			pushDir = Vector3.Normalize(pushDir);
-
-			float impulseMagnitude = m_pushForce * 1e7f;
-			Vector3 impulse = pushDir * impulseMagnitude;
-
-			target.ComponentBody.ApplyImpulse(impulse);
+			hitBody.ApplyImpulse(pushDir * m_pushForce * 1e7f);
 		}
 	}
 }
