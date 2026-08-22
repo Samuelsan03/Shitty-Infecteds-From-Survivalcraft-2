@@ -248,6 +248,16 @@ public class ShittyInfectedsModLoader : ModLoader
 			{
 				if (bodyResult.ComponentBody != null)
 				{
+					// Verificar si es el vendedor de armas por nombre en la base de datos
+					string entityName = bodyResult.ComponentBody.Entity.ValuesDictionary.DatabaseObject.Name;
+					if (entityName == "FirearmsSeller")
+					{
+						player.ComponentGui.ModalPanelWidget = new FirearmsShopWidget(player);
+						AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+						handled = true;
+						return;
+					}
+
 					ComponentCreatureInventory creatureInv = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureInventory>();
 
 					if (creatureInv != null)
