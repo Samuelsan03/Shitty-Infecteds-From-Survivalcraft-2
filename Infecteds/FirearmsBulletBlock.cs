@@ -15,7 +15,6 @@ namespace Game
 			base.Initialize();
 			m_texture = ContentManager.Get<Texture2D>("Textures/Experience");
 
-			// Configuración base para proyectiles
 			IsCollidable = false;
 			IsTransparent = true;
 			IsPlaceable = false;
@@ -47,41 +46,24 @@ namespace Game
 			BlocksManager.DrawFlatBlock(primitivesRenderer, value, drawSize, ref matrix, m_texture, bulletColor, true, environmentData);
 		}
 
-		// ====================================================================
-		// SISTEMA DE DAÑO - Siguiendo el patrón del Block original
-		// Estructura de datos: Bits 0-3 = Tipo de bala, Bits 4-15 = Daño
-		// ====================================================================
-
-		/// <summary>
-		/// Obtiene el daño actual almacenado en el bloque (bits 4-15)
-		/// </summary>
 		public override int GetDamage(int value)
 		{
 			return Terrain.ExtractData(value) >> 4 & 4095;
 		}
 
-		/// <summary>
-		/// Establece el daño en el bloque, preservando el tipo de bala (primeros 4 bits)
-		/// </summary>
 		public override int SetDamage(int value, int damage)
 		{
 			int num = Terrain.ExtractData(value);
-			num &= 15; // Preservar solo el tipo de bala (bits 0-3)
-			num |= Math.Clamp(damage, 0, 4095) << 4; // Establecer daño en bits 4-15
+			num &= 15;
+			num |= Math.Clamp(damage, 0, 4095) << 4;
 			return Terrain.ReplaceData(value, num);
 		}
 
-		/// <summary>
-		/// Valor que queda cuando la bala es destruida por daño (0 = desaparece)
-		/// </summary>
 		public override int GetDamageDestructionValue(int value)
 		{
 			return 0;
 		}
 
-		/// <summary>
-		/// Calcula la salud del bloque (0 a 1, donde 1 es sin daño)
-		/// </summary>
 		public override float GetBlockHealth(int value)
 		{
 			int durability = GetDurability(value);
@@ -93,50 +75,30 @@ namespace Game
 			return -1f;
 		}
 
-		/// <summary>
-		/// Obtiene la durabilidad según el tipo de bala
-		/// </summary>
 		public override int GetDurability(int value)
 		{
 			FirearmsBulletType type = GetFirearmsBulletType(Terrain.ExtractData(value));
 			return GetBulletDurability(type);
 		}
 
-		// ====================================================================
-		// SISTEMA DE PROYECTILES - Lo que realmente causa daño a entidades
-		// ====================================================================
-
-		/// <summary>
-		/// Poder del proyectil - ES LO QUE REALMENTE CAUSA DAÑO A ENTIDADES
-		/// El motor del juego usa este valor para calcular el daño
-		/// </summary>
 		public override float GetProjectilePower(int value)
 		{
 			FirearmsBulletType type = GetFirearmsBulletType(Terrain.ExtractData(value));
 			return GetBulletDamage(type);
 		}
 
-		/// <summary>
-		/// Amortiguación del proyectil (1.0 = sin pérdida de velocidad)
-		/// </summary>
 		public override float GetProjectileDamping(int value)
 		{
 			FirearmsBulletType type = GetFirearmsBulletType(Terrain.ExtractData(value));
 			return GetBulletDamping(type);
 		}
 
-		/// <summary>
-		/// Resistencia a impactos de otros proyectiles
-		/// </summary>
 		public override float GetProjectileResilience(int value)
 		{
-			return 0f; // Las balas son vulnerables a otros proyectiles
+			return 0f;
 		}
 
-		// ====================================================================
 		// ENUM Y MÉTODOS ESTÁTICOS
-		// ====================================================================
-
 		public enum FirearmsBulletType
 		{
 			AK47Bullet,
@@ -144,7 +106,13 @@ namespace Game
 			SPAS12Bullet,
 			SniperBullet,
 			RevolverBullet,
-			IZH43Bullet
+			IZH43Bullet,
+			Mac10Bullet,
+			M4Bullet,
+			UziBullet,
+			BK93Bullet,
+			Master308Bullet,
+			MP5SSDBullet  // ✅ NUEVA BALA MP5SSD
 		}
 
 		public static FirearmsBulletType GetFirearmsBulletType(int data)
@@ -173,14 +141,23 @@ namespace Game
 					return new Color(200, 180, 100);
 				case FirearmsBulletType.IZH43Bullet:
 					return new Color(180, 140, 60);
+				case FirearmsBulletType.Mac10Bullet:
+					return new Color(255, 200, 50);
+				case FirearmsBulletType.M4Bullet:
+					return new Color(230, 190, 100);
+				case FirearmsBulletType.UziBullet:
+					return new Color(255, 190, 60);
+				case FirearmsBulletType.BK93Bullet:
+					return new Color(190, 145, 55);
+				case FirearmsBulletType.Master308Bullet:
+					return new Color(200, 170, 120);
+				case FirearmsBulletType.MP5SSDBullet:  // ✅ COLOR BALA MP5SSD
+					return new Color(200, 200, 210);
 				default:
 					return Color.White;
 			}
 		}
 
-		/// <summary>
-		/// Daño que causa cada tipo de bala (usado por GetProjectilePower)
-		/// </summary>
 		public static float GetBulletDamage(FirearmsBulletType type)
 		{
 			switch (type)
@@ -197,14 +174,23 @@ namespace Game
 					return 45f;
 				case FirearmsBulletType.IZH43Bullet:
 					return 15f;
+				case FirearmsBulletType.Mac10Bullet:
+					return 18f;
+				case FirearmsBulletType.M4Bullet:
+					return 22f;
+				case FirearmsBulletType.UziBullet:
+					return 15f;
+				case FirearmsBulletType.BK93Bullet:
+					return 15f;
+				case FirearmsBulletType.Master308Bullet:
+					return 120f;
+				case FirearmsBulletType.MP5SSDBullet:  // ✅ DAÑO MP5SSD (9mm subsonic)
+					return 20f;
 				default:
 					return 10f;
 			}
 		}
 
-		/// <summary>
-		/// Durabilidad de cada tipo de bala (veces que puede recibir daño antes de destruirse)
-		/// </summary>
 		public static int GetBulletDurability(FirearmsBulletType type)
 		{
 			switch (type)
@@ -221,14 +207,23 @@ namespace Game
 					return 1;
 				case FirearmsBulletType.IZH43Bullet:
 					return 1;
+				case FirearmsBulletType.Mac10Bullet:
+					return 1;
+				case FirearmsBulletType.M4Bullet:
+					return 1;
+				case FirearmsBulletType.UziBullet:
+					return 1;
+				case FirearmsBulletType.BK93Bullet:
+					return 1;
+				case FirearmsBulletType.Master308Bullet:
+					return 1;
+				case FirearmsBulletType.MP5SSDBullet:
+					return 1;
 				default:
 					return 1;
 			}
 		}
 
-		/// <summary>
-		/// Amortiguación de cada tipo de bala (qué tan rápido pierde velocidad)
-		/// </summary>
 		public static float GetBulletDamping(FirearmsBulletType type)
 		{
 			switch (type)
@@ -245,6 +240,18 @@ namespace Game
 					return 0.96f;
 				case FirearmsBulletType.IZH43Bullet:
 					return 0.88f;
+				case FirearmsBulletType.Mac10Bullet:
+					return 0.93f;
+				case FirearmsBulletType.M4Bullet:
+					return 0.96f;
+				case FirearmsBulletType.UziBullet:
+					return 0.95f;
+				case FirearmsBulletType.BK93Bullet:
+					return 0.88f;
+				case FirearmsBulletType.Master308Bullet:
+					return 0.98f;
+				case FirearmsBulletType.MP5SSDBullet:  // ✅ DAMPING MP5SSD (subsonic)
+					return 0.94f;
 				default:
 					return 0.8f;
 			}
