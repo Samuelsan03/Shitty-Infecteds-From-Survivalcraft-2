@@ -1,0 +1,20 @@
+<FirearmsShopWidget xmlns="runtime-namespace:Game" Size="614, 382">
+  <BevelledRectangleWidget BevelSize="3" />
+
+  <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+
+    <CanvasWidget Size="0, 12"/>
+
+    <LabelWidget Name="TitleLabel" Text="Tienda de Armas de Fuego" Color="255, 255, 255" HorizontalAlignment="Center"/>
+    <CanvasWidget Size="0, 4" />
+    <LabelWidget Text="Próximamente..." Color="160, 160, 160, 255" HorizontalAlignment="Center" />
+
+    <CanvasWidget Size="0, Infinity"/>
+
+  </StackPanelWidget>
+
+  <BevelledButtonWidget Name="CloseButton" CanvasWidget.Position="535, 12" Style="{Styles/ButtonStyle_70x60}">
+    <LabelWidget Text="X" Color="255, 80, 80" HorizontalAlignment="Center" VerticalAlignment="Center" />
+  </BevelledButtonWidget>
+
+</FirearmsShopWidget>
