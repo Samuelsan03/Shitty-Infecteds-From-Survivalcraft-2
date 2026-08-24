@@ -13,7 +13,6 @@ namespace Game
 		private ComponentFirearmsShop m_shopComponent;
 		private ButtonWidget m_closeButton;
 		private ScrollPanelWidget m_scrollPanel;
-		private CanvasWidget m_itemsContainer;
 		private LabelWidget m_restorationLabel;
 		private SubsystemAudio m_subsystemAudio;
 
@@ -31,7 +30,6 @@ namespace Game
 
 			m_closeButton = Children.Find<ButtonWidget>("CloseButton", true);
 			m_scrollPanel = Children.Find<ScrollPanelWidget>("ItemsScrollPanel", true);
-			m_itemsContainer = Children.Find<CanvasWidget>("ItemsContainer", true);
 			m_restorationLabel = Children.Find<LabelWidget>("RestorationLabel", true);
 
 			m_subsystemAudio = componentPlayer?.Project?.FindSubsystem<SubsystemAudio>(true);
@@ -44,19 +42,13 @@ namespace Game
 		{
 			m_itemWidgets.Clear();
 
-			if (m_itemsContainer != null)
-			{
-				m_itemsContainer.Children.Clear();
-			}
-			else if (m_scrollPanel != null)
+			if (m_scrollPanel != null)
 			{
 				m_scrollPanel.Children.Clear();
 			}
 
-			if (m_shopComponent == null || m_shopComponent.ShopItems == null || m_shopComponent.ShopItems.Count == 0)
-			{
+			if (m_shopComponent == null || m_shopComponent.ShopItems == null)
 				return;
-			}
 
 			float yPosition = 0f;
 
@@ -68,22 +60,9 @@ namespace Game
 				CanvasWidget.SetPosition(itemWidget, new Vector2(5f, yPosition));
 
 				m_itemWidgets.Add(itemWidget);
-
-				if (m_itemsContainer != null)
-				{
-					m_itemsContainer.Children.Add(itemWidget);
-				}
-				else if (m_scrollPanel != null)
-				{
-					m_scrollPanel.Children.Add(itemWidget);
-				}
+				m_scrollPanel?.Children.Add(itemWidget);
 
 				yPosition += m_itemHeight + m_itemSpacing;
-			}
-
-			if (m_itemsContainer != null)
-			{
-				m_itemsContainer.Size = new Vector2(540f, yPosition);
 			}
 		}
 
@@ -136,11 +115,11 @@ namespace Game
 			if (result == 0)
 			{
 				m_subsystemAudio?.PlaySound("Audio/cash", 1f, 0f, 0f, 0f);
-				m_componentPlayer.ComponentGui.DisplaySmallMessage("¡Compra exitosa!", new Color(100, 255, 100), true, false);
+				m_componentPlayer.ComponentGui.DisplaySmallMessage("¡Compra exitosa!", new Color(100, 255, 100), true, true);
 			}
 			else if (result == 2)
 			{
-				m_componentPlayer.ComponentGui.DisplaySmallMessage("¡Inventario lleno!", new Color(255, 100, 100), true, true);
+				m_componentPlayer.ComponentGui.DisplaySmallMessage("¡Inventario lleno!", new Color(255, 100, 100), true, false);
 			}
 		}
 	}
@@ -167,11 +146,11 @@ namespace Game
 			m_shop = shop;
 			m_itemIndex = index;
 
-			Size = new Vector2(530f, 65f);
+			Size = new Vector2(525f, 65f);
 
 			m_background = new BevelledRectangleWidget
 			{
-				Size = new Vector2(530f, 65f),
+				Size = new Vector2(525f, 65f),
 				BevelSize = 2f
 			};
 			Children.Add(m_background);
@@ -183,7 +162,7 @@ namespace Game
 				Scale = 1f
 			};
 			Children.Add(m_blockIcon);
-			CanvasWidget.SetPosition(m_blockIcon, new Vector2(8f, 12f));
+			CanvasWidget.SetPosition(m_blockIcon, new Vector2(50f, 5f));
 
 			string displayName = GetBlockDisplayName(item.BlockValue);
 
@@ -192,9 +171,9 @@ namespace Game
 				Text = displayName,
 				Color = Color.White
 			};
-			m_nameLabel.Size = new Vector2(200f, 20f);
+			m_nameLabel.Size = new Vector2(150f, 16f);
 			Children.Add(m_nameLabel);
-			CanvasWidget.SetPosition(m_nameLabel, new Vector2(55f, 12f));
+			CanvasWidget.SetPosition(m_nameLabel, new Vector2(8f, 35f));
 
 			m_priceLabel = new LabelWidget
 			{
@@ -204,11 +183,11 @@ namespace Game
 			};
 			m_priceLabel.Size = new Vector2(120f, 20f);
 			Children.Add(m_priceLabel);
-			CanvasWidget.SetPosition(m_priceLabel, new Vector2(55f, 35f));
+			CanvasWidget.SetPosition(m_priceLabel, new Vector2(260f, 20f));
 
 			m_buyButton = new BevelledButtonWidget
 			{
-				Size = new Vector2(100f, 35f),
+				Size = new Vector2(107f, 38f),
 				IsEnabled = true
 			};
 
@@ -222,7 +201,7 @@ namespace Game
 			m_buyButton.Children.Add(m_buyLabel);
 
 			Children.Add(m_buyButton);
-			CanvasWidget.SetPosition(m_buyButton, new Vector2(420f, 15f));
+			CanvasWidget.SetPosition(m_buyButton, new Vector2(417f, 14f));
 		}
 
 		public bool IsBuyButtonClicked()
