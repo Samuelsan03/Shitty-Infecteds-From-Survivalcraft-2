@@ -1,20 +1,28 @@
-<FirearmsShopWidget xmlns="runtime-namespace:Game" Size="614, 382">
+<FirearmsShopWidget xmlns="runtime-namespace:Game" Size="580, 400">
   <BevelledRectangleWidget BevelSize="3" />
 
   <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
 
-    <CanvasWidget Size="0, 12"/>
+    <CanvasWidget Size="0, 10"/>
+    
+    <LabelWidget Name="TitleLabel" Text="Tienda de Armas de Fuego" Color="255, 255, 255" HorizontalAlignment="Center" FontScale="1.2"/>
+    <CanvasWidget Size="0, 5" />
+    
+    <LabelWidget Name="RestorationLabel" Text="Restaura en: --:--" Color="160, 160, 160" FontScale="0.85" HorizontalAlignment="Center"/>
+    
+    <CanvasWidget Size="0, 8"/>
 
-    <LabelWidget Name="TitleLabel" Text="Tienda de Armas de Fuego" Color="255, 255, 255" HorizontalAlignment="Center"/>
-    <CanvasWidget Size="0, 4" />
-    <LabelWidget Text="Próximamente..." Color="160, 160, 160, 255" HorizontalAlignment="Center" />
-
-    <CanvasWidget Size="0, Infinity"/>
+    <CanvasWidget Size="550, 310" HorizontalAlignment="Center">
+      <BevelledRectangleWidget Size="550, 310" BevelSize="2"/>
+      <ScrollPanelWidget Name="ItemsScrollPanel" Direction="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="4,4,4,4">
+        <CanvasWidget Name="ItemsContainer" Size="530, 0" HorizontalAlignment="Stretch"/>
+      </ScrollPanelWidget>
+    </CanvasWidget>
 
   </StackPanelWidget>
 
-  <BevelledButtonWidget Name="CloseButton" CanvasWidget.Position="535, 12" Style="{Styles/ButtonStyle_70x60}">
-    <LabelWidget Text="X" Color="255, 80, 80" HorizontalAlignment="Center" VerticalAlignment="Center" />
+  <BevelledButtonWidget Name="CloseButton" CanvasWidget.Position="500, 12" Size="70, 30" Style="{Styles/ButtonStyle_70x60}">
+    <LabelWidget Text="X" Color="255, 80, 80" HorizontalAlignment="Center" VerticalAlignment="Center" FontScale="1.1"/>
   </BevelledButtonWidget>
 
 </FirearmsShopWidget>
