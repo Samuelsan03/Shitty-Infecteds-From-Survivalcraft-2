@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Engine;
 using GameEntitySystem;
@@ -17,7 +16,7 @@ namespace Game
 		}
 
 		private List<ShopItem> m_shopItems = new List<ShopItem>();
-		private SubsystemTime m_subsystemTime;
+		private SubsystemGameInfo m_subsystemGameInfo;
 		private double m_lastRestorationTime;
 		private float m_restorationTime;
 		private List<string> m_itemDefinitions;
@@ -31,6 +30,34 @@ namespace Game
 			{
 				return m_shopItems;
 			}
+		}
+
+		public bool IsEntityAlive
+		{
+			get
+			{
+				if (Entity == null || !Entity.IsAddedToProject)
+				{
+					return false;
+				}
+
+				ComponentHealth componentHealth = Entity.FindComponent<ComponentHealth>();
+				if (componentHealth != null)
+				{
+					return componentHealth.Health > 0f;
+				}
+
+				return true;
+			}
+		}
+
+		private double GetWorldTime()
+		{
+			if (m_subsystemGameInfo != null)
+			{
+				return m_subsystemGameInfo.TotalElapsedGameTime;
+			}
+			return 0.0;
 		}
 
 		private IInventory GetPlayerInventory(ComponentPlayer player)
@@ -61,23 +88,31 @@ namespace Game
 			return num;
 		}
 
-		public bool TryPurchaseItem(ComponentPlayer player, int itemIndex)
+		public int TryPurchaseItemWithStatus(ComponentPlayer player, int itemIndex)
 		{
 			IInventory inventory = GetPlayerInventory(player);
 			if (inventory == null)
 			{
-				return false;
+				return 3;
 			}
+
 			if (itemIndex < 0 || itemIndex >= m_shopItems.Count)
 			{
-				return false;
+				return 3;
 			}
+
 			ShopItem shopItem = m_shopItems[itemIndex];
 			int playerCoinCount = GetPlayerCoinCount(player);
 			if (playerCoinCount < shopItem.Price)
 			{
-				return false;
+				return 1;
 			}
+
+			if (ComponentInventoryBase.FindAcquireSlotForItem(inventory, shopItem.BlockValue) == -1)
+			{
+				return 2;
+			}
+
 			int num = shopItem.Price;
 			for (int i = 0; i < inventory.SlotsCount && num > 0; i++)
 			{
@@ -90,8 +125,14 @@ namespace Game
 					num -= num2;
 				}
 			}
+
 			ComponentInventoryBase.AcquireItems(inventory, shopItem.BlockValue, 1);
-			return true;
+			return 0;
+		}
+
+		public bool TryPurchaseItem(ComponentPlayer player, int itemIndex)
+		{
+			return TryPurchaseItemWithStatus(player, itemIndex) == 0;
 		}
 
 		public string GetRestorationTimeFormatted()
@@ -100,15 +141,20 @@ namespace Game
 			{
 				return "N/A";
 			}
-			double num = m_subsystemTime.GameTime - m_lastRestorationTime;
-			double num2 = (double)m_restorationTime - num;
-			if (num2 <= 0.0)
+
+			double currentTime = GetWorldTime();
+			double elapsed = currentTime - m_lastRestorationTime;
+			double remaining = (double)m_restorationTime - elapsed;
+
+			if (remaining <= 0.0)
 			{
-				return "Ahora";
+				m_lastRestorationTime = GetWorldTime();
+				remaining = (double)m_restorationTime;
 			}
-			int num3 = (int)(num2 / 60.0);
-			int num4 = (int)(num2 % 60.0);
-			return string.Format("{0}:{1:D2}", num3, num4);
+
+			int minutes = (int)(remaining / 60.0);
+			int seconds = (int)(remaining % 60.0);
+			return string.Format("{0}:{1:D2}", minutes, seconds);
 		}
 
 		public void OpenShop(ComponentPlayer player)
@@ -117,28 +163,31 @@ namespace Game
 			{
 				return;
 			}
+
+			if (!IsEntityAlive)
+			{
+				return;
+			}
+
 			player.ComponentGui.ModalPanelWidget = new FirearmsShopWidget(player, this);
 		}
 
 		public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
 		{
 			base.Load(valuesDictionary, idToEntityMap);
-			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
+			m_subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true);
 			m_coinBlockIndex = BlocksManager.GetBlockIndex("CoinBlock");
 			m_restorationTime = valuesDictionary.GetValue<float>("RestorationTime", 300f);
-			m_lastRestorationTime = valuesDictionary.GetValue<double>("LastRestorationTime", 0.0);
+			m_lastRestorationTime = valuesDictionary.GetValue<double>("LastRestorationTime", -1.0);
 			m_itemsSellString = valuesDictionary.GetValue<string>("ItemsSell", "");
 			m_itemDefinitions = ParseItemDefinitions(m_itemsSellString);
-			bool flag = m_lastRestorationTime == 0.0 || (m_subsystemTime != null && m_subsystemTime.GameTime - m_lastRestorationTime >= (double)m_restorationTime);
-			if (flag)
+
+			if (m_lastRestorationTime < 0.0)
 			{
-				RefreshShopItems();
-				m_lastRestorationTime = ((m_subsystemTime != null) ? m_subsystemTime.GameTime : 0.0);
+				m_lastRestorationTime = GetWorldTime();
 			}
-			else
-			{
-				LoadShopItems(valuesDictionary);
-			}
+
+			RefreshShopItems();
 		}
 
 		public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)
@@ -146,16 +195,6 @@ namespace Game
 			base.Save(valuesDictionary, entityToIdMap);
 			valuesDictionary.SetValue<float>("RestorationTime", m_restorationTime);
 			valuesDictionary.SetValue<double>("LastRestorationTime", m_lastRestorationTime);
-			valuesDictionary.SetValue<string>("ItemsSell", m_itemsSellString);
-			ValuesDictionary valuesDictionary2 = new ValuesDictionary();
-			valuesDictionary.SetValue<ValuesDictionary>("ShopItems", valuesDictionary2);
-			for (int i = 0; i < m_shopItems.Count; i++)
-			{
-				ValuesDictionary valuesDictionary3 = new ValuesDictionary();
-				valuesDictionary3.SetValue<int>("BlockValue", m_shopItems[i].BlockValue);
-				valuesDictionary3.SetValue<int>("Price", m_shopItems[i].Price);
-				valuesDictionary2.SetValue<ValuesDictionary>("Item" + i.ToString(CultureInfo.InvariantCulture), valuesDictionary3);
-			}
 		}
 
 		private List<string> ParseItemDefinitions(string itemsSell)
@@ -167,7 +206,7 @@ namespace Game
 			}
 			string[] array = itemsSell.Split(new char[]
 			{
-				';'
+		','  // Cambiado de ';' a ','
 			}, StringSplitOptions.RemoveEmptyEntries);
 			for (int i = 0; i < array.Length; i++)
 			{
@@ -183,17 +222,30 @@ namespace Game
 		private void RefreshShopItems()
 		{
 			m_shopItems.Clear();
+
 			if (m_itemDefinitions == null || m_itemDefinitions.Count == 0)
 			{
 				return;
 			}
-			int num = m_itemDefinitions.Count;
-			int num2 = Math.Min(3, num);
-			int num3 = m_random.Int(num2, num);
-			List<string> list = m_itemDefinitions.OrderBy((string x) => m_random.Int()).ToList();
-			for (int i = 0; i < num3; i++)
+
+			int total = m_itemDefinitions.Count;
+			int minItems = Math.Min(3, total);
+
+			int maxItems;
+			if (minItems >= total)
 			{
-				ShopItem shopItem = ParseShopItem(list[i]);
+				maxItems = total;
+			}
+			else
+			{
+				maxItems = m_random.Int(minItems, total + 1);
+			}
+
+			List<string> shuffled = m_itemDefinitions.OrderBy(x => m_random.Int()).ToList();
+
+			for (int i = 0; i < maxItems; i++)
+			{
+				ShopItem shopItem = ParseShopItem(shuffled[i]);
 				if (shopItem != null && shopItem.BlockValue != 0)
 				{
 					m_shopItems.Add(shopItem);
@@ -203,56 +255,42 @@ namespace Game
 
 		private ShopItem ParseShopItem(string definition)
 		{
+			if (string.IsNullOrEmpty(definition))
+			{
+				return null;
+			}
+
 			string[] array = definition.Split(':');
-			if (array.Length < 3)
+
+			if (array.Length < 2)
 			{
 				return null;
 			}
-			string text = array[0].Trim();
-			if (string.IsNullOrEmpty(text))
+
+			string blockName = array[0].Trim();
+			if (string.IsNullOrEmpty(blockName))
 			{
 				return null;
 			}
-			if (!int.TryParse(array[2].Trim(), out int num) || num <= 0)
+
+			string priceStr = array.Length >= 3 ? array[2].Trim() : array[1].Trim();
+
+			if (!int.TryParse(priceStr, out int num) || num <= 0)
 			{
 				return null;
 			}
-			Block block = BlocksManager.GetBlock(text, false);
+
+			Block block = BlocksManager.GetBlock(blockName, false);
 			if (block == null)
 			{
 				return null;
 			}
+
 			return new ShopItem
 			{
 				BlockValue = Terrain.MakeBlockValue(block.BlockIndex),
 				Price = num
 			};
-		}
-
-		private void LoadShopItems(ValuesDictionary valuesDictionary)
-		{
-			m_shopItems.Clear();
-			ValuesDictionary valuesDictionary2 = valuesDictionary.GetValue<ValuesDictionary>("ShopItems", null);
-			if (valuesDictionary2 == null)
-			{
-				RefreshShopItems();
-				return;
-			}
-			int num = 0;
-			while (true)
-			{
-				ValuesDictionary valuesDictionary3 = valuesDictionary2.GetValue<ValuesDictionary>("Item" + num.ToString(CultureInfo.InvariantCulture), null);
-				if (valuesDictionary3 == null)
-				{
-					break;
-				}
-				m_shopItems.Add(new ShopItem
-				{
-					BlockValue = valuesDictionary3.GetValue<int>("BlockValue"),
-					Price = valuesDictionary3.GetValue<int>("Price")
-				});
-				num++;
-			}
 		}
 	}
 }
