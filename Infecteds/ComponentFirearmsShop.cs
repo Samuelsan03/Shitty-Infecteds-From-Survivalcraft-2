@@ -36,18 +36,8 @@ namespace Game
 		{
 			get
 			{
-				if (Entity == null || !Entity.IsAddedToProject)
-				{
-					return false;
-				}
-
 				ComponentHealth componentHealth = Entity.FindComponent<ComponentHealth>();
-				if (componentHealth != null)
-				{
-					return componentHealth.Health > 0f;
-				}
-
-				return true;
+				return componentHealth == null || componentHealth.Health > 0f;
 			}
 		}
 
@@ -88,6 +78,7 @@ namespace Game
 			return num;
 		}
 
+		// 0 = éxito, 1 = sin monedas, 2 = inventario lleno
 		public int TryPurchaseItemWithStatus(ComponentPlayer player, int itemIndex)
 		{
 			IInventory inventory = GetPlayerInventory(player);
@@ -206,7 +197,7 @@ namespace Game
 			}
 			string[] array = itemsSell.Split(new char[]
 			{
-		','  // Cambiado de ';' a ','
+				';'
 			}, StringSplitOptions.RemoveEmptyEntries);
 			for (int i = 0; i < array.Length; i++)
 			{
@@ -230,17 +221,7 @@ namespace Game
 
 			int total = m_itemDefinitions.Count;
 			int minItems = Math.Min(3, total);
-
-			int maxItems;
-			if (minItems >= total)
-			{
-				maxItems = total;
-			}
-			else
-			{
-				maxItems = m_random.Int(minItems, total + 1);
-			}
-
+			int maxItems = m_random.Int(minItems, total);
 			List<string> shuffled = m_itemDefinitions.OrderBy(x => m_random.Int()).ToList();
 
 			for (int i = 0; i < maxItems; i++)
@@ -255,37 +236,25 @@ namespace Game
 
 		private ShopItem ParseShopItem(string definition)
 		{
-			if (string.IsNullOrEmpty(definition))
-			{
-				return null;
-			}
-
 			string[] array = definition.Split(':');
-
-			if (array.Length < 2)
+			if (array.Length < 3)
 			{
 				return null;
 			}
-
-			string blockName = array[0].Trim();
-			if (string.IsNullOrEmpty(blockName))
+			string text = array[0].Trim();
+			if (string.IsNullOrEmpty(text))
 			{
 				return null;
 			}
-
-			string priceStr = array.Length >= 3 ? array[2].Trim() : array[1].Trim();
-
-			if (!int.TryParse(priceStr, out int num) || num <= 0)
+			if (!int.TryParse(array[2].Trim(), out int num) || num <= 0)
 			{
 				return null;
 			}
-
-			Block block = BlocksManager.GetBlock(blockName, false);
+			Block block = BlocksManager.GetBlock(text, false);
 			if (block == null)
 			{
 				return null;
 			}
-
 			return new ShopItem
 			{
 				BlockValue = Terrain.MakeBlockValue(block.BlockIndex),
