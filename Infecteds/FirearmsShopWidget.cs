@@ -13,6 +13,7 @@ namespace Game
 		private ComponentFirearmsShop m_shopComponent;
 		private ButtonWidget m_closeButton;
 		private ScrollPanelWidget m_scrollPanel;
+		private StackPanelWidget m_itemsContainer;
 		private LabelWidget m_restorationLabel;
 		private SubsystemAudio m_subsystemAudio;
 
@@ -30,6 +31,7 @@ namespace Game
 
 			m_closeButton = Children.Find<ButtonWidget>("CloseButton", true);
 			m_scrollPanel = Children.Find<ScrollPanelWidget>("ItemsScrollPanel", true);
+			m_itemsContainer = Children.Find<StackPanelWidget>("ItemsContainer", true);
 			m_restorationLabel = Children.Find<LabelWidget>("RestorationLabel", true);
 
 			m_subsystemAudio = componentPlayer?.Project?.FindSubsystem<SubsystemAudio>(true);
@@ -42,27 +44,26 @@ namespace Game
 		{
 			m_itemWidgets.Clear();
 
-			if (m_scrollPanel != null)
-			{
-				m_scrollPanel.Children.Clear();
-			}
+			if (m_itemsContainer != null)
+				m_itemsContainer.Children.Clear();
 
 			if (m_shopComponent == null || m_shopComponent.ShopItems == null)
 				return;
 
-			float yPosition = 0f;
-
 			for (int i = 0; i < m_shopComponent.ShopItems.Count; i++)
 			{
 				var item = m_shopComponent.ShopItems[i];
-
 				ShopItemWidget itemWidget = new ShopItemWidget(m_componentPlayer, m_shopComponent, i, item);
-				CanvasWidget.SetPosition(itemWidget, new Vector2(5f, yPosition));
+
+				// Margen izquierdo para alinear (5px)
+				itemWidget.MarginLeft = 5f;
+				itemWidget.MarginRight = 0f;
+				itemWidget.MarginTop = 0f;
+				// Espaciado inferior entre ítems (excepto el último)
+				itemWidget.MarginBottom = (i < m_shopComponent.ShopItems.Count - 1) ? m_itemSpacing : 0f;
 
 				m_itemWidgets.Add(itemWidget);
-				m_scrollPanel?.Children.Add(itemWidget);
-
-				yPosition += m_itemHeight + m_itemSpacing;
+				m_itemsContainer?.Children.Add(itemWidget);
 			}
 		}
 
