@@ -15,8 +15,8 @@
     <CanvasWidget Size="550, 310" HorizontalAlignment="Center">
       <BevelledRectangleWidget Size="550, 310" BevelSize="2"/>
       <ScrollPanelWidget Name="ItemsScrollPanel" Direction="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="4,4,4,4">
-        <CanvasWidget Name="ItemsContainer" Size="530, 0" HorizontalAlignment="Stretch"/>
-      </ScrollPanelWidget>
+    <StackPanelWidget Name="ItemsContainer" Direction="Vertical" HorizontalAlignment="Stretch" />
+</ScrollPanelWidget>
     </CanvasWidget>
 
   </StackPanelWidget>
