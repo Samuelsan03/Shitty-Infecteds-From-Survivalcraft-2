@@ -220,7 +220,7 @@ namespace Game
 			}
 
 			int total = m_itemDefinitions.Count;
-			int minItems = Math.Min(3, total);
+			int minItems = Math.Min(6, total);
 			int maxItems = m_random.Int(minItems, total);
 			List<string> shuffled = m_itemDefinitions.OrderBy(x => m_random.Int()).ToList();
 
