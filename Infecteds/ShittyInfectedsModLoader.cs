@@ -252,10 +252,14 @@ public class ShittyInfectedsModLoader : ModLoader
 					string entityName = bodyResult.ComponentBody.Entity.ValuesDictionary.DatabaseObject.Name;
 					if (entityName == "FirearmsSeller")
 					{
-						player.ComponentGui.ModalPanelWidget = new FirearmsShopWidget(player);
-						AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-						handled = true;
-						return;
+						ComponentFirearmsShop shopComponent = bodyResult.ComponentBody.Entity.FindComponent<ComponentFirearmsShop>();
+						if (shopComponent != null && shopComponent.IsEntityAlive)  // <-- Agregar esta verificación
+						{
+							player.ComponentGui.ModalPanelWidget = new FirearmsShopWidget(player, shopComponent);
+							AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+							handled = true;
+							return;
+						}
 					}
 
 					ComponentCreatureInventory creatureInv = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureInventory>();
