@@ -15,6 +15,7 @@ namespace Game
 		private ScrollPanelWidget m_scrollPanel;
 		private StackPanelWidget m_itemsContainer;
 		private LabelWidget m_restorationLabel;
+		private LabelWidget m_titleLabel;
 		private SubsystemAudio m_subsystemAudio;
 
 		private List<ShopItemWidget> m_itemWidgets = new List<ShopItemWidget>();
@@ -33,6 +34,7 @@ namespace Game
 			m_scrollPanel = Children.Find<ScrollPanelWidget>("ItemsScrollPanel", true);
 			m_itemsContainer = Children.Find<StackPanelWidget>("ItemsContainer", true);
 			m_restorationLabel = Children.Find<LabelWidget>("RestorationLabel", true);
+			m_titleLabel = Children.Find<LabelWidget>("TitleLabel", true);
 
 			m_subsystemAudio = componentPlayer?.Project?.FindSubsystem<SubsystemAudio>(true);
 			m_subsystemAudio?.PlaySound("Audio/cortina abriendo", 1f, 0f, 0f, 0f);
@@ -55,11 +57,9 @@ namespace Game
 				var item = m_shopComponent.ShopItems[i];
 				ShopItemWidget itemWidget = new ShopItemWidget(m_componentPlayer, m_shopComponent, i, item);
 
-				// Margen izquierdo para alinear (5px)
 				itemWidget.MarginLeft = 5f;
 				itemWidget.MarginRight = 0f;
 				itemWidget.MarginTop = 0f;
-				// Espaciado inferior entre ítems (excepto el último)
 				itemWidget.MarginBottom = (i < m_shopComponent.ShopItems.Count - 1) ? m_itemSpacing : 0f;
 
 				m_itemWidgets.Add(itemWidget);
@@ -81,9 +81,22 @@ namespace Game
 				return;
 			}
 
+			if (m_titleLabel != null)
+			{
+				m_titleLabel.Text = LanguageControl.Get(new string[]
+				{
+					"FirearmsShopWidget",
+					"title"
+				});
+			}
+
 			if (m_restorationLabel != null && m_shopComponent != null)
 			{
-				m_restorationLabel.Text = $"Restaura en: {m_shopComponent.GetRestorationTimeFormatted()}";
+				m_restorationLabel.Text = string.Format(LanguageControl.Get(new string[]
+				{
+					"FirearmsShopWidget",
+					"restoresInFormat"
+				}), m_shopComponent.GetRestorationTimeFormatted());
 			}
 
 			for (int i = 0; i < m_itemWidgets.Count; i++)
@@ -116,11 +129,19 @@ namespace Game
 			if (result == 0)
 			{
 				m_subsystemAudio?.PlaySound("Audio/cash", 1f, 0f, 0f, 0f);
-				m_componentPlayer.ComponentGui.DisplaySmallMessage("¡Compra exitosa!", new Color(100, 255, 100), true, true);
+				m_componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(new string[]
+				{
+					"FirearmsShopWidget",
+					"purchaseSuccess"
+				}), new Color(100, 255, 100), true, true);
 			}
 			else if (result == 2)
 			{
-				m_componentPlayer.ComponentGui.DisplaySmallMessage("¡Inventario lleno!", new Color(255, 100, 100), true, false);
+				m_componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(new string[]
+				{
+					"FirearmsShopWidget",
+					"inventoryFull"
+				}), new Color(255, 100, 100), true, false);
 			}
 		}
 	}
@@ -178,7 +199,11 @@ namespace Game
 
 			m_priceLabel = new LabelWidget
 			{
-				Text = $"{item.Price} monedas",
+				Text = string.Format(LanguageControl.Get(new string[]
+				{
+					"FirearmsShopWidget",
+					"priceFormat"
+				}), item.Price),
 				Color = new Color(255, 215, 0),
 				VerticalAlignment = WidgetAlignment.Center
 			};
@@ -194,7 +219,11 @@ namespace Game
 
 			m_buyLabel = new LabelWidget
 			{
-				Text = "Comprar",
+				Text = LanguageControl.Get(new string[]
+				{
+					"FirearmsShopWidget",
+					"buy"
+				}),
 				Color = ColorEnabled,
 				HorizontalAlignment = WidgetAlignment.Center,
 				VerticalAlignment = WidgetAlignment.Center
@@ -226,7 +255,11 @@ namespace Game
 					return block.DefaultDisplayName;
 				}
 			}
-			return "Bloque desconocido";
+			return LanguageControl.Get(new string[]
+			{
+				"FirearmsShopWidget",
+				"unknownBlock"
+			});
 		}
 
 		public void UpdateItemData(ComponentFirearmsShop.ShopItem item)
@@ -243,7 +276,11 @@ namespace Game
 
 			if (m_priceLabel != null)
 			{
-				m_priceLabel.Text = $"{item.Price} monedas";
+				m_priceLabel.Text = string.Format(LanguageControl.Get(new string[]
+				{
+					"FirearmsShopWidget",
+					"priceFormat"
+				}), item.Price);
 			}
 
 			if (m_buyButton != null && m_buyLabel != null)
