@@ -5,18 +5,18 @@
 
     <CanvasWidget Size="0, 10"/>
     
-    <LabelWidget Name="TitleLabel" Text="Tienda de Armas de Fuego" Color="255, 255, 255" HorizontalAlignment="Center" FontScale="1.2"/>
+    <LabelWidget Name="TitleLabel" Text="[FirearmsShopWidget:title]" Color="255, 255, 255" HorizontalAlignment="Center" FontScale="1.2"/>
     <CanvasWidget Size="0, 5" />
     
-    <LabelWidget Name="RestorationLabel" Text="Restaura en: --:--" Color="160, 160, 160" FontScale="0.85" HorizontalAlignment="Center"/>
+    <LabelWidget Name="RestorationLabel" Text="[FirearmsShopWidget:restoresIn] --:--" Color="160, 160, 160" FontScale="0.85" HorizontalAlignment="Center"/>
     
     <CanvasWidget Size="0, 8"/>
 
     <CanvasWidget Size="550, 310" HorizontalAlignment="Center">
       <BevelledRectangleWidget Size="550, 310" BevelSize="2"/>
       <ScrollPanelWidget Name="ItemsScrollPanel" Direction="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="4,4,4,4">
-    <StackPanelWidget Name="ItemsContainer" Direction="Vertical" HorizontalAlignment="Stretch" />
-</ScrollPanelWidget>
+        <StackPanelWidget Name="ItemsContainer" Direction="Vertical" HorizontalAlignment="Stretch" />
+      </ScrollPanelWidget>
     </CanvasWidget>
 
   </StackPanelWidget>
