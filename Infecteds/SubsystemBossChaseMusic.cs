@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -8,12 +8,16 @@ namespace Game
 	public class SubsystemBossChaseMusic : Subsystem, IUpdateable
 	{
 		private SubsystemBodies m_subsystemBodies;
+		private SubsystemPlayers m_subsystemPlayers;
+
+		public const float MusicRadius = 50f;
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
 		public override void Load(ValuesDictionary valuesDictionary)
 		{
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
+			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
 			BossChaseMusicManager.Initialize();
 		}
 
@@ -38,6 +42,8 @@ namespace Game
 
 		private bool CheckIfAnyBruteIsChasing()
 		{
+			float radiusSquared = MusicRadius * MusicRadius;
+
 			foreach (ComponentBody body in m_subsystemBodies.Bodies)
 			{
 				if (body?.Entity == null) continue;
@@ -48,9 +54,16 @@ namespace Game
 				ComponentZombieChaseBehavior chaseBehavior = body.Entity.FindComponent<ComponentZombieChaseBehavior>();
 				ComponentHealth health = body.Entity.FindComponent<ComponentHealth>();
 
-				if (chaseBehavior != null && health != null)
+				if (chaseBehavior == null || health == null) continue;
+				if (!chaseBehavior.IsActive || chaseBehavior.Target == null || health.Health <= 0f) continue;
+
+				// El brute está persiguiendo, verificar si algún jugador está dentro del radio
+				foreach (ComponentPlayer player in m_subsystemPlayers.ComponentPlayers)
 				{
-					if (chaseBehavior.IsActive && chaseBehavior.Target != null && health.Health > 0f)
+					if (player?.ComponentBody == null) continue;
+
+					float distanceSquared = Vector3.DistanceSquared(body.Position, player.ComponentBody.Position);
+					if (distanceSquared <= radiusSquared)
 					{
 						return true;
 					}

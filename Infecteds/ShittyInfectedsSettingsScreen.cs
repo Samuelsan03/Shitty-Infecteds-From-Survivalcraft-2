@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Xml.Linq;
 using Engine;
 
@@ -16,6 +16,7 @@ namespace Game
 		private ButtonWidget m_enableFreeCameraButton;
 		private ButtonWidget m_enableBossChaseMusicButton;
 		private ButtonWidget m_enableDeathSpawnButton;
+		private ButtonWidget m_enableGhostChaseMusicButton;
 
 		public ShittyInfectedsSettingsScreen()
 		{
@@ -69,6 +70,12 @@ namespace Game
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 9)
 			);
 			m_enableDeathSpawnButton.ColorTransform = new Color(180, 40, 60);
+
+			m_enableGhostChaseMusicButton = AddToggleButton(
+				"EnableGhostChaseMusic",
+				LanguageControl.Get("ShittyInfectedsSettingsScreen", 10)
+			);
+			m_enableGhostChaseMusicButton.ColorTransform = new Color(100, 220, 220);
 		}
 
 		private ButtonWidget AddToggleButton(string name, string descriptionText)
@@ -182,6 +189,20 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_enableDeathSpawnButton.Text = ShittyInfectedsSettings.EnableDeathSpawn
+				? LanguageControl.On
+				: LanguageControl.Off;
+
+			if (m_enableGhostChaseMusicButton.IsClicked)
+			{
+				ShittyInfectedsSettings.EnableGhostChaseMusic = !ShittyInfectedsSettings.EnableGhostChaseMusic;
+				ShittyInfectedsSettingsManager.Save();
+
+				if (!ShittyInfectedsSettings.EnableGhostChaseMusic)
+				{
+					ChaseMusicManager.StopMusic(); // Corta la música si lo desactivas estando en medio de una persecución
+				}
+			}
+			m_enableGhostChaseMusicButton.Text = ShittyInfectedsSettings.EnableGhostChaseMusic
 				? LanguageControl.On
 				: LanguageControl.Off;
 
