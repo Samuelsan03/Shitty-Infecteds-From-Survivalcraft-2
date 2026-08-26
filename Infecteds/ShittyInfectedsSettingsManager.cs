@@ -47,10 +47,14 @@ namespace Game
 					new XAttribute("value", ShittyInfectedsSettings.EnableFreeCamera.ToString().ToLower())
 				));
 
-				// NUEVO BLOQUE
 				root.Add(new XElement("EnableBossChaseMusic",
 					new XAttribute("type", "bool"),
 					new XAttribute("value", ShittyInfectedsSettings.EnableBossChaseMusic.ToString().ToLower())
+				));
+
+				root.Add(new XElement("EnableDeathSpawn",
+					new XAttribute("type", "bool"),
+					new XAttribute("value", ShittyInfectedsSettings.EnableDeathSpawn.ToString().ToLower())
 				));
 
 				using (Stream stream = Storage.OpenFile(SettingsFilePath, OpenFileMode.Create))
@@ -117,12 +121,18 @@ namespace Game
 							ShittyInfectedsSettings.EnableFreeCamera = val6;
 					}
 
-					// NUEVA LÓGICA
 					XElement elem7 = root.Element("EnableBossChaseMusic");
 					if (elem7 != null)
 					{
 						if (bool.TryParse(elem7.Attribute("value")?.Value, out bool val7))
 							ShittyInfectedsSettings.EnableBossChaseMusic = val7;
+					}
+
+					XElement elem8 = root.Element("EnableDeathSpawn");
+					if (elem8 != null)
+					{
+						if (bool.TryParse(elem8.Attribute("value")?.Value, out bool val8))
+							ShittyInfectedsSettings.EnableDeathSpawn = val8;
 					}
 				}
 			}
