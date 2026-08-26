@@ -329,9 +329,13 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override bool OnPlayerSpawned(PlayerData.SpawnMode spawnMode, ComponentPlayer player, Vector3 position)
 	{
-		if ((spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro)
-			&& player.PlayerData.SpawnsCount <= 1)
+		// Solo dar items en el primer spawn (no al respawnear)
+		if (spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro)
 		{
+			// Dar los items iniciales
+			GiveStarterItems(player);
+
+			// Mostrar el diálogo de configuración de Green Night
 			if (player?.GuiWidget != null)
 			{
 				DialogsManager.ShowDialog(player.GuiWidget, new GreenNightConfigDialog(player));
@@ -680,6 +684,63 @@ public class ShittyInfectedsModLoader : ModLoader
 		}
 
 		return false;
+	}
+
+	private void AddItemsToInventory(ComponentPlayer player, string blockName, int count)
+	{
+		if (player?.ComponentMiner?.Inventory == null) return;
+
+		int blockIndex = BlocksManager.GetBlockIndex(blockName);
+		if (blockIndex < 0 || blockIndex >= 1024) return;
+
+		int blockValue = Terrain.MakeBlockValue(blockIndex, 0, 0);
+		IInventory inventory = player.ComponentMiner.Inventory;
+
+		int remaining = count;
+
+		// Primero, intentar agregar a slots existentes con el mismo item
+		for (int i = 0; i < inventory.SlotsCount && remaining > 0; i++)
+		{
+			if (inventory.GetSlotValue(i) == blockValue)
+			{
+				int capacity = inventory.GetSlotCapacity(i, blockValue);
+				int currentCount = inventory.GetSlotCount(i);
+				int canAdd = capacity - currentCount;
+				if (canAdd > 0)
+				{
+					int toAdd = Math.Min(canAdd, remaining);
+					inventory.AddSlotItems(i, blockValue, toAdd);
+					remaining -= toAdd;
+				}
+			}
+		}
+
+		// Luego, intentar agregar a slots vacíos
+		for (int i = 0; i < inventory.SlotsCount && remaining > 0; i++)
+		{
+			if (inventory.GetSlotCount(i) == 0 || inventory.GetSlotValue(i) == 0)
+			{
+				int capacity = inventory.GetSlotCapacity(i, blockValue);
+				if (capacity > 0)
+				{
+					int toAdd = Math.Min(capacity, remaining);
+					inventory.AddSlotItems(i, blockValue, toAdd);
+					remaining -= toAdd;
+				}
+			}
+		}
+	}
+
+	/// Da los items iniciales al jugador en su primer spawn
+	private void GiveStarterItems(ComponentPlayer player)
+	{
+		AddItemsToInventory(player, "CookedFishBlock", 3);
+		AddItemsToInventory(player, "IronMacheteBlock", 1);
+		AddItemsToInventory(player, "DesertEagleBlock", 1);
+		AddItemsToInventory(player, "DesertEagleAmmunitionBlock", 5);
+		AddItemsToInventory(player, "BandageSmallBlock", 5);
+		AddItemsToInventory(player, "AntidotePillBlock", 5);
+		AddItemsToInventory(player, "CoinBlock", 100);
 	}
 
 	public override void SaveSettings(XElement xElement)
