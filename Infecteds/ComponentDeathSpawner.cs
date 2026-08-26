@@ -24,6 +24,11 @@ namespace Game
 				return;
 			}
 
+			if (!ShittyInfectedsSettings.EnableDeathSpawn)
+			{
+				return;
+			}
+
 			if (m_componentHealth.Health <= 0f)
 			{
 				m_hasSpawned = true;
@@ -84,13 +89,11 @@ namespace Game
 
 		public virtual void ComponentSpawn_Despawned(ComponentSpawn componentSpawn)
 		{
-			// Cuando el cadáver termina de desaparecer, aparece SOLO UNA criatura
 			if (m_willSpawn && m_spawnEntityTemplateNames != null && m_spawnEntityTemplateNames.Length > 0)
 			{
 				Vector3 position = m_componentBody.Position;
 				Vector3 velocity = m_componentBody.Velocity;
 
-				// Elegimos SOLO UN template aleatorio de la lista
 				int randomIndex = s_random.Int(0, m_spawnEntityTemplateNames.Length - 1);
 				string templateName = m_spawnEntityTemplateNames[randomIndex];
 
