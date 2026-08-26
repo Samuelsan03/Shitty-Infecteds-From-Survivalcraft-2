@@ -9,5 +9,6 @@ namespace Game
 		public static bool EnableCreatureBleeding { get; set; } = true;
 		public static bool EnableFreeCamera { get; set; } = true;
 		public static bool EnableBossChaseMusic { get; set; } = true;
+		public static bool EnableDeathSpawn { get; set; } = true;
 	}
 }
