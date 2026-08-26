@@ -14,7 +14,8 @@ namespace Game
 		private ButtonWidget m_showCreatureHealthBarsButton;
 		private ButtonWidget m_enableCreatureBleedingButton;
 		private ButtonWidget m_enableFreeCameraButton;
-		private ButtonWidget m_enableBossChaseMusicButton; // NUEVO BOTÓN
+		private ButtonWidget m_enableBossChaseMusicButton;
+		private ButtonWidget m_enableDeathSpawnButton;
 
 		public ShittyInfectedsSettingsScreen()
 		{
@@ -57,14 +58,17 @@ namespace Game
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 7)
 			);
 
-			// NUEVO BOTÓN
 			m_enableBossChaseMusicButton = AddToggleButton(
 				"EnableBossChaseMusic",
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 8)
 			);
-
-			// Le aplicamos un color naranja distinto al resto para diferenciarlo visualmente
 			m_enableBossChaseMusicButton.ColorTransform = new Color(255, 140, 0);
+
+			m_enableDeathSpawnButton = AddToggleButton(
+				"EnableDeathSpawn",
+				LanguageControl.Get("ShittyInfectedsSettingsScreen", 9)
+			);
+			m_enableDeathSpawnButton.ColorTransform = new Color(180, 40, 60);
 		}
 
 		private ButtonWidget AddToggleButton(string name, string descriptionText)
@@ -158,19 +162,26 @@ namespace Game
 				? LanguageControl.On
 				: LanguageControl.Off;
 
-			// NUEVA LÓGICA DEL BOTÓN
 			if (m_enableBossChaseMusicButton.IsClicked)
 			{
 				ShittyInfectedsSettings.EnableBossChaseMusic = !ShittyInfectedsSettings.EnableBossChaseMusic;
 				ShittyInfectedsSettingsManager.Save();
 
-				// Si se desactiva, cortamos la música inmediatamente por si ya estaba sonando
 				if (!ShittyInfectedsSettings.EnableBossChaseMusic)
 				{
 					BossChaseMusicManager.Stop();
 				}
 			}
 			m_enableBossChaseMusicButton.Text = ShittyInfectedsSettings.EnableBossChaseMusic
+				? LanguageControl.On
+				: LanguageControl.Off;
+
+			if (m_enableDeathSpawnButton.IsClicked)
+			{
+				ShittyInfectedsSettings.EnableDeathSpawn = !ShittyInfectedsSettings.EnableDeathSpawn;
+				ShittyInfectedsSettingsManager.Save();
+			}
+			m_enableDeathSpawnButton.Text = ShittyInfectedsSettings.EnableDeathSpawn
 				? LanguageControl.On
 				: LanguageControl.Off;
 
