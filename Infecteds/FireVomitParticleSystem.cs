@@ -38,10 +38,10 @@ namespace Game
 		{
 			dt = Math.Clamp(dt, 0f, 0.1f);
 
-			// Limpiar lista de entidades afectadas cada 2 segundos para permitir re-ignición y daño periódico
-			if (m_subsystemTime != null && m_subsystemTime.GameTime - m_lastClearTime > 2.0)
+			// Limpiar diccionario de tiempos de daño cada 5 segundos para evitar acumulación
+			if (m_subsystemTime != null && m_subsystemTime.GameTime - m_lastClearTime > 5.0)
 			{
-				m_recentlyAffectedEntities.Clear();
+				m_lastDamageTimeByEntity.Clear();
 				m_lastClearTime = m_subsystemTime.GameTime;
 			}
 
@@ -94,7 +94,7 @@ namespace Game
 							}
 							else
 							{
-								// Colisión con cuerpos - Genera incendio y causa un poco de daño
+								// Colisión con cuerpos - Genera incendio y causa daño gradual
 								if (CheckBodyCollisionAndSetFire(newPos, particle))
 								{
 									particle.IsStuck = true;
@@ -211,8 +211,8 @@ namespace Game
 		}
 
 		/// <summary>
-		/// Verifica colisión con cuerpos, genera incendio, causa un poco de daño 
-		/// y registra la causa de muerte usando el sistema de idiomas.
+		/// Verifica colisión con cuerpos, genera incendio y causa daño gradual
+		/// como un proyectil suave, registrando la causa de muerte usando el sistema de idiomas.
 		/// </summary>
 		private bool CheckBodyCollisionAndSetFire(Vector3 position, FireVomitParticleSystem.Particle particle)
 		{
@@ -221,6 +221,8 @@ namespace Game
 			m_componentBodies.Clear();
 			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), 2f, m_componentBodies);
 
+			double currentTime = m_subsystemTime != null ? m_subsystemTime.GameTime : 0;
+
 			for (int i = 0; i < m_componentBodies.Count; i++)
 			{
 				ComponentBody body = m_componentBodies.Array[i];
@@ -228,9 +230,7 @@ namespace Game
 				// Ignorar al dueño del vómito
 				if (body == OwnerBody) continue;
 
-				// Verificar si ya fue afectado recientemente (evitar spam)
 				int entityId = body.Entity.GetHashCode();
-				if (m_recentlyAffectedEntities.Contains(entityId)) continue;
 
 				// Verificar si la partícula está dentro del bounding box (expandido ligeramente)
 				BoundingBox box = body.BoundingBox;
@@ -239,21 +239,31 @@ namespace Game
 
 				if (box.Contains(position))
 				{
-					// Generar incendio
+					// Generar incendio (solo una vez por contacto continuo)
 					ComponentOnFire onFire = body.Entity.FindComponent<ComponentOnFire>();
-					if (onFire != null)
+					if (onFire != null && !onFire.IsOnFire)
 					{
 						onFire.SetOnFire(Attacker, m_random.Float(8f, 14f));
 					}
 
-					// Causa un poco de daño directo (5% de la vida) y registra la causa de muerte usando lang
+					// Causa daño gradual como proyectil suave - cada 0.25 segundos
+					double lastDamageTime;
+					if (m_lastDamageTimeByEntity.TryGetValue(entityId, out lastDamageTime))
+					{
+						if (currentTime - lastDamageTime < 0.25)
+						{
+							particle.Position = position;
+							return true;
+						}
+					}
+
+					// Aplicar daño suave (1.5% por tick, ~6% por segundo)
 					ComponentHealth targetHealth = body.Entity.FindComponent<ComponentHealth>();
 					if (targetHealth != null && targetHealth.Health > 0f)
 					{
-						targetHealth.Injure(0.05f, Attacker, false, LanguageControl.Get("ComponentMonsterSkills", 1));
+						targetHealth.Injure(0.015f, Attacker, false, LanguageControl.Get("ComponentMonsterSkills", 1));
+						m_lastDamageTimeByEntity[entityId] = currentTime;
 					}
-
-					m_recentlyAffectedEntities.Add(entityId);
 
 					particle.Position = position;
 					return true;
@@ -282,7 +292,7 @@ namespace Game
 		public DynamicArray<ComponentBody> m_componentBodies = new DynamicArray<ComponentBody>();
 
 		// Token: 0x04000D73 RID: 3443
-		public HashSet<int> m_recentlyAffectedEntities = new HashSet<int>();
+		public Dictionary<int, double> m_lastDamageTimeByEntity = new Dictionary<int, double>();
 
 		// Token: 0x04000D74 RID: 3444
 		public Random m_random = new Random();
