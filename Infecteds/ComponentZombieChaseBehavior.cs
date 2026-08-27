@@ -5,8 +5,9 @@ using TemplatesDatabase;
 
 namespace Game
 {
-	public class ComponentZombieChaseBehavior : ComponentBehavior, IUpdateable
+	public class ComponentZombieChaseBehavior : ComponentBehavior, IUpdateable, INoiseAttraction
 	{
+		// Propiedades existentes
 		public float ChaseRangeDay { get; set; }
 		public float ChaseRangeNight { get; set; }
 		public float ChaseTimeDay { get; set; }
@@ -30,6 +31,16 @@ namespace Game
 		public bool PlayIdleSoundWhenStartToChase = true;
 		public bool PlayAngrySoundWhenChasing = true;
 
+		// Constantes para ruido
+		private const float NOISE_INVESTIGATION_DURATION = 10f;
+		private const float NOISE_ATTRACTION_RANGE = 30f;
+		private const float NOISE_LOUDNESS_THRESHOLD = 0.5f;
+
+		// Campos de ruido
+		private Vector3 m_noiseSourcePosition;
+		private float m_noiseInvestigationTime;
+
+		// Campos existentes
 		private SubsystemGameInfo m_subsystemGameInfo;
 		private SubsystemPlayers m_subsystemPlayers;
 		private SubsystemSky m_subsystemSky;
@@ -66,6 +77,38 @@ namespace Game
 		public ComponentCreature Target => m_target;
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 		public override float ImportanceLevel => m_importanceLevel;
+
+		// --------------------------------------------------------------
+		// Implementación de INoiseAttraction
+		// --------------------------------------------------------------
+		public void AttractNoise(ComponentBody sourceBody, Vector3 sourcePosition, float loudness)
+		{
+			if (Suppressed) return;
+			if (m_componentCreature == null) return;
+
+			if (loudness < NOISE_LOUDNESS_THRESHOLD) return;
+
+			Vector3 myPos = m_componentCreature.ComponentBody.Position;
+			float distance = Vector3.Distance(myPos, sourcePosition);
+			if (distance > NOISE_ATTRACTION_RANGE) return;
+
+			// Si ya estamos en un estado de ruido, actualizar el destino
+			if (m_stateMachine.CurrentState == "InvestigatingNoise" ||
+				m_stateMachine.CurrentState == "NoiseAttraction")
+			{
+				m_noiseSourcePosition = sourcePosition;
+				m_noiseInvestigationTime = 0f;
+				m_componentPathfinding.SetDestination(new Vector3?(m_noiseSourcePosition), 1f, 1f, 0, false, true, false, null);
+				return;
+			}
+
+			// Guardar origen del ruido
+			m_noiseSourcePosition = sourcePosition;
+			m_noiseInvestigationTime = 0f;
+
+			// Si está persiguiendo, el estado Chasing se encargará de limpiar m_target al salir
+			m_stateMachine.TransitionTo("NoiseAttraction");
+		}
 
 		private bool IsTargetFriendlyZombie(ComponentCreature target)
 		{
@@ -328,158 +371,253 @@ namespace Game
 				}
 			};
 
-			m_stateMachine.AddState("LookingForTarget", delegate
-			{
-				m_importanceLevel = 0f;
-				m_target = null;
-			}, delegate
-			{
-				if (IsActive)
-				{
-					m_stateMachine.TransitionTo("Chasing");
-					return;
-				}
-				if (!Suppressed && m_autoChaseSuppressionTime <= 0f && (m_target == null || ScoreTarget(m_target) <= 0f) && m_componentCreature.ComponentHealth.Health > MinHealthToAttackActively)
-				{
-					m_range = ((m_subsystemSky.SkyLightIntensity < 0.2f) ? ChaseRangeNight : ChaseRangeDay);
-					m_range *= m_componentFactors.GetOtherFactorResult("ChaseRange", false, false);
-
-					ComponentCreature target = FindTarget();
-					if (target != null)
-					{
-						m_targetInRangeTime += m_dt;
-					}
-					else
-					{
-						m_targetInRangeTime = 0f;
-					}
-
-					if (m_targetInRangeTime > TargetInRangeTimeToChase)
-					{
-						bool isDay = m_subsystemSky.SkyLightIntensity >= 0.1f;
-						float maxRange = isDay ? (ChaseRangeDay + 6f) : (ChaseRangeNight + 6f);
-						float maxTime = isDay ? (ChaseTimeDay * m_random.Float(0.75f, 1f)) : (ChaseTimeNight * m_random.Float(0.75f, 1f));
-						Attack(target, maxRange, maxTime, !isDay);
-					}
-				}
-			}, null);
-
-			m_stateMachine.AddState("RandomMoving", delegate
-			{
-				m_componentPathfinding.SetDestination(new Vector3?(m_componentCreature.ComponentBody.Position + new Vector3(6f * m_random.Float(-1f, 1f), 0f, 6f * m_random.Float(-1f, 1f))), 1f, 1f, 0, false, true, false, null);
-			}, delegate
-			{
-				if (m_componentPathfinding.IsStuck || m_componentPathfinding.Destination == null)
-				{
-					m_stateMachine.TransitionTo("Chasing");
-				}
-				if (!IsActive)
-				{
-					m_stateMachine.TransitionTo("LookingForTarget");
-				}
-			}, delegate
-			{
-				m_componentPathfinding.Stop();
-			});
-
-			m_stateMachine.AddState("Chasing", delegate
-			{
-				m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody, 0.25f, 6f);
-				if (PlayIdleSoundWhenStartToChase)
-				{
-					m_componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
-				}
-				m_nextUpdateTime = 0.0;
-			}, delegate
-			{
-				bool isGreenNightActiveNow = MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive;
-				bool isChasingPlayerOnGreenNight = isGreenNightActiveNow && m_wasForcedByGreenNight && m_target != null && m_subsystemPlayers.IsPlayer(m_target.Entity);
-				bool isChasingGreenNightAttackerValid = isGreenNightActiveNow && m_isChasingGreenNightAttacker;
-
-				if (!IsActive)
-				{
-					m_stateMachine.TransitionTo("LookingForTarget");
-				}
-				else if (isChasingPlayerOnGreenNight && m_chaseTime <= 0f)
-				{
-					m_chaseTime = 1f;
-				}
-				else if (isChasingGreenNightAttackerValid && m_chaseTime <= 0f)
-				{
-					m_isChasingGreenNightAttacker = false;
-					m_importanceLevel = 0f;
-				}
-				else if (!isChasingPlayerOnGreenNight && !isChasingGreenNightAttackerValid && m_chaseTime <= 0f)
-				{
-					m_autoChaseSuppressionTime = m_random.Float(10f, 60f);
-					m_importanceLevel = 0f;
-				}
-				else if (m_target == null)
+			// ============================================================
+			// ESTADO: LookingForTarget
+			// ============================================================
+			m_stateMachine.AddState("LookingForTarget",
+				enter: delegate
 				{
 					m_importanceLevel = 0f;
-				}
-				else if (m_target.ComponentHealth.Health <= 0f)
+					m_target = null;
+				},
+				update: delegate
 				{
-					if (m_componentFeedBehavior != null)
+					if (IsActive)
 					{
-						ComponentCreature deadTarget = m_target;
-						m_subsystemTime.QueueGameTimeDelayedExecution(m_subsystemTime.GameTime + (double)m_random.Float(1f, 3f), delegate
+						m_stateMachine.TransitionTo("Chasing");
+						return;
+					}
+					if (!Suppressed && m_autoChaseSuppressionTime <= 0f && (m_target == null || ScoreTarget(m_target) <= 0f) && m_componentCreature.ComponentHealth.Health > MinHealthToAttackActively)
+					{
+						m_range = ((m_subsystemSky.SkyLightIntensity < 0.2f) ? ChaseRangeNight : ChaseRangeDay);
+						m_range *= m_componentFactors.GetOtherFactorResult("ChaseRange", false, false);
+
+						ComponentCreature target = FindTarget();
+						if (target != null)
 						{
-							if (deadTarget != null)
-							{
-								m_componentFeedBehavior.Feed(deadTarget.ComponentBody.Position);
-							}
-						});
+							m_targetInRangeTime += m_dt;
+						}
+						else
+						{
+							m_targetInRangeTime = 0f;
+						}
+
+						if (m_targetInRangeTime > TargetInRangeTimeToChase)
+						{
+							bool isDay = m_subsystemSky.SkyLightIntensity >= 0.1f;
+							float maxRange = isDay ? (ChaseRangeDay + 6f) : (ChaseRangeNight + 6f);
+							float maxTime = isDay ? (ChaseTimeDay * m_random.Float(0.75f, 1f)) : (ChaseTimeNight * m_random.Float(0.75f, 1f));
+							Attack(target, maxRange, maxTime, !isDay);
+						}
 					}
-					m_importanceLevel = 0f;
-				}
-				else if (!isChasingPlayerOnGreenNight && !isChasingGreenNightAttackerValid && !m_isPersistent && m_componentPathfinding.IsStuck)
-				{
-					m_importanceLevel = 0f;
-				}
-				else if ((m_isPersistent || isChasingPlayerOnGreenNight) && m_componentPathfinding.IsStuck)
-				{
-					m_stateMachine.TransitionTo("RandomMoving");
-				}
-				else
-				{
-					if (ScoreTarget(m_target) <= 0f)
-						m_targetUnsuitableTime += m_dt;
-					else
-						m_targetUnsuitableTime = 0f;
+				},
+				leave: null
+			);
 
-					if (m_targetUnsuitableTime > 3f)
+			// ============================================================
+			// ESTADO: NoiseAttraction (NUEVO)
+			// ============================================================
+			m_stateMachine.AddState("NoiseAttraction",
+				enter: delegate
+				{
+					IsActive = false; // Desactivar persecución activa
+					m_noiseInvestigationTime = 0f;
+					m_componentPathfinding.SetDestination(new Vector3?(m_noiseSourcePosition), 1f, 1f, 0, false, true, false, null);
+				},
+				update: delegate
+				{
+					m_noiseInvestigationTime += m_dt;
+
+					// Condiciones para finalizar la atracción por ruido:
+					if (m_componentPathfinding.IsStuck ||
+						m_componentPathfinding.Destination == null ||
+						m_noiseInvestigationTime > NOISE_INVESTIGATION_DURATION)
 					{
-						if (isChasingGreenNightAttackerValid)
-							m_isChasingGreenNightAttacker = false;
+						m_stateMachine.TransitionTo("LookingForTarget");
+						return;
+					}
 
+					float dist = Vector3.Distance(m_componentCreature.ComponentBody.Position, m_noiseSourcePosition);
+					if (dist < 2f)
+					{
+						// Llegó al origen del ruido
+						m_stateMachine.TransitionTo("LookingForTarget");
+						return;
+					}
+				},
+				leave: delegate
+				{
+					// Al salir, detener el pathfinding y limpiar
+					m_componentPathfinding.Stop();
+				}
+			);
+
+			// ============================================================
+			// ESTADO: RandomMoving
+			// ============================================================
+			m_stateMachine.AddState("RandomMoving",
+				enter: delegate
+				{
+					m_componentPathfinding.SetDestination(new Vector3?(m_componentCreature.ComponentBody.Position + new Vector3(6f * m_random.Float(-1f, 1f), 0f, 6f * m_random.Float(-1f, 1f))), 1f, 1f, 0, false, true, false, null);
+				},
+				update: delegate
+				{
+					if (m_componentPathfinding.IsStuck || m_componentPathfinding.Destination == null)
+					{
+						m_stateMachine.TransitionTo("Chasing");
+					}
+					if (!IsActive)
+					{
+						m_stateMachine.TransitionTo("LookingForTarget");
+					}
+				},
+				leave: delegate
+				{
+					m_componentPathfinding.Stop();
+				}
+			);
+
+			// ============================================================
+			// ESTADO: Chasing
+			// ============================================================
+			m_stateMachine.AddState("Chasing",
+				enter: delegate
+				{
+					m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody, 0.25f, 6f);
+					if (PlayIdleSoundWhenStartToChase)
+					{
+						m_componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
+					}
+					m_nextUpdateTime = 0.0;
+				},
+				update: delegate
+				{
+					bool isGreenNightActiveNow = MoreAggressiveOnGreenNight && m_subsystemGreenNight != null && m_subsystemGreenNight.IsGreenNightActive;
+					bool isChasingPlayerOnGreenNight = isGreenNightActiveNow && m_wasForcedByGreenNight && m_target != null && m_subsystemPlayers.IsPlayer(m_target.Entity);
+					bool isChasingGreenNightAttackerValid = isGreenNightActiveNow && m_isChasingGreenNightAttacker;
+
+					if (!IsActive)
+					{
+						m_stateMachine.TransitionTo("LookingForTarget");
+					}
+					else if (isChasingPlayerOnGreenNight && m_chaseTime <= 0f)
+					{
+						m_chaseTime = 1f;
+					}
+					else if (isChasingGreenNightAttackerValid && m_chaseTime <= 0f)
+					{
+						m_isChasingGreenNightAttacker = false;
 						m_importanceLevel = 0f;
 					}
+					else if (!isChasingPlayerOnGreenNight && !isChasingGreenNightAttackerValid && m_chaseTime <= 0f)
+					{
+						m_autoChaseSuppressionTime = m_random.Float(10f, 60f);
+						m_importanceLevel = 0f;
+					}
+					else if (m_target == null)
+					{
+						m_importanceLevel = 0f;
+					}
+					else if (m_target.ComponentHealth.Health <= 0f)
+					{
+						if (m_componentFeedBehavior != null)
+						{
+							ComponentCreature deadTarget = m_target;
+							m_subsystemTime.QueueGameTimeDelayedExecution(m_subsystemTime.GameTime + (double)m_random.Float(1f, 3f), delegate
+							{
+								if (deadTarget != null)
+								{
+									m_componentFeedBehavior.Feed(deadTarget.ComponentBody.Position);
+								}
+							});
+						}
+						m_importanceLevel = 0f;
+					}
+					else if (!isChasingPlayerOnGreenNight && !isChasingGreenNightAttackerValid && !m_isPersistent && m_componentPathfinding.IsStuck)
+					{
+						m_importanceLevel = 0f;
+					}
+					else if ((m_isPersistent || isChasingPlayerOnGreenNight) && m_componentPathfinding.IsStuck)
+					{
+						m_stateMachine.TransitionTo("RandomMoving");
+					}
 					else
 					{
-						int maxPathfindingPositions = 0;
-						if (m_isPersistent || isGreenNightActiveNow)
-						{
-							maxPathfindingPositions = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
-						}
-						BoundingBox boundingBox = m_componentCreature.ComponentBody.BoundingBox;
-						BoundingBox boundingBox2 = m_target.ComponentBody.BoundingBox;
-						Vector3 v = 0.5f * (boundingBox.Min + boundingBox.Max);
-						Vector3 vector = 0.5f * (boundingBox2.Min + boundingBox2.Max);
-						float num = Vector3.Distance(v, vector);
-						float num2 = (num < 4f) ? 0.2f : 0f;
-						m_componentPathfinding.SetDestination(new Vector3?(vector + num2 * num * m_target.ComponentBody.Velocity), 1f, 1.5f, maxPathfindingPositions, true, false, true, m_target.ComponentBody);
+						if (ScoreTarget(m_target) <= 0f)
+							m_targetUnsuitableTime += m_dt;
+						else
+							m_targetUnsuitableTime = 0f;
 
-						if (PlayAngrySoundWhenChasing && m_random.Float(0f, 1f) < 0.33f * m_dt)
+						if (m_targetUnsuitableTime > 3f)
 						{
-							m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
+							if (isChasingGreenNightAttackerValid)
+								m_isChasingGreenNightAttacker = false;
+
+							m_importanceLevel = 0f;
+						}
+						else
+						{
+							int maxPathfindingPositions = 0;
+							if (m_isPersistent || isGreenNightActiveNow)
+							{
+								maxPathfindingPositions = (m_subsystemTime.FixedTimeStep != null) ? 2000 : 500;
+							}
+							BoundingBox boundingBox = m_componentCreature.ComponentBody.BoundingBox;
+							BoundingBox boundingBox2 = m_target.ComponentBody.BoundingBox;
+							Vector3 v = 0.5f * (boundingBox.Min + boundingBox.Max);
+							Vector3 vector = 0.5f * (boundingBox2.Min + boundingBox2.Max);
+							float num = Vector3.Distance(v, vector);
+							float num2 = (num < 4f) ? 0.2f : 0f;
+							m_componentPathfinding.SetDestination(new Vector3?(vector + num2 * num * m_target.ComponentBody.Velocity), 1f, 1.5f, maxPathfindingPositions, true, false, true, m_target.ComponentBody);
+
+							if (PlayAngrySoundWhenChasing && m_random.Float(0f, 1f) < 0.33f * m_dt)
+							{
+								m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
+							}
 						}
 					}
+				},
+				leave: delegate
+				{
+					// Al salir del estado Chasing (por ejemplo, por ruido), limpiamos el target
+					m_target = null;
+					IsActive = false;
+					m_importanceLevel = 0f;
+					m_chaseTime = 0f;
 				}
-			}, null);
+			);
+
+			// ============================================================
+			// ESTADO: Stuck
+			// ============================================================
+			m_stateMachine.AddState("Stuck",
+				enter: delegate
+				{
+					IsActive = false;
+					IsActive = true;
+				},
+				update: delegate
+				{
+					if (m_target != null && m_target.ComponentHealth.Health > 0f)
+					{
+						m_stateMachine.TransitionTo("Chasing");
+					}
+					else if (m_componentPathfinding.Destination != null && !m_componentPathfinding.IsStuck)
+					{
+						m_stateMachine.TransitionTo("Chasing");
+					}
+					else
+					{
+						m_stateMachine.TransitionTo("LookingForTarget");
+					}
+				},
+				leave: null
+			);
 
 			m_stateMachine.TransitionTo("LookingForTarget");
 		}
+
+		// ====== Métodos auxiliares (sin cambios) ======
 
 		public virtual ComponentCreature FindTarget()
 		{
