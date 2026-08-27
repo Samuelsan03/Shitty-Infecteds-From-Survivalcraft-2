@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
@@ -19,14 +19,14 @@ namespace Game
 				InfectedEggBlock.InfectedType.Common, new string[] {
 					"InfectedNormal1", "InfectedNormal2",
 					"InfectedFast1", "InfectedFast2",
-					"InfectedMuscle1", "InfectedMuscle2"
+					"InfectedMuscle1", "InfectedMuscle2",
+					"InfectedPoisonous1", "InfectedPoisonous2"
 				}
 			},
 			{
 				InfectedEggBlock.InfectedType.Ghost, new string[] {
 					"GhostNormal"
-                    // InfectedBrute fue removido de aquí
-                }
+				}
 			},
 			{
 				InfectedEggBlock.InfectedType.Flying, new string[] {
@@ -36,8 +36,14 @@ namespace Game
 				}
 			},
 			{
-				InfectedEggBlock.InfectedType.Boss, new string[] { // NUEVO
-                    "InfectedBrute"
+				InfectedEggBlock.InfectedType.Boss, new string[] {
+					"InfectedBrute",
+					"FlyingInfectedBoss"
+				}
+			},
+			{
+				InfectedEggBlock.InfectedType.Explosive, new string[] {
+					"FatInfected"
 				}
 			}
 		};

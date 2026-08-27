@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Engine;
 using Engine.Graphics;
@@ -15,7 +15,8 @@ namespace Game
 			Common,
 			Ghost,
 			Flying,
-			Boss // NUEVO TIPO JEFE
+			Boss,
+			Explosive // NUEVO: Gordos/Explosivos
 		}
 
 		/// <summary>
@@ -60,10 +61,17 @@ namespace Game
 				}
 			},
 			{
-				InfectedType.Boss, new InfectedEggData // NUEVO
-                {
-					Scale = 1.4f,                       // Más grande para indicar que es un jefe
-                    EggColor = new Color(200, 20, 20)    // Rojo sangre
+				InfectedType.Boss, new InfectedEggData
+				{
+					Scale = 1.4f,
+					EggColor = new Color(200, 20, 20)
+				}
+			},
+			{
+				InfectedType.Explosive, new InfectedEggData
+				{
+					Scale = 1.3f,                        // Más grande (es gordo)
+                    EggColor = new Color(255, 140, 0)     // Naranja explosivo
                 }
 			}
 		};
@@ -160,7 +168,7 @@ namespace Game
 			return Terrain.MakeBlockValue(Index, 0, SetInfectedType(0, type));
 		}
 
-		// --- MÉTODOS DELEGADOS AL SUBSYSTEM (Para no romper tu código original) ---
+		// --- MÉTODOS DELEGADOS AL SUBSYSTEM ---
 
 		public static string[] GetCreaturesForType(InfectedType type)
 		{
