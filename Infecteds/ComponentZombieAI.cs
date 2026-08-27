@@ -129,14 +129,6 @@ namespace Game
 		private static readonly List<FirearmData> m_firearmsList = new List<FirearmData>();
 		private static bool m_firearmsInitialized = false;
 
-		private static readonly HashSet<string> m_noArmMovementCreatures = new HashSet<string>
-		{
-			"InfectedNormalTamed1",
-			"InfectedNormalTamed2",
-			"InfectedMuscleTamed1",
-			"InfectedMuscleTamed2"
-		};
-
 		private float m_equipTimer;
 		private bool m_isEquipping;
 		private int m_equipSlot;
@@ -160,7 +152,8 @@ namespace Game
 
 		public static readonly HashSet<string> NormalAnimationCreatures = new HashSet<string>
 		{
-			"GhostNormal"
+			"GhostNormal",
+			"FatInfected"
 		};
 
 		public bool IsMounted => CurrentMountState == MountState.Mounted;
@@ -185,71 +178,17 @@ namespace Game
 		}
 
 		/// <summary>
-		/// Detecta si la criatura actual no debe mover los brazos al apuntar con armas a distancia.
-		/// </summary>
-		private bool ShouldSkipArmMovementForRanged()
-		{
-			if (Entity?.ValuesDictionary?.DatabaseObject != null)
-			{
-				return m_noArmMovementCreatures.Contains(Entity.ValuesDictionary.DatabaseObject.Name);
-			}
-			return false;
-		}
-
-		/// <summary>
-		/// Aplica la configuración visual de apuntado para criaturas que no mueven los brazos.
-		/// </summary>
-		private void ApplyNoArmMovementAimSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
-		{
-			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-
-			if (isFirearm)
-			{
-				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
-				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
-			}
-			else if (isBow)
-			{
-				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(0f, 0f, 0f);
-				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(0f, -0.2f, 0f);
-			}
-			else if (isFlameThrower)
-			{
-				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.21f, 0.15f, 0.08f);
-				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
-			}
-			else if (isCrossbow)
-			{
-				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.1f, 0.07f);
-				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.55f, 0f, 0f);
-			}
-			else
-			{
-				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
-				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
-			}
-		}
-
-		/// <summary>
 		/// Aplica la configuración visual de apuntado según el tipo de criatura y arma.
-		/// Para criaturas sin movimiento de brazos: offset/rotación específica + manos quietas.
-		/// Para criaturas con animación normal: NO toca las manos (deja la animación normal).
-		/// Para las demás: solo manos quietas (sin offset/rotación especial).
+		/// Para criaturas con animación normal: NO toca nada (deja la animación normal).
+		/// Para las demás: solo se fija AimHandAngleOrder = 0 para que no muevan los brazos.
 		/// </summary>
 		private void ApplyAimVisualSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
 		{
-			bool skipArmMovement = ShouldSkipArmMovementForRanged();
-
-			if (skipArmMovement)
-			{
-				ApplyNoArmMovementAimSettings(isBow, isCrossbow, isFlameThrower, isFirearm);
-			}
-			else if (!UsesNormalAimAnimation())
+			if (!UsesNormalAimAnimation())
 			{
 				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 			}
-			// Si usa animación normal, no tocar nada - deja que el bloque del arma
-			// y el modelo del NPC manejen la rotación y posición del arma naturalmente
+			// Si usa animación normal, no se modifica nada
 		}
 
 		/// <summary>
@@ -336,6 +275,84 @@ namespace Game
 				SetAmmoCount = (data, count) => SniperBlock.SetAmmoCount(data, count),
 				GetLoadState = (data) => SniperBlock.GetLoadState(data) == SniperBlock.LoadState.Loaded,
 				SetLoadState = (data, state) => SniperBlock.SetLoadState(data, state == 1 ? SniperBlock.LoadState.Loaded : SniperBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "RevolverBlock",
+				MaxAmmo = 6,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 0.45f,
+				GetAmmoCount = (data) => RevolverBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => RevolverBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => RevolverBlock.GetLoadState(data) == RevolverBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => RevolverBlock.SetLoadState(data, state == 1 ? RevolverBlock.LoadState.Loaded : RevolverBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "IZH43Block",
+				MaxAmmo = 2,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 0.5f,
+				GetAmmoCount = (data) => IZH43Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => IZH43Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => IZH43Block.GetLoadState(data) == IZH43Block.LoadState.Loaded,
+				SetLoadState = (data, state) => IZH43Block.SetLoadState(data, state == 1 ? IZH43Block.LoadState.Loaded : IZH43Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "BK93Block",
+				MaxAmmo = 2,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 0.5f,
+				GetAmmoCount = (data) => BK93Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => BK93Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => BK93Block.GetLoadState(data) == BK93Block.LoadState.Loaded,
+				SetLoadState = (data, state) => BK93Block.SetLoadState(data, state == 1 ? BK93Block.LoadState.Loaded : BK93Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "UziBlock",
+				MaxAmmo = 32,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => UziBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => UziBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => UziBlock.GetLoadState(data) == UziBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => UziBlock.SetLoadState(data, state == 1 ? UziBlock.LoadState.Loaded : UziBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "Mac10Block",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.12f,
+				CooldownAfterShot = 1.3f,
+				GetAmmoCount = (data) => Mac10Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => Mac10Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => Mac10Block.GetLoadState(data) == Mac10Block.LoadState.Loaded,
+				SetLoadState = (data, state) => Mac10Block.SetLoadState(data, state == 1 ? Mac10Block.LoadState.Loaded : Mac10Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "M4Block",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.25f,
+				CooldownAfterShot = 1.6f,
+				GetAmmoCount = (data) => M4Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => M4Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => M4Block.GetLoadState(data) == M4Block.LoadState.Loaded,
+				SetLoadState = (data, state) => M4Block.SetLoadState(data, state == 1 ? M4Block.LoadState.Loaded : M4Block.LoadState.Empty)
 			});
 
 			m_firearmsInitialized = true;
