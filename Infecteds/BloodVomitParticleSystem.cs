@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using Engine.Graphics;
@@ -31,9 +31,10 @@ namespace Game
 		{
 			dt = Math.Clamp(dt, 0f, 0.1f);
 
-			if (m_subsystemTime != null && m_subsystemTime.GameTime - m_lastClearTime > 2.0)
+			// Limpiar diccionario de tiempos de daño cada 5 segundos para evitar acumulación
+			if (m_subsystemTime != null && m_subsystemTime.GameTime - m_lastClearTime > 5.0)
 			{
-				m_recentlyAffectedEntities.Clear();
+				m_lastDamageTimeByEntity.Clear();
 				m_lastClearTime = m_subsystemTime.GameTime;
 			}
 
@@ -77,6 +78,7 @@ namespace Game
 							}
 							else
 							{
+								// Colisión con cuerpos - Causa daño gradual
 								if (CheckBodyCollisionAndDamage(newPos, particle))
 								{
 									particle.IsStuck = true;
@@ -121,6 +123,10 @@ namespace Game
 			return IsStopped && !anyActive;
 		}
 
+		/// <summary>
+		/// Verifica colisión con cuerpos y causa daño gradual
+		/// como un proyectil suave, registrando la causa de muerte usando el sistema de idiomas.
+		/// </summary>
 		private bool CheckBodyCollisionAndDamage(Vector3 position, BloodVomitParticleSystem.Particle particle)
 		{
 			if (m_subsystemBodies == null) return false;
@@ -128,28 +134,42 @@ namespace Game
 			m_componentBodies.Clear();
 			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), 2f, m_componentBodies);
 
+			double currentTime = m_subsystemTime != null ? m_subsystemTime.GameTime : 0;
+
 			for (int i = 0; i < m_componentBodies.Count; i++)
 			{
 				ComponentBody body = m_componentBodies.Array[i];
 
+				// Ignorar al dueño del vómito
 				if (body == OwnerBody) continue;
 
 				int entityId = body.Entity.GetHashCode();
-				if (m_recentlyAffectedEntities.Contains(entityId)) continue;
 
+				// Verificar si la partícula está dentro del bounding box (expandido ligeramente)
 				BoundingBox box = body.BoundingBox;
 				box.Min -= new Vector3(0.15f);
 				box.Max += new Vector3(0.15f);
 
 				if (box.Contains(position))
 				{
+					// Causa daño gradual como proyectil suave - cada 0.25 segundos
+					double lastDamageTime;
+					if (m_lastDamageTimeByEntity.TryGetValue(entityId, out lastDamageTime))
+					{
+						if (currentTime - lastDamageTime < 0.25)
+						{
+							particle.Position = position;
+							return true;
+						}
+					}
+
+					// Aplicar daño suave (0.05% por tick, ~6% por segundo)
 					ComponentHealth targetHealth = body.Entity.FindComponent<ComponentHealth>();
 					if (targetHealth != null && targetHealth.Health > 0f)
 					{
-						targetHealth.Injure(0.1f, Attacker, false, LanguageControl.Get("ComponentMonsterSkills", 2));
+						targetHealth.Injure(0.05f, Attacker, false, LanguageControl.Get("ComponentMonsterSkills", 2));
+						m_lastDamageTimeByEntity[entityId] = currentTime;
 					}
-
-					m_recentlyAffectedEntities.Add(entityId);
 
 					particle.Position = position;
 					return true;
@@ -165,7 +185,7 @@ namespace Game
 		public float m_toGenerate;
 		public double m_lastClearTime;
 		public DynamicArray<ComponentBody> m_componentBodies = new DynamicArray<ComponentBody>();
-		public HashSet<int> m_recentlyAffectedEntities = new HashSet<int>();
+		public Dictionary<int, double> m_lastDamageTimeByEntity = new Dictionary<int, double>();
 		public Random m_random = new Random();
 
 		public class Particle : Game.Particle
