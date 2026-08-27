@@ -2,6 +2,10 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+<ComponentTemplate Name="InfectedFatExplosion" Description="Hace que la criatura explote al morir usando el sistema de explosiones original del juego" Guid="cd3e41ba-94f1-4273-aaa5-d8f6963c862a" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="146677f9-6a76-41c4-8e7c-60bca85ed51a" Value="Game.ComponentInfectedFatExplosion" Type="string" />
+</ComponentTemplate>
+
     <ComponentTemplate Name="CreatureAI" Description="Permite a la criatura usar su inventario para equipar y disparar armas a distancia de forma automática" Guid="c00b9ef4-d87a-4422-9cdc-ee5884030443" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Guid="e71ba8bb-2176-417e-b087-bbd7170401b2" Value="Game.ComponentCreatureAI" Type="string" />
   <Parameter Name="CanUseInventory" Description="Determina si la criatura tiene la capacidad de usar armas a distancia desde su inventario" Guid="bda48580-a38c-439d-b033-b37ad0523d41" Value="false" Type="bool" />
@@ -253,9 +257,36 @@
   <Parameter Name="GhostOpacity" Description="Opacidad del modelo fantasma" Guid="9751def2-6b90-44ae-8817-dd3f1caf83a0" Value="0.5" Type="float" />
   <Parameter Name="Class" Guid="7ba47296-ca0f-45f5-ad4e-570a10d91718" Value="Game.ComponentGhostModel" Type="string" />
 </ComponentTemplate>
+
+<ComponentTemplate Name="FirearmsShop" Description="Tienda de armas de fuego que vende items por monedas" Guid="a2bf0097-fb81-4ac0-9fdb-edc89405fae5" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+  <Parameter Name="Class" Guid="dd61f346-ac8b-432e-ba61-4098b579b057" Value="Game.ComponentFirearmsShop" Type="string" />
+  <Parameter Name="RestorationTime" Description="Tiempo en segundos para variar los items (ej: 300 = 5 minutos)" Guid="4691f400-4ea5-4232-9aea-2bce303255be" Value="300" Type="float" />
+  <Parameter Name="ItemsSell" Description="Formato: NombreBloque:Cantidad:Precio; separados por punto y coma" Guid="e9863ce9-44bd-4be5-a897-7a67ae3d6a76" Value="" Type="string" />
+</ComponentTemplate>
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="NoiseAttraction" Guid="c0d7cbb9-05dc-4fa7-849b-f77b5c026cc4" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="d00e4d02-73f0-46c6-80a6-a391acb155dd" Value="Game.SubsystemNoiseAttraction" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemMP5SSDBlockBehavior" Guid="7cbcb8c3-800c-4cee-96db-00975b6662a4" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="32d8e45e-7c86-4cfd-aeb2-671b45c9c714" Value="Game.SubsystemMP5SSDBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemMaster308BlockBehavior" Guid="83885cda-157c-434a-94f5-70a337775672" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="595e04cb-c7d2-4e55-9724-7e3bf6c4e759" Value="Game.SubsystemMaster308BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemBK93BlockBehavior" Guid="42dd1e1a-62d7-4b26-bbc0-3ce567e6fe33" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="ae7dc8af-11e4-4940-9eeb-35dfafc926d1" Value="Game.SubsystemBK93BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemUziBlockBehavior" Guid="0f4f4b7b-0a8c-4252-8859-34660c781f8d" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="26f8dfe9-5f77-42bc-8658-04390e4166e2" Value="Game.SubsystemUziBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemM4BlockBehavior" Guid="fbef957b-9e5e-47de-887b-92a76a9c57d4" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="4da63029-562b-4afb-84d9-342b5b2c3fc3" Value="Game.SubsystemM4BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemMac10BlockBehavior" Guid="bfb8af12-89ed-4e4f-9f65-9726fa703e58" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="3b2defbb-a5f6-491b-985f-bd1e034049cf" Value="Game.SubsystemMac10BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemIZH43BlockBehavior" Guid="27ccd42d-9d08-48eb-b7f4-c76eef881db9" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
           <Parameter Name="Class" Guid="fe47fb37-cb19-4d4f-9a9a-c0ff8a870739" Value="Game.SubsystemIZH43BlockBehavior" Type="string" />
         </MemberSubsystemTemplate>
@@ -280,6 +311,9 @@
      <MemberSubsystemTemplate Name="SubsystemFrozenExplosions" Guid="cccffc1e-f039-4548-b0d4-c3e855647917" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="a50a11ae-142d-4ef3-957c-c1f6cc338a27" Value="Game.SubsystemFrozenExplosions" Type="string" />
   </MemberSubsystemTemplate>
+  <MemberSubsystemTemplate Name="SubsystemGhostChase" Guid="a3fd93b9-65b0-4961-b93b-abb3e1b4e8ee" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="7dd32950-0553-4428-96da-0ea1abcffb74" Value="Game.SubsystemGhostChase" Type="string" />
+        </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemBossChaseMusic" Guid="3591246a-7c86-4bb9-98ad-89a5a928275b" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="01fb4227-8ccc-439d-88b7-6081c25d3c4d" Value="Game.SubsystemBossChaseMusic" Type="string" />
   </MemberSubsystemTemplate>
