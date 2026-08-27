@@ -193,7 +193,7 @@ namespace Game
 					{
 						if (IsTargetInSight(target))
 						{
-							if (m_random.Float(0f, 1f) < 0.15f * dt)
+							if (m_random.Float(0f, 1f) < 2f * dt)
 							{
 								StartVomiting();
 							}
