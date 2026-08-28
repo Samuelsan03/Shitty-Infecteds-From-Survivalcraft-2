@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Engine;
 using Engine.Graphics;
@@ -227,12 +227,11 @@ namespace Game
 			{
 				ComponentBody body = m_componentBodies.Array[i];
 
-				// Ignorar al dueño del vómito
-				if (body == OwnerBody) continue;
+				// CORRECCIÓN: Usar ShouldVomitIgnoreBody para fuego amigo completo
+				if (body == OwnerBody || ShittyInfectedsModLoader.ShouldVomitIgnoreBody(OwnerBody, body)) continue;
 
 				int entityId = body.Entity.GetHashCode();
 
-				// Verificar si la partícula está dentro del bounding box (expandido ligeramente)
 				BoundingBox box = body.BoundingBox;
 				box.Min -= new Vector3(0.15f);
 				box.Max += new Vector3(0.15f);
@@ -246,7 +245,6 @@ namespace Game
 						onFire.SetOnFire(Attacker, m_random.Float(8f, 14f));
 					}
 
-					// Causa daño gradual como proyectil suave - cada 0.25 segundos
 					double lastDamageTime;
 					if (m_lastDamageTimeByEntity.TryGetValue(entityId, out lastDamageTime))
 					{
@@ -257,7 +255,6 @@ namespace Game
 						}
 					}
 
-					// Aplicar daño suave (1.5% por tick, ~6% por segundo)
 					ComponentHealth targetHealth = body.Entity.FindComponent<ComponentHealth>();
 					if (targetHealth != null && targetHealth.Health > 0f)
 					{

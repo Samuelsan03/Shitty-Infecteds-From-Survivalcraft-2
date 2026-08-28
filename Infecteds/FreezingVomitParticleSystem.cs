@@ -132,7 +132,8 @@ namespace Game
 			{
 				ComponentBody body = m_componentBodies.Array[i];
 
-				if (body == OwnerBody) continue;
+				// CORRECCIÓN: Usar ShouldVomitIgnoreBody para fuego amigo completo
+				if (body == OwnerBody || ShittyInfectedsModLoader.ShouldVomitIgnoreBody(OwnerBody, body)) continue;
 
 				int entityId = body.Entity.GetHashCode();
 				if (m_recentlyAffectedEntities.Contains(entityId)) continue;
