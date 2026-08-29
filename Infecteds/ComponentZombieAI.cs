@@ -2019,73 +2019,51 @@ namespace Game
 		}
 
 		private void TryDestroyBlockingBlocks(ComponentCreature target)
-        {
-            if (!CanDestroyBlocks) return;
-            if (m_subsystemTerrain == null) return;
-            if (target == null) return;
+		{
+			if (!CanDestroyBlocks || m_subsystemTerrain == null)
+				return;
 
-            m_blockDestroyTimer -= m_subsystemTime.GameTimeDelta;
-            if (m_blockDestroyTimer > 0f) return;
+			Vector3 eyePos = m_componentCreature.ComponentCreatureModel.EyePosition;
+			Vector3 targetCenter = target.ComponentBody.BoundingBox.Center();
+			Vector3 direction = Vector3.Normalize(targetCenter - eyePos);
 
-            Vector3 myPos = m_componentBody.Position;
-            Vector3 targetPos = target.ComponentBody.Position;
-            Vector3 direction = Vector3.Normalize(targetPos - myPos);
-            direction.Y = 0f;
+			// Obtener posición del bloque a verificar
+			Vector3 checkPos = eyePos + direction * 1.5f;
+			int x = Terrain.ToCell(checkPos.X);
+			int y = Terrain.ToCell(checkPos.Y);
+			int z = Terrain.ToCell(checkPos.Z);
 
-            if (direction.LengthSquared() < 0.001f) return;
-            direction = Vector3.Normalize(direction);
+			if (!m_subsystemTerrain.Terrain.IsCellValid(x, y, z))
+				return;
 
-            int bedrockIndex = BlocksManager.GetBlockIndex("BedrockBlock");
+			int cellValue = m_subsystemTerrain.Terrain.GetCellValue(x, y, z);
+			int contents = Terrain.ExtractContents(cellValue);
 
-            int baseX = Terrain.ToCell(myPos.X);
-            int baseY = Terrain.ToCell(myPos.Y);
-            int baseZ = Terrain.ToCell(myPos.Z);
+			// No destruir aire o fluidos
+			if (contents == 0 || BlocksManager.Blocks[contents] is FluidBlock)
+				return;
 
-            int forwardX = (direction.X > 0.3f) ? 1 : ((direction.X < -0.3f) ? -1 : 0);
-            int forwardZ = (direction.Z > 0.3f) ? 1 : ((direction.Z < -0.3f) ? -1 : 0);
+			// No destruir bloques muy resistentes
+			Block block = BlocksManager.Blocks[contents];
+			if (block.GetDigResilience(cellValue) > 10f)
+				return;
 
-            bool destroyed = false;
+			m_blockDestroyTimer -= m_subsystemTime.GameTimeDelta;
 
-            for (int dy = 0; dy <= 1 && !destroyed; dy++)
-            {
-                for (int dx = 0; dx <= 1 && !destroyed; dx++)
-                {
-                    for (int dz = 0; dz <= 1 && !destroyed; dz++)
-                    {
-                        int checkX = baseX + (dx == 0 ? 0 : forwardX);
-                        int checkY = baseY + dy;
-                        int checkZ = baseZ + (dz == 0 ? 0 : forwardZ);
+			if (m_blockDestroyTimer <= 0f)
+			{
+				m_blockDestroyTimer = BLOCK_DESTROY_INTERVAL;
 
-                        if (!m_subsystemTerrain.Terrain.IsCellValid(checkX, checkY, checkZ)) continue;
+				// === CORRECCIÓN: Reproducir sonido de impacto ANTES de destruir ===
+				if (m_subsystemSoundMaterials != null)
+				{
+					Vector3 blockCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
+					m_subsystemSoundMaterials.PlayImpactSound(cellValue, blockCenter, 1f);
+				}
+				// === FIN CORRECCIÓN ===
 
-                        int cellValue = m_subsystemTerrain.Terrain.GetCellValue(checkX, checkY, checkZ);
-                        int contents = Terrain.ExtractContents(cellValue);
-
-                        if (contents == 0) continue;
-                        if (contents == bedrockIndex) continue;
-
-                        Block block = BlocksManager.Blocks[contents];
-                        if (!block.IsCollidable) continue;
-
-                        Vector3 blockCenter = new Vector3(checkX + 0.5f, checkY + 0.5f, checkZ + 0.5f);
-                        float distToBlock = Vector3.Distance(myPos, blockCenter);
-
-                        if (distToBlock <= BLOCK_DESTROY_RANGE)
-                        {
-                            // Reproducir sonido de impacto antes de destruir
-                            if (m_subsystemSoundMaterials != null)
-                            {
-                                m_subsystemSoundMaterials.PlayImpactSound(cellValue, blockCenter, 0.5f);
-                            }
-
-                            // Destruir con drops y partículas habilitados
-                            m_subsystemTerrain.DestroyCell(0, checkX, checkY, checkZ, 0, false, false);
-                            m_blockDestroyTimer = BLOCK_DESTROY_INTERVAL;
-                            destroyed = true;
-                        }
-                    }
-                }
-            }
-        }
+				m_subsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+			}
+		}
 	}
 }
