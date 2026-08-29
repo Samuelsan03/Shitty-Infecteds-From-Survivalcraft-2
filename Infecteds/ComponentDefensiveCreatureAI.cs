@@ -219,6 +219,110 @@ namespace Game
 				SetLoadState = (data, state) => SniperBlock.SetLoadState(data, state == 1 ? SniperBlock.LoadState.Loaded : SniperBlock.LoadState.Empty)
 			});
 
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "RevolverBlock",
+				MaxAmmo = 6,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 0.45f,
+				GetAmmoCount = (data) => RevolverBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => RevolverBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => RevolverBlock.GetLoadState(data) == RevolverBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => RevolverBlock.SetLoadState(data, state == 1 ? RevolverBlock.LoadState.Loaded : RevolverBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "IZH43Block",
+				MaxAmmo = 2,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 0.5f,
+				GetAmmoCount = (data) => IZH43Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => IZH43Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => IZH43Block.GetLoadState(data) == IZH43Block.LoadState.Loaded,
+				SetLoadState = (data, state) => IZH43Block.SetLoadState(data, state == 1 ? IZH43Block.LoadState.Loaded : IZH43Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "BK93Block",
+				MaxAmmo = 2,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 0.5f,
+				GetAmmoCount = (data) => BK93Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => BK93Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => BK93Block.GetLoadState(data) == BK93Block.LoadState.Loaded,
+				SetLoadState = (data, state) => BK93Block.SetLoadState(data, state == 1 ? BK93Block.LoadState.Loaded : BK93Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "UziBlock",
+				MaxAmmo = 32,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => UziBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => UziBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => UziBlock.GetLoadState(data) == UziBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => UziBlock.SetLoadState(data, state == 1 ? UziBlock.LoadState.Loaded : UziBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "Mac10Block",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.12f,
+				CooldownAfterShot = 1.3f,
+				GetAmmoCount = (data) => Mac10Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => Mac10Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => Mac10Block.GetLoadState(data) == Mac10Block.LoadState.Loaded,
+				SetLoadState = (data, state) => Mac10Block.SetLoadState(data, state == 1 ? Mac10Block.LoadState.Loaded : Mac10Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "M4Block",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.25f,
+				CooldownAfterShot = 1.6f,
+				GetAmmoCount = (data) => M4Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => M4Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => M4Block.GetLoadState(data) == M4Block.LoadState.Loaded,
+				SetLoadState = (data, state) => M4Block.SetLoadState(data, state == 1 ? M4Block.LoadState.Loaded : M4Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "Master308Block",
+				MaxAmmo = 5,
+				FireMode = FirearmFireMode.BoltAction,
+				AimTimeBeforeShot = 0.045f,
+				CooldownAfterShot = 0.45f,
+				GetAmmoCount = (data) => Master308Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => Master308Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => Master308Block.GetLoadState(data) == Master308Block.LoadState.Loaded,
+				SetLoadState = (data, state) => Master308Block.SetLoadState(data, state == 1 ? Master308Block.LoadState.Loaded : Master308Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "MP5SSDBlock",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => MP5SSDBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => MP5SSDBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => MP5SSDBlock.GetLoadState(data) == MP5SSDBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => MP5SSDBlock.SetLoadState(data, state == 1 ? MP5SSDBlock.LoadState.Loaded : MP5SSDBlock.LoadState.Empty)
+			});
+
 			m_firearmsInitialized = true;
 		}
 
