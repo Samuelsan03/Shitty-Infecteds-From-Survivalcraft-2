@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Engine;
 using Engine.Graphics;
 using GameEntitySystem;
@@ -66,7 +66,7 @@ namespace Game
 				float pressure = giantFireRock.GetExplosionPressure(blockValue);
 				if (pressure <= 0f)
 				{
-					pressure = 15f;
+					pressure = 200f;
 				}
 
 				m_subsystemExplosions.AddExplosion(x, y, z, pressure, true, false);
