@@ -18,11 +18,15 @@ namespace Game
 		private SubsystemBodies m_subsystemBodies;
 		private SubsystemAudio m_subsystemAudio;
 		private SubsystemParticles m_subsystemParticles;
+		private SubsystemSoundMaterials m_subsystemSoundMaterials;
 		private ComponentMiner m_componentMiner;
 		private ComponentCreature m_componentCreature;
 		private ComponentBody m_componentBody;
 		private ComponentZombieChaseBehavior m_componentChaseBehavior;
 		private ComponentCreatureClothing m_componentCreatureClothing;
+		private float m_blockDestroyTimer;
+		private const float BLOCK_DESTROY_INTERVAL = 0.5f;
+		private const float BLOCK_DESTROY_RANGE = 2f;
 
 		private static readonly HashSet<string> MountableCreatures = new HashSet<string>
 		{
@@ -69,6 +73,7 @@ namespace Game
 
 		public bool CanUseInventory;
 		public bool CanWearClothing;
+		public bool CanDestroyBlocks;
 
 		/// <summary>
 		/// Estado actual de recarga del arma de fuego
@@ -153,7 +158,10 @@ namespace Game
 		public static readonly HashSet<string> NormalAnimationCreatures = new HashSet<string>
 		{
 			"GhostNormal",
-			"FatInfected"
+			"FatInfected",
+			"FatInfectedArsonist",
+			"FatInfectedPoisonous",
+			"FatInfectedFrozen"
 		};
 
 		public bool IsMounted => CurrentMountState == MountState.Mounted;
@@ -355,6 +363,32 @@ namespace Game
 				SetLoadState = (data, state) => M4Block.SetLoadState(data, state == 1 ? M4Block.LoadState.Loaded : M4Block.LoadState.Empty)
 			});
 
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "Master308Block",
+				MaxAmmo = 5,
+				FireMode = FirearmFireMode.BoltAction,
+				AimTimeBeforeShot = 0.045f,
+				CooldownAfterShot = 0.45f,
+				GetAmmoCount = (data) => Master308Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => Master308Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => Master308Block.GetLoadState(data) == Master308Block.LoadState.Loaded,
+				SetLoadState = (data, state) => Master308Block.SetLoadState(data, state == 1 ? Master308Block.LoadState.Loaded : Master308Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "MP5SSDBlock",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => MP5SSDBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => MP5SSDBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => MP5SSDBlock.GetLoadState(data) == MP5SSDBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => MP5SSDBlock.SetLoadState(data, state == 1 ? MP5SSDBlock.LoadState.Loaded : MP5SSDBlock.LoadState.Empty)
+			});
+
 			m_firearmsInitialized = true;
 		}
 
@@ -389,6 +423,7 @@ namespace Game
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(false);
 			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
 			m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
+			m_subsystemSoundMaterials = Project.FindSubsystem<SubsystemSoundMaterials>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentBody = Entity.FindComponent<ComponentBody>(true);
@@ -397,6 +432,7 @@ namespace Game
 
 			CanUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
 			CanWearClothing = valuesDictionary.GetValue<bool>("CanWearClothing", false);
+			CanDestroyBlocks = valuesDictionary.GetValue<bool>("CanDestroyBlocks", false);
 			CanItBeMounted = valuesDictionary.GetValue<bool>("CanItBeMounted", false);
 
 			m_componentRider = Entity.FindComponent<ComponentRider>(false);
@@ -578,6 +614,9 @@ namespace Game
 					CancelAiming();
 				}
 			}
+
+			// Intentar destruir bloques que obstruyan el camino
+			TryDestroyBlockingBlocks(target);
 
 			if (isMounted)
 			{
@@ -1978,5 +2017,75 @@ namespace Game
 			// Usar Attack con parámetros persistentes para persecución agresiva
 			chaseBehavior.Attack(attacker, 30f, 60f, true);
 		}
+
+		private void TryDestroyBlockingBlocks(ComponentCreature target)
+        {
+            if (!CanDestroyBlocks) return;
+            if (m_subsystemTerrain == null) return;
+            if (target == null) return;
+
+            m_blockDestroyTimer -= m_subsystemTime.GameTimeDelta;
+            if (m_blockDestroyTimer > 0f) return;
+
+            Vector3 myPos = m_componentBody.Position;
+            Vector3 targetPos = target.ComponentBody.Position;
+            Vector3 direction = Vector3.Normalize(targetPos - myPos);
+            direction.Y = 0f;
+
+            if (direction.LengthSquared() < 0.001f) return;
+            direction = Vector3.Normalize(direction);
+
+            int bedrockIndex = BlocksManager.GetBlockIndex("BedrockBlock");
+
+            int baseX = Terrain.ToCell(myPos.X);
+            int baseY = Terrain.ToCell(myPos.Y);
+            int baseZ = Terrain.ToCell(myPos.Z);
+
+            int forwardX = (direction.X > 0.3f) ? 1 : ((direction.X < -0.3f) ? -1 : 0);
+            int forwardZ = (direction.Z > 0.3f) ? 1 : ((direction.Z < -0.3f) ? -1 : 0);
+
+            bool destroyed = false;
+
+            for (int dy = 0; dy <= 1 && !destroyed; dy++)
+            {
+                for (int dx = 0; dx <= 1 && !destroyed; dx++)
+                {
+                    for (int dz = 0; dz <= 1 && !destroyed; dz++)
+                    {
+                        int checkX = baseX + (dx == 0 ? 0 : forwardX);
+                        int checkY = baseY + dy;
+                        int checkZ = baseZ + (dz == 0 ? 0 : forwardZ);
+
+                        if (!m_subsystemTerrain.Terrain.IsCellValid(checkX, checkY, checkZ)) continue;
+
+                        int cellValue = m_subsystemTerrain.Terrain.GetCellValue(checkX, checkY, checkZ);
+                        int contents = Terrain.ExtractContents(cellValue);
+
+                        if (contents == 0) continue;
+                        if (contents == bedrockIndex) continue;
+
+                        Block block = BlocksManager.Blocks[contents];
+                        if (!block.IsCollidable) continue;
+
+                        Vector3 blockCenter = new Vector3(checkX + 0.5f, checkY + 0.5f, checkZ + 0.5f);
+                        float distToBlock = Vector3.Distance(myPos, blockCenter);
+
+                        if (distToBlock <= BLOCK_DESTROY_RANGE)
+                        {
+                            // Reproducir sonido de impacto antes de destruir
+                            if (m_subsystemSoundMaterials != null)
+                            {
+                                m_subsystemSoundMaterials.PlayImpactSound(cellValue, blockCenter, 0.5f);
+                            }
+
+                            // Destruir con drops y partículas habilitados
+                            m_subsystemTerrain.DestroyCell(0, checkX, checkY, checkZ, 0, false, false);
+                            m_blockDestroyTimer = BLOCK_DESTROY_INTERVAL;
+                            destroyed = true;
+                        }
+                    }
+                }
+            }
+        }
 	}
 }
