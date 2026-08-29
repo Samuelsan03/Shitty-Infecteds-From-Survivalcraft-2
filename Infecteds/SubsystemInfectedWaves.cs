@@ -185,30 +185,37 @@ namespace Game
 				return Vector3.Zero;
 
 			ComponentPlayer targetPlayer = m_subsystemPlayers.ComponentPlayers[m_random.Int(0, m_subsystemPlayers.ComponentPlayers.Count - 1)];
-
-			if (targetPlayer?.ComponentBody == null)
-				return Vector3.Zero;
+			if (targetPlayer?.ComponentBody == null) return Vector3.Zero;
 
 			Vector3 playerPosition = targetPlayer.ComponentBody.Position;
 
-			float angle = m_random.Float(0f, MathF.PI * 2f);
-			float distance = m_random.Float(MIN_SPAWN_RADIUS, SPAWN_RADIUS);
-
-			float x = playerPosition.X + MathF.Cos(angle) * distance;
-			float z = playerPosition.Z + MathF.Sin(angle) * distance;
-
-			float y = playerPosition.Y;
-
-			if (m_subsystemTerrain != null)
+			// Intentar hasta 5 veces encontrar un punto válido
+			for (int i = 0; i < 5; i++)
 			{
-				int terrainHeight = m_subsystemTerrain.Terrain.CalculateTopmostCellHeight(
-					Terrain.ToCell(x),
-					Terrain.ToCell(z)
-				);
-				y = terrainHeight + 1f;
+				float angle = m_random.Float(0f, MathF.PI * 2f);
+				float distance = m_random.Float(MIN_SPAWN_RADIUS, SPAWN_RADIUS);
+
+				float x = playerPosition.X + MathF.Cos(angle) * distance;
+				float z = playerPosition.Z + MathF.Sin(angle) * distance;
+
+				int cellX = Terrain.ToCell(x);
+				int cellZ = Terrain.ToCell(z);
+
+				int terrainHeight = m_subsystemTerrain.Terrain.CalculateTopmostCellHeight(cellX, cellZ);
+				int blockBelow = Terrain.ExtractContents(m_subsystemTerrain.Terrain.GetCellValueFast(cellX, terrainHeight - 1, cellZ));
+
+				// Validar que el bloque de abajo sea Dirt, Grass, Sand o Gravel
+				if (blockBelow == BlocksManager.GetBlockIndex<DirtBlock>() ||
+					blockBelow == BlocksManager.GetBlockIndex<GrassBlock>() ||
+					blockBelow == BlocksManager.GetBlockIndex<SandBlock>() ||
+					blockBelow == BlocksManager.GetBlockIndex<GravelBlock>())
+				{
+					return new Vector3(x, terrainHeight + 1f, z);
+				}
 			}
 
-			return new Vector3(x, y, z);
+			// Si después de 5 intentos no encuentra un bloque válido, no spawnea
+			return Vector3.Zero;
 		}
 
 		private void NotifyPlayersWaveStarted(int waveNumber)
