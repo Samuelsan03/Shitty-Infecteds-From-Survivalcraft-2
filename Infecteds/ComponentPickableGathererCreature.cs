@@ -31,6 +31,7 @@ namespace Game
 		// Configuration fields (loaded from template)
 		private List<string> m_categoriesOfInterest = new List<string>();
 		private bool m_canPickUp = false;
+		// private bool m_lootInitialized = false;
 
 		/// <summary>
 		/// Gets the creature's position (from its body component).
@@ -132,6 +133,108 @@ namespace Game
 			}
 		}
 
+		private void InitializeCreatureStartingLoot()
+		{
+			if (m_inventory == null) return;
+
+			// Verificar si el inventario ya tiene algo (no es la primera vez)
+			for (int i = 0; i < m_inventory.SlotsCount; i++)
+			{
+				if (m_inventory.GetSlotCount(i) > 0) return;
+			}
+
+			Random random = new Random();
+			string creatureType = Entity.ValuesDictionary.DatabaseObject.Name;
+
+			// ========== InfectedNormal1 ==========
+			if (creatureType == "InfectedNormal1" || creatureType == "InfectedNormal2" || creatureType == "InfectedMuscle1" || creatureType == "InfectedMuscle2" || creatureType == "FatInfectedFrozen" || creatureType == "FatInfected" || creatureType == "FatInfectedArsonist" || creatureType == "FatInfectedPoisonous" || creatureType == "GhostNormal")
+			{
+				int[] rangedWeapons = {
+			BlocksManager.GetBlockIndex("FlameThrowerBlock"),
+			BlocksManager.GetBlockIndex("RepeatCrossbowBlock"),
+			BlocksManager.GetBlockIndex("MusketBlock"),
+			BlocksManager.GetBlockIndex("BowBlock"),
+			BlocksManager.GetBlockIndex("CrossbowBlock")
+		};
+
+				int[] meleeWeapons = {
+			BlocksManager.GetBlockIndex("CopperMacheteBlock"),
+			BlocksManager.GetBlockIndex("IronMacheteBlock"),
+			BlocksManager.GetBlockIndex("DiamondMacheteBlock"),
+			BlocksManager.GetBlockIndex("WoodenClubBlock"),
+			BlocksManager.GetBlockIndex("StoneClubBlock")
+		};
+
+				int[] throwableWeapons = {
+			BlocksManager.GetBlockIndex("BombBlock"),
+			BlocksManager.GetBlockIndex("IncendiaryBombBlock"),
+			BlocksManager.GetBlockIndex("PoisonBombBlock")
+		};
+
+				int[] spearWeapons = {
+			BlocksManager.GetBlockIndex("WoodenSpearBlock"),
+			BlocksManager.GetBlockIndex("StoneSpearBlock"),
+			BlocksManager.GetBlockIndex("IronSpearBlock"),
+			BlocksManager.GetBlockIndex("CopperSpearBlock"),
+			BlocksManager.GetBlockIndex("DiamondSpearBlock"),
+			BlocksManager.GetBlockIndex("WoodenLongspearBlock"),
+			BlocksManager.GetBlockIndex("StoneLongspearBlock"),
+			BlocksManager.GetBlockIndex("IronLongspearBlock"),
+			BlocksManager.GetBlockIndex("CopperLongspearBlock"),
+			BlocksManager.GetBlockIndex("DiamondLongspearBlock"),
+			BlocksManager.GetBlockIndex("LavaLongspearBlock")
+		};
+
+				int roll = random.Int(0, 99);
+
+				if (roll <= 24)
+				{
+					// Solo arma a distancia (25%)
+					int weapon = rangedWeapons[random.Int(0, rangedWeapons.Length - 1)];
+					ComponentInventoryBase.AcquireItems(m_inventory, weapon, 1);
+				}
+				else if (roll <= 49)
+				{
+					// Solo arma cuerpo a cuerpo (25%)
+					int weapon = meleeWeapons[random.Int(0, meleeWeapons.Length - 1)];
+					ComponentInventoryBase.AcquireItems(m_inventory, weapon, 1);
+				}
+				else if (roll <= 69)
+				{
+					// Arma a distancia + UN lanzable (20%)
+					int ranged = rangedWeapons[random.Int(0, rangedWeapons.Length - 1)];
+					ComponentInventoryBase.AcquireItems(m_inventory, ranged, 1);
+
+					int throwable = throwableWeapons[random.Int(0, throwableWeapons.Length - 1)];
+					ComponentInventoryBase.AcquireItems(m_inventory, throwable, 5);
+				}
+				else if (roll <= 89)
+				{
+					// Arma cuerpo a cuerpo + UN lanzable (20%)
+					int melee = meleeWeapons[random.Int(0, meleeWeapons.Length - 1)];
+					ComponentInventoryBase.AcquireItems(m_inventory, melee, 1);
+
+					int throwable = throwableWeapons[random.Int(0, throwableWeapons.Length - 1)];
+					ComponentInventoryBase.AcquireItems(m_inventory, throwable, 5);
+				}
+				else if (roll <= 94)
+				{
+					// UNA sola lanza (5%)
+					int spear = spearWeapons[random.Int(0, spearWeapons.Length - 1)];
+					ComponentInventoryBase.AcquireItems(m_inventory, spear, 1);
+				}
+				// else roll 95-99: Inventario vacío (5%) - no se agrega nada
+			}
+
+			// ========== Espacio para futuras criaturas ==========
+			// else if (creatureType == "NombreOtraCriatura")
+			// {
+			//     int[] armasEspecificas = { ... };
+			//     int roll = random.Int(0, 99);
+			//     // Lógica específica
+			// }
+		}
+
 		/// <summary>
 		/// Updates the component: scans for pickables in range and gathers them if possible.
 		/// Uses the "fly to target" distance (1.75 blocks) so items can be picked up even while falling,
@@ -139,6 +242,12 @@ namespace Game
 		/// </summary>
 		public virtual void Update(float dt)
 		{
+			// if (!m_lootInitialized)
+			// {
+			//	m_lootInitialized = true;
+			//	InitializeCreatureStartingLoot();
+			// }
+
 			// If disabled or cannot pick up, do nothing
 			if (!m_canPickUp)
 				return;
