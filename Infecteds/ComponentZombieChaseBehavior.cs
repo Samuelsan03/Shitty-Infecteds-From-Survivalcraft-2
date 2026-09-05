@@ -48,6 +48,7 @@ namespace Game
 		private SubsystemTime m_subsystemTime;
 		private SubsystemNoise m_subsystemNoise;
 		private SubsystemGreenNightSky m_subsystemGreenNight;
+		private SubsystemNoiseAttraction m_subsystemNoiseAttraction; // CAMBIO: Añadido el subsistema de atracción de ruido
 		private ComponentCreature m_componentCreature;
 		private ComponentPathfinding m_componentPathfinding;
 		private ComponentMiner m_componentMiner;
@@ -287,6 +288,7 @@ namespace Game
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
+			m_subsystemNoiseAttraction = Project.FindSubsystem<SubsystemNoiseAttraction>(true); // CAMBIO: Inicialización del subsistema
 			m_subsystemGreenNight = Project.FindSubsystem<SubsystemGreenNightSky>(false);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
@@ -483,7 +485,12 @@ namespace Game
 			m_stateMachine.AddState("Chasing",
 				enter: delegate
 				{
+					// Ruido estándar del juego
 					m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody, 0.25f, 6f);
+
+					// CAMBIO: Emitir ruido de atracción personalizado para llamar a otros zombies
+					m_subsystemNoiseAttraction.MakeAttractionNoise(m_componentCreature.ComponentBody.Position, 0.6f, 40f);
+
 					if (PlayIdleSoundWhenStartToChase)
 					{
 						m_componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
