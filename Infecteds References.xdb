@@ -139,12 +139,6 @@
   <Parameter Name="Class" Guid="00eaeffa-bee3-4dbe-bb52-7f444b37e7a5" Value="Game.ComponentPoisonInfectionBehavior" Type="string" />
 </ComponentTemplate>
 
-    <ComponentTemplate Name="BlockBreakerBehavior" Description="Permite a la criatura romper bloques al golpear, con probabilidad configurable y lista de bloques rompibles (separados por comas)" Guid="27c2d1a4-776c-432b-81d0-88ef0d417b42" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
-  <Parameter Name="Class" Guid="7cf54e1a-5d86-4eb6-acad-e7d4ceed95b6" Value="Game.ComponentBlockBreakerBehavior" Type="string" />
-  <Parameter Name="BreakBlockProbability" Description="Probabilidad (0-1) de romper un bloque al golpear" Guid="f64dcef3-9fb9-4e87-b596-10fb5b0a911f" Value="1" Type="float" />
-  <Parameter Name="BreakableBlocks" Description="Nombres de bloques separados por comas. Vacío = todos excepto la roca madre" Guid="dc2a8d58-3956-4180-9fdc-153f140261a6" Value="" Type="string" />
-</ComponentTemplate>
-
     <ComponentTemplate Name="Gravity" Description="Makes the creature push its target away when hitting" Guid="e6f5442f-3e30-4192-9b1b-02c51108cc29" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Guid="4b9de1ad-7a78-4c4d-8533-508b39d857c1" Value="Game.Gravity" Type="string" />
   <Parameter Name="PushProbability" Description="Probability of pushing the target when hit (0-1)" Guid="a2c9b60d-7ee2-4600-a33f-49d76b9867d2" Value="0.1" Type="float" />
@@ -171,6 +165,7 @@
   <Parameter Name="CanUseInventory" Description="Permite al zombie acceder y usar armas de su inventario" Guid="4aafbac5-4b4a-4087-96ec-e2d81461f504" Value="false" Type="bool" />
   <Parameter Name="CanWearClothing" Description="Permite a la criatura vestirse con la ropa del inventario" Guid="a356ddc4-862e-4115-97c0-482a0a29284a" Value="false" Type="bool" />
   <Parameter Name="CanItBeMounted" Description="Permite a la criatura buscar y montar criaturas montables cercanas" Guid="1597774b-bcc0-4517-88f2-3192bc4a10b8" Value="false" Type="bool" />
+  <Parameter Name="CanDestroyBlocks" Description="Permite al zombie destruir bloques que obstruyan su camino (excepto roca madre)" Guid="9e60d5a8-1299-4ec1-8498-36cfaf773843" Value="false" Type="bool" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="DefensiveCreatureAI" Description="Inteligencia artificial defensiva para criaturas" Guid="4f686fb8-0650-4dd9-8281-1247d07a28a7" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
@@ -266,6 +261,18 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="SubsystemM249BlockBehavior" Guid="0ceae944-63ca-4194-a0e3-a2a0c4b78661" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="4c8756e2-952d-4c43-8044-e1a6cfb57421" Value="Game.SubsystemM249BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemGiantFrozenRockBlockBehavior" Guid="2516cc58-3d6d-4adf-a523-36f35612f520" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="4c451484-222b-4d06-8b62-e99a9ba61a41" Value="Game.SubsystemGiantFrozenRockBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemGiantPoisonousRockBlockBehavior" Guid="fe22a821-0ce7-43cb-894b-d1d21192da3e" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="d3331040-5562-4cbd-b7d5-8df7208b37a0" Value="Game.SubsystemGiantPoisonousRockBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemGiantFireRockBlockBehavior" Guid="a02558d4-fab0-42fe-8dd9-5b63661cbbad" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="4e5c9c32-2e3e-488c-ada4-ae8e5e55e9bf" Value="Game.SubsystemGiantFireRockBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="NoiseAttraction" Guid="c0d7cbb9-05dc-4fa7-849b-f77b5c026cc4" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
           <Parameter Name="Class" Guid="d00e4d02-73f0-46c6-80a6-a391acb155dd" Value="Game.SubsystemNoiseAttraction" Type="string" />
         </MemberSubsystemTemplate>
@@ -296,12 +303,9 @@
      <MemberSubsystemTemplate Name="SubsystemAntidotePillBehavior" Guid="5aa290f7-8ace-4cd8-b29c-449bc408f8b9" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
           <Parameter Name="Class" Guid="e51f8ab1-e1c2-4d6a-9ef9-f7a3cd21720a" Value="Game.SubsystemAntidotePillBehavior" Type="string" />
         </MemberSubsystemTemplate>
-     <MemberSubsystemTemplate Name="SubsystemBandageLargeBehavior" Guid="e00bffc3-1067-40ad-890f-b143d792244f" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
-          <Parameter Name="Class" Guid="d7547284-40d9-4339-878b-57a1bb04ec0a" Value="Game.SubsystemBandageLargeBehavior" Type="string" />
+     <MemberSubsystemTemplate Name="SubsystemBandageBlockBehavior" Guid="e00bffc3-1067-40ad-890f-b143d792244f" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="d7547284-40d9-4339-878b-57a1bb04ec0a" Value="Game.SubsystemBandageBlockBehavior" Type="string" />
         </MemberSubsystemTemplate>
-     <MemberSubsystemTemplate Name="SubsystemBandageSmallBehavior" Guid="f77caedc-ed02-4c7d-bf0b-df3102d9d5d6" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
-  <Parameter Name="Class" Guid="6aa0bd42-a658-4c69-a302-5989028c82e0" Value="Game.SubsystemBandageSmallBehavior" Type="string" />
-  </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemFrozenSnowballBlockBehavior" Guid="cc7ba9a2-3a26-4bb8-bee4-8cd24e514cd9" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
   <Parameter Name="Class" Guid="24fdfce2-9931-4d02-af09-8bcb10dd7a90" Value="Game.SubsystemFrozenSnowballBlockBehavior" Type="string" />
   </MemberSubsystemTemplate>
