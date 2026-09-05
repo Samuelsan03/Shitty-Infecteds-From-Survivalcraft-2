@@ -316,8 +316,7 @@ namespace Game
 				UpdatePukeParticles(dt);
 				UpdateGreenoutEffect(dt);
 
-				if (m_componentLocomotion != null
-					&& m_componentCreature != null
+				if (m_componentCreature != null
 					&& m_componentCreature.ComponentBody != null
 					&& m_subsystemTime.PeriodicGameTimeEvent(0.5f, 0.25f))
 				{
@@ -341,15 +340,19 @@ namespace Game
 					StoreOriginalSpeeds();
 				}
 
-				float maxSpeedReduction = 0.6f * PoisonEffectiveness;
-				float penalty = 1f - maxSpeedReduction * m_poisonIntensity;
-				penalty = MathUtils.Max(penalty, 1f - maxSpeedReduction);
+				// CORRECCIÓN: Verificar si m_componentLocomotion no es nulo antes de acceder
+				if (m_componentLocomotion != null)
+				{
+					float maxSpeedReduction = 0.6f * PoisonEffectiveness;
+					float penalty = 1f - maxSpeedReduction * m_poisonIntensity;
+					penalty = MathUtils.Max(penalty, 1f - maxSpeedReduction);
 
-				m_componentLocomotion.WalkSpeed = m_originalWalkSpeed * penalty;
-				m_componentLocomotion.FlySpeed = m_originalFlySpeed * penalty;
-				m_componentLocomotion.SwimSpeed = m_originalSwimSpeed * penalty;
-				m_componentLocomotion.JumpSpeed = m_originalJumpSpeed * penalty;
-				m_componentLocomotion.LadderSpeed = m_originalLadderSpeed * penalty;
+					m_componentLocomotion.WalkSpeed = m_originalWalkSpeed * penalty;
+					m_componentLocomotion.FlySpeed = m_originalFlySpeed * penalty;
+					m_componentLocomotion.SwimSpeed = m_originalSwimSpeed * penalty;
+					m_componentLocomotion.JumpSpeed = m_originalJumpSpeed * penalty;
+					m_componentLocomotion.LadderSpeed = m_originalLadderSpeed * penalty;
+				}
 			}
 			else
 			{
