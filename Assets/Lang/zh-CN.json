@@ -1,4 +1,20 @@
 {
+  "FlameBulletBlock": [
+  "火焰子弹",
+  "毒子弹"
+],
+"RepeatBoltBlock": [
+  "连发铜弩箭",
+  "连发铁弩箭",
+  "连发钻石弩箭",
+  "连发爆炸弩箭",
+  "连发火焰弩箭",
+  "连发毒弩箭",
+  "连发剧毒弩箭"
+],
+  "BlocksManager": {
+    "Firearms": "枪械"
+  },
   "Database": {
     "DisplayName": {
       "Aimep3": "Aimep3",
@@ -20,10 +36,34 @@
       "FlyingInfectedTamed2": "已驯服飞行感染者 II",
       "FlyingInfected3": "飞行感染者 III",
       "FlyingInfectedTamed3": "已驯服飞行感染者 III",
+      "FlyingInfectedBoss": "飞行感染者首领",
+      "FlyingInfectedBossTamed": "已驯服的飞行感染者首领",
       "InfectedPoisonous1": "感染毒性 I",
       "InfectedPoisonousTamed1": "驯服感染毒性 I",
       "InfectedPoisonous2": "感染毒性 II",
-      "InfectedPoisonousTamed2": "驯服感染毒性 II"
+      "InfectedPoisonousTamed2": "驯服感染毒性 II",
+      "FatInfected": "肥胖感染者",
+      "FatInfectedTamed": "驯服的肥胖感染者",
+      "FatInfectedArsonist": "肥胖纵火感染者",
+      "FatInfectedArsonistTamed": "驯服的肥胖纵火感染者",
+      "FatInfectedPoisonous": "肥胖毒性感染者",
+      "FatInfectedPoisonousTamed": "驯服的肥胖毒性感染者",
+      "FatInfectedFrozen": "冰冻肥胖感染者",
+      "FatInfectedFrozenTamed": "驯服的冰冻肥胖感染者",
+      "InfectedPusher1": "感染推手 I",
+      "InfectedPusherTamed1": "驯服的感染推手 I",
+      "InfectedPusher2": "感染推手 II",
+      "InfectedPusherTamed2": "驯服的感染推手 II",
+      "InfectedBrute": "感染的蛮兽",
+      "InfectedBruteTamed": "驯服的感染蛮兽",
+      "InfectedBruteArsonist": "纵火感染蛮兽",
+      "InfectedBruteArsonistTamed": "驯服的纵火感染蛮兽",
+      "InfectedBrutePoisonous": "剧毒感染蛮兽",
+      "InfectedBrutePoisonousTamed": "驯服的剧毒感染蛮兽",
+      "InfectedBruteFrozen": "冰冻感染蛮兽",
+      "InfectedBruteFrozenTamed": "驯服的冰冻感染蛮兽",
+      "GhostNormal": "普通幽灵",
+      "GhostNormalTamed": "驯服的普通幽灵"
   },
   "Description": {
     "InfectedNormal1": "自第1波开始出现。这种感染者是瘟疫中最常见的威胁之一，但绝不能低估它。它会不断游荡寻找猎物，能够侦测、追逐并攻击幸存者以及其他生物。它可以长途跋涉追击目标，与附近的感染者协同行动，并在同伴进入战斗时响应求援。它还能拾取沿途发现的武器、工具和衣物，并利用它们提高自己的生存能力。如果障碍物挡住去路，它会尝试将其摧毁并继续前进。它那双发着绿色光芒的眼睛即使在完全黑暗中也清晰可见。在绿色之夜期间，它会变得更加凶残：彻底放弃撤退的念头，将全部注意力集中在幸存者身上，并以毫不松懈的决心持续追杀目标。即使遭到攻击，它也会记住攻击者，并在很长一段时间内持续追击。可以使用项圈将其驯服，使其成为忠诚的守护者，与主人并肩作战。死亡后，它的堕落灵魂有极小概率会以新的形态继续留存在这个世界。",
@@ -96,6 +136,96 @@
   "Description": "适用于巴雷特狙击步枪的高口径钻石尖弹。飞行速度极快，弹道下坠极小。对空仓的巴雷特狙击步枪使用即可装填。",
   "CRDescription:0": "使用铁、火药和钻石加工一发狙击弹"
 },
+"RevolverBlock:0": {
+    "DisplayName": "左轮手枪",
+    "Description": "一把经典的左轮手枪，可装填6发子弹。在近距离和中距离下可靠且威力强大。",
+    "CRDescription:0": "使用铁和木板制作左轮手枪"
+},
+"RevolverAmmunitionBlock:0": {
+    "DisplayName": "左轮手枪弹药",
+    "Description": "左轮手枪使用的弹药。每次重新装填都会填满全部6个弹膛。",
+    "CRDescription:0": "使用铁块和火药制作左轮手枪弹药"
+},
+"IZH43Block:0": {
+    "DisplayName": "IZH-43",
+    "Description": "一把简单的双管猎枪。可靠，但容量有限。发射会在命中时散开的霰弹。",
+    "CRDescription:0": "使用铁和木材制作一把双管猎枪"
+},
+"Izh43AmmunitionBlock:0": {
+    "DisplayName": "IZH-43 霰弹",
+    "Description": "装填了用于 IZH-43 的霰弹的猎枪弹药。",
+    "CRDescription:0": "使用铁和火药制作猎枪弹药"
+},
+"Mac10Block:0": {
+  "DisplayName": "MAC-10",
+  "Description": "一款使用 .45 ACP 弹药的紧凑型全自动冲锋枪。射速高，但精准度和伤害较低。按住瞄准键即可持续射击。",
+  "CRDescription:0": "使用铁、铁块和木板制作 MAC-10"
+},
+"Mac10AmmunitionBlock:0": {
+  "DisplayName": ".45 ACP 弹药",
+  "Description": "MAC-10 使用的弹药。每个弹匣可装 30 发子弹。",
+  "CRDescription:0": "使用铁锭和火药制作 .45 ACP 弹药"
+},
+"M4Block:0": {
+  "DisplayName": "M4",
+  "Description": "一款现代化突击步枪，具有高精度和快速射速。伤害低于AK47，但精度更高，射程更远。",
+  "CRDescription:0": "使用铁、金属杆和半导体制造一把M4"
+},
+"M4AmmunitionBlock:0": {
+  "DisplayName": "M4弹药",
+  "Description": "适用于M4步枪的5.56毫米子弹。",
+  "CRDescription:0": "使用铁锭和火药制造M4弹药"
+},
+"UziBlock:0": {
+  "DisplayName": "乌兹冲锋枪",
+  "Description": "乌兹冲锋枪是一种发射9毫米子弹的全自动冲锋枪。它配备32发弹匣，射速适中。按住按钮可持续射击——射击时间越长，精准度越低。",
+  "CRDescription:0": "使用铁锭、铁块和铁棒制作乌兹冲锋枪"
+},
+"UziAmmunitionBlock:0": {
+  "DisplayName": "乌兹弹匣",
+  "Description": "一个适用于乌兹冲锋枪的32发9毫米弹匣。使用铜制弹壳制作，以确保可靠供弹。使用它为武器重新装填弹药。",
+  "CRDescription:0": "使用铁锭、火药和铜锭制作乌兹弹匣"
+},
+"BK93Block:0": {
+  "DisplayName": "BK-93",
+  "Description": "一把双管霰弹枪。近距离威力强大，但装填速度较慢。",
+  "CRDescription:0": "使用铁、铁棒、木板和铜制作一把BK-93"
+},
+"BK93AmmunitionBlock:0": {
+  "DisplayName": "BK-93霰弹",
+  "Description": "适用于BK-93的霰弹。",
+  "CRDescription:0": "使用铁、火药和羽毛制作BK-93霰弹"
+},
+"Master308Block:0": {
+  "DisplayName": "Master 308",
+  "Description": "一把使用 .308 弹药的栓动式狙击步枪。伤害高、精准度出色，但射速较慢。内置弹匣最多可容纳 5 发子弹。",
+  "CRDescription:0": "使用铁、铜、金属棒和玻璃制造一把精密步枪"
+},
+"Master308AmmunitionBlock:0": {
+  "DisplayName": ".308 子弹",
+  "Description": "Master 308 使用的高威力步枪弹药。专为远距离交战而设计。",
+  "CRDescription:0": "使用铁、铜和火药制造 .308 子弹"
+},
+"MP5SSDBlock:0": {
+  "DisplayName": "MP5SD",
+  "Description": "一把带有消音器、能够降低噪音的冲锋枪。发射 9mm 亚音速弹药，非常适合隐秘行动。伤害较低，但射速很快。",
+  "CRDescription:0": "使用铁、金属棒和铜制造一把 MP5SD，并用铜制作消音器"
+},
+"MP5AmmunitionBlock:0": {
+  "DisplayName": "9mm 弹药",
+  "Description": "为 MP5SD 设计的 9mm 亚音速弹药。速度低于标准弹药，但射击时更加安静。",
+  "CRDescription:0": "使用铜和火药制造 9mm 子弹"
+},
+"M249Block:0": {
+"DisplayName": "M249",
+"Description": "一挺射速极高、配备100发弹匣的重机枪。精准度较低，但持续射击时具有毁灭性的火力。",
+"CRDescription:0": "使用铁块和铁棒制作重机枪"
+},
+"M249AmmunitionBlock:0": {
+"DisplayName": "M249弹药箱",
+"Description": "一个装有100发M249机枪弹药的弹药箱。",
+"CRDescription:0": "使用铁、火药和铜制作M249弹药"
+},
     "ImprovedMusketBlock:0": {
   "DisplayName": "改良火枪",
   "Description": "一种重新设计的火枪，省去了分别装填火药和填塞物的繁琐步骤。它允许你直接向枪膛装入最多2颗弹丸。与原版火枪不同，即使浸入水中也不会哑火，其坚固的机械结构还能防止每次射击时损失耐久度。",
@@ -112,37 +242,30 @@
     "CRDescription:0": "使用木杆、铁锭、绳子和标准弩制作"
   },
   "RepeatBoltBlock:0": {
-    "DisplayName": "连发铜弩箭",
     "Description": "连发弩使用的基础铜制弩箭。威力较低，但制作成本便宜。",
     "CRDescription:0": "使用铜锭、木杆和羽毛制作"
   },
   "RepeatBoltBlock:1": {
-    "DisplayName": "连发铁弩箭",
     "Description": "坚固的铁制弩箭，具有良好的护甲穿透能力和伤害。",
     "CRDescription:1": "使用铁锭、木杆和羽毛制作"
   },
   "RepeatBoltBlock:2": {
-    "DisplayName": "连发钻石弩箭",
     "Description": "镶有钻石箭头的弩箭，能够轻松穿透最坚固的护甲。其流线型设计使其能在水中穿行而不减速。",
     "CRDescription:2": "使用钻石强化铁弩箭"
 },
   "RepeatBoltBlock:3": {
-    "DisplayName": "连发爆炸弩箭",
     "Description": "装填火药的弩箭，命中后会爆炸，对附近的生物和地形造成伤害。",
     "CRDescription:3": "将火药与铜弩箭组合"
   },
   "RepeatBoltBlock:4": {
-    "DisplayName": "连发火焰弩箭",
     "Description": "能够点燃目标并留下火焰轨迹的弩箭。对易燃敌人特别有效。",
     "CRDescription:4": "将硫磺块与铜弩箭组合"
   },
   "RepeatBoltBlock:5": {
-    "DisplayName": "连发毒弩箭",
     "Description": "涂覆了轻度毒素的弩箭，会随着时间持续使目标中毒。",
     "CRDescription:5": "将毒素涂覆在铜弩箭上"
   },
   "RepeatBoltBlock:6": {
-    "DisplayName": "连发剧毒弩箭",
     "Description": "涂覆了高浓度毒素的弩箭，能够迅速造成致命中毒。",
     "CRDescription:6": "使用额外剂量的毒素强化毒弩箭"
   },
@@ -202,15 +325,38 @@
   "Description": "一种火焰喷射器，可根据装填的弹药发射燃烧或剧毒弹。使用特殊弹药进行装填。",
   "CRDescription:0": "使用铁锭、铜锭、金属杆和木板制作火焰喷射器。"
 },
+"CopperThinHammerBlock:0": {
+    "DisplayName": "铜制轻型锤",
+    "Description": "一种多功能工具，将铲子、镐和斧子的功能结合在一个轻巧的工具头中。虽然效率不如专用工具，但可以节省背包空间，非常适合探索。铜制工具比木制工具更加耐用，工作速度也更快。",
+    "CRDescription:0": "锻造一个铜制多功能工具头"
+  },
+  "IronThinHammerBlock:0": {
+    "DisplayName": "铁制轻型锤",
+    "Description": "一种多功能工具，将铲子、镐和斧子的功能结合在一个轻巧的工具头中。虽然效率不如专用工具，但可以节省背包空间，非常适合探索。铁制工具比铜制工具更加耐用且效率更高。",
+    "CRDescription:0": "使用铁进行升级以提高耐久度"
+  },
+  "DiamondThinHammerBlock:0": {
+    "DisplayName": "钻石刃轻型锤",
+    "Description": "一种多功能工具，将铲子、镐和斧子的功能结合在一个轻巧的工具头中。虽然效率不如专用工具，但可以节省背包空间，非常适合探索。钻石刃大幅提升了工具的切割和挖掘能力。",
+    "CRDescription:0": "在工具的工作刃上添加钻石"
+  },
+  "LavaThinHammerBlock:0": {
+    "DisplayName": "熔岩灌注轻型锤",
+    "Description": "一种多功能工具，将铲子、镐和斧子的功能结合在一个轻巧的工具头中。注入熔融岩浆后，这把工具在耐久度和效率方面都超越了其他工具。炽热的刃口可以轻松处理任何材料。",
+    "CRDescription:0": "注入岩浆以获得终极性能"
+  },
 "FlameBulletBlock:0": {
-  "DisplayName": "燃烧弹",
   "Description": "火焰喷射器使用的燃烧弹药。命中后会点燃敌人及周围环境。",
   "CRDescription:0": "使用铁锭和火药制作燃烧弹。"
 },
 "FlameBulletBlock:1": {
-  "DisplayName": "毒弹",
   "Description": "火焰喷射器使用的剧毒弹药。命中后使敌人中毒，并持续造成伤害。",
   "CRDescription:1": "使用毒素和燃烧弹制作毒弹。"
+},
+"AntidotePillBlock:0": {
+  "DisplayName": "解毒药丸",
+  "Description": "一种可以治疗流感和中毒的药丸，也可以治疗范围内附近的生物。",
+  "CRDescription:0": "使用帆布和药用花朵制作解毒药丸"
 }
   },
   "ContentWidgets": {
@@ -243,6 +389,20 @@
   "1": "感染体图鉴"
     }
   },
+  "FirearmsShopWidget": {
+  "title": "枪械商店",
+  "restoresIn": "恢复时间：",
+  "restoresInFormat": "{0}后恢复",
+  "buy": "购买",
+  "priceFormat": "{0}枚硬币",
+  "purchaseSuccess": "购买成功！",
+  "inventoryFull": "背包已满！",
+  "unknownBlock": "未知方块"
+},
+  "SubsystemAntidotePillBehavior": {
+    "1": "解毒药已服用！你已经痊愈了",
+    "2": "你治愈了 {0} 的疾病！"
+},
   "SubsystemBandageBehavior": {
   "1": "你为 {0} 部分治疗",
   "2": "你已部分治愈自己",
@@ -318,7 +478,9 @@
     "5": "显示生物生命值条",
     "6": "启用生物流血",
     "7": "在非创造模式下启用自由视角",
-    "8": "当蛮族正在追捕你时播放 Boss 追逐音乐"
+    "8": "当蛮族正在追捕你时播放 Boss 追逐音乐",
+    "9": "启用尸体消失时出现生物",
+    "10": "当幽灵追赶你时播放恐怖音乐"
   },
   "GreenNightActivationDialog": {
     "1": "绿色之夜管理",
@@ -330,5 +492,5 @@
     "7": "确认",
     "8": "绿色之夜已启用。",
     "9": "绿色之夜已禁用。"
-}
+  }
 }
