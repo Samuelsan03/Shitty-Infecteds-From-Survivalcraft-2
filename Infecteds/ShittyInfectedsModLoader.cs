@@ -268,7 +268,7 @@ public class ShittyInfectedsModLoader : ModLoader
 					{
 						// NUEVA LÓGICA: Verificar si tiene vendaje y la criatura necesita curación
 						int activeBlockIndex = Terrain.ExtractContents(player.ComponentMiner.ActiveBlockValue);
-						bool hasBandage = activeBlockIndex == BlocksManager.GetBlockIndex<BandageSmallBlock>() || activeBlockIndex == BlocksManager.GetBlockIndex<LargeBandageBlock>();
+						bool hasBandage = activeBlockIndex == BlocksManager.GetBlockIndex<BandageBlock>();
 
 						if (hasBandage)
 						{
