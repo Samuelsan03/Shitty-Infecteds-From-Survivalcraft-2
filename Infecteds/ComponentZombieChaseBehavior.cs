@@ -41,6 +41,8 @@ namespace Game
 		private float m_noiseInvestigationTime;
 
 		// Campos existentes
+		private ComponentRider m_componentRider;
+		public bool IsInvestigatingNoise { get; private set; } = false;
 		private SubsystemGameInfo m_subsystemGameInfo;
 		private SubsystemPlayers m_subsystemPlayers;
 		private SubsystemSky m_subsystemSky;
@@ -289,6 +291,7 @@ namespace Game
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
 			m_subsystemNoiseAttraction = Project.FindSubsystem<SubsystemNoiseAttraction>(true); // CAMBIO: Inicialización del subsistema
+			m_componentRider = Entity.FindComponent<ComponentRider>(false);
 			m_subsystemGreenNight = Project.FindSubsystem<SubsystemGreenNightSky>(false);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
@@ -416,41 +419,94 @@ namespace Game
 				leave: null
 			);
 
-			// ============================================================
-			// ESTADO: NoiseAttraction (NUEVO)
-			// ============================================================
+			// ESTADO: NoiseAttraction (MODIFICADO PARA MONTURAS)
 			m_stateMachine.AddState("NoiseAttraction",
 				enter: delegate
 				{
-					IsActive = false; // Desactivar persecución activa
+					IsActive = false;
+					IsInvestigatingNoise = true;
 					m_noiseInvestigationTime = 0f;
-					m_componentPathfinding.SetDestination(new Vector3?(m_noiseSourcePosition), 1f, 1f, 0, false, true, false, null);
+
+					// Verificar si está montado
+					bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
+
+					if (isMounted)
+					{
+						// Si está montado, usar el pathfinding de la montura
+						ComponentMount mount = m_componentRider.Mount;
+						ComponentPathfinding mountPathfinding = mount.Entity.FindComponent<ComponentPathfinding>();
+						if (mountPathfinding != null)
+						{
+							mountPathfinding.SetDestination(new Vector3?(m_noiseSourcePosition), 1f, 1f, 0, false, true, false, null);
+						}
+					}
+					else
+					{
+						// Si no está montado, usar su propio pathfinding (lógica original)
+						m_componentPathfinding.SetDestination(new Vector3?(m_noiseSourcePosition), 1f, 1f, 0, false, true, false, null);
+					}
 				},
 				update: delegate
 				{
 					m_noiseInvestigationTime += m_dt;
+					bool shouldExit = false;
+
+					// Verificar estado de montaje en cada frame por si desmonta/monta durante el estado
+					bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
 
 					// Condiciones para finalizar la atracción por ruido:
-					if (m_componentPathfinding.IsStuck ||
-						m_componentPathfinding.Destination == null ||
-						m_noiseInvestigationTime > NOISE_INVESTIGATION_DURATION)
+					if (isMounted)
+					{
+						ComponentMount mount = m_componentRider.Mount;
+						ComponentPathfinding mountPathfinding = mount.Entity.FindComponent<ComponentPathfinding>();
+						if (mountPathfinding == null || mountPathfinding.IsStuck || mountPathfinding.Destination == null || m_noiseInvestigationTime > NOISE_INVESTIGATION_DURATION)
+						{
+							shouldExit = true;
+						}
+					}
+					else
+					{
+						// Lógica original desmontado
+						if (m_componentPathfinding.IsStuck || m_componentPathfinding.Destination == null || m_noiseInvestigationTime > NOISE_INVESTIGATION_DURATION)
+						{
+							shouldExit = true;
+						}
+					}
+
+					if (shouldExit)
 					{
 						m_stateMachine.TransitionTo("LookingForTarget");
 						return;
 					}
 
-					float dist = Vector3.Distance(m_componentCreature.ComponentBody.Position, m_noiseSourcePosition);
+					// Comprobar si ha llegado al origen del ruido
+					Vector3 myPos = isMounted
+						? m_componentRider.Mount.ComponentBody.Position
+						: m_componentCreature.ComponentBody.Position;
+
+					float dist = Vector3.Distance(myPos, m_noiseSourcePosition);
 					if (dist < 2f)
 					{
-						// Llegó al origen del ruido
 						m_stateMachine.TransitionTo("LookingForTarget");
 						return;
 					}
 				},
 				leave: delegate
 				{
-					// Al salir, detener el pathfinding y limpiar
-					m_componentPathfinding.Stop();
+					IsInvestigatingNoise = false;
+
+					bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
+
+					if (isMounted)
+					{
+						// Detener la montura al salir
+						ComponentPathfinding mountPathfinding = m_componentRider.Mount.Entity.FindComponent<ComponentPathfinding>();
+						if (mountPathfinding != null) mountPathfinding.Stop();
+					}
+					else
+					{
+						m_componentPathfinding.Stop();
+					}
 				}
 			);
 
