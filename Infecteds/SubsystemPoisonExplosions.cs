@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
@@ -13,7 +13,6 @@ namespace Game
 		public SubsystemTerrain m_subsystemTerrain;
 		public SubsystemAudio m_subsystemAudio;
 		public SubsystemParticles m_subsystemParticles;
-		public SubsystemNoise m_subsystemNoise;
 		public SubsystemBodies m_subsystemBodies;
 
 		private List<ExplosionData> m_queuedExplosions = new List<ExplosionData>();
@@ -218,7 +217,6 @@ namespace Game
 			float volume = MathUtils.Clamp(totalPressure / 5000f, 0.5f, 1f);
 			m_subsystemAudio.PlaySound("Audio/Explosion Smoke", volume, m_random.Float(-0.1f, 0.1f), position, 25f, delay);
 
-			m_subsystemNoise.MakeNoise(position, 0.6f, 30f);
 		}
 
 		public override void Load(ValuesDictionary valuesDictionary)
@@ -226,7 +224,6 @@ namespace Game
 			m_subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true);
 			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
 			m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
-			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 
 			m_poisonParticleSystem = new PoisonExplosionParticleSystem();
