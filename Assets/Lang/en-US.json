@@ -1,4 +1,20 @@
 {
+  "FlameBulletBlock": [
+    "Fire Bullet",
+    "Poison Bullet"
+  ],
+  "RepeatBoltBlock": [
+    "Repeat Copper Bolt",
+    "Repeat Iron Bolt",
+    "Repeat Diamond Bolt",
+    "Repeat Explosive Bolt",
+    "Repeat Fire Bolt",
+    "Repeat Poison Bolt",
+    "Repeat Severely Poisonous Bolt"
+  ],
+  "BlocksManager": {
+    "Firearms": "Firearms"
+  },
   "Database": {
     "DisplayName": {
       "Aimep3": "Aimep3",
@@ -20,10 +36,34 @@
       "FlyingInfectedTamed2": "Flying Infected Tamed II",
       "FlyingInfected3": "Flying Infected III",
       "FlyingInfectedTamed3": "Flying Infected Tamed III",
+      "FlyingInfectedBoss": "Flying Infected Boss",
+      "FlyingInfectedBossTamed": "Flying Infected Boss Tamed",
       "InfectedPoisonous1": "Infected Poisonous I",
       "InfectedPoisonousTamed1": "Infected Poisonous Tamed I",
       "InfectedPoisonous2": "Infected Poisonous II",
-      "InfectedPoisonousTamed2": "Infected Poisonous Tamed II"
+      "InfectedPoisonousTamed2": "Infected Poisonous Tamed II",
+      "FatInfected": "Fat Infected",
+      "FatInfectedTamed": "Fat Infected Tamed",
+      "FatInfectedArsonist": "Fat Infected Arsonist",
+      "FatInfectedArsonistTamed": "Fat Infected Arsonist Tamed",
+      "FatInfectedPoisonous": "Fat Infected Poisonous",
+      "FatInfectedPoisonousTamed": "Fat Infected Poisonous Tamed",
+      "FatInfectedFrozen": "Fat Infected Frozen",
+      "FatInfectedFrozenTamed": "Fat Infected Frozen Tamed",
+      "InfectedPusher1": "Infected Pusher I",
+      "InfectedPusherTamed1": "Infected Pusher Tamed I",
+      "InfectedPusher2": "Infected Pusher II",
+      "InfectedPusherTamed2": "Infected Pusher Tamed II",
+      "InfectedBrute": "Infected Brute",
+      "InfectedBruteTamed": "Infected Brute Tamed",
+      "InfectedBruteArsonist": "Infected Brute Arsonist",
+      "InfectedBruteArsonistTamed": "Infected Brute Arsonist Tamed",
+      "InfectedBrutePoisonous": "Infected Brute Poisonous",
+      "InfectedBrutePoisonousTamed": "Infected Brute Poisonous Tamed",
+      "InfectedBruteFrozen": "Infected Brute Frozen",
+      "InfectedBruteFrozenTamed": "Infected Brute Frozen Tamed",
+      "GhostNormal": "Ghost Normal",
+      "GhostNormalTamed": "Ghost Normal Tamed"
   },
   "Description": {
     "InfectedNormal1": "Appears from Wave 1. This infected is one of the most common threats of the plague, but it should never be underestimated. It constantly roams in search of prey and is capable of detecting, chasing, and attacking both survivors and other creatures. It can travel great distances to reach its target, cooperate with nearby infected, and respond to their calls for help when one of them enters combat. It can pick up weapons, tools, and clothing found along its path, using them to improve its chances of survival. If an obstacle blocks its way, it will attempt to destroy it and continue forward. Its distinctive glowing green eyes remain visible even in complete darkness. During the Green Night, its behavior becomes far more aggressive: it abandons any intention of retreating, focuses entirely on survivors, and pursues them with relentless determination. Even after being attacked, it can remember its aggressor and continue the chase for a long time. It can be tamed using a Collar, becoming a loyal guardian that will fight by your side. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form.",
@@ -96,6 +136,96 @@
   "Description": "A single high-caliber diamond-tipped round for the Barrett Sniper. Travels at extreme velocity with minimal bullet drop. Use on an empty Barrett Sniper to load it.",
   "CRDescription:0": "Machine a sniper round from iron, gunpowder and diamond"
 },
+"RevolverBlock:0": {
+    "DisplayName": "Revolver",
+    "Description": "A classic revolver that holds 6 rounds. Reliable and powerful at close to medium range.",
+    "CRDescription:0": "Make a revolver from iron and planks"
+},
+"RevolverAmmunitionBlock:0": {
+    "DisplayName": "Revolver Ammunition",
+    "Description": "Ammunition for the revolver. Each reload fills all 6 chambers.",
+    "CRDescription:0": "Make revolver ammunition from iron blocks and gunpowder"
+},
+"IZH43Block:0": {
+    "DisplayName": "IZH-43",
+    "Description": "A simple double-barrel shotgun. Reliable but with limited capacity. Fires buckshot that spreads on impact.",
+    "CRDescription:0": "Craft a double-barrel shotgun from iron and wood"
+},
+"Izh43AmmunitionBlock:0": {
+    "DisplayName": "IZH-43 Shells",
+    "Description": "Shotgun shells loaded with buckshot for the IZH-43.",
+    "CRDescription:0": "Craft shotgun shells from iron and gunpowder"
+},
+"Mac10Block:0": {
+  "DisplayName": "MAC-10",
+  "Description": "A compact fully automatic submachine gun chambered in .45 ACP. High fire rate but lower accuracy and damage. Hold aim to fire continuously.",
+  "CRDescription:0": "Make a MAC-10 from iron, iron blocks and planks"
+},
+"Mac10AmmunitionBlock:0": {
+  "DisplayName": ".45 ACP Ammunition",
+  "Description": "Ammunition for the MAC-10. Each magazine holds 30 rounds.",
+  "CRDescription:0": "Make .45 ACP ammunition from iron ingots and gunpowder"
+},
+"M4Block:0": {
+  "DisplayName": "M4",
+  "Description": "A modern assault rifle with high accuracy and fast fire rate. Less damage than the AK47 but more precise and with better range.",
+  "CRDescription:0": "Craft an M4 from iron, rods, and semiconductors"
+},
+"M4AmmunitionBlock:0": {
+  "DisplayName": "M4 Ammunition",
+  "Description": "5.56mm cartridges for the M4 rifle.",
+  "CRDescription:0": "Craft M4 ammunition from iron ingots and gunpowder"
+},
+"UziBlock:0": {
+  "DisplayName": "Uzi",
+  "Description": "An Uzi is an automatic submachine gun that fires 9mm rounds. It has a 32-round magazine and a moderate rate of fire. Hold to fire continuously - accuracy decreases the longer you shoot.",
+  "CRDescription:0": "Make an Uzi from iron ingots, iron blocks and rods"
+},
+"UziAmmunitionBlock:0": {
+  "DisplayName": "Uzi Magazine",
+  "Description": "A 32-round 9mm magazine for the Uzi. Crafted with copper casings for reliable feeding. Use it to reload the weapon.",
+  "CRDescription:0": "Make Uzi magazines from iron ingots, gunpowder and copper ingots"
+},
+"BK93Block:0": {
+  "DisplayName": "BK-93",
+  "Description": "A double-barrel shotgun. Powerful at close range but slow to reload.",
+  "CRDescription:0": "Craft a BK-93 from iron, rods, planks and copper"
+},
+"BK93AmmunitionBlock:0": {
+  "DisplayName": "BK-93 Shells",
+  "Description": "Shotgun shells for the BK-93.",
+  "CRDescription:0": "Craft BK-93 shells from iron, gunpowder and feathers"
+},
+"Master308Block:0": {
+  "DisplayName": "Master 308",
+  "Description": "A bolt-action sniper rifle chambered in .308. High damage and excellent accuracy, but slow fire rate. Holds up to 5 rounds in its internal magazine.",
+  "CRDescription:0": "Craft a precision rifle from iron, copper, rods and glass"
+},
+"Master308AmmunitionBlock:0": {
+  "DisplayName": ".308 Round",
+  "Description": "High-powered rifle ammunition for the Master 308. Designed for long-range engagements.",
+  "CRDescription:0": "Craft .308 rounds from iron, copper and gunpowder"
+},
+"MP5SSDBlock:0": {
+  "DisplayName": "MP5SD",
+  "Description": "A suppressed submachine gun with reduced noise. Fires 9mm subsonic rounds, ideal for stealth operations. Lower damage but fast fire rate.",
+  "CRDescription:0": "Craft an MP5SD from iron, rods, and copper for the suppressor"
+},
+"MP5AmmunitionBlock:0": {
+  "DisplayName": "9mm Ammunition",
+  "Description": "Subsonic 9mm rounds designed for the MP5SD. Lower velocity than standard rounds but quieter operation.",
+  "CRDescription:0": "Make 9mm rounds from copper and gunpowder"
+},
+"M249Block:0": {
+    "DisplayName": "M249",
+    "Description": "A heavy machine gun with high fire rate and 100 round magazine. Less accurate but devastating sustained fire.",
+    "CRDescription:0": "Craft a heavy machine gun from iron blocks and rods"
+  },
+  "M249AmmunitionBlock:0": {
+    "DisplayName": "M249 Ammunition Box",
+    "Description": "A box of 100 rounds for the M249 machine gun.",
+    "CRDescription:0": "Craft M249 ammunition from iron, gunpowder and copper"
+  },
     "ImprovedMusketBlock:0": {
     "DisplayName": "Improved Musket",
     "Description": "A redesigned musket that eliminates the cumbersome process of loading gunpowder and wads separately. It allows you to insert up to 2 pellets directly into the chamber. Unlike the original musket, it will not misfire if you submerge in water, and its sturdy mechanism prevents it from losing durability with each shot.",
@@ -112,37 +242,30 @@
     "CRDescription:0": "Craft from rods, iron ingots, string, and a standard crossbow"
   },
   "RepeatBoltBlock:0": {
-    "DisplayName": "Repeat Copper Bolt",
     "Description": "A basic copper bolt for the repeating crossbow. Low power but cheap to make.",
     "CRDescription:0": "Craft from a copper ingot, a rod, and a feather"
   },
   "RepeatBoltBlock:1": {
-    "DisplayName": "Repeat Iron Bolt",
     "Description": "A sturdy iron bolt with good armor penetration and damage.",
     "CRDescription:1": "Craft from an iron ingot, a rod, and a feather"
   },
   "RepeatBoltBlock:2": {
-    "DisplayName": "Repeat Diamond Bolt",
     "Description": "A diamond-tipped bolt that pierces through the toughest armor with ease. Its aerodynamic design allows it to travel through water without losing speed.",
     "CRDescription:2": "Reinforce an iron bolt with a diamond"
 },
   "RepeatBoltBlock:3": {
-    "DisplayName": "Repeat Explosive Bolt",
     "Description": "A bolt packed with gunpowder that detonates on impact, damaging nearby creatures and terrain.",
     "CRDescription:3": "Combine gunpowder with a copper bolt"
   },
   "RepeatBoltBlock:4": {
-    "DisplayName": "Repeat Fire Bolt",
     "Description": "A bolt that ignites targets and leaves a trail of fire. Very effective against flammable enemies.",
     "CRDescription:4": "Combine a sulphur chunk with a copper bolt"
   },
   "RepeatBoltBlock:5": {
-    "DisplayName": "Repeat Poison Bolt",
     "Description": "A bolt coated with a mild toxin that poisons the target over time.",
     "CRDescription:5": "Coat a copper bolt with toxin"
   },
   "RepeatBoltBlock:6": {
-    "DisplayName": "Repeat Severely Poisonous Bolt",
     "Description": "A bolt laced with a highly concentrated toxin, capable of inflicting fatal poisoning quickly.",
     "CRDescription:6": "Reinforce a poison bolt with an extra dose of toxin"
   },
@@ -197,20 +320,43 @@
       "Description": "A terrifying longspear forged with molten magma. It possesses extreme reach and devastating burning power, easily piercing through defenses when thrown or wielded in close combat.",
       "CRDescription:0": "Imbue the long weapon with the heat of magma"
     },
+    "CopperThinHammerBlock:0": {
+  "DisplayName": "Copper Thin Hammer",
+  "Description": "A versatile multi-tool combining shovel, pickaxe and axe functions in one lightweight head. While not as efficient as specialized tools, it saves inventory space and is ideal for exploration. Copper tools last longer and work faster than wooden ones.",
+  "CRDescription:0": "Forge a copper multi-tool head"
+},
+"IronThinHammerBlock:0": {
+  "DisplayName": "Iron Thin Hammer",
+  "Description": "A versatile multi-tool combining shovel, pickaxe and axe functions in one lightweight head. While not as efficient as specialized tools, it saves inventory space and is ideal for exploration. Iron tools are significantly more durable and effective than copper ones.",
+  "CRDescription:0": "Upgrade with iron for improved durability"
+},
+"DiamondThinHammerBlock:0": {
+  "DisplayName": "Diamond Edge Thin Hammer",
+  "Description": "A versatile multi-tool combining shovel, pickaxe and axe functions in one lightweight head. While not as efficient as specialized tools, it saves inventory space and is ideal for exploration. Diamond edge greatly enhances all cutting and digging capabilities.",
+  "CRDescription:0": "Add diamonds to the working edge of the tool"
+},
+"LavaThinHammerBlock:0": {
+  "DisplayName": "Lava Infused Thin Hammer",
+  "Description": "A versatile multi-tool combining shovel, pickaxe and axe functions in one lightweight head. Infused with molten magma, this tool surpasses all others in both durability and effectiveness. Its burning edge makes short work of any material.",
+  "CRDescription:0": "Imbue with magma for ultimate performance"
+},
     "FlameThrowerBlock:0": {
   "DisplayName": "Flamethrower",
   "Description": "A flamethrower that fires incendiary or poisonous projectiles depending on the loaded ammunition. Reloads with special ammo.",
   "CRDescription:0": "Craft a flamethrower using iron ingots, copper ingots, rods, and wooden planks."
 },
 "FlameBulletBlock:0": {
-  "DisplayName": "Fire Bullet",
   "Description": "Incendiary ammunition for the flamethrower. Sets enemies and the surrounding area on fire upon impact.",
   "CRDescription:0": "Craft fire bullets using iron ingots and gunpowder."
 },
 "FlameBulletBlock:1": {
-  "DisplayName": "Poison Bullet",
   "Description": "Toxic ammunition for the flamethrower. Poisons enemies on impact, dealing continuous damage.",
   "CRDescription:1": "Craft poison bullets using toxin and fire bullets."
+},
+"AntidotePillBlock:0": {
+  "DisplayName": "Antidote Pill",
+  "Description": "A medicinal pill that cures flu and poison. Can also cure nearby creatures within range.",
+  "CRDescription:0": "Craft antidote pills from canvas and medicinal flowers"
 }
 },
   "ContentWidgets": {
@@ -242,6 +388,20 @@
 "BestiaryInfectedScreen": {
     "1": "Infected Bestiary"
   }
+},
+"FirearmsShopWidget": {
+  "title": "Firearms Shop",
+  "restoresIn": "Restores in:",
+  "restoresInFormat": "Restores in: {0}",
+  "buy": "Buy",
+  "priceFormat": "{0} coins",
+  "purchaseSuccess": "Purchase successful!",
+  "inventoryFull": "Inventory full!",
+  "unknownBlock": "Unknown block"
+},
+"SubsystemAntidotePillBehavior": {
+    "1": "Antidote consumed! You have been cured",
+    "2": "You have cured {0} of the disease!"
 },
 "SubsystemBandageBehavior": {
   "1": "You partially healed {0}",
@@ -318,7 +478,9 @@
     "5": "Show creature health bars",
     "6": "Enable creature bleeding",
     "7": "Enables a free camera in non-creative modes",
-    "8": "Play boss chase music when a Brute is pursuing you"
+    "8": "Play boss chase music when a Brute is pursuing you",
+    "9": "Enable creatures to appear when a corpse fades away",
+    "10": "Play scary music when a Ghost is chasing you"
   },
   "GreenNightActivationDialog": {
     "1": "Green Night Management",
@@ -330,5 +492,5 @@
     "7": "Accept",
     "8": "Green Night enabled.",
     "9": "Green Night disabled."
-}
+  }
 }
