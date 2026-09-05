@@ -234,7 +234,12 @@ namespace Game
 		public override string GetDisplayName(SubsystemTerrain subsystemTerrain, int value)
 		{
 			int type = (int)GetRepeatBoltType(Terrain.ExtractData(value));
-			return LanguageControl.GetBlock($"RepeatBoltBlock:{type}", "DisplayName");
+			if (type < 0 || type >= Enum.GetValues<RepeatBoltType>().Length)
+			{
+				return string.Empty;
+			}
+			// Actualizado para usar el sistema de arrays del JSON como ArrowBlock y BulletBlock
+			return LanguageControl.Get("RepeatBoltBlock", type);
 		}
 
 		public static RepeatBoltType GetRepeatBoltType(int data)
