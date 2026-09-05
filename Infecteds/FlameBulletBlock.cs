@@ -50,10 +50,11 @@ namespace Game
 		{
 			int type = (int)GetBulletType(Terrain.ExtractData(value));
 			if (type < 0 || type >= Enum.GetValues<FlameBulletType>().Length)
+			{
 				return string.Empty;
-			// Usar LanguageControl.GetBlock con la clave "FlameBulletBlock:0" o ":1"
-			string key = "FlameBulletBlock:" + type;
-			return LanguageControl.GetBlock(key, "DisplayName");
+			}
+			// Actualizado para usar el sistema de arrays del JSON como ArrowBlock y BulletBlock
+			return LanguageControl.Get("FlameBulletBlock", type);
 		}
 
 		public override int GetFaceTextureSlot(int face, int value)
