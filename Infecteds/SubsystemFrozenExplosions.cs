@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Engine;
 using GameEntitySystem;
@@ -215,7 +215,6 @@ namespace Game
 				this.m_subsystemAudio.PlaySound("Audio/explosion congelante", volume, this.m_random.Float(-0.1f, 0.1f), position, 30f, delay);
 			}
 
-			this.m_subsystemNoise.MakeNoise(position, 1f, 40f);
 			this.m_pressureByPoint = null;
 		}
 
@@ -255,7 +254,6 @@ namespace Game
 			this.m_subsystemAudio = base.Project.FindSubsystem<SubsystemAudio>(true);
 			this.m_subsystemParticles = base.Project.FindSubsystem<SubsystemParticles>(true);
 			this.m_subsystemTerrain = base.Project.FindSubsystem<SubsystemTerrain>(true);
-			this.m_subsystemNoise = base.Project.FindSubsystem<SubsystemNoise>(true);
 			this.m_subsystemBodies = base.Project.FindSubsystem<SubsystemBodies>(true);
 			this.m_frozenExplosionParticleSystem = new FrozenExplosionParticleSystem();
 			this.m_subsystemParticles.AddParticleSystem(this.m_frozenExplosionParticleSystem, false);
@@ -264,7 +262,6 @@ namespace Game
 		private SubsystemAudio m_subsystemAudio;
 		private SubsystemParticles m_subsystemParticles;
 		private SubsystemTerrain m_subsystemTerrain;
-		private SubsystemNoise m_subsystemNoise;
 		private SubsystemBodies m_subsystemBodies;
 		private FrozenExplosionParticleSystem m_frozenExplosionParticleSystem;
 		private Random m_random = new Random();
