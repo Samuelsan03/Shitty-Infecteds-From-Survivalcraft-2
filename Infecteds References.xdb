@@ -205,8 +205,6 @@
   <Parameter Name="NightChaseRange" Description="Rango cuando la criatura empieza a perseguir durante la noche" Guid="3473bace-e628-4028-be54-8123837f7d94" Value="1.5" Type="float" />
   <Parameter Name="AutoChaseMask" Description="Categorías de criaturas a perseguir" Guid="c74e40cf-1c82-4997-a230-2b8cea61eb91" Value="LandOther, Bird" Type="Game.CreatureCategory" />
   <Parameter Name="ChaseNonPlayerProbability" Description="Probabilidad de que la criatura persiga a un objetivo no jugador cuando está en rango, de 0 a 1" Guid="54db5623-3f54-4274-9b89-4d72d91acc9b" Value="0" Type="float" />
-  <Parameter Name="InvokeLightningOnHit" Description="Si es verdadero, al golpear cuerpo a cuerpo invoca un rayo sobre la víctima" Guid="f4a0ddb7-336d-4468-998c-eab878df6130" Value="false" Type="bool" />
-  <Parameter Name="ExplodeOnHit" Description="Si es verdadero, al golpear cuerpo a cuerpo crea una explosión normal en la víctima" Guid="cbbaa8e2-35e8-4e44-916e-4818b983f1f2" Value="false" Type="bool" />
   <Parameter Name="DestroyBlocksWhenStuck" Description="Si es verdadero, al estar atascado rompe 2 bloques en la dirección de la mirada" Guid="f05f7c35-29b8-42fa-9ee4-4c70600ab7df" Value="false" Type="bool" />
   <Parameter Name="PushVictimOnHit" Description="Si es verdadero, al golpear a su presa la empuja haciéndola salir volando" Guid="3f86b7ff-4e9d-4602-a6af-61b4b1db56cb" Value="false" Type="bool" />
 </ComponentTemplate>
