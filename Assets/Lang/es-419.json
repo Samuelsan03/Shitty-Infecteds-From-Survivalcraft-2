@@ -1,4 +1,20 @@
 {
+  "FlameBulletBlock": [
+  "Bala de Fuego",
+  "Bala Venenosa"
+],
+"RepeatBoltBlock": [
+  "Virote de Cobre Repetitivo",
+  "Virote de Hierro Repetitivo",
+  "Virote de Diamante Repetitivo",
+  "Virote Explosivo Repetitivo",
+  "Virote de Fuego Repetitivo",
+  "Virote Venenoso Repetitivo",
+  "Virote Extremadamente Venenoso Repetitivo"
+],
+  "BlocksManager": {
+    "Firearms": "Armas de fuego"
+  },
   "Database": {
     "DisplayName": {
       "Aimep3": "Aimep3",
@@ -20,10 +36,34 @@
       "FlyingInfectedTamed2": "Infectado Volador Domesticado II",
       "FlyingInfected3": "Infectado Volador III",
       "FlyingInfectedTamed3": "Infectado Volador Domesticado III",
+      "FlyingInfectedBoss": "Jefe Infectado Volador",
+      "FlyingInfectedBossTamed": "Jefe Infectado Volador Domesticado",
       "InfectedPoisonous1": "Venenoso Infectado I",
       "InfectedPoisonousTamed1": "Venenoso Infectado Domesticado I",
       "InfectedPoisonous2": "Venenoso Infectado II",
-      "InfectedPoisonousTamed2": "Venenoso Infectado Domesticado II"
+      "InfectedPoisonousTamed2": "Venenoso Infectado Domesticado II",
+      "FatInfected": "Infectado Gordo",
+      "FatInfectedTamed": "Infectado Gordo Domesticado",
+      "FatInfectedArsonist": "Infectado Gordo Pirómano",
+      "FatInfectedArsonistTamed": "Infectado Gordo Pirómano Domesticado",
+      "FatInfectedPoisonous": "Infectado Gordo Venenoso",
+      "FatInfectedPoisonousTamed": "Infectado Gordo Venenoso Domesticado",
+      "FatInfectedFrozen": "Infectado Gordo Congelado",
+      "FatInfectedFrozenTamed": "Infectado Gordo Congelado Domesticado",
+      "InfectedPusher1": "Empujador Infectado I",
+      "InfectedPusherTamed1": "Empujador Infectado Domesticado I",
+      "InfectedPusher2": "Empujador Infectado II",
+      "InfectedPusherTamed2": "Empujador Infectado Domesticado II",
+      "InfectedBrute": "Bruto Infectado",
+      "InfectedBruteTamed": "Bruto Infectado Domesticado",
+      "InfectedBruteArsonist": "Bruto Infectado Pirómano",
+      "InfectedBruteArsonistTamed": "Bruto Infectado Pirómano Domesticado",
+      "InfectedBrutePoisonous": "Bruto Infectado Venenoso",
+      "InfectedBrutePoisonousTamed": "Bruto Infectado Venenoso Domesticado",
+      "InfectedBruteFrozen": "Bruto Infectado Congelado",
+      "InfectedBruteFrozenTamed": "Bruto Infectado Congelado Domesticado",
+      "GhostNormal": "Fantasma Normal",
+      "GhostNormalTamed": "Fantasma Normal Domesticado"
     },
   "Description": {
     "InfectedNormal1": "Aparece a partir de la Oleada 1. Este infectado es una de las amenazas más comunes de la plaga, pero nunca debe subestimarse. Deambula constantemente en busca de presas y es capaz de detectar, perseguir y atacar tanto a los supervivientes como a otras criaturas. Puede recorrer grandes distancias para alcanzar a su objetivo, cooperar con los infectados cercanos y responder a sus llamadas de ayuda cuando uno de ellos entra en combate. Puede recoger armas, herramientas y ropa que encuentre a su paso, utilizándolas para mejorar sus posibilidades de supervivencia. Si un obstáculo bloquea su camino, intentará destruirlo y continuar avanzando. Sus característicos ojos verdes brillantes permanecen visibles incluso en la oscuridad absoluta. Durante la Noche Verde, su comportamiento se vuelve mucho más agresivo: abandona cualquier intención de retirarse, se concentra por completo en los supervivientes y los persigue con una determinación implacable. Incluso después de ser atacado, puede recordar a su agresor y continuar la persecución durante mucho tiempo. Puede ser domesticado usando un Collar, convirtiéndose en un guardián leal que luchará a tu lado. Al morir, existe una pequeña probabilidad de que su espíritu corrupto permanezca en este mundo bajo una nueva forma.",
@@ -96,7 +136,97 @@
   "Description": "Un cartucho de gran calibre con punta de diamante para el Barrett. Viaja a velocidad extrema con una caída de bala mínima. Úsalo en un Barrett vacío para cargarlo.",
   "CRDescription:0": "Mecaniza un cartucho de francotirador con hierro, pólvora y diamante"
 },
-  "ImprovedMusketBlock:0": {
+"RevolverBlock:0": {
+    "DisplayName": "Revólver",
+    "Description": "Un revólver clásico que contiene 6 balas. Fiable y potente a corta y media distancia.",
+    "CRDescription:0": "Fabricar un revólver con hierro y tablones"
+},
+"RevolverAmmunitionBlock:0": {
+    "DisplayName": "Munición de revólver",
+    "Description": "Munición para el revólver. Cada recarga llena las 6 recámaras.",
+    "CRDescription:0": "Fabricar munición de revólver con bloques de hierro y pólvora"
+},
+"IZH43Block:0": {
+    "DisplayName": "IZH-43",
+    "Description": "Una escopeta de doble cañón sencilla. Fiable, pero con capacidad limitada. Dispara perdigones que se dispersan al impactar.",
+    "CRDescription:0": "Fabricar una escopeta de doble cañón con hierro y madera"
+},
+"Izh43AmmunitionBlock:0": {
+    "DisplayName": "Cartuchos para IZH-43",
+    "Description": "Cartuchos de escopeta cargados con perdigones para la IZH-43.",
+    "CRDescription:0": "Fabricar cartuchos de escopeta con hierro y pólvora"
+},
+"Mac10Block:0": {
+  "DisplayName": "MAC-10",
+  "Description": "Una ametralladora compacta totalmente automática con recámara para .45 ACP. Alta cadencia de fuego, pero menor precisión y daño. Mantén presionado el botón de apuntar para disparar continuamente.",
+  "CRDescription:0": "Fabricar una MAC-10 con hierro, bloques de hierro y tablones"
+},
+"Mac10AmmunitionBlock:0": {
+  "DisplayName": "Munición .45 ACP",
+  "Description": "Munición para la MAC-10. Cada cargador contiene 30 proyectiles.",
+  "CRDescription:0": "Fabricar munición .45 ACP con lingotes de hierro y pólvora"
+},
+"M4Block:0": {
+  "DisplayName": "M4",
+  "Description": "Un rifle de asalto moderno con alta precisión y una cadencia de fuego rápida. Inflige menos daño que el AK47, pero es más preciso y tiene mayor alcance.",
+  "CRDescription:0": "Fabricar un M4 con hierro, varillas y semiconductores"
+},
+"M4AmmunitionBlock:0": {
+  "DisplayName": "Munición de M4",
+  "Description": "Cartuchos de 5,56 mm para el rifle M4.",
+  "CRDescription:0": "Fabricar munición de M4 con lingotes de hierro y pólvora"
+},
+"UziBlock:0": {
+  "DisplayName": "Uzi",
+  "Description": "Una Uzi es una pistola ametralladora automática que dispara cartuchos de 9 mm. Tiene un cargador de 32 cartuchos y una cadencia de fuego moderada. Mantén pulsado para disparar continuamente; la precisión disminuye cuanto más tiempo disparas.",
+  "CRDescription:0": "Crea una Uzi usando lingotes de hierro, bloques de hierro y varillas"
+},
+"UziAmmunitionBlock:0": {
+  "DisplayName": "Cargador de Uzi",
+  "Description": "Un cargador de 32 cartuchos de 9 mm para la Uzi. Fabricado con vainas de cobre para una alimentación fiable. Úsalo para recargar el arma.",
+  "CRDescription:0": "Crea cargadores de Uzi usando lingotes de hierro, pólvora y lingotes de cobre"
+},
+"BK93Block:0": {
+  "DisplayName": "BK-93",
+  "Description": "Una escopeta de dos cañones. Potente a corta distancia, pero lenta de recargar.",
+  "CRDescription:0": "Fabrica una BK-93 con hierro, varillas, tablones y cobre"
+},
+"BK93AmmunitionBlock:0": {
+  "DisplayName": "Cartuchos de BK-93",
+  "Description": "Cartuchos de escopeta para la BK-93.",
+  "CRDescription:0": "Fabrica cartuchos de BK-93 con hierro, pólvora y plumas"
+},
+"Master308Block:0": {
+  "DisplayName": "Master 308",
+  "Description": "Un rifle de francotirador de cerrojo con cámara para .308. Alto daño y excelente precisión, pero una cadencia de fuego lenta. Tiene capacidad para 5 proyectiles en su cargador interno.",
+  "CRDescription:0": "Fabrica un rifle de precisión con hierro, cobre, varillas y vidrio"
+},
+"Master308AmmunitionBlock:0": {
+  "DisplayName": "Munición .308",
+  "Description": "Munición de rifle de alta potencia para el Master 308. Diseñada para enfrentamientos a larga distancia.",
+  "CRDescription:0": "Fabrica munición .308 con hierro, cobre y pólvora"
+},
+"MP5SSDBlock:0": {
+  "DisplayName": "MP5SD",
+  "Description": "Un subfusil con silenciador que reduce el ruido. Dispara munición subsónica de 9 mm, ideal para operaciones sigilosas. Menor daño, pero alta cadencia de fuego.",
+  "CRDescription:0": "Fabrica un MP5SD con hierro, varillas y cobre para el silenciador"
+},
+"MP5AmmunitionBlock:0": {
+  "DisplayName": "Munición de 9 mm",
+  "Description": "Munición subsónica de 9 mm diseñada para el MP5SD. Tiene menor velocidad que la munición estándar, pero permite un funcionamiento más silencioso.",
+  "CRDescription:0": "Fabrica munición de 9 mm con cobre y pólvora"
+},
+"M249Block:0": {
+"DisplayName": "M249",
+"Description": "Una ametralladora pesada con una alta cadencia de fuego y un cargador de 100 cartuchos. Menos precisa, pero devastadora con fuego sostenido.",
+"CRDescription:0": "Crea una ametralladora pesada a partir de bloques y varillas de hierro"
+},
+"M249AmmunitionBlock:0": {
+"DisplayName": "Caja de munición M249",
+"Description": "Una caja con 100 cartuchos para la ametralladora M249.",
+"CRDescription:0": "Crea munición para la M249 a partir de hierro, pólvora y cobre"
+},
+"ImprovedMusketBlock:0": {
   "DisplayName": "Mosquete Mejorado",
   "Description": "Un mosquete rediseñado que elimina el engorroso proceso de cargar pólvora y tacos por separado. Te permite insertar directamente hasta 2 perdigones en la recámara. A diferencia del mosquete original, no fallará al disparar si te sumerges en el agua, y su resistente mecanismo evita que pierda durabilidad con cada disparo.",
   "CRDescription:0": "Mejora un mosquete estándar reforzándolo con bloques y varillas de hierro."
@@ -112,37 +242,30 @@
     "CRDescription:0": "Se fabrica con varillas, lingotes de hierro, cuerda y una ballesta estándar"
   },
   "RepeatBoltBlock:0": {
-    "DisplayName": "Virote de Cobre para Repetición",
     "Description": "Un virote básico de cobre para la ballesta de repetición. Tiene poca potencia, pero es barato de fabricar.",
     "CRDescription:0": "Se fabrica con un lingote de cobre, una varilla y una pluma"
   },
   "RepeatBoltBlock:1": {
-    "DisplayName": "Virote de Hierro para Repetición",
     "Description": "Un resistente virote de hierro con buena penetración de armadura y daño.",
     "CRDescription:1": "Se fabrica con un lingote de hierro, una varilla y una pluma"
   },
   "RepeatBoltBlock:2": {
-    "DisplayName": "Virote de Diamante para Repetición",
     "Description": "Un virote con punta de diamante que atraviesa con facilidad incluso las armaduras más resistentes. Su diseño aerodinámico le permite desplazarse por el agua sin perder velocidad.",
     "CRDescription:2": "Refuerza un virote de hierro con un diamante"
 },
   "RepeatBoltBlock:3": {
-    "DisplayName": "Virote Explosivo para Repetición",
     "Description": "Un virote cargado con pólvora que detona al impactar, dañando a las criaturas y al terreno cercanos.",
     "CRDescription:3": "Combina pólvora con un virote de cobre"
   },
   "RepeatBoltBlock:4": {
-    "DisplayName": "Virote Ígneo para Repetición",
     "Description": "Un virote que incendia a los objetivos y deja un rastro de fuego. Muy eficaz contra enemigos inflamables.",
     "CRDescription:4": "Combina un trozo de azufre con un virote de cobre"
   },
   "RepeatBoltBlock:5": {
-    "DisplayName": "Virote Envenenado para Repetición",
     "Description": "Un virote recubierto con una toxina suave que envenena al objetivo con el tiempo.",
     "CRDescription:5": "Recubre un virote de cobre con toxina"
   },
   "RepeatBoltBlock:6": {
-    "DisplayName": "Virote Altamente Venenoso para Repetición",
     "Description": "Un virote impregnado con una toxina altamente concentrada, capaz de provocar un envenenamiento mortal rápidamente.",
     "CRDescription:6": "Refuerza un virote envenenado con una dosis adicional de toxina"
   },
@@ -197,20 +320,43 @@
   "Description": "Una aterradora lanza larga forjada con magma fundido. Posee un alcance extraordinario y un devastador poder ígneo, atravesando fácilmente las defensas tanto al lanzarla como al blandirla en combate cercano.",
   "CRDescription:0": "Imbuye el arma larga con el calor del magma"
 },
+"CopperThinHammerBlock:0": {
+    "DisplayName": "Martillo Delgado de Cobre",
+    "Description": "Una herramienta múltiple versátil que combina las funciones de pala, pico y hacha en una sola cabeza ligera. Aunque no es tan eficiente como las herramientas especializadas, ahorra espacio en el inventario y es ideal para la exploración. Las herramientas de cobre duran más y funcionan más rápido que las de madera.",
+    "CRDescription:0": "Forja una cabeza de herramienta múltiple de cobre"
+  },
+  "IronThinHammerBlock:0": {
+    "DisplayName": "Martillo Delgado de Hierro",
+    "Description": "Una herramienta múltiple versátil que combina las funciones de pala, pico y hacha en una sola cabeza ligera. Aunque no es tan eficiente como las herramientas especializadas, ahorra espacio en el inventario y es ideal para la exploración. Las herramientas de hierro son considerablemente más duraderas y eficaces que las de cobre.",
+    "CRDescription:0": "Mejora con hierro para aumentar la durabilidad"
+  },
+  "DiamondThinHammerBlock:0": {
+    "DisplayName": "Martillo Delgado con Borde de Diamante",
+    "Description": "Una herramienta múltiple versátil que combina las funciones de pala, pico y hacha en una sola cabeza ligera. Aunque no es tan eficiente como las herramientas especializadas, ahorra espacio en el inventario y es ideal para la exploración. El borde de diamante mejora considerablemente todas las capacidades de corte y excavación.",
+    "CRDescription:0": "Añade diamantes al borde de trabajo de la herramienta"
+  },
+  "LavaThinHammerBlock:0": {
+    "DisplayName": "Martillo Delgado Imbuido en Lava",
+    "Description": "Una herramienta múltiple versátil que combina las funciones de pala, pico y hacha en una sola cabeza ligera. Infundida con magma fundido, esta herramienta supera a todas las demás tanto en durabilidad como en eficacia. Su borde ardiente hace que cualquier material sea fácil de trabajar.",
+    "CRDescription:0": "Imbuye con magma para obtener el máximo rendimiento"
+  },
 "FlameThrowerBlock:0": {
   "DisplayName": "Lanzallamas",
   "Description": "Un lanzallamas que dispara proyectiles incendiarios o venenosos según la munición cargada. Recarga con balas especiales.",
   "CRDescription:0": "Fabricar un lanzallamas con lingotes de hierro, cobre, varillas y tablones."
 },
 "FlameBulletBlock:0": {
-  "DisplayName": "Bala de fuego",
   "Description": "Munición incendiaria para lanzallamas. Prende fuego a los enemigos y al entorno al impactar.",
   "CRDescription:0": "Fabricar balas de fuego con lingotes de hierro y pólvora."
 },
 "FlameBulletBlock:1": {
-  "DisplayName": "Bala venenosa",
   "Description": "Munición tóxica para lanzallamas. Envenena a los enemigos al impactar, causando daño continuo.",
   "CRDescription:1": "Fabricar balas venenosas con toxina y balas de fuego."
+},
+"AntidotePillBlock:0": {
+  "DisplayName": "Píldora Antídoto",
+  "Description": "Una píldora medicinal que cura la gripe y el envenenamiento. También puede curar a las criaturas cercanas dentro de su alcance.",
+  "CRDescription:0": "Crea píldoras antídoto usando lona y flores medicinales"
 }
   },
   "ContentWidgets": {
@@ -243,6 +389,20 @@
   "1": "Bestiario de infectados"
     }
   },
+  "FirearmsShopWidget": {
+    "title": "Tienda de Armas de Fuego",
+    "restoresIn": "Restaura en:",
+    "restoresInFormat": "Restaura en: {0}",
+    "buy": "Comprar",
+    "priceFormat": "{0} monedas",
+    "purchaseSuccess": "¡Compra exitosa!",
+    "inventoryFull": "¡Inventario lleno!",
+    "unknownBlock": "Bloque desconocido"
+  },
+  "SubsystemAntidotePillBehavior": {
+    "1": "¡Antídoto consumido! Te has curado",
+    "2": "¡Has curado a {0} de la enfermedad!"
+},
   "SubsystemBandageBehavior": {
     "1": "Curaste a {0} parcialmente",
     "2": "Te has curado parcialmente",
@@ -318,7 +478,9 @@
     "5": "Mostrar barras de salud de las criaturas",
     "6": "Habilitar sangrado de criaturas",
     "7": "Activa una cámara libre en modos que no son creativos",
-    "8": "Reproducir música de persecución de jefe cuando un Bruto te persiga"
+    "8": "Reproducir música de persecución de jefe cuando un Bruto te persiga",
+    "9": "Habilitar la aparición de criaturas al desvanecerse un cadáver",
+    "10": "Reproducir música aterradora cuando un Fantasma te persigue"
   },
   "GreenNightActivationDialog": {
     "1": "Administración Noche Verde",
@@ -330,5 +492,5 @@
     "7": "Aceptar",
     "8": "Noche Verde activada.",
     "9": "Noche Verde desactivada."
-}
+  }
 }
