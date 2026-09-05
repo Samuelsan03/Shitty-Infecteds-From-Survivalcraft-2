@@ -306,17 +306,6 @@ namespace Game
 							}
 							hitBody.ApplyImpulse(Vector3.Normalize(pushDir + Vector3.UnitY * 0.5f) * 1e+9f);
 						}
-
-						// INVOCAR RAYO AL GOLPEAR
-						if (m_invokeLightningOnHit && m_target != null && m_random.Float(0f, 1f) < 0.1f)
-							m_subsystemSky.MakeLightningStrike(m_target.ComponentBody.Position, false);
-
-						// EXPLOTAR AL GOLPEAR
-						if (m_explodeOnHit && m_target != null && m_random.Float(0f, 1f) < 0.1f)
-						{
-							Vector3 pos = m_target.ComponentBody.Position;
-							m_subsystemExplosions.AddExplosion(Terrain.ToCell(pos.X), Terrain.ToCell(pos.Y), Terrain.ToCell(pos.Z), 555f, false, false);
-						}
 					}
 				}
 			}
@@ -464,8 +453,6 @@ namespace Game
 			m_chaseWhenAttackedProbability = valuesDictionary.GetValue<float>("ChaseWhenAttackedProbability");
 			m_chaseOnTouchProbability = valuesDictionary.GetValue<float>("ChaseOnTouchProbability");
 
-			m_invokeLightningOnHit = valuesDictionary.GetValue<bool>("InvokeLightningOnHit", false);
-			m_explodeOnHit = valuesDictionary.GetValue<bool>("ExplodeOnHit", false);
 			m_destroyBlocksWhenStuck = valuesDictionary.GetValue<bool>("DestroyBlocksWhenStuck", false);
 			m_pushVictimOnHit = valuesDictionary.GetValue<bool>("PushVictimOnHit", false);
 
@@ -824,8 +811,6 @@ namespace Game
 		public float TargetInRangeTimeToChase = 3f;
 		public ComponentNewHerdBehavior m_componentNewHerdBehavior;
 
-		public bool m_invokeLightningOnHit = false;
-		public bool m_explodeOnHit = false;
 		public bool m_destroyBlocksWhenStuck = false;
 		public bool m_pushVictimOnHit = false;
 
