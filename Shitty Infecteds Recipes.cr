@@ -1,4 +1,32 @@
 <Recipes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="CraftingRecipes.xsd">
+<Recipe Result="M249Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironblock" b="ironingot" c="rod" d="planks" Description="[0]">
+  "aba"
+  "cdc"
+  " a "
+</Recipe>
+<Recipe Result="M249AmmunitionBlock" ResultCount="10" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" c="copperingot" Description="[0]">
+  "ab "
+  "bcb"
+  " a "
+</Recipe>
+<Recipe Result="MP5SSDBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="rod" c="copperingot" Description="[0]">
+  "  a"
+  "bca"
+  "  b"
+</Recipe>
+<Recipe Result="MP5AmmunitionBlock" ResultCount="12" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="copperingot" b="gunpowder" Description="[0]">
+  "ab"
+  "ba"
+</Recipe>
+<Recipe Result="Master308Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="rod" b="ironingot" c="glass" d="copperingot" Description="[0]">
+  "ab "
+  "cdc"
+  " b "
+</Recipe>
+<Recipe Result="Master308AmmunitionBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="gunpowder" c="copperingot" Description="[0]">
+  "ab"
+  "ca"
+</Recipe>
 <Recipe Result="BK93Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="rod" b="ironingot" c="planks" d="copperingot" Description="[0]">
   "ab "
   "dcd"
@@ -49,10 +77,10 @@
   "b"
   "c"
 </Recipe>
-<Recipe Result="BandageSmallBlock" ResultCount="2" RequiredHeatLevel="0" a="canvas" Description="[0]">
+<Recipe Result="BandageBlock:0" ResultCount="2" RequiredHeatLevel="0" a="canvas" Description="[0]">
     "a"
 </Recipe>
-<Recipe Result="LargeBandageBlock" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
+<Recipe Result="BandageBlock:1" ResultCount="2" RequiredHeatLevel="0" a="canvas" Description="[1]">
     "aa"
     "aa"
 </Recipe>
