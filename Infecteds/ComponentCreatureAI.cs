@@ -1626,7 +1626,7 @@ namespace Game
 			chaseBehavior.Attack(attacker, 30f, 60f, true);
 		}
 
-		// === NUEVO: Destrucción de bloques cuando está atascado contra una pared ===
+		// === NUEVO: Destrucción de bloques cuando está atascado (arriba / abajo / adelante) ===
 		private void TryDestroyStuckBlocks()
 		{
 			if (!CanDestroyBlocks) return;
@@ -1639,29 +1639,72 @@ namespace Game
 			int airIndex = BlocksManager.GetBlockIndex("AirBlock");
 
 			Vector3 position = m_componentCreature.ComponentBody.Position;
+			float bodyHeight = m_componentCreature.ComponentBody.BoxSize.Y;
+
+			// === Determinar dónde está la víctima respecto a la criatura ===
+			ComponentCreature target = m_componentChaseBehavior?.Target;
+			float verticalDelta = 0f;
+			if (target?.ComponentBody != null)
+			{
+				verticalDelta = target.ComponentBody.Position.Y - position.Y;
+			}
+
+			const float verticalThreshold = 1.5f;
+
+			// ─────────────────────────────────────────────────────────────
+			// CASO 1: Víctima ARRIBA  →  romper 2 bloques verticales encima
+			// ─────────────────────────────────────────────────────────────
+			if (verticalDelta > verticalThreshold)
+			{
+				int x = Terrain.ToCell(position.X);
+				int z = Terrain.ToCell(position.Z);
+				// Primera celda libre justo sobre la cabeza de la criatura
+				int startY = Terrain.ToCell(position.Y + bodyHeight) + 1;
+
+				TryDestroySingleStuckBlock(x, startY, z, airIndex, bedrockIndex);
+				TryDestroySingleStuckBlock(x, startY + 1, z, airIndex, bedrockIndex);
+				return;
+			}
+
+			// ─────────────────────────────────────────────────────────────
+			// CASO 2: Víctima ABAJO  →  romper 2 bloques verticales debajo
+			// ─────────────────────────────────────────────────────────────
+			if (verticalDelta < -verticalThreshold)
+			{
+				int x = Terrain.ToCell(position.X);
+				int z = Terrain.ToCell(position.Z);
+				// Primera celda bajo los pies de la criatura
+				int startY = Terrain.ToCell(position.Y) - 1;
+
+				TryDestroySingleStuckBlock(x, startY, z, airIndex, bedrockIndex);
+				TryDestroySingleStuckBlock(x, startY - 1, z, airIndex, bedrockIndex);
+				return;
+			}
+
+			// ─────────────────────────────────────────────────────────────
+			// CASO 3: Víctima ADELANTE (o misma altura) → pared frontal
+			//         Comportamiento original: bloque pegado + el de arriba
+			// ─────────────────────────────────────────────────────────────
 			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
 			forward.Y = 0f;
 			if (forward.LengthSquared() < 0.01f) return;
 			forward = Vector3.Normalize(forward);
 
-			// Celda PEGADA al cuerpo (adyacente a la hitbox), no 1.5 bloques al frente
+			// Celda PEGADA al cuerpo (adyacente a la hitbox)
 			float bodyRadius = m_componentCreature.ComponentBody.BoxSize.X * 0.5f + 0.1f;
 			int wallX = Terrain.ToCell(position.X + forward.X * bodyRadius);
 			int wallY = Terrain.ToCell(position.Y + 0.5f);
 			int wallZ = Terrain.ToCell(position.Z + forward.Z * bodyRadius);
 
-			// Verificar que HAY una pared real justo enfrente (a la altura del cuerpo)
+			// Verificar que HAY pared sólida justo enfrente
 			int wallValue = m_subsystemTerrain.Terrain.GetCellValue(wallX, wallY, wallZ);
 			int wallContents = Terrain.ExtractContents(wallValue);
-
-			// Si no hay pared sólida enfrente, no rompemos nada
 			if (wallContents == airIndex || wallContents == bedrockIndex) return;
 
-			// Bloque inferior: a la altura del cuerpo, pegado al frente
+			// Bloque inferior (a la altura del cuerpo)
 			TryDestroySingleStuckBlock(wallX, wallY, wallZ, airIndex, bedrockIndex);
 
-			// Bloque superior: MISMO X y Z, una celda arriba (vertical),
-			// solo si también es sólido (si hay 1, romperlo de todos modos)
+			// Bloque superior (mismo X, Z, una celda arriba)
 			int aboveY = wallY + 1;
 			int aboveValue = m_subsystemTerrain.Terrain.GetCellValue(wallX, aboveY, wallZ);
 			int aboveContents = Terrain.ExtractContents(aboveValue);
