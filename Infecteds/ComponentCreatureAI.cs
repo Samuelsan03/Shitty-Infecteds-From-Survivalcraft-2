@@ -70,7 +70,10 @@ namespace Game
 
 		// Loaded from XML
 		public bool CanUseInventory;
-		public bool CanItBeMounted { get; private set; }
+		public bool CanItBeMounted;
+
+		// NUEVO: Si es true, la criatura destruirá bloques cuando esté atascada
+		public bool CanDestroyBlocks;
 
 		public MountState CurrentMountState { get; private set; } = MountState.None;
 		public FirearmReloadState CurrentFirearmReloadState { get; private set; } = FirearmReloadState.None;
@@ -93,6 +96,8 @@ namespace Game
 		private Action<Projectile> m_projectileAddedHandler;
 
 		// Subsystems
+		private SubsystemSoundMaterials m_subsystemSoundMaterials;
+		private SubsystemGameWidgets m_subsystemGameWidgets;
 		private SubsystemTime m_subsystemTime;
 		private SubsystemBlockBehaviors m_subsystemBlockBehaviors;
 		private SubsystemBodies m_subsystemBodies;
@@ -251,6 +256,110 @@ namespace Game
 				SetLoadState = (data, state) => SniperBlock.SetLoadState(data, state == 1 ? SniperBlock.LoadState.Loaded : SniperBlock.LoadState.Empty)
 			});
 
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "RevolverBlock",
+				MaxAmmo = 6,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 0.45f,
+				GetAmmoCount = (data) => RevolverBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => RevolverBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => RevolverBlock.GetLoadState(data) == RevolverBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => RevolverBlock.SetLoadState(data, state == 1 ? RevolverBlock.LoadState.Loaded : RevolverBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "IZH43Block",
+				MaxAmmo = 2,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 0.5f,
+				GetAmmoCount = (data) => IZH43Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => IZH43Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => IZH43Block.GetLoadState(data) == IZH43Block.LoadState.Loaded,
+				SetLoadState = (data, state) => IZH43Block.SetLoadState(data, state == 1 ? IZH43Block.LoadState.Loaded : IZH43Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "BK93Block",
+				MaxAmmo = 2,
+				FireMode = FirearmFireMode.SemiAuto,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 0.5f,
+				GetAmmoCount = (data) => BK93Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => BK93Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => BK93Block.GetLoadState(data) == BK93Block.LoadState.Loaded,
+				SetLoadState = (data, state) => BK93Block.SetLoadState(data, state == 1 ? BK93Block.LoadState.Loaded : BK93Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "UziBlock",
+				MaxAmmo = 32,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => UziBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => UziBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => UziBlock.GetLoadState(data) == UziBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => UziBlock.SetLoadState(data, state == 1 ? UziBlock.LoadState.Loaded : UziBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "Mac10Block",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.12f,
+				CooldownAfterShot = 1.3f,
+				GetAmmoCount = (data) => Mac10Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => Mac10Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => Mac10Block.GetLoadState(data) == Mac10Block.LoadState.Loaded,
+				SetLoadState = (data, state) => Mac10Block.SetLoadState(data, state == 1 ? Mac10Block.LoadState.Loaded : Mac10Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "M4Block",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.25f,
+				CooldownAfterShot = 1.6f,
+				GetAmmoCount = (data) => M4Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => M4Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => M4Block.GetLoadState(data) == M4Block.LoadState.Loaded,
+				SetLoadState = (data, state) => M4Block.SetLoadState(data, state == 1 ? M4Block.LoadState.Loaded : M4Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "Master308Block",
+				MaxAmmo = 5,
+				FireMode = FirearmFireMode.BoltAction,
+				AimTimeBeforeShot = 0.045f,
+				CooldownAfterShot = 0.45f,
+				GetAmmoCount = (data) => Master308Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => Master308Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => Master308Block.GetLoadState(data) == Master308Block.LoadState.Loaded,
+				SetLoadState = (data, state) => Master308Block.SetLoadState(data, state == 1 ? Master308Block.LoadState.Loaded : Master308Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "MP5SSDBlock",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => MP5SSDBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => MP5SSDBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => MP5SSDBlock.GetLoadState(data) == MP5SSDBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => MP5SSDBlock.SetLoadState(data, state == 1 ? MP5SSDBlock.LoadState.Loaded : MP5SSDBlock.LoadState.Empty)
+			});
+
 			m_firearmsInitialized = true;
 		}
 
@@ -263,6 +372,8 @@ namespace Game
 			m_subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true);
 			m_subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true);
 			m_subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true);
+			m_subsystemSoundMaterials = Project.FindSubsystem<SubsystemSoundMaterials>(true);
+			m_subsystemGameWidgets = Project.FindSubsystem<SubsystemGameWidgets>(true);
 
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
@@ -273,6 +384,7 @@ namespace Game
 
 			CanUseInventory = valuesDictionary.GetValue<bool>("CanUseInventory", false);
 			CanItBeMounted = valuesDictionary.GetValue<bool>("CanItBeMounted", false);
+			CanDestroyBlocks = valuesDictionary.GetValue<bool>("CanDestroyBlocks", false);
 			CurrentMountState = CanItBeMounted ? MountState.Searching : MountState.None;
 
 			InitializeFirearmsList();
@@ -310,6 +422,9 @@ namespace Game
 
 		public void Update(float dt)
 		{
+			// NUEVO: Si está atascado y puede, destruir 2 bloques horizontales
+			TryDestroyStuckBlocks();
+
 			UpdateMountingBehavior(dt);
 
 			if (!CanUseInventory || m_componentCreature?.ComponentBody == null ||
@@ -1509,6 +1624,74 @@ namespace Game
 
 			// Usar Attack con parámetros persistentes para persecución agresiva
 			chaseBehavior.Attack(attacker, 30f, 60f, true);
+		}
+
+		// === NUEVO: Destrucción de bloques cuando está atascado contra una pared ===
+		private void TryDestroyStuckBlocks()
+		{
+			if (!CanDestroyBlocks) return;
+			if (m_componentPathfinding == null || !m_componentPathfinding.IsStuck) return;
+			if (m_componentCreature?.ComponentBody == null) return;
+			if (m_subsystemTerrain?.Terrain == null) return;
+
+			// Nombres, no números
+			int bedrockIndex = BlocksManager.GetBlockIndex("BedrockBlock");
+			int airIndex = BlocksManager.GetBlockIndex("AirBlock");
+
+			Vector3 position = m_componentCreature.ComponentBody.Position;
+			Vector3 forward = m_componentCreature.ComponentBody.Matrix.Forward;
+			forward.Y = 0f;
+			if (forward.LengthSquared() < 0.01f) return;
+			forward = Vector3.Normalize(forward);
+
+			// Celda PEGADA al cuerpo (adyacente a la hitbox), no 1.5 bloques al frente
+			float bodyRadius = m_componentCreature.ComponentBody.BoxSize.X * 0.5f + 0.1f;
+			int wallX = Terrain.ToCell(position.X + forward.X * bodyRadius);
+			int wallY = Terrain.ToCell(position.Y + 0.5f);
+			int wallZ = Terrain.ToCell(position.Z + forward.Z * bodyRadius);
+
+			// Verificar que HAY una pared real justo enfrente (a la altura del cuerpo)
+			int wallValue = m_subsystemTerrain.Terrain.GetCellValue(wallX, wallY, wallZ);
+			int wallContents = Terrain.ExtractContents(wallValue);
+
+			// Si no hay pared sólida enfrente, no rompemos nada
+			if (wallContents == airIndex || wallContents == bedrockIndex) return;
+
+			// Bloque inferior: a la altura del cuerpo, pegado al frente
+			TryDestroySingleStuckBlock(wallX, wallY, wallZ, airIndex, bedrockIndex);
+
+			// Bloque superior: MISMO X y Z, una celda arriba (vertical),
+			// solo si también es sólido (si hay 1, romperlo de todos modos)
+			int aboveY = wallY + 1;
+			int aboveValue = m_subsystemTerrain.Terrain.GetCellValue(wallX, aboveY, wallZ);
+			int aboveContents = Terrain.ExtractContents(aboveValue);
+			if (aboveContents != airIndex && aboveContents != bedrockIndex)
+			{
+				TryDestroySingleStuckBlock(wallX, aboveY, wallZ, airIndex, bedrockIndex);
+			}
+		}
+
+		// === NUEVO: Destruye un bloque atascado con drop, partículas y sonido ===
+		private void TryDestroySingleStuckBlock(int x, int y, int z, int airIndex, int bedrockIndex)
+		{
+			int value = m_subsystemTerrain.Terrain.GetCellValue(x, y, z);
+			int contents = Terrain.ExtractContents(value);
+
+			if (contents == airIndex || contents == bedrockIndex) return;
+
+			// Sonido de impacto usando el material del bloque (antes de destruirlo)
+			if (m_subsystemSoundMaterials != null)
+			{
+				Vector3 blockCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
+				m_subsystemSoundMaterials.PlayImpactSound(value, blockCenter, 1f);
+			}
+
+			// DestroyCell:
+			//   toolLevel        = 0     (sin requisito de herramienta)
+			//   newValue         = 0     (aire)
+			//   noDrop           = false (dropea items -> SubsystemPickables)
+			//   noParticleSystem = false (genera debris  -> SubsystemParticles)
+			m_subsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
 		}
 	}
 }
