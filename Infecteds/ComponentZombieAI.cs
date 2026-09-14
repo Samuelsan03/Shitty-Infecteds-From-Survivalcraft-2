@@ -540,8 +540,7 @@ namespace Game
 			if (target == null || target.ComponentHealth.Health <= 0f)
 			{
 				CancelAiming();
-				// CAMBIO: No desmontar si estamos investigando un ruido (explosión, etc.)
-				if (IsMounted && !(m_componentChaseBehavior?.IsInvestigatingNoise ?? false))
+				if (IsMounted)
 				{
 					StopMount();
 				}
