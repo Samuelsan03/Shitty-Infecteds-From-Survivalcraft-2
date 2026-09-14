@@ -2,6 +2,10 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="NoiseAttractionBehavior" Guid="1172189a-da5c-471c-b285-65af0aca9a33" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+          <Parameter Name="Class" Guid="fd9c7caa-ad16-4744-aa69-442e420b84b5" Value="Game.ComponentNoiseAttractionBehavior" Type="string" />
+        </ComponentTemplate>
+
 <ComponentTemplate Name="InfectedFatExplosion" Description="Hace que la criatura explote al morir usando el sistema de explosiones original del juego" Guid="cd3e41ba-94f1-4273-aaa5-d8f6963c862a" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
   <Parameter Name="Class" Guid="146677f9-6a76-41c4-8e7c-60bca85ed51a" Value="Game.ComponentInfectedFatExplosion" Type="string" />
 </ComponentTemplate>
@@ -10,6 +14,7 @@
   <Parameter Name="Class" Guid="e71ba8bb-2176-417e-b087-bbd7170401b2" Value="Game.ComponentCreatureAI" Type="string" />
   <Parameter Name="CanUseInventory" Description="Determina si la criatura tiene la capacidad de usar armas a distancia desde su inventario" Guid="bda48580-a38c-439d-b033-b37ad0523d41" Value="false" Type="bool" />
   <Parameter Name="CanItBeMounted" Description="Determina si la criatura tiene la capacidad de buscar y montar criaturas de montura" Guid="d2feec9f-f583-441c-983b-639978800786" Value="false" Type="bool" />
+  <Parameter Name="CanDestroyBlocks" Description="Determina si la criatura destruirá bloques cuando esté atascada (2 bloques horizontales, excluyendo Roca Madre y Aire)" Guid="a7c4e1b2-9d38-4f6a-b5e2-1c8f3a6d9e47" Value="false" Type="bool" />
 </ComponentTemplate>
 
     <ComponentTemplate Name="BanditChaseBehavior" Description="Comportamiento de persecución diseñado para bandidos. Ignora y no ataca a criaturas que tengan el componente BanditHerdBehavior con el mismo nombre de manada." Guid="b122e050-2d19-46f6-8874-97967f422a3b" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
