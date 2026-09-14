@@ -35,6 +35,24 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("OnVitalStatsUpdateSleep", this);
 		ModsManager.RegisterHook("OnProjectileHitBody", this);
 		ModsManager.RegisterHook("ProcessAttackment", this);
+		ModsManager.RegisterHook("OnPlayerDead", this);
+	}
+
+	public override void OnPlayerDead(PlayerData playerData)
+	{
+		// Respetar el toggle de música de muerte
+		if (!ShittyInfectedsSettings.EnableDeathMusic) return;
+
+		// Aseguramos que el manager esté inicializado (idempotente)
+		InfectedsMusicManager.Initialize();
+
+		// Encendemos el canal Death con la ruta indicada.
+		// Al ser loop=true en GetMusicSettings, se queda sonando hasta que lo detengamos.
+		InfectedsMusicManager.Update(
+			isChasing: true,
+			dt: 0f,
+			path: "Music/Left 4 Dead 2 Left for Death",
+			type: InfectedsMusicManager.MusicType.Death);
 	}
 
 	/// Aplica protección de armadura de ComponentCreatureClothing a criaturas
@@ -329,13 +347,13 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override bool OnPlayerSpawned(PlayerData.SpawnMode spawnMode, ComponentPlayer player, Vector3 position)
 	{
-		// Solo dar items en el primer spawn (no al respawnear)
+		// Fade out de la música de muerte al reaparecer (2 segundos)
+		InfectedsMusicManager.FadeOut(InfectedsMusicManager.MusicType.Death, 0.5f);
+
 		if (spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro)
 		{
-			// Dar los items iniciales
 			GiveStarterItems(player);
 
-			// Mostrar el diálogo de configuración de Green Night
 			if (player?.GuiWidget != null)
 			{
 				DialogsManager.ShowDialog(player.GuiWidget, new GreenNightConfigDialog(player));
@@ -464,6 +482,9 @@ public class ShittyInfectedsModLoader : ModLoader
 
 	public override void AfterWidgetUpdate(Widget widget)
 	{
+		// Tick del fade-out (internamente se asegura de ejecutarse 1 vez por frame)
+		InfectedsMusicManager.UpdateFades();
+
 		if (widget is BevelledButtonWidget button)
 		{
 			if (button.Name == "ZombiConfigButton" && button.IsClicked)
