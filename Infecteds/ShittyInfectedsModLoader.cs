@@ -36,6 +36,23 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("OnProjectileHitBody", this);
 		ModsManager.RegisterHook("ProcessAttackment", this);
 		ModsManager.RegisterHook("OnPlayerDead", this);
+		ModsManager.RegisterHook("ScoreMount", this);
+	}
+
+	public override void ScoreMount(ComponentRider rider, ComponentMount mount, out float? score)
+	{
+		score = null;
+
+		// Si no es la criatura FlyingInfected1, no intervenimos.
+		if (mount?.Entity?.ValuesDictionary?.DatabaseObject?.Name != "FlyingInfected1")
+			return;
+
+		// Si el que intenta montar es un jugador → prohibido.
+		// Si es una criatura IA → permitido (dejamos score = null, el vanilla decide).
+		if (rider.ComponentCreature.Entity.FindComponent<ComponentPlayer>() != null)
+		{
+			score = -1f; // negativo = modDisallows, jamás la encontrará como montura
+		}
 	}
 
 	public override void OnPlayerDead(PlayerData playerData)
