@@ -1,4 +1,4 @@
-﻿namespace Game
+namespace Game
 {
 	public static class ShittyInfectedsSettings
 	{
@@ -11,5 +11,6 @@
 		public static bool EnableBossChaseMusic { get; set; } = true;
 		public static bool EnableDeathSpawn { get; set; } = true;
 		public static bool EnableGhostChaseMusic { get; set; } = true;
+		public static bool EnableDeathMusic { get; set; } = true;
 	}
 }
