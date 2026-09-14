@@ -37,14 +37,29 @@ namespace Game
 				// Si NO es jugador (IA), permitir montaje
 			}
 
+			// NUEVA COMPROBACIÓN: bloquear montaje a jugadores en criaturas específicas por nombre
+			if (componentMount?.Entity?.ValuesDictionary?.DatabaseObject?.Name == "FlyingInfected1")
+			{
+				ComponentPlayer player = this.ComponentCreature.Entity.FindComponent<ComponentPlayer>();
+				if (player != null)
+				{
+					if (player.ComponentGui != null)
+					{
+						player.ComponentGui.DisplaySmallMessage(
+							LanguageControl.Get("ComponentRiderZombie", 1), // Puedes usar otro key si prefieres un mensaje distinto
+							new Color(0, 153, 76),
+							true,
+							true
+						);
+					}
+					return; // BLOQUEAR - No montar
+				}
+				// Si NO es jugador (IA), se permite el montaje
+			}
+
 			// Para CUALQUIER otra montura (caballo normal, etc.) o zombie permitido,
 			// llamar al comportamiento base NORMAL
 			base.StartMounting(componentMount);
 		}
-
-		// NO SOBREESCRIBIR Update
-		// NO SOBREESCRIBIR StartDismounting
-		// NO SOBREESCRIBIR NADA MÁS
-		// Todo lo demás hereda de ComponentRider sin cambios
 	}
 }
