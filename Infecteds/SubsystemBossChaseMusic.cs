@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -10,6 +10,9 @@ namespace Game
 		private SubsystemBodies m_subsystemBodies;
 		private SubsystemPlayers m_subsystemPlayers;
 
+		// Ruta del tema (ahora vive aquí, no en el manager)
+		public const string MusicPath = "Music/ChaseTheme/Tank Theme";
+
 		public const float MusicRadius = 50f;
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -18,12 +21,12 @@ namespace Game
 		{
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
-			BossChaseMusicManager.Initialize();
+			InfectedsMusicManager.Initialize();
 		}
 
 		public override void Dispose()
 		{
-			BossChaseMusicManager.Stop();
+			InfectedsMusicManager.Stop(InfectedsMusicManager.MusicType.BossChase);
 			base.Dispose();
 		}
 
@@ -32,12 +35,12 @@ namespace Game
 			// Si la opción está desactivada en los ajustes, forzamos la detención y no buscamos entidades
 			if (!ShittyInfectedsSettings.EnableBossChaseMusic)
 			{
-				BossChaseMusicManager.Update(false, dt);
+				InfectedsMusicManager.Update(false, dt, MusicPath, InfectedsMusicManager.MusicType.BossChase);
 				return;
 			}
 
 			bool isChasing = CheckIfAnyBruteIsChasing();
-			BossChaseMusicManager.Update(isChasing, dt);
+			InfectedsMusicManager.Update(isChasing, dt, MusicPath, InfectedsMusicManager.MusicType.BossChase);
 		}
 
 		private bool CheckIfAnyBruteIsChasing()
