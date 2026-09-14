@@ -5,7 +5,7 @@ using TemplatesDatabase;
 
 namespace Game
 {
-	public class ComponentZombieChaseBehavior : ComponentBehavior, IUpdateable, INoiseAttraction
+	public class ComponentZombieChaseBehavior : ComponentBehavior, IUpdateable
 	{
 		// Propiedades existentes
 		public float ChaseRangeDay { get; set; }
@@ -31,18 +31,8 @@ namespace Game
 		public bool PlayIdleSoundWhenStartToChase = true;
 		public bool PlayAngrySoundWhenChasing = true;
 
-		// Constantes para ruido
-		private const float NOISE_INVESTIGATION_DURATION = 10f;
-		private const float NOISE_ATTRACTION_RANGE = 30f;
-		private const float NOISE_LOUDNESS_THRESHOLD = 0.5f;
-
-		// Campos de ruido
-		private Vector3 m_noiseSourcePosition;
-		private float m_noiseInvestigationTime;
-
 		// Campos existentes
 		private ComponentRider m_componentRider;
-		public bool IsInvestigatingNoise { get; private set; } = false;
 		private SubsystemGameInfo m_subsystemGameInfo;
 		private SubsystemPlayers m_subsystemPlayers;
 		private SubsystemSky m_subsystemSky;
@@ -50,7 +40,6 @@ namespace Game
 		private SubsystemTime m_subsystemTime;
 		private SubsystemNoise m_subsystemNoise;
 		private SubsystemGreenNightSky m_subsystemGreenNight;
-		private SubsystemNoiseAttraction m_subsystemNoiseAttraction; // CAMBIO: Añadido el subsistema de atracción de ruido
 		private ComponentCreature m_componentCreature;
 		private ComponentPathfinding m_componentPathfinding;
 		private ComponentMiner m_componentMiner;
@@ -80,38 +69,6 @@ namespace Game
 		public ComponentCreature Target => m_target;
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 		public override float ImportanceLevel => m_importanceLevel;
-
-		// --------------------------------------------------------------
-		// Implementación de INoiseAttraction
-		// --------------------------------------------------------------
-		public void AttractNoise(ComponentBody sourceBody, Vector3 sourcePosition, float loudness)
-		{
-			if (Suppressed) return;
-			if (m_componentCreature == null) return;
-
-			if (loudness < NOISE_LOUDNESS_THRESHOLD) return;
-
-			Vector3 myPos = m_componentCreature.ComponentBody.Position;
-			float distance = Vector3.Distance(myPos, sourcePosition);
-			if (distance > NOISE_ATTRACTION_RANGE) return;
-
-			// Si ya estamos en un estado de ruido, actualizar el destino
-			if (m_stateMachine.CurrentState == "InvestigatingNoise" ||
-				m_stateMachine.CurrentState == "NoiseAttraction")
-			{
-				m_noiseSourcePosition = sourcePosition;
-				m_noiseInvestigationTime = 0f;
-				m_componentPathfinding.SetDestination(new Vector3?(m_noiseSourcePosition), 1f, 1f, 0, false, true, false, null);
-				return;
-			}
-
-			// Guardar origen del ruido
-			m_noiseSourcePosition = sourcePosition;
-			m_noiseInvestigationTime = 0f;
-
-			// Si está persiguiendo, el estado Chasing se encargará de limpiar m_target al salir
-			m_stateMachine.TransitionTo("NoiseAttraction");
-		}
 
 		private bool IsTargetFriendlyZombie(ComponentCreature target)
 		{
@@ -290,7 +247,6 @@ namespace Game
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
-			m_subsystemNoiseAttraction = Project.FindSubsystem<SubsystemNoiseAttraction>(true); // CAMBIO: Inicialización del subsistema
 			m_componentRider = Entity.FindComponent<ComponentRider>(false);
 			m_subsystemGreenNight = Project.FindSubsystem<SubsystemGreenNightSky>(false);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
@@ -419,97 +375,6 @@ namespace Game
 				leave: null
 			);
 
-			// ESTADO: NoiseAttraction (MODIFICADO PARA MONTURAS)
-			m_stateMachine.AddState("NoiseAttraction",
-				enter: delegate
-				{
-					IsActive = false;
-					IsInvestigatingNoise = true;
-					m_noiseInvestigationTime = 0f;
-
-					// Verificar si está montado
-					bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
-
-					if (isMounted)
-					{
-						// Si está montado, usar el pathfinding de la montura
-						ComponentMount mount = m_componentRider.Mount;
-						ComponentPathfinding mountPathfinding = mount.Entity.FindComponent<ComponentPathfinding>();
-						if (mountPathfinding != null)
-						{
-							mountPathfinding.SetDestination(new Vector3?(m_noiseSourcePosition), 1f, 1f, 0, false, true, false, null);
-						}
-					}
-					else
-					{
-						// Si no está montado, usar su propio pathfinding (lógica original)
-						m_componentPathfinding.SetDestination(new Vector3?(m_noiseSourcePosition), 1f, 1f, 0, false, true, false, null);
-					}
-				},
-				update: delegate
-				{
-					m_noiseInvestigationTime += m_dt;
-					bool shouldExit = false;
-
-					// Verificar estado de montaje en cada frame por si desmonta/monta durante el estado
-					bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
-
-					// Condiciones para finalizar la atracción por ruido:
-					if (isMounted)
-					{
-						ComponentMount mount = m_componentRider.Mount;
-						ComponentPathfinding mountPathfinding = mount.Entity.FindComponent<ComponentPathfinding>();
-						if (mountPathfinding == null || mountPathfinding.IsStuck || mountPathfinding.Destination == null || m_noiseInvestigationTime > NOISE_INVESTIGATION_DURATION)
-						{
-							shouldExit = true;
-						}
-					}
-					else
-					{
-						// Lógica original desmontado
-						if (m_componentPathfinding.IsStuck || m_componentPathfinding.Destination == null || m_noiseInvestigationTime > NOISE_INVESTIGATION_DURATION)
-						{
-							shouldExit = true;
-						}
-					}
-
-					if (shouldExit)
-					{
-						m_stateMachine.TransitionTo("LookingForTarget");
-						return;
-					}
-
-					// Comprobar si ha llegado al origen del ruido
-					Vector3 myPos = isMounted
-						? m_componentRider.Mount.ComponentBody.Position
-						: m_componentCreature.ComponentBody.Position;
-
-					float dist = Vector3.Distance(myPos, m_noiseSourcePosition);
-					if (dist < 2f)
-					{
-						m_stateMachine.TransitionTo("LookingForTarget");
-						return;
-					}
-				},
-				leave: delegate
-				{
-					IsInvestigatingNoise = false;
-
-					bool isMounted = m_componentRider != null && m_componentRider.Mount != null;
-
-					if (isMounted)
-					{
-						// Detener la montura al salir
-						ComponentPathfinding mountPathfinding = m_componentRider.Mount.Entity.FindComponent<ComponentPathfinding>();
-						if (mountPathfinding != null) mountPathfinding.Stop();
-					}
-					else
-					{
-						m_componentPathfinding.Stop();
-					}
-				}
-			);
-
 			// ============================================================
 			// ESTADO: RandomMoving
 			// ============================================================
@@ -543,9 +408,6 @@ namespace Game
 				{
 					// Ruido estándar del juego
 					m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody, 0.25f, 6f);
-
-					// CAMBIO: Emitir ruido de atracción personalizado para llamar a otros zombies
-					m_subsystemNoiseAttraction.MakeAttractionNoise(m_componentCreature.ComponentBody.Position, 0.6f, 40f);
 
 					if (PlayIdleSoundWhenStartToChase)
 					{
@@ -640,14 +502,7 @@ namespace Game
 						}
 					}
 				},
-				leave: delegate
-				{
-					// Al salir del estado Chasing (por ejemplo, por ruido), limpiamos el target
-					m_target = null;
-					IsActive = false;
-					m_importanceLevel = 0f;
-					m_chaseTime = 0f;
-				}
+				leave: null
 			);
 
 			// ============================================================
