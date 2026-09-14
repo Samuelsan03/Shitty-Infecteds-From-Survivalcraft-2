@@ -5,7 +5,7 @@ using TemplatesDatabase;
 
 namespace Game
 {
-	public class ComponentZombieChaseBehavior : ComponentBehavior, IUpdateable
+	public class ComponentZombieChaseBehavior : ComponentBehavior, IUpdateable, INoiseAttraction
 	{
 		// Propiedades existentes
 		public float ChaseRangeDay { get; set; }
@@ -30,6 +30,16 @@ namespace Game
 		public bool Suppressed;
 		public bool PlayIdleSoundWhenStartToChase = true;
 		public bool PlayAngrySoundWhenChasing = true;
+
+		// ==== NUEVO: parámetros de atracción de ruido ====
+		/// <summary>Duración de la investigación al llegar al origen del ruido.</summary>
+		public float NoiseInvestigationDuration = 5f;
+		/// <summary>Distancia² a la que se considera que el zombi llegó al ruido.</summary>
+		public float NoiseArrivalDistanceSq = 2.5f;
+		/// <summary>Umbral² para considerar un ruido como "nuevo" (posición distinta).</summary>
+		public float NewNoiseDistanceSq = 1f;
+		/// <summary>Distancia máxima a la que el zombi responde a un ruido.</summary>
+		public float NoiseMaxDistance = 30f;
 
 		// Campos existentes
 		private ComponentRider m_componentRider;
@@ -66,6 +76,14 @@ namespace Game
 		private bool m_isChasingGreenNightAttacker = false;
 		private bool m_wasForcedByGreenNight = false;
 
+		// ==== NUEVO: estado interno de la atracción de ruido ====
+		private Vector3? m_noisePosition;
+		private float m_noiseLoudness;
+		private double m_noiseInvestigationStartTime;
+		private long m_noiseCounter;
+		private long m_stateEnterNoiseCounter;
+		private bool m_isNoisePursuit;
+
 		public ComponentCreature Target => m_target;
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 		public override float ImportanceLevel => m_importanceLevel;
@@ -77,6 +95,61 @@ namespace Game
 			if (targetHerd != null && targetHerd.HerdName == "Zombie") return true;
 			if (targetHerd != null && !string.IsNullOrEmpty(targetHerd.HerdName) && targetHerd.HerdName == m_myHerdName) return true;
 			return false;
+		}
+
+		// ============================================================
+		// NUEVO: Implementación de INoiseAttraction
+		// ============================================================
+		/// <summary>
+		/// Llamado por SubsystemNoiseAttraction cuando se emite un ruido cerca.
+		/// Solo reaccionamos si estamos activos (persiguiendo o buscando objetivo).
+		/// Un ruido nuevo (posición distinta) nos manda a investigarlo; uno en la
+		/// misma posición solo refresca la investigación en curso.
+		/// </summary>
+		public void AttractNoise(ComponentBody sourceBody, Vector3 sourcePosition, float loudness)
+		{
+			if (Suppressed) return;
+			if (!IsActive) return;
+			if (m_componentCreature == null || m_componentCreature.ComponentBody == null) return;
+
+			float distSq = Vector3.DistanceSquared(m_componentCreature.ComponentBody.Position, sourcePosition);
+			if (distSq > NoiseMaxDistance * NoiseMaxDistance) return;
+
+			bool isNew = m_noisePosition == null
+				|| Vector3.DistanceSquared(m_noisePosition.Value, sourcePosition) > NewNoiseDistanceSq;
+
+			m_noisePosition = sourcePosition;
+			m_noiseLoudness = loudness;
+			m_nextUpdateTime = 0.0;
+
+			if (isNew)
+			{
+				m_noiseCounter++;
+			}
+
+			string state = m_stateMachine.CurrentState;
+
+			if (state == "NoiseInvestigation")
+			{
+				// Si es un ruido nuevo (posición distinta), salimos a investigarlo.
+				// Si es el mismo, solo refrescamos el temporizador para seguir atentos.
+				if (isNew)
+				{
+					m_stateMachine.TransitionTo("NoiseAttraction");
+				}
+				else
+				{
+					m_noiseInvestigationStartTime = m_subsystemTime.GameTime;
+				}
+			}
+			else if (state != "NoiseAttraction")
+			{
+				// Estamos en cualquier otro estado (Chasing, LookingForTarget,
+				// RandomMoving, Stuck): interrumpimos y vamos al ruido.
+				m_stateMachine.TransitionTo("NoiseAttraction");
+			}
+			// Si ya estamos en NoiseAttraction, su Update detecta m_noiseCounter
+			// cambiado y redirige el pathfinding al nuevo origen.
 		}
 
 		public virtual void Attack(ComponentCreature target, float maxRange, float maxChaseTime, bool isPersistent)
@@ -109,6 +182,11 @@ namespace Game
 			m_targetUnsuitableTime = 0f;
 			m_targetInRangeTime = 0f;
 			m_wasForcedByGreenNight = false;
+
+			// NUEVO: limpiar el estado de ruido al detener el ataque.
+			m_isNoisePursuit = false;
+			m_noisePosition = null;
+			m_noiseLoudness = 0f;
 		}
 
 		public virtual void Update(float dt)
@@ -142,7 +220,8 @@ namespace Game
 			}
 			m_wasGreenNightActive = isGreenNightActiveNow;
 
-			if (isGreenNightActiveNow)
+			// NUEVO: si estamos investigando un ruido, la noche verde no nos fuerza a perseguir.
+			if (isGreenNightActiveNow && !m_isNoisePursuit)
 			{
 				bool isAlreadyChasingPlayer = m_target != null && m_subsystemPlayers.IsPlayer(m_target.Entity) && m_target.ComponentHealth.Health > 0f;
 				if (!isAlreadyChasingPlayer)
@@ -153,31 +232,41 @@ namespace Game
 
 			if (IsActive && m_target != null)
 			{
-				m_chaseTime -= dt;
-
-				if (m_chaseTime <= 0f && isGreenNightActiveNow && m_wasForcedByGreenNight && m_subsystemPlayers.IsPlayer(m_target.Entity))
+				// NUEVO: durante la persecución de ruido, congelamos el temporizador
+				// de persecución, no miramos al objetivo y no atacamos.
+				if (!m_isNoisePursuit)
 				{
-					m_chaseTime = 1f;
-				}
+					m_chaseTime -= dt;
 
-				m_componentCreature.ComponentCreatureModel.LookAtOrder = new Vector3?(m_target.ComponentCreatureModel.EyePosition);
-
-				if (IsTargetInAttackRange(m_target.ComponentBody))
-				{
-					m_componentCreatureModel.AttackOrder = true;
-				}
-
-				if (m_componentCreatureModel.IsAttackHitMoment)
-				{
-					Vector3 hitPoint;
-					ComponentBody hitBody = GetHitBody(m_target.ComponentBody, out hitPoint);
-					if (hitBody != null)
+					if (m_chaseTime <= 0f && isGreenNightActiveNow && m_wasForcedByGreenNight && m_subsystemPlayers.IsPlayer(m_target.Entity))
 					{
-						float newChaseTime = m_isPersistent ? m_random.Float(8f, 10f) : 2f;
-						m_chaseTime = MathUtils.Max(m_chaseTime, newChaseTime);
-						m_componentMiner.Hit(hitBody, hitPoint, m_componentCreature.ComponentBody.Matrix.Forward);
-						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
+						m_chaseTime = 1f;
 					}
+
+					m_componentCreature.ComponentCreatureModel.LookAtOrder = new Vector3?(m_target.ComponentCreatureModel.EyePosition);
+
+					if (IsTargetInAttackRange(m_target.ComponentBody))
+					{
+						m_componentCreatureModel.AttackOrder = true;
+					}
+
+					if (m_componentCreatureModel.IsAttackHitMoment)
+					{
+						Vector3 hitPoint;
+						ComponentBody hitBody = GetHitBody(m_target.ComponentBody, out hitPoint);
+						if (hitBody != null)
+						{
+							float newChaseTime = m_isPersistent ? m_random.Float(8f, 10f) : 2f;
+							m_chaseTime = MathUtils.Max(m_chaseTime, newChaseTime);
+							m_componentMiner.Hit(hitBody, hitPoint, m_componentCreature.ComponentBody.Matrix.Forward);
+							m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
+						}
+					}
+				}
+				else if (m_noisePosition != null)
+				{
+					// Durante la persecución de ruido, mantener la mirada fija en el origen.
+					m_componentCreature.ComponentCreatureModel.LookAtOrder = new Vector3?(m_noisePosition.Value);
 				}
 			}
 
@@ -191,6 +280,7 @@ namespace Game
 
 		private void ForceChasePlayerOnGreenNight()
 		{
+			if (m_isNoisePursuit) return;
 			if (m_isChasingGreenNightAttacker && m_target != null && m_target.ComponentHealth.Health > 0f) return;
 			if (m_subsystemTime.GameTime - m_lastGreenNightForcedSearch < 1.0) return;
 			m_lastGreenNightForcedSearch = m_subsystemTime.GameTime;
@@ -406,7 +496,6 @@ namespace Game
 			m_stateMachine.AddState("Chasing",
 				enter: delegate
 				{
-					// Ruido estándar del juego
 					m_subsystemNoise.MakeNoise(m_componentCreature.ComponentBody, 0.25f, 6f);
 
 					if (PlayIdleSoundWhenStartToChase)
@@ -527,6 +616,89 @@ namespace Game
 					else
 					{
 						m_stateMachine.TransitionTo("LookingForTarget");
+					}
+				},
+				leave: null
+			);
+
+			// ============================================================
+			// NUEVO ESTADO: NoiseAttraction (ir hacia el ruido)
+			// ============================================================
+			m_stateMachine.AddState("NoiseAttraction",
+				enter: delegate
+				{
+					m_isNoisePursuit = true;
+					m_stateEnterNoiseCounter = m_noiseCounter;
+					m_componentCreatureModel.AttackOrder = false;
+
+					if (m_noisePosition != null)
+					{
+						m_componentPathfinding.SetDestination(
+							new Vector3?(m_noisePosition.Value),
+							1f, 1f, 0, false, true, false, null);
+					}
+				},
+				update: delegate
+				{
+					if (m_noisePosition == null)
+					{
+						// Sin ruido pendiente: volver a la lógica normal.
+						m_isNoisePursuit = false;
+						if (IsActive && m_target != null && m_target.ComponentHealth.Health > 0f)
+							m_stateMachine.TransitionTo("Chasing");
+						else
+							m_stateMachine.TransitionTo("LookingForTarget");
+						return;
+					}
+
+					// Ruido nuevo mientras íbamos al anterior → redirigir.
+					if (m_noiseCounter != m_stateEnterNoiseCounter)
+					{
+						m_stateEnterNoiseCounter = m_noiseCounter;
+						if (m_noisePosition != null)
+						{
+							m_componentPathfinding.SetDestination(
+								new Vector3?(m_noisePosition.Value),
+								1f, 1f, 0, false, true, false, null);
+						}
+					}
+
+					Vector3 destination = m_noisePosition.Value;
+					float distSq = Vector3.DistanceSquared(m_componentCreature.ComponentBody.Position, destination);
+
+					if (distSq <= NoiseArrivalDistanceSq || m_componentPathfinding.IsStuck)
+					{
+						m_stateMachine.TransitionTo("NoiseInvestigation");
+					}
+				},
+				leave: delegate
+				{
+					m_componentPathfinding.Stop();
+				}
+			);
+
+			// ============================================================
+			// NUEVO ESTADO: NoiseInvestigation (quedarse quieto y observar)
+			// ============================================================
+			m_stateMachine.AddState("NoiseInvestigation",
+				enter: delegate
+				{
+					m_componentPathfinding.Stop();
+					m_noiseInvestigationStartTime = m_subsystemTime.GameTime;
+				},
+				update: delegate
+				{
+					if (m_subsystemTime.GameTime - m_noiseInvestigationStartTime >= NoiseInvestigationDuration)
+					{
+						// Terminó la investigación: volver a la lógica normal.
+						m_isNoisePursuit = false;
+						m_noisePosition = null;
+						m_noiseLoudness = 0f;
+
+						if (IsActive && m_target != null && m_target.ComponentHealth.Health > 0f)
+							m_stateMachine.TransitionTo("Chasing");
+						else
+							m_stateMachine.TransitionTo("LookingForTarget");
 					}
 				},
 				leave: null
