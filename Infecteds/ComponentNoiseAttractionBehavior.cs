@@ -14,6 +14,10 @@ namespace Game
 	/// Extendido para criaturas montadas: si el jinete está montado, la orden de
 	/// desplazamiento se envía a la montura (SteedBehavior / SteedBehaviorImproved /
 	/// Pilot) en lugar de al pathfinding del jinete.
+	///
+	/// Si llega un ruido NUEVO (en una posición distinta) mientras estamos en
+	/// NoiseAttraction o NoiseInvestigation, se vuelve a NoiseAttraction para ir al
+	/// nuevo origen. Un ruido en la misma posición solo refresca la investigación.
 	/// </summary>
 	public class ComponentNoiseAttractionBehavior : ComponentBehavior, INoiseAttraction, IUpdateable
 	{
@@ -21,7 +25,7 @@ namespace Game
 		public ComponentCreature m_componentCreature;
 		public ComponentPathfinding m_componentPathfinding;
 		public ComponentCreatureModel m_componentCreatureModel;
-		public ComponentRider m_componentRider; // NUEVO
+		public ComponentRider m_componentRider;
 
 		public StateMachine m_stateMachine = new StateMachine();
 		public Random m_random = new Random();
@@ -45,13 +49,30 @@ namespace Game
 		public float ArrivalDistanceSq = 2.5f;
 
 		/// <summary>
-		/// NUEVO: true mientras estamos en el estado NoiseAttraction. Se usa para
-		/// emitir órdenes de movimiento a la montura en cada frame (no en el update
-		/// "throttled" de la máquina de estados).
+		/// Umbral cuadrado de distancia para considerar un ruido como "nuevo".
+		/// Un ruido en la misma posición (dentro de este umbral) no reinicia la
+		/// atracción, solo refresca la investigación.
 		/// </summary>
+		public float NewNoiseDistanceSq = 1f;
+
+		/// <summary>
+		/// Contador que se incrementa cada vez que llega un ruido NUEVO (posición
+		/// distinta). Se usa para que los estados detecten ruidos nuevos y
+		/// reaccionen sin necesidad de polling.
+		/// </summary>
+		private long m_noiseCounter;
+
+		/// <summary>
+		/// Valor del contador al entrar en el estado actual. Si en el update
+		/// detectamos m_noiseCounter != m_stateEnterNoiseCounter, es que llegó
+		/// un ruido nuevo mientras estábamos en ese estado.
+		/// </summary>
+		private long m_stateEnterNoiseCounter;
+
+		/// <summary>true mientras estamos en el estado NoiseAttraction.</summary>
 		private bool m_isAttracting;
 
-		/// <summary>NUEVO: indica si hemos tomado control de la montura y debemos soltarlo.</summary>
+		/// <summary>Indica si hemos tomado control de la montura y debemos soltarlo.</summary>
 		private bool m_controllingMount;
 
 		public override float ImportanceLevel
@@ -76,7 +97,7 @@ namespace Game
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
 			m_componentCreatureModel = Entity.FindComponent<ComponentCreatureModel>(true);
-			m_componentRider = Entity.FindComponent<ComponentRider>(false); // NUEVO
+			m_componentRider = Entity.FindComponent<ComponentRider>(false);
 
 			// -------------------- Estado: Idle (no hace nada) --------------------
 			m_stateMachine.AddState("Idle", null, delegate
@@ -91,9 +112,9 @@ namespace Game
 			m_stateMachine.AddState("NoiseAttraction", delegate
 			{
 				m_isAttracting = true;
+				m_stateEnterNoiseCounter = m_noiseCounter;
 
-				// Solo usamos pathfinding si NO estamos montados. Si estamos montados,
-				// las órdenes se envían a la montura cada frame desde Update().
+				// Solo usamos pathfinding si NO estamos montados.
 				if (m_noisePosition != null && !IsMounted())
 				{
 					m_componentPathfinding.SetDestination(
@@ -114,23 +135,40 @@ namespace Game
 					return;
 				}
 
+				// NUEVO: si llegó otro ruido (posición distinta) mientras íbamos
+				// al anterior, redirigir el pathfinding al nuevo origen.
+				if (m_noiseCounter != m_stateEnterNoiseCounter)
+				{
+					m_stateEnterNoiseCounter = m_noiseCounter;
+
+					if (!IsMounted() && m_noisePosition != null)
+					{
+						m_componentPathfinding.SetDestination(
+							m_noisePosition.Value,
+							1f,
+							1f,
+							0,
+							false,
+							true,
+							false,
+							null);
+					}
+					// En montados, ControlMountTowardNoise ya lee m_noisePosition
+					// cada frame en Update(), así que no hay que hacer nada extra.
+				}
+
 				Vector3 destination = m_noisePosition.Value;
 				m_componentCreatureModel.LookAtOrder = destination;
 
-				// NUEVO: medir la distancia desde la posición efectiva del conjunto
-				// (montura si está montado, jinete si no).
 				Vector3 currentPosition = GetEffectivePosition();
-
 				float distSq = Vector3.DistanceSquared(currentPosition, destination);
 
-				// Llegamos lo suficientemente cerca: pasar a investigar.
 				if (distSq <= ArrivalDistanceSq)
 				{
 					m_stateMachine.TransitionTo("NoiseInvestigation");
 					return;
 				}
 
-				// El pathfinding se atascó (solo aplica si no estamos montados):
 				if (!IsMounted() && m_componentPathfinding.IsStuck)
 				{
 					m_stateMachine.TransitionTo("NoiseInvestigation");
@@ -139,17 +177,26 @@ namespace Game
 			{
 				m_isAttracting = false;
 				m_componentPathfinding.Stop();
-				StopMountMovement(); // NUEVO
+				StopMountMovement();
 			});
 
 			// -------------------- Estado: NoiseInvestigation --------------------
 			m_stateMachine.AddState("NoiseInvestigation", delegate
 			{
+				m_stateEnterNoiseCounter = m_noiseCounter;
 				m_componentPathfinding.Stop();
-				StopMountMovement(); // NUEVO: no dejar a la montura corriendo
+				StopMountMovement();
 				m_investigationStartTime = m_subsystemTime.GameTime;
 			}, delegate
 			{
+				// NUEVO: si llegó un ruido nuevo (posición distinta) mientras
+				// investigábamos, ir hacia el nuevo origen.
+				if (m_noiseCounter != m_stateEnterNoiseCounter)
+				{
+					m_stateMachine.TransitionTo("NoiseAttraction");
+					return;
+				}
+
 				if (m_noisePosition != null)
 				{
 					m_componentCreatureModel.LookAtOrder = m_noisePosition.Value;
@@ -171,17 +218,33 @@ namespace Game
 		/// </summary>
 		public void AttractNoise(ComponentBody sourceBody, Vector3 sourcePosition, float loudness)
 		{
+			// ¿Es un ruido en una posición distinta al actual? Solo en ese caso
+			// reiniciamos la atracción/investigación hacia el nuevo origen.
+			bool isNewNoise = m_noisePosition == null
+				|| Vector3.DistanceSquared(m_noisePosition.Value, sourcePosition) > NewNoiseDistanceSq;
+
 			m_noisePosition = sourcePosition;
 			m_noiseLoudness = loudness;
 			m_nextUpdateTime = 0.0;
+
+			if (isNewNoise)
+			{
+				m_noiseCounter++;
+
+				// Un ruido nuevo siempre reinicia la investigación si ya estábamos
+				// investigando, para que el temporizador cuente desde cero.
+				m_investigationStartTime = m_subsystemTime.GameTime;
+			}
+			else
+			{
+				// Misma posición: solo refrescamos el temporizador de investigación
+				// para que la criatura siga atenta mientras el sonido continúe.
+				m_investigationStartTime = m_subsystemTime.GameTime;
+			}
 		}
 
 		public void Update(float dt)
 		{
-			// NUEVO: si estamos en fase de atracción y montados, emitir órdenes
-			// de movimiento a la montura CADA FRAME (el steed resetea las órdenes
-			// al final de su Update, por eso no podemos hacerlo desde el update
-			// throttled de la máquina de estados).
 			if (m_isAttracting && m_noisePosition != null && IsMounted())
 			{
 				ControlMountTowardNoise(m_noisePosition.Value);
@@ -196,7 +259,7 @@ namespace Game
 		}
 
 		// =====================================================================
-		// NUEVOS MÉTODOS: control de la montura cuando el jinete oye un ruido
+		// Control de la montura
 		// =====================================================================
 
 		private bool IsMounted()
@@ -217,13 +280,6 @@ namespace Game
 			return m_componentCreature.ComponentBody.Position;
 		}
 
-		/// <summary>
-		/// Ordena a la montura actual que se dirija hacia la posición del ruido.
-		/// Reutiliza el patrón de ComponentZombieAI.PilotMount:
-		///   - Monturas voladoras: ComponentPilot.SetDestination (leído por
-		///     ComponentSteedBehaviorImproved.ProcessAIFlightControls).
-		///   - Monturas terrestres: TurnOrder/SpeedOrder en SteedBehavior(Improved).
-		/// </summary>
 		private void ControlMountTowardNoise(Vector3 destination)
 		{
 			ComponentMount mount = m_componentRider?.Mount;
@@ -240,7 +296,6 @@ namespace Game
 			float horizontalDistance = delta.Length();
 			if (horizontalDistance < 0.01f)
 			{
-				// Ya estamos encima horizontalmente; que se detenga.
 				StopMountMovement();
 				return;
 			}
@@ -258,7 +313,6 @@ namespace Game
 			float cross = forward.X * dirToTarget.Z - forward.Z * dirToTarget.X;
 			float dot = Vector3.Dot(forward, dirToTarget);
 
-			// Mismo factor que usa la IA al pilotar monturas.
 			float turnOrder = MathUtils.Clamp(cross * 2f, -0.5f, 0.5f);
 
 			float stopDistance = MathF.Sqrt(ArrivalDistanceSq);
@@ -271,23 +325,18 @@ namespace Game
 				}
 				else if (dot < -0.5f)
 				{
-					// Casi de espaldas: retroceder suavemente en lugar de girar en seco.
 					speedOrder = -1;
 				}
 			}
 
-			// Detectar montura voladora
 			ComponentLocomotion mountLocomotion = mount.Entity.FindComponent<ComponentLocomotion>();
 			bool isFlying = mountLocomotion != null && mountLocomotion.FlySpeed > 0f;
 
 			if (isFlying)
 			{
-				// El pilot vive en la entidad del jinete (ver ZombieAI.PilotMount).
 				ComponentPilot pilot = Entity.FindComponent<ComponentPilot>(false);
 				if (pilot != null)
 				{
-					// Apuntar un poco por encima del origen del ruido para que la
-					// montura no intente aterrizar exactamente sobre el bloque.
 					Vector3 pilotDest = destination;
 					pilotDest.Y = MathUtils.Max(destination.Y, myPos.Y + 1f);
 
@@ -296,7 +345,6 @@ namespace Game
 			}
 			else
 			{
-				// En terrestres nos aseguramos de que el pilot no interfiera.
 				ComponentPilot pilot = Entity.FindComponent<ComponentPilot>(false);
 				if (pilot != null && pilot.Destination != null)
 				{
@@ -324,9 +372,6 @@ namespace Game
 			}
 		}
 
-		/// <summary>
-		/// Detiene cualquier orden de movimiento que hayamos dado a la montura.
-		/// </summary>
 		private void StopMountMovement()
 		{
 			if (!m_controllingMount)
