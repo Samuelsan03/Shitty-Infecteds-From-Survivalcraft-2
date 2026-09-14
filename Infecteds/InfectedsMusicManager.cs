@@ -8,18 +8,17 @@ namespace Game
 {
 	public static class InfectedsMusicManager
 	{
-		// Tipos de música que administra el manager
 		public enum MusicType
 		{
-			// Persecución normal: bucle continuo, volumen al 80%
 			Chase,
-			// Persecución de jefe: sin bucle nativo (reinicio manual), volumen de MusicManager
 			BossChase,
-			// Música de muerte del jugador: bucle continuo hasta reaparecer
 			Death
 		}
 
-		// Canal independiente por tipo (permite que dos temas suenen a la vez, como antes)
+		// Duración por defecto del fade-out cuando la persecución termina
+		// o cuando el zombi cambia de presa.
+		public const float ChaseFadeOutDuration = 1.5f;
+
 		private class MusicChannel
 		{
 			public StreamingSound Sound;
@@ -27,7 +26,6 @@ namespace Game
 			public float PlayTime;
 			public float Duration;
 
-			// Estado de fade-out
 			public bool FadingOut;
 			public float FadeElapsed;
 			public float FadeDuration;
@@ -37,7 +35,8 @@ namespace Game
 		private static Dictionary<MusicType, MusicChannel> m_channels = new Dictionary<MusicType, MusicChannel>();
 		private static bool m_initialized;
 		private static double m_lastFadeTick = -1.0;
-		/// Inicia un fade-out sobre el canal indicado. No hace nada si no hay sonido.
+
+		/// <summary>Inicia un fade-out sobre el canal indicado. No hace nada si no hay sonido.</summary>
 		public static void FadeOut(MusicType type, float duration)
 		{
 			MusicChannel channel = GetChannel(type);
@@ -49,14 +48,13 @@ namespace Game
 			channel.FadeStartVolume = channel.Sound.Volume;
 		}
 
+		/// <summary>
 		/// Debe llamarse cada frame (por ejemplo desde AfterWidgetUpdate).
 		/// Se protege contra múltiples llamadas por frame con un chequeo de tiempo.
+		/// </summary>
 		public static void UpdateFades()
 		{
 			// DEFENSIVO: si la música de muerte está desactivada, cortarla siempre.
-			// Esto cubre el caso en el que el Stop del toggle no llegó a ejecutarse
-			// (por ejemplo si se reactivó el sonido por otro camino) o si el ajuste
-			// se cambió mientras el canal Death seguía sonando.
 			if (!ShittyInfectedsSettings.EnableDeathMusic)
 			{
 				MusicChannel deathChannel;
@@ -118,10 +116,17 @@ namespace Game
 				return;
 			}
 
-			// Si la criatura dejó de perseguir (o la opción está desactivada), detenemos su música
+			// CAMBIO: ya no cortamos en seco al terminar la persecución.
+			// Aplicamos un fade-out suave (jugador perdido, presa alejada,
+			// presa muerta...). El cambio de presa lo dispara el subsistema
+			// llamando directamente a FadeOut, ya que aquí no sabemos de entidades.
 			if (!isChasing)
 			{
-				Stop(type);
+				MusicChannel channel = GetChannel(type);
+				if (channel.Sound != null && !channel.FadingOut)
+				{
+					FadeOut(type, ChaseFadeOutDuration);
+				}
 				return;
 			}
 
@@ -129,23 +134,23 @@ namespace Game
 			float volume;
 			GetMusicSettings(type, out loop, out volume);
 
-			MusicChannel channel = GetChannel(type);
+			MusicChannel ch = GetChannel(type);
 
-			// Si el sonido se pausó (ej. minimizar ventana) y seguimos persiguiendo, lo reanudamos
-			if (channel.Sound != null && channel.Sound.State == SoundState.Paused)
+			if (ch.Sound != null && ch.Sound.State == SoundState.Paused)
 			{
-				channel.Sound.Play();
+				ch.Sound.Play();
 			}
 
-			// Si no hay sonido, cambió la ruta, se detuvo solo, o (sin bucle nativo) terminó su duración -> reiniciar
-			if (channel.Sound == null || channel.Path != path || channel.Sound.State <= SoundState.Stopped || (!loop && channel.PlayTime >= channel.Duration))
+			// Si no hay sonido, cambió la ruta, se detuvo solo, o (sin bucle nativo) terminó su duración -> reiniciar.
+			// IMPORTANTE: un fade en curso NO reinicia el sonido; se deja terminar y, cuando el
+			// canal quede vacío, el siguiente frame lo vuelve a lanzar limpio (fade out → restart).
+			if (ch.Sound == null || ch.Path != path || ch.Sound.State <= SoundState.Stopped || (!loop && ch.PlayTime >= ch.Duration))
 			{
 				Play(path, type);
 			}
 			else
 			{
-				// Sumamos tiempo solo si está sonando
-				channel.PlayTime += dt;
+				ch.PlayTime += dt;
 			}
 		}
 
@@ -169,7 +174,6 @@ namespace Game
 
 				MusicChannel channel = GetChannel(type);
 
-				// Duración exacta del audio (PCM 16 bits)
 				channel.Duration = (float)((double)source.BytesCount / (double)source.ChannelsCount / 2.0 / (double)source.SamplingFrequency);
 				channel.PlayTime = 0f;
 				channel.Path = path;
@@ -177,7 +181,8 @@ namespace Game
 				channel.FadeElapsed = 0f;
 				channel.FadeDuration = 0f;
 
-				channel.Sound = new StreamingSound(source, volume, 1f, 0f, false, loop, 1f);
+				// Orden correcto: (source, volume, pitch, pan, isLooped, disposeSource, ...)
+				channel.Sound = new StreamingSound(source, volume, 1f, 0f, loop, true, 1f);
 				channel.Sound.Play();
 			}
 			catch (Exception ex)
@@ -218,7 +223,6 @@ namespace Game
 			if (m_initialized) return;
 			m_initialized = true;
 
-			// Por seguridad, si cierran el juego de golpe, limpiamos el audio
 			Window.Closed += delegate
 			{
 				try
@@ -247,17 +251,15 @@ namespace Game
 			return channel;
 		}
 
-		// Aquí vive la lógica original de cada manager antiguo (bucle y volumen por tipo)
 		private static void GetMusicSettings(MusicType type, out bool loop, out float volume)
 		{
 			switch (type)
 			{
 				case MusicType.BossChase:
-					loop = false;
+					loop = true;
 					volume = MusicManager.Volume;
 					break;
 				case MusicType.Death:
-					// Bucle continuo mientras el jugador esté muerto
 					loop = true;
 					volume = MusicManager.Volume;
 					break;
