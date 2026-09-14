@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using Engine;
 using GameEntitySystem;
 using TemplatesDatabase;
@@ -15,6 +14,12 @@ namespace Game
 		private DynamicArray<ComponentBody> m_componentBodies = new DynamicArray<ComponentBody>();
 		private double m_nextUpdateTime;
 
+		// Último resultado de la detección (se recalcula cada 0.5s, pero la música se gestiona cada frame)
+		private bool m_isChasing;
+
+		// Ruta del tema (ahora vive aquí, no en el manager)
+		public const string MusicPath = "Music/ChaseTheme/Hotel Insanity Chase Theme";
+
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
 		public override void Load(ValuesDictionary valuesDictionary)
@@ -26,24 +31,30 @@ namespace Game
 
 		public void Update(float dt)
 		{
-			ChaseMusicManager.Update();
-
-			// Si la opción está desactivada en el menú, impedir que suene y salir del método
+			// Si la opción está desactivada en el menú, impedir que suene
 			if (!ShittyInfectedsSettings.EnableGhostChaseMusic)
 			{
-				ChaseMusicManager.StopMusic();
+				m_isChasing = false;
+				InfectedsMusicManager.Update(false, dt, MusicPath, InfectedsMusicManager.MusicType.Chase);
 				return;
 			}
 
-			if (m_subsystemTime.GameTime < m_nextUpdateTime) return;
-			m_nextUpdateTime = m_subsystemTime.GameTime + 0.5;
+			// La detección pesada se hace cada 0.5s, pero el manager se actualiza cada frame
+			// (seguridad de pantalla, reanudar tras pausa, corte instantáneo, etc.)
+			if (m_subsystemTime.GameTime >= m_nextUpdateTime)
+			{
+				m_nextUpdateTime = m_subsystemTime.GameTime + 0.5;
+				m_isChasing = DetectChase();
+			}
 
-			bool isChasing = false;
+			InfectedsMusicManager.Update(m_isChasing, dt, MusicPath, InfectedsMusicManager.MusicType.Chase);
+		}
 
+		private bool DetectChase()
+		{
 			if (m_subsystemPlayers.ComponentPlayers.Count == 0)
 			{
-				ChaseMusicManager.StopMusic();
-				return;
+				return false;
 			}
 
 			ComponentBody playerBody = m_subsystemPlayers.ComponentPlayers[0].ComponentBody;
@@ -71,28 +82,18 @@ namespace Game
 							// CONDICIÓN ESTRICTA: A 50 BLOQUES O MENOS
 							if (distance <= 50f)
 							{
-								isChasing = true;
-								break;
+								return true;
 							}
 						}
 					}
 				}
 			}
-
-			// Activa o corta la música de golpe
-			if (isChasing)
-			{
-				ChaseMusicManager.PlayChaseMusic();
-			}
-			else
-			{
-				ChaseMusicManager.StopMusic();
-			}
+			return false;
 		}
 
 		public override void Dispose()
 		{
-			ChaseMusicManager.StopMusic();
+			InfectedsMusicManager.Stop(InfectedsMusicManager.MusicType.Chase);
 			base.Dispose();
 		}
 	}
