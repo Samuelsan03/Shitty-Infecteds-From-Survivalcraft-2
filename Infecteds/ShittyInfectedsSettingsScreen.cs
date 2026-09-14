@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Xml.Linq;
 using Engine;
 
@@ -17,6 +17,7 @@ namespace Game
 		private ButtonWidget m_enableBossChaseMusicButton;
 		private ButtonWidget m_enableDeathSpawnButton;
 		private ButtonWidget m_enableGhostChaseMusicButton;
+		private ButtonWidget m_enableDeathMusicButton;
 
 		public ShittyInfectedsSettingsScreen()
 		{
@@ -76,6 +77,12 @@ namespace Game
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", 10)
 			);
 			m_enableGhostChaseMusicButton.ColorTransform = new Color(100, 220, 220);
+
+			m_enableDeathMusicButton = AddToggleButton(
+	"EnableDeathMusic",
+	LanguageControl.Get("ShittyInfectedsSettingsScreen", 11)
+);
+			m_enableDeathMusicButton.ColorTransform = new Color(200, 30, 30);
 		}
 
 		private ButtonWidget AddToggleButton(string name, string descriptionText)
@@ -176,7 +183,7 @@ namespace Game
 
 				if (!ShittyInfectedsSettings.EnableBossChaseMusic)
 				{
-					BossChaseMusicManager.Stop();
+					InfectedsMusicManager.Stop(InfectedsMusicManager.MusicType.BossChase);
 				}
 			}
 			m_enableBossChaseMusicButton.Text = ShittyInfectedsSettings.EnableBossChaseMusic
@@ -199,10 +206,26 @@ namespace Game
 
 				if (!ShittyInfectedsSettings.EnableGhostChaseMusic)
 				{
-					ChaseMusicManager.StopMusic(); // Corta la música si lo desactivas estando en medio de una persecución
+					// Corta la música si lo desactivas estando en medio de una persecución
+					InfectedsMusicManager.Stop(InfectedsMusicManager.MusicType.Chase);
 				}
 			}
 			m_enableGhostChaseMusicButton.Text = ShittyInfectedsSettings.EnableGhostChaseMusic
+				? LanguageControl.On
+				: LanguageControl.Off;
+
+			if (m_enableDeathMusicButton.IsClicked)
+			{
+				ShittyInfectedsSettings.EnableDeathMusic = !ShittyInfectedsSettings.EnableDeathMusic;
+				ShittyInfectedsSettingsManager.Save();
+
+				if (!ShittyInfectedsSettings.EnableDeathMusic)
+				{
+					// Corta la música de muerte si la desactivas estando muerto
+					InfectedsMusicManager.Stop(InfectedsMusicManager.MusicType.Death);
+				}
+			}
+			m_enableDeathMusicButton.Text = ShittyInfectedsSettings.EnableDeathMusic
 				? LanguageControl.On
 				: LanguageControl.Off;
 
