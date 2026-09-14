@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Xml.Linq;
 using Engine;
@@ -61,6 +61,10 @@ namespace Game
 					new XAttribute("type", "bool"),
 					new XAttribute("value", ShittyInfectedsSettings.EnableGhostChaseMusic.ToString().ToLower())
 				));
+				root.Add(new XElement("EnableDeathMusic",
+	new XAttribute("type", "bool"),
+	new XAttribute("value", ShittyInfectedsSettings.EnableDeathMusic.ToString().ToLower())
+));
 
 				using (Stream stream = Storage.OpenFile(SettingsFilePath, OpenFileMode.Create))
 				{
@@ -145,6 +149,13 @@ namespace Game
 					{
 						if (bool.TryParse(elem9.Attribute("value")?.Value, out bool val9))
 							ShittyInfectedsSettings.EnableGhostChaseMusic = val9;
+					}
+
+					XElement elem10 = root.Element("EnableDeathMusic");
+					if (elem10 != null)
+					{
+						if (bool.TryParse(elem10.Attribute("value")?.Value, out bool val10))
+							ShittyInfectedsSettings.EnableDeathMusic = val10;
 					}
 				}
 			}
