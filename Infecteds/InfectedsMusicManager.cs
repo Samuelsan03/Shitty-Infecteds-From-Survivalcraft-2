@@ -8,13 +8,15 @@ namespace Game
 {
 	public static class InfectedsMusicManager
 	{
-		// Tipos de música que administra el manager (por ahora solo persecución)
+		// Tipos de música que administra el manager
 		public enum MusicType
 		{
 			// Persecución normal: bucle continuo, volumen al 80%
 			Chase,
 			// Persecución de jefe: sin bucle nativo (reinicio manual), volumen de MusicManager
-			BossChase
+			BossChase,
+			// Música de muerte del jugador: bucle continuo hasta reaparecer
+			Death
 		}
 
 		// Canal independiente por tipo (permite que dos temas suenen a la vez, como antes)
@@ -24,10 +26,83 @@ namespace Game
 			public string Path;
 			public float PlayTime;
 			public float Duration;
+
+			// Estado de fade-out
+			public bool FadingOut;
+			public float FadeElapsed;
+			public float FadeDuration;
+			public float FadeStartVolume;
 		}
 
 		private static Dictionary<MusicType, MusicChannel> m_channels = new Dictionary<MusicType, MusicChannel>();
 		private static bool m_initialized;
+		private static double m_lastFadeTick = -1.0;
+		/// Inicia un fade-out sobre el canal indicado. No hace nada si no hay sonido.
+		public static void FadeOut(MusicType type, float duration)
+		{
+			MusicChannel channel = GetChannel(type);
+			if (channel.Sound == null || channel.FadingOut) return;
+
+			channel.FadingOut = true;
+			channel.FadeElapsed = 0f;
+			channel.FadeDuration = MathUtils.Max(0.01f, duration);
+			channel.FadeStartVolume = channel.Sound.Volume;
+		}
+
+		/// Debe llamarse cada frame (por ejemplo desde AfterWidgetUpdate).
+		/// Se protege contra múltiples llamadas por frame con un chequeo de tiempo.
+		public static void UpdateFades()
+		{
+			// DEFENSIVO: si la música de muerte está desactivada, cortarla siempre.
+			// Esto cubre el caso en el que el Stop del toggle no llegó a ejecutarse
+			// (por ejemplo si se reactivó el sonido por otro camino) o si el ajuste
+			// se cambió mientras el canal Death seguía sonando.
+			if (!ShittyInfectedsSettings.EnableDeathMusic)
+			{
+				MusicChannel deathChannel;
+				if (m_channels.TryGetValue(MusicType.Death, out deathChannel) && deathChannel.Sound != null)
+				{
+					Stop(MusicType.Death);
+				}
+			}
+
+			double now = Time.FrameStartTime;
+			if (m_lastFadeTick < 0.0)
+			{
+				m_lastFadeTick = now;
+				return;
+			}
+			float dt = (float)(now - m_lastFadeTick);
+			m_lastFadeTick = now;
+			if (dt <= 0f) return;
+
+			List<MusicType> toStop = null;
+			foreach (KeyValuePair<MusicType, MusicChannel> pair in m_channels)
+			{
+				MusicChannel channel = pair.Value;
+				if (!channel.FadingOut || channel.Sound == null) continue;
+
+				channel.FadeElapsed += dt;
+				float t = MathUtils.Clamp(channel.FadeElapsed / channel.FadeDuration, 0f, 1f);
+				try
+				{
+					channel.Sound.Volume = channel.FadeStartVolume * (1f - t);
+				}
+				catch
+				{
+				}
+
+				if (t >= 1f)
+				{
+					if (toStop == null) toStop = new List<MusicType>();
+					toStop.Add(pair.Key);
+				}
+			}
+			if (toStop != null)
+			{
+				foreach (MusicType k in toStop) Stop(k);
+			}
+		}
 
 		public static bool IsPlaying(MusicType type)
 		{
@@ -98,6 +173,9 @@ namespace Game
 				channel.Duration = (float)((double)source.BytesCount / (double)source.ChannelsCount / 2.0 / (double)source.SamplingFrequency);
 				channel.PlayTime = 0f;
 				channel.Path = path;
+				channel.FadingOut = false;
+				channel.FadeElapsed = 0f;
+				channel.FadeDuration = 0f;
 
 				channel.Sound = new StreamingSound(source, volume, 1f, 0f, false, loop, 1f);
 				channel.Sound.Play();
@@ -122,6 +200,8 @@ namespace Game
 				channel.Sound = null;
 				channel.Path = null;
 				channel.PlayTime = 0f;
+				channel.FadingOut = false;
+				channel.FadeElapsed = 0f;
 			}
 		}
 
@@ -173,13 +253,16 @@ namespace Game
 			switch (type)
 			{
 				case MusicType.BossChase:
-					// Original de BossChaseMusicManager: loop en false (reinicio manual), volumen de MusicManager
 					loop = false;
+					volume = MusicManager.Volume;
+					break;
+				case MusicType.Death:
+					// Bucle continuo mientras el jugador esté muerto
+					loop = true;
 					volume = MusicManager.Volume;
 					break;
 				case MusicType.Chase:
 				default:
-					// Original de ChaseMusicManager: en bucle (true), volumen directo al 80%
 					loop = true;
 					volume = SettingsManager.MusicVolume * 0.8f;
 					break;
