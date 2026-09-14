@@ -5,18 +5,23 @@ using TemplatesDatabase;
 
 namespace Game
 {
-	public class SubsystemBossChaseMusic : Subsystem, IUpdateable
+	public class SubsystemGhostChase : Subsystem, IUpdateable
 	{
 		private SubsystemBodies m_subsystemBodies;
 		private SubsystemPlayers m_subsystemPlayers;
+		private SubsystemTime m_subsystemTime;
 
-		public const string MusicPath = "Music/ChaseTheme/Tank Theme";
-		public const float MusicRadius = 50f;
+		private DynamicArray<ComponentBody> m_componentBodies = new DynamicArray<ComponentBody>();
+		private double m_nextUpdateTime;
 
-		// NUEVO: mismo seguimiento que en SubsystemGhostChase.
+		// Último resultado de la detección (se recalcula cada 0.5s, pero la música se gestiona cada frame)
+		private bool m_isChasing;
+
+		// NUEVO: cazador y presa actuales, para detectar cambio de objetivo.
 		private Entity m_lastChasedEntity;
 		private Entity m_lastChasedTarget;
-		private bool m_wasChasing;
+
+		public const string MusicPath = "Music/ChaseTheme/Hotel Insanity Chase Theme";
 
 		public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -24,96 +29,96 @@ namespace Game
 		{
 			m_subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true);
 			m_subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true);
-			InfectedsMusicManager.Initialize();
-		}
-
-		public override void Dispose()
-		{
-			InfectedsMusicManager.Stop(InfectedsMusicManager.MusicType.BossChase);
-			base.Dispose();
+			m_subsystemTime = Project.FindSubsystem<SubsystemTime>(true);
 		}
 
 		public void Update(float dt)
 		{
-			if (!ShittyInfectedsSettings.EnableBossChaseMusic)
+			// Si la opción está desactivada en el menú, impedir que suene
+			if (!ShittyInfectedsSettings.EnableGhostChaseMusic)
 			{
-				m_wasChasing = false;
+				m_isChasing = false;
 				m_lastChasedEntity = null;
 				m_lastChasedTarget = null;
-				InfectedsMusicManager.Update(false, dt, MusicPath, InfectedsMusicManager.MusicType.BossChase);
+				InfectedsMusicManager.Update(false, dt, MusicPath, InfectedsMusicManager.MusicType.Chase);
 				return;
 			}
 
-			Entity newEntity, newTarget;
-			bool isChasing = CheckIfAnyBruteIsChasing(out newEntity, out newTarget);
-
-			// NUEVO: si seguía habiendo persecución pero cambió el brute o la presa,
-			// disparamos fade-out. Al terminar la persecución, el propio manager
-			// (Update con isChasing=false) se encarga del fade.
-			if (m_wasChasing && isChasing &&
-				(newEntity != m_lastChasedEntity || newTarget != m_lastChasedTarget))
+			if (m_subsystemTime.GameTime >= m_nextUpdateTime)
 			{
-				InfectedsMusicManager.FadeOut(
-					InfectedsMusicManager.MusicType.BossChase,
-					InfectedsMusicManager.ChaseFadeOutDuration);
+				m_nextUpdateTime = m_subsystemTime.GameTime + 0.5;
+
+				Entity newEntity, newTarget;
+				bool newIsChasing = DetectChase(out newEntity, out newTarget);
+
+				// NUEVO: si seguimos persiguiendo pero cambió el cazador o la presa
+				// (nueva víctima, la presa lo provocó, etc.), hacemos un fade suave
+				// para que la música arranque limpia para la nueva presa.
+				// Esto NO se aplica al inicio de la persecución (allí Play es directo).
+				if (m_isChasing && newIsChasing &&
+					(newEntity != m_lastChasedEntity || newTarget != m_lastChasedTarget))
+				{
+					InfectedsMusicManager.FadeOut(
+						InfectedsMusicManager.MusicType.Chase,
+						InfectedsMusicManager.ChaseFadeOutDuration);
+				}
+
+				m_isChasing = newIsChasing;
+				m_lastChasedEntity = newEntity;
+				m_lastChasedTarget = newTarget;
 			}
 
-			m_wasChasing = isChasing;
-			m_lastChasedEntity = newEntity;
-			m_lastChasedTarget = newTarget;
-
-			InfectedsMusicManager.Update(isChasing, dt, MusicPath, InfectedsMusicManager.MusicType.BossChase);
+			InfectedsMusicManager.Update(m_isChasing, dt, MusicPath, InfectedsMusicManager.MusicType.Chase);
 		}
 
-		// Comprueba si el nombre de la entidad es uno de los brutes con música de jefe.
-		// Sin diccionarios: solo comparaciones normales con ||.
-		private static bool IsBossBruteName(string entityName)
-		{
-			if (string.IsNullOrEmpty(entityName)) return false;
-
-			return entityName == "InfectedBrute"
-				|| entityName == "InfectedBruteArsonist"
-				|| entityName == "InfectedBruteFrozen"
-				|| entityName == "InfectedBrutePoisonous";
-		}
-
-		private bool CheckIfAnyBruteIsChasing(out Entity chasedEntity, out Entity chasedTarget)
+		// Ahora además reporta quién persigue y a quién, para detectar cambio de presa.
+		private bool DetectChase(out Entity chasedEntity, out Entity chasedTarget)
 		{
 			chasedEntity = null;
 			chasedTarget = null;
 
-			float radiusSquared = MusicRadius * MusicRadius;
-
-			foreach (ComponentBody body in m_subsystemBodies.Bodies)
+			if (m_subsystemPlayers.ComponentPlayers.Count == 0)
 			{
-				if (body?.Entity == null) continue;
+				return false;
+			}
 
-				string entityName = body.Entity.ValuesDictionary?.DatabaseObject?.Name;
+			ComponentBody playerBody = m_subsystemPlayers.ComponentPlayers[0].ComponentBody;
+			m_componentBodies.Clear();
 
-				// ANTES: if (entityName != "InfectedBrute" | ...) continue;  → mal, siempre true
-				// AHORA: solo seguimos con los brutes con música de jefe.
-				if (!IsBossBruteName(entityName)) continue;
+			m_subsystemBodies.FindBodiesAroundPoint(
+				new Vector2(playerBody.Position.X, playerBody.Position.Z), 60f, m_componentBodies);
 
-				ComponentZombieChaseBehavior chaseBehavior = body.Entity.FindComponent<ComponentZombieChaseBehavior>();
-				ComponentHealth health = body.Entity.FindComponent<ComponentHealth>();
-
-				if (chaseBehavior == null || health == null) continue;
-				if (!chaseBehavior.IsActive || chaseBehavior.Target == null || health.Health <= 0f) continue;
-
-				foreach (ComponentPlayer player in m_subsystemPlayers.ComponentPlayers)
+			for (int i = 0; i < m_componentBodies.Count; i++)
+			{
+				ComponentBody body = m_componentBodies.Array[i];
+				if (body.Entity.ValuesDictionary.DatabaseObject.Name == "GhostNormal")
 				{
-					if (player?.ComponentBody == null) continue;
+					ComponentCreature creature = body.Entity.FindComponent<ComponentCreature>();
+					ComponentHealth health = body.Entity.FindComponent<ComponentHealth>();
+					ComponentZombieChaseBehavior chaseBehavior = body.Entity.FindComponent<ComponentZombieChaseBehavior>();
 
-					float distanceSquared = Vector3.DistanceSquared(body.Position, player.ComponentBody.Position);
-					if (distanceSquared <= radiusSquared)
+					if (creature != null && health != null && health.Health > 0f && chaseBehavior != null)
 					{
-						chasedEntity = body.Entity;
-						chasedTarget = chaseBehavior.Target.Entity;
-						return true;
+						if (chaseBehavior.IsActive && chaseBehavior.Target != null && m_subsystemPlayers.IsPlayer(chaseBehavior.Target.Entity))
+						{
+							float distance = Vector3.Distance(playerBody.Position, creature.ComponentBody.Position);
+							if (distance <= 50f)
+							{
+								chasedEntity = body.Entity;
+								chasedTarget = chaseBehavior.Target.Entity;
+								return true;
+							}
+						}
 					}
 				}
 			}
 			return false;
+		}
+
+		public override void Dispose()
+		{
+			InfectedsMusicManager.Stop(InfectedsMusicManager.MusicType.Chase);
+			base.Dispose();
 		}
 	}
 }
