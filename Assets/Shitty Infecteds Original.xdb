@@ -9,8 +9,48 @@
 <MemberComponentTemplate Name="NewSleep" Guid="e7b98f0e-317f-4589-8033-ca605f92ee15" InheritanceParent="0f088018-fb70-45f1-bc91-789c9965ca1b">
 <Parameter Name="Class" Guid="b783c0e3-2ca7-478f-8b9e-6fa2209e2b9c" Value="Game.ComponentNewSleep" Type="string" />
 </MemberComponentTemplate>
-<MemberComponentTemplate Name="ZombieRider" Guid="207db8a4-3c12-4c55-8495-c79aff287bc8" InheritanceParent="a59c6dfa-6be1-4450-8e1b-d9aba7a4e80b">
-<Parameter Name="RiderOffset" Guid="efc45009-68f8-4f8b-bd08-4491b125b328" Value="0,-0.71,0" Type="Vector3" />
+</EntityTemplate>
+
+<EntityTemplate Name="Rhino" Guid="4d02fd7e-3054-4121-b2a5-787db985df5f" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+<MemberComponentTemplate Name="InfectedWithPoison" Guid="385b166c-b3bb-42fc-abbb-64156dc3ef01" InheritanceParent="5a97d777-b5aa-45fc-9442-9f47addf7988">
+  <Parameter Name="PoisonResistance" Guid="31be0163-4ec8-4507-9ac7-622f85a3fb78" Value="0.1" Type="float" />
+  <Parameter Name="DurationOfPoison" Guid="0c74f505-8bbb-476c-98ec-a5f86ef6d917" Value="300" Type="float" />
+</MemberComponentTemplate>
+<MemberComponentTemplate Name="DeathSpawner" Guid="5c7889e4-270a-42a9-9a2f-3fdd2f1f1279" InheritanceParent="0ffb00a2-fa59-4c2c-a6cf-204e30936a86">
+  <Parameter Name="SpawnEntities" Guid="fb817f09-8b7b-4511-b0c7-53c2fa246184" Value="InfectedMuscle1,InfectedMuscle2" Type="string" />
+  <Parameter Name="Probability" Guid="08c03631-5fdd-4874-be16-13cfe9508a2d" Value="0.5" Type="float" />
+</MemberComponentTemplate>
+</EntityTemplate>
+
+<EntityTemplate Name="Werewolf" Guid="6a4c3ee2-bb65-4d45-9b91-e1ec3dc3e865" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+<MemberComponentTemplate Name="HerdBehavior" Guid="159ebf9b-dfc7-4d9b-bcb2-95282ed9f253" InheritanceParent="dfe7218e-ce14-4bde-8dac-f919c38e9efe">
+              <Parameter Name="HerdName" Guid="863c28c3-dccc-42e6-a571-f3735febb6d2" Value="GrayWolf" Type="string" />
+              <Parameter Name="AutoNearbyCreaturesHelp" Guid="4589860b-7d63-4d86-b0b6-2517e432d14e" Value="True" Type="bool" />
+            </MemberComponentTemplate>
+<MemberComponentTemplate Name="Rider" Guid="1775c212-d858-4934-bb3b-0f56f1686764" InheritanceParent="894cdf33-9691-4320-a342-3aba1fd1c746">
+              <Parameter Name="RiderOffset" Guid="1f25adf0-6cf4-404d-84da-2062858a69d9" Value="0,-0.71,0" Type="Vector3" />
+            </MemberComponentTemplate>
+<MemberComponentTemplate Name="CreatureAI" Guid="068b3656-0609-48c6-919e-02473e03c12a" InheritanceParent="c00b9ef4-d87a-4422-9cdc-ee5884030443">
+  <Parameter Name="CanUseInventory" Guid="5a5afad5-f4f3-419f-a809-4085d56ef23f" Value="true" Type="bool" />
+  <Parameter Name="CanItBeMounted" Guid="27c77c76-cb57-455c-bd86-e10c4f71b3a3" Value="true" Type="bool" />
+  <Parameter Name="CanDestroyBlocks" Guid="7741944e-eff1-4b47-b486-c9d83f855a4e" Value="true" Type="bool" />
+</MemberComponentTemplate>
+<MemberComponentTemplate Name="Inventory" Guid="77235d30-c310-48e6-9591-d23a027d49ff" InheritanceParent="de5c0cb9-42d1-4ee4-b58f-bb9bb668b890" />
+<MemberComponentTemplate Name="GatherPickableBehavior" Guid="1e5ffe35-120b-49ac-b419-d0848e2b55f6" InheritanceParent="0177b6c8-11b2-4f86-951f-205d38e8d9c6">
+  <ParameterSet Name="CategoryFactors" Guid="6eb213f8-7b1e-45f3-9261-2454dfd68417">
+    <Parameter Name="Weapons" Guid="550544fb-6f9d-49d2-99e4-bea0deae602b" Value="1" Type="float" />
+    <Parameter Name="Tools" Guid="b41ca532-2bbc-4fd9-8046-37957d36de5f" Value="1" Type="float" />
+    </ParameterSet>
+</MemberComponentTemplate>
+<MemberComponentTemplate Name="InfectedWithPoison" Guid="733c3bb6-cee7-41a7-a650-21a05b8aedbf" InheritanceParent="5a97d777-b5aa-45fc-9442-9f47addf7988">
+  <Parameter Name="PoisonResistance" Guid="0c5e3ea6-a313-49ed-a608-b4579e0c51c4" Value="0.35" Type="float" />
+  <Parameter Name="DurationOfPoison" Guid="6991bedd-1903-4e87-a497-1ee0e59bb158" Value="300" Type="float" />
+</MemberComponentTemplate>
+<MemberComponentTemplate Name="CreatureFlu" Guid="134587ed-868e-4ec8-b05b-3f2d2fa692ed" InheritanceParent="13c23935-cef8-4284-9177-e890dd9c667d">
+  <Parameter Name="SneezeSoundPath" Guid="847b15d8-1a65-468a-aa8a-57a96b965dbd" Value="Audio/Creatures/MaleSneeze" Type="string" />
+  <Parameter Name="CoughSoundPath" Guid="7bc1861b-fa4a-4426-87d2-4b43f480a9c4" Value="Audio/Creatures/MaleCough" Type="string" />
+  <Parameter Name="FluDuration" Guid="d7ed7500-56a4-4540-973b-5db49c1921d9" Value="300" Type="float" />
+  <Parameter Name="FluResistance" Guid="18f33b5d-be56-4de1-9dd8-7d8d321ed6d6" Value="0.1" Type="float" />
 </MemberComponentTemplate>
 </EntityTemplate>
 </Zombie>
