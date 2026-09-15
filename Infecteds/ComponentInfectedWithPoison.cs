@@ -284,6 +284,11 @@ namespace Game
 								canNausea = true;
 							}
 						}
+						else
+						{
+							// Igual que el vanilla: sin historial => primera náusea
+							canNausea = true;
+						}
 
 						if (canNausea)
 						{
@@ -386,12 +391,47 @@ namespace Game
 
 			m_poisonResistance = valuesDictionary.GetValue<float>("PoisonResistance");
 			m_durationOfPoison = valuesDictionary.GetValue<float>("DurationOfPoison");
+
+			// --- RESTAURAR ESTADO DE INFECCIÓN ---
+			m_infectionDuration = valuesDictionary.GetValue<float>("CurrentInfectionDuration", 0f);
+			m_poisonIntensity = valuesDictionary.GetValue<float>("PoisonIntensity", 0f);
+			m_poisonSourceName = valuesDictionary.GetValue<string>("PoisonSourceName", null);
+			m_firstVomitQueued = valuesDictionary.GetValue<bool>("FirstVomitQueued", false);
+			m_firstVomitTimer = valuesDictionary.GetValue<float>("FirstVomitTimer", -1f);
+
+			// Reaplicar penalizaciones de velocidad si seguía infectada
+			if (IsInfected && m_componentLocomotion != null)
+			{
+				StoreOriginalSpeeds();
+				float maxSpeedReduction = 0.6f * PoisonEffectiveness;
+				float penalty = 1f - maxSpeedReduction * m_poisonIntensity;
+				penalty = MathUtils.Max(penalty, 1f - maxSpeedReduction);
+
+				m_componentLocomotion.WalkSpeed = m_originalWalkSpeed * penalty;
+				m_componentLocomotion.FlySpeed = m_originalFlySpeed * penalty;
+				m_componentLocomotion.SwimSpeed = m_originalSwimSpeed * penalty;
+				m_componentLocomotion.JumpSpeed = m_originalJumpSpeed * penalty;
+				m_componentLocomotion.LadderSpeed = m_originalLadderSpeed * penalty;
+
+				// --- REINICIAR EL CICLO DE SÍNTOMAS ---
+				// Si seguía infectada, forzamos a que vuelva a vomitar pronto
+				// (así se rellena m_lastNauseaTime y el resto del ciclo continúa).
+				m_firstVomitQueued = false;
+				m_firstVomitTimer = 2f;
+				m_lastNauseaTime = null;
+				m_lastMoanTime = null;
+			}
 		}
 
 		public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)
 		{
 			valuesDictionary.SetValue<float>("PoisonResistance", m_poisonResistance);
 			valuesDictionary.SetValue<float>("DurationOfPoison", m_durationOfPoison);
+
+			// Estado persistente de la infección
+			valuesDictionary.SetValue<float>("CurrentInfectionDuration", m_infectionDuration);
+			valuesDictionary.SetValue<float>("PoisonIntensity", m_poisonIntensity);
+			valuesDictionary.SetValue<string>("PoisonSourceName", m_poisonSourceName);
 		}
 	}
 }
