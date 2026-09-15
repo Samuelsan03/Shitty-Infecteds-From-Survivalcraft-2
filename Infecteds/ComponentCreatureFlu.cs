@@ -366,14 +366,32 @@ namespace Game
 
 			m_fluResistance = valuesDictionary.GetValue<float>("FluResistance");
 			m_fluDurationDefault = valuesDictionary.GetValue<float>("FluDuration");
-			m_fluDuration = 0f;
-			m_activeInfection = false;
+
+			// --- RESTAURAR ESTADO DE INFECCIÓN ---
+			m_fluDuration = valuesDictionary.GetValue<float>("CurrentFluDuration", 0f);
+			m_activeInfection = valuesDictionary.GetValue<bool>("ActiveInfection", false);
+
+			// Coherencia por si acaso
+			if (m_fluDuration > 0f && !m_activeInfection)
+				m_activeInfection = true;
+			if (m_fluDuration <= 0f)
+				m_activeInfection = false;
+
+			// Reaplicar penalizaciones de velocidad si seguía infectada
+			if (HasFlu)
+			{
+				UpdateLocomotionSpeeds();
+			}
 		}
 
 		public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)
 		{
 			valuesDictionary.SetValue<float>("FluResistance", m_fluResistance);
 			valuesDictionary.SetValue<float>("FluDuration", m_fluDurationDefault);
+
+			// --- PERSISTIR ESTADO DE INFECCIÓN ---
+			valuesDictionary.SetValue<float>("CurrentFluDuration", m_fluDuration);
+			valuesDictionary.SetValue<bool>("ActiveInfection", m_activeInfection);
 		}
 	}
 }
