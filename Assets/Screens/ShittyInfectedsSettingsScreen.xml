@@ -5,13 +5,64 @@
   <StackPanelWidget Direction="Horizontal">
 
     <CanvasWidget Style="{Widgets/TopBarContents}" >
-      <LabelWidget Name="TopBar.Label" Text="Shitty Infecteds Settings" />
+      <LabelWidget Name="TopBar.Label" Text="[ShittyInfectedsSettingsScreen:1]" />
     </CanvasWidget>
 
     <CanvasWidget Margin="10, 20">
       <BevelledRectangleWidget Style="{Styles/Area}" />
       <ScrollPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3, 3">
-        <StackPanelWidget Name="SettingsContainer" Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="EnableCreatureAttacksLabel" Text="[ShittyInfectedsSettingsScreen:2]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="EnableCreatureAttacks" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="AttackOnHitCreativeLabel" Text="[ShittyInfectedsSettingsScreen:3]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="AttackOnHitCreative" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="ShowCoordinatesLabel" Text="[ShittyInfectedsSettingsScreen:4]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="ShowCoordinates" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="ShowCreatureHealthBarsLabel" Text="[ShittyInfectedsSettingsScreen:5]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="ShowCreatureHealthBars" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="EnableCreatureBleedingLabel" Text="[ShittyInfectedsSettingsScreen:6]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="EnableCreatureBleeding" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="EnableFreeCameraLabel" Text="[ShittyInfectedsSettingsScreen:7]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="EnableFreeCamera" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="EnableBossChaseMusicLabel" Text="[ShittyInfectedsSettingsScreen:8]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="EnableBossChaseMusic" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="EnableDeathSpawnLabel" Text="[ShittyInfectedsSettingsScreen:9]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="EnableDeathSpawn" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="EnableGhostChaseMusicLabel" Text="[ShittyInfectedsSettingsScreen:10]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="EnableGhostChaseMusic" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
+          <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Name="EnableDeathMusicLabel" Text="[ShittyInfectedsSettingsScreen:11]" HorizontalAlignment="Far" VerticalAlignment="Center" Margin="20, 0" Size="600, -1" WordWrap="true" />
+            <BevelledButtonWidget Name="EnableDeathMusic" Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0" />
+          </UniformSpacingPanelWidget>
+
         </StackPanelWidget>
       </ScrollPanelWidget>
     </CanvasWidget>
