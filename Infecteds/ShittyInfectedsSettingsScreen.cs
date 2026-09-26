@@ -6,8 +6,6 @@ namespace Game
 {
 	public class ShittyInfectedsSettingsScreen : Screen
 	{
-		private StackPanelWidget m_settingsContainer;
-
 		private ButtonWidget m_enableCreatureAttacksButton;
 		private ButtonWidget m_attackOnHitCreativeButton;
 		private ButtonWidget m_showCoordinatesButton;
@@ -28,96 +26,39 @@ namespace Game
 
 			Children.Find<LabelWidget>("TopBar.Label", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 1);
 
-			m_settingsContainer = Children.Find<StackPanelWidget>("SettingsContainer", true);
+			Children.Find<LabelWidget>("EnableCreatureAttacksLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 2);
+			m_enableCreatureAttacksButton = Children.Find<ButtonWidget>("EnableCreatureAttacks", true);
 
-			m_enableCreatureAttacksButton = AddToggleButton(
-				"EnableCreatureAttacks",
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", 2)
-			);
+			Children.Find<LabelWidget>("AttackOnHitCreativeLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 3);
+			m_attackOnHitCreativeButton = Children.Find<ButtonWidget>("AttackOnHitCreative", true);
 
-			m_attackOnHitCreativeButton = AddToggleButton(
-				"AttackOnHitCreative",
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", 3)
-			);
+			Children.Find<LabelWidget>("ShowCoordinatesLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 4);
+			m_showCoordinatesButton = Children.Find<ButtonWidget>("ShowCoordinates", true);
 
-			m_showCoordinatesButton = AddToggleButton(
-				"ShowCoordinates",
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", 4)
-			);
+			Children.Find<LabelWidget>("ShowCreatureHealthBarsLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 5);
+			m_showCreatureHealthBarsButton = Children.Find<ButtonWidget>("ShowCreatureHealthBars", true);
 
-			m_showCreatureHealthBarsButton = AddToggleButton(
-				"ShowCreatureHealthBars",
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", 5)
-			);
+			Children.Find<LabelWidget>("EnableCreatureBleedingLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 6);
+			m_enableCreatureBleedingButton = Children.Find<ButtonWidget>("EnableCreatureBleeding", true);
 
-			m_enableCreatureBleedingButton = AddToggleButton(
-				"EnableCreatureBleeding",
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", 6)
-			);
+			Children.Find<LabelWidget>("EnableFreeCameraLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 7);
+			m_enableFreeCameraButton = Children.Find<ButtonWidget>("EnableFreeCamera", true);
 
-			m_enableFreeCameraButton = AddToggleButton(
-				"EnableFreeCamera",
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", 7)
-			);
-
-			m_enableBossChaseMusicButton = AddToggleButton(
-				"EnableBossChaseMusic",
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", 8)
-			);
+			Children.Find<LabelWidget>("EnableBossChaseMusicLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 8);
+			m_enableBossChaseMusicButton = Children.Find<ButtonWidget>("EnableBossChaseMusic", true);
 			m_enableBossChaseMusicButton.ColorTransform = new Color(255, 140, 0);
 
-			m_enableDeathSpawnButton = AddToggleButton(
-				"EnableDeathSpawn",
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", 9)
-			);
+			Children.Find<LabelWidget>("EnableDeathSpawnLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 9);
+			m_enableDeathSpawnButton = Children.Find<ButtonWidget>("EnableDeathSpawn", true);
 			m_enableDeathSpawnButton.ColorTransform = new Color(180, 40, 60);
 
-			m_enableGhostChaseMusicButton = AddToggleButton(
-				"EnableGhostChaseMusic",
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", 10)
-			);
+			Children.Find<LabelWidget>("EnableGhostChaseMusicLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 10);
+			m_enableGhostChaseMusicButton = Children.Find<ButtonWidget>("EnableGhostChaseMusic", true);
 			m_enableGhostChaseMusicButton.ColorTransform = new Color(100, 220, 220);
 
-			m_enableDeathMusicButton = AddToggleButton(
-	"EnableDeathMusic",
-	LanguageControl.Get("ShittyInfectedsSettingsScreen", 11)
-);
+			Children.Find<LabelWidget>("EnableDeathMusicLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 11);
+			m_enableDeathMusicButton = Children.Find<ButtonWidget>("EnableDeathMusic", true);
 			m_enableDeathMusicButton.ColorTransform = new Color(200, 30, 30);
-		}
-
-		private ButtonWidget AddToggleButton(string name, string descriptionText)
-		{
-			UniformSpacingPanelWidget row = new UniformSpacingPanelWidget
-			{
-				Direction = LayoutDirection.Horizontal,
-				Margin = new Vector2(0, 3)
-			};
-
-			LabelWidget descriptionLabel = new LabelWidget
-			{
-				Text = descriptionText,
-				HorizontalAlignment = WidgetAlignment.Far,
-				VerticalAlignment = WidgetAlignment.Center,
-				Color = new Color(180, 180, 180),
-				Margin = new Vector2(20, 0),
-				WordWrap = true
-			};
-
-			BevelledButtonWidget button = new BevelledButtonWidget
-			{
-				Name = name,
-				Style = ContentManager.Get<XElement>("Styles/ButtonStyle_310x60"),
-				VerticalAlignment = WidgetAlignment.Center,
-				Margin = new Vector2(20, 0),
-				Text = LanguageControl.Off
-			};
-
-			row.Children.Add(descriptionLabel);
-			row.Children.Add(button);
-
-			m_settingsContainer.Children.Add(row);
-
-			return button;
 		}
 
 		public override void Update()
@@ -206,7 +147,6 @@ namespace Game
 
 				if (!ShittyInfectedsSettings.EnableGhostChaseMusic)
 				{
-					// Corta la música si lo desactivas estando en medio de una persecución
 					InfectedsMusicManager.Stop(InfectedsMusicManager.MusicType.Chase);
 				}
 			}
@@ -221,7 +161,6 @@ namespace Game
 
 				if (!ShittyInfectedsSettings.EnableDeathMusic)
 				{
-					// Corta la música de muerte si la desactivas estando muerto
 					InfectedsMusicManager.Stop(InfectedsMusicManager.MusicType.Death);
 				}
 			}
