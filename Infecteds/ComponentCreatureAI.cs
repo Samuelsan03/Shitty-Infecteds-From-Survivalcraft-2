@@ -61,6 +61,8 @@ namespace Game
 		public float RepeatCrossbowCooldown = 0.01f;
 		public float FlameThrowerAimTime = 1.5f;
 		public float FlameThrowerCooldown = 0.01f;
+		public float CannonAimTime = 1.5f;
+		public float CannonCooldown = 0.01f;
 
 		public Vector2 DistanceForUseOfThrowableObjects = new Vector2(5f, 15f);
 		public float ThrowableAimTime = 1.5f;
@@ -552,7 +554,8 @@ namespace Game
 				CancelFirearmAim();
 			}
 
-			// 3. LÓGICA DE RANGO LEGADO (MOSQUETE MEJORADO, MOSQUETE, ARCO, BALLESTA, BALLESTA REPETIDORA, LANZALLAMAS)
+			// 3. LÓGICA DE RANGO LEGADO (CAÑÓN, MOSQUETE MEJORADO, MOSQUETE, ARCO, BALLESTA, BALLESTA REPETIDORA, LANZALLAMAS)
+			int cannonBlockIndex = BlocksManager.GetBlockIndex<CannonBlock>(false, false);
 			int improvedMusketBlockIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>(false, false);
 			int musketBlockIndex = BlocksManager.GetBlockIndex<MusketBlock>(false, false);
 			int bowBlockIndex = BlocksManager.GetBlockIndex<BowBlock>(false, false);
@@ -560,12 +563,13 @@ namespace Game
 			int repeatCrossbowBlockIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>(false, false);
 			int flameThrowerBlockIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>(false, false);
 
-			int improvedMusketSlot = improvedMusketBlockIndex > 0 ? FindAndLoadImprovedMusketSlot(improvedMusketBlockIndex) : -1;
-			int musketSlot = FindBlockSlot(musketBlockIndex);
-			int bowSlot = bowBlockIndex > 0 ? FindAndLoadBowSlot(bowBlockIndex) : -1;
-			int crossbowSlot = crossbowBlockIndex > 0 ? FindAndLoadCrossbowSlot(crossbowBlockIndex, distance) : -1;
-			int repeatCrossbowSlot = repeatCrossbowBlockIndex > 0 ? FindAndLoadRepeatCrossbowSlot(repeatCrossbowBlockIndex, distance) : -1;
-			int flameThrowerSlot = flameThrowerBlockIndex > 0 ? FindAndLoadFlameThrowerSlot(flameThrowerBlockIndex) : -1;
+			int cannonSlot = cannonBlockIndex > 0 ? FindAndLoadCannonSlot(cannonBlockIndex) : -1;
+			int improvedMusketSlot = (cannonSlot < 0 && improvedMusketBlockIndex > 0) ? FindAndLoadImprovedMusketSlot(improvedMusketBlockIndex) : -1;
+			int musketSlot = (cannonSlot < 0 && improvedMusketSlot < 0) ? FindBlockSlot(musketBlockIndex) : -1;
+			int bowSlot = (cannonSlot < 0 && improvedMusketSlot < 0 && musketSlot < 0 && bowBlockIndex > 0) ? FindAndLoadBowSlot(bowBlockIndex) : -1;
+			int crossbowSlot = (cannonSlot < 0 && improvedMusketSlot < 0 && musketSlot < 0 && bowSlot < 0 && crossbowBlockIndex > 0) ? FindAndLoadCrossbowSlot(crossbowBlockIndex, distance) : -1;
+			int repeatCrossbowSlot = (cannonSlot < 0 && improvedMusketSlot < 0 && musketSlot < 0 && bowSlot < 0 && crossbowSlot < 0 && repeatCrossbowBlockIndex > 0) ? FindAndLoadRepeatCrossbowSlot(repeatCrossbowBlockIndex, distance) : -1;
+			int flameThrowerSlot = (cannonSlot < 0 && improvedMusketSlot < 0 && musketSlot < 0 && bowSlot < 0 && crossbowSlot < 0 && repeatCrossbowSlot < 0 && flameThrowerBlockIndex > 0) ? FindAndLoadFlameThrowerSlot(flameThrowerBlockIndex) : -1;
 
 			int meleeSlot = FindMeleeWeaponSlot();
 			bool hasMeleeWeapon = meleeSlot >= 0;
@@ -575,7 +579,13 @@ namespace Game
 			float currentCooldown = MusketCooldown;
 			bool isMusket = false;
 
-			if (improvedMusketSlot >= 0)
+			if (cannonSlot >= 0)
+			{
+				activeRangedSlot = cannonSlot;
+				currentAimTime = CannonAimTime;
+				currentCooldown = CannonCooldown;
+			}
+			else if (improvedMusketSlot >= 0)
 			{
 				activeRangedSlot = improvedMusketSlot;
 				currentAimTime = ImprovedMusketAimTime;
@@ -1437,8 +1447,9 @@ namespace Game
 					int blockId = Terrain.ExtractContents(value);
 
 					if (blockId == MusketBlock.Index || blockId == ImprovedMusketBlock.Index ||
-						blockId == BowBlock.Index || blockId == CrossbowBlock.Index ||
-						blockId == RepeatCrossbowBlock.Index || blockId == FlameThrowerBlock.Index)
+	blockId == BowBlock.Index || blockId == CrossbowBlock.Index ||
+	blockId == RepeatCrossbowBlock.Index || blockId == FlameThrowerBlock.Index ||
+	blockId == CannonBlock.Index)
 						continue;
 
 					bool isFirearm = false;
@@ -1735,6 +1746,32 @@ namespace Game
 			//   noDrop           = false (dropea items -> SubsystemPickables)
 			//   noParticleSystem = false (genera debris  -> SubsystemParticles)
 			m_subsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+		}
+
+		private int FindAndLoadCannonSlot(int cannonBlockIndex)
+		{
+			IInventory inventory = m_componentMiner.Inventory;
+			if (inventory == null) return -1;
+
+			for (int i = 0; i < inventory.SlotsCount; i++)
+			{
+				int value = inventory.GetSlotValue(i);
+				if (inventory.GetSlotCount(i) > 0 && Terrain.ExtractContents(value) == cannonBlockIndex)
+				{
+					int data = Terrain.ExtractData(value);
+					CannonBlock.LoadState loadState = CannonBlock.GetLoadState(data);
+
+					if (loadState == CannonBlock.LoadState.Loaded) return i;
+
+					int newData = CannonBlock.SetLoadState(data, CannonBlock.LoadState.Loaded);
+					int newValue = Terrain.MakeBlockValue(cannonBlockIndex, 0, newData);
+
+					inventory.RemoveSlotItems(i, 1);
+					inventory.AddSlotItems(i, newValue, 1);
+					return i;
+				}
+			}
+			return -1;
 		}
 	}
 }
