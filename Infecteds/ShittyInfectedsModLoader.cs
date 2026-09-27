@@ -37,6 +37,7 @@ public class ShittyInfectedsModLoader : ModLoader
 		ModsManager.RegisterHook("ProcessAttackment", this);
 		ModsManager.RegisterHook("OnPlayerDead", this);
 		ModsManager.RegisterHook("ScoreMount", this);
+		ModsManager.RegisterHook("UpdatePlayerInputAim", this);
 	}
 
 	public override void ScoreMount(ComponentRider rider, ComponentMount mount, out float? score)
@@ -780,6 +781,23 @@ public class ShittyInfectedsModLoader : ModLoader
 		AddItemsToInventory(player, "AntidotePillBlock", 5);
 		AddItemsToInventory(player, "CoinBlock", 100);
 	}
+
+	public override void UpdatePlayerInputAim(
+	ComponentPlayer player,
+	bool isAiming,
+	ref bool flag,
+	ref float timeIntervalAim,
+	bool skipVanilla,
+	out bool skip)
+	{
+		skip = false;
+
+		// Sin cooldown entre apuntados.
+		// Vanilla usa 0.1f en Creative; aquí lo aplicamos
+		// también en los demás modos de juego.
+		timeIntervalAim = 0.1f;
+	}
+
 
 	public override void SaveSettings(XElement xElement)
 	{
