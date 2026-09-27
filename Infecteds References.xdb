@@ -264,6 +264,12 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="SubsystemCannonBlockBehavior" Guid="33fa93a6-98ac-426a-8581-90e54c382659" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="da0daa98-db1d-48c3-bcd0-fe580cf21c77" Value="Game.SubsystemCannonBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemCannonballBlockBehavior" Guid="9ac0a9f9-cbe5-4885-a3cb-0df537579dc3" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="bd7d45c3-3a79-4593-9c56-da619d71ffd6" Value="Game.SubsystemCannonballBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemM249BlockBehavior" Guid="0ceae944-63ca-4194-a0e3-a2a0c4b78661" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
           <Parameter Name="Class" Guid="4c8756e2-952d-4c43-8044-e1a6cfb57421" Value="Game.SubsystemM249BlockBehavior" Type="string" />
         </MemberSubsystemTemplate>
