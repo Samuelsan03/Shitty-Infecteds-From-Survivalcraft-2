@@ -104,6 +104,8 @@ namespace Game
 
 		public float ThrowableCooldown = 0.01f;
 		public float ThrowableAimTime = 1.5f;
+		public float CannonCooldown = 0.01f;
+		public float CannonAimTime = 1.5f;
 
 		public float CooldownTimer;
 		public float AimTimeTimer;
@@ -1247,6 +1249,7 @@ namespace Game
 
 		private bool IsRangedWeapon(int blockIndex)
 		{
+			int cannonIndex = BlocksManager.GetBlockIndex<CannonBlock>();
 			int improvedMusketIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>();
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
@@ -1254,7 +1257,7 @@ namespace Game
 			int repeatCrossbowIndex = BlocksManager.GetBlockIndex<RepeatCrossbowBlock>();
 			int flameThrowerIndex = BlocksManager.GetBlockIndex<FlameThrowerBlock>();
 
-			if (blockIndex == improvedMusketIndex || blockIndex == musketIndex || blockIndex == crossbowIndex || blockIndex == bowIndex || blockIndex == repeatCrossbowIndex || blockIndex == flameThrowerIndex)
+			if (blockIndex == cannonIndex || blockIndex == improvedMusketIndex || blockIndex == musketIndex || blockIndex == crossbowIndex || blockIndex == bowIndex || blockIndex == repeatCrossbowIndex || blockIndex == flameThrowerIndex)
 				return true;
 
 			if (IsFirearmBlock(blockIndex))
@@ -1268,6 +1271,7 @@ namespace Game
 			int firearmSlot = FindFirearmSlot(inventory);
 			if (firearmSlot >= 0) return firearmSlot;
 
+			int cannonIndex = BlocksManager.GetBlockIndex<CannonBlock>();
 			int improvedMusketIndex = BlocksManager.GetBlockIndex<ImprovedMusketBlock>();
 			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
 			int crossbowIndex = BlocksManager.GetBlockIndex<CrossbowBlock>();
@@ -1283,6 +1287,8 @@ namespace Game
 
 				int value = inventory.GetSlotValue(i);
 				int contents = Terrain.ExtractContents(value);
+
+				if (contents == cannonIndex) return i;
 
 				if (contents == improvedMusketIndex) return i;
 
@@ -1328,7 +1334,9 @@ namespace Game
 			int value = inventory.GetSlotValue(slot);
 			int contents = Terrain.ExtractContents(value);
 
-			if (contents == BlocksManager.GetBlockIndex<ImprovedMusketBlock>())
+			if (contents == BlocksManager.GetBlockIndex<CannonBlock>())
+				EnsureCannonLoaded(inventory, slot, value);
+			else if (contents == BlocksManager.GetBlockIndex<ImprovedMusketBlock>())
 				EnsureImprovedMusketLoaded(inventory, slot, value);
 			else if (contents == BlocksManager.GetBlockIndex<MusketBlock>())
 				EnsureMusketLoaded(inventory, slot, value);
@@ -1340,6 +1348,19 @@ namespace Game
 				EnsureBowLoaded(inventory, slot, value);
 			else if (contents == BlocksManager.GetBlockIndex<RepeatCrossbowBlock>())
 				EnsureRepeatCrossbowLoaded(inventory, slot, value, distance);
+		}
+
+		private void EnsureCannonLoaded(IInventory inventory, int slot, int value)
+		{
+			int cannonIndex = BlocksManager.GetBlockIndex<CannonBlock>();
+			int data = Terrain.ExtractData(value);
+			if (CannonBlock.GetLoadState(data) != CannonBlock.LoadState.Loaded)
+			{
+				data = CannonBlock.SetLoadState(data, CannonBlock.LoadState.Loaded);
+				int newValue = Terrain.MakeBlockValue(cannonIndex, 0, data);
+				inventory.RemoveSlotItems(slot, 1);
+				inventory.AddSlotItems(slot, newValue, 1);
+			}
 		}
 
 		private void EnsureImprovedMusketLoaded(IInventory inventory, int slot, int value)
@@ -1623,19 +1644,37 @@ namespace Game
 
 			GetRangedWeaponTypeFlags(out bool isBow, out bool isCrossbow, out bool isFlameThrower, out bool isImprovedMusket);
 
+			int activeSlot = m_componentMiner.Inventory.ActiveSlotIndex;
+			int slotValue = m_componentMiner.Inventory.GetSlotValue(activeSlot);
+			int contents = Terrain.ExtractContents(slotValue);
+			int cannonIndex = BlocksManager.GetBlockIndex<CannonBlock>();
+			int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
+			bool isCannon = contents == cannonIndex;
+
 			if (AimTimeTimer > 0f)
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
-				ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
+
+				if (isCannon)
+				{
+					// Para criaturas SIN animación normal: forzar brazos quietos y rotar el arma
+					if (!UsesNormalAimAnimation())
+					{
+						m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+						m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
+						m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
+					}
+					// Para criaturas CON animación normal, SubsystemCannonBlockBehavior gestiona los visuales
+				}
+				else
+				{
+					ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
+				}
+
 				AimTimeTimer -= m_subsystemTime.GameTimeDelta;
 			}
 			else
 			{
-				int activeSlot = m_componentMiner.Inventory.ActiveSlotIndex;
-				int slotValue = m_componentMiner.Inventory.GetSlotValue(activeSlot);
-				int contents = Terrain.ExtractContents(slotValue);
-				int musketIndex = BlocksManager.GetBlockIndex<MusketBlock>();
-
 				if (contents == musketIndex && m_random.Bool(0.05f))
 				{
 					TripleShot(aim);
@@ -1643,10 +1682,29 @@ namespace Game
 				else
 				{
 					m_componentMiner.Aim(aim, AimState.Completed);
-					ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
+
+					if (isCannon)
+					{
+						// Para criaturas SIN animación normal: forzar brazos quietos y rotar el arma
+						if (!UsesNormalAimAnimation())
+						{
+							m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+							m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
+							m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
+						}
+					}
+					else
+					{
+						ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
+					}
 				}
 
-				if (isImprovedMusket)
+				if (isCannon)
+				{
+					CooldownTimer = CannonCooldown;
+					AimTimeTimer = CannonAimTime;
+				}
+				else if (isImprovedMusket)
 				{
 					CooldownTimer = ImprovedMusketCooldown;
 					AimTimeTimer = ImprovedMusketAimTime;
