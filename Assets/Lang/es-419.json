@@ -1,4 +1,11 @@
 {
+  "CannonballBlock": [
+    "Bala de cañón"
+],
+  "BandageBlock": [
+  "Vendaje Grande",
+  "Vendaje Pequeño"
+],
   "FlameBulletBlock": [
   "Bala de Fuego",
   "Bala Venenosa"
@@ -67,19 +74,26 @@
     },
   "Description": {
     "InfectedNormal1": "Aparece a partir de la Oleada 1. Este infectado es una de las amenazas más comunes de la plaga, pero nunca debe subestimarse. Deambula constantemente en busca de presas y es capaz de detectar, perseguir y atacar tanto a los supervivientes como a otras criaturas. Puede recorrer grandes distancias para alcanzar a su objetivo, cooperar con los infectados cercanos y responder a sus llamadas de ayuda cuando uno de ellos entra en combate. Puede recoger armas, herramientas y ropa que encuentre a su paso, utilizándolas para mejorar sus posibilidades de supervivencia. Si un obstáculo bloquea su camino, intentará destruirlo y continuar avanzando. Sus característicos ojos verdes brillantes permanecen visibles incluso en la oscuridad absoluta. Durante la Noche Verde, su comportamiento se vuelve mucho más agresivo: abandona cualquier intención de retirarse, se concentra por completo en los supervivientes y los persigue con una determinación implacable. Incluso después de ser atacado, puede recordar a su agresor y continuar la persecución durante mucho tiempo. Puede ser domesticado usando un Collar, convirtiéndose en un guardián leal que luchará a tu lado. Al morir, existe una pequeña probabilidad de que su espíritu corrupto permanezca en este mundo bajo una nueva forma.",
-  "InfectedFast1": "Aparece a partir de la Oleada 2. Esta variante rápida destaca por su extraordinaria movilidad y agresividad. Puede recorrer grandes distancias en muy poco tiempo, saltar obstáculos con facilidad y cambiar rápidamente de dirección mientras persigue a su presa. Al igual que otras criaturas infectadas por la plaga, puede detectar, perseguir y atacar tanto a los supervivientes como a otras criaturas, además de coordinarse con los infectados cercanos y responder a sus llamadas de ayuda. Si encuentra barreras en su camino, intentará destruirlas para continuar la persecución. Sus brillantes ojos verdes suelen ser lo último que ven quienes intentan escapar. Durante la Noche Verde, se convierte en una amenaza especialmente peligrosa, abandonando toda cautela para centrarse exclusivamente en la caza de supervivientes. Su velocidad superior le permite acortar distancias rápidamente y mantener persecuciones durante largos periodos. Aunque posee una resistencia física notable, es más vulnerable al veneno que la mayoría de los infectados. Puede ser domesticado usando un Collar, convirtiéndose en un guardián veloz capaz de luchar junto a su dueño. Al morir, existe una pequeña probabilidad de que su espíritu corrupto permanezca en este mundo bajo una nueva forma."
+    "InfectedFast1": "Aparece a partir de la Oleada 2. Esta variante rápida destaca por su extraordinaria movilidad y agresividad. Puede recorrer grandes distancias en muy poco tiempo, saltar obstáculos con facilidad y cambiar rápidamente de dirección mientras persigue a su presa. Al igual que otras criaturas infectadas por la plaga, puede detectar, perseguir y atacar tanto a los supervivientes como a otras criaturas, además de coordinarse con los infectados cercanos y responder a sus llamadas de ayuda. Si encuentra barreras en su camino, intentará destruirlas para continuar la persecución. Sus brillantes ojos verdes suelen ser lo último que ven quienes intentan escapar. Durante la Noche Verde, se convierte en una amenaza especialmente peligrosa, abandonando toda cautela para centrarse exclusivamente en la caza de supervivientes. Su velocidad superior le permite acortar distancias rápidamente y mantener persecuciones durante largos periodos. Aunque posee una resistencia física notable, es más vulnerable al veneno que la mayoría de los infectados. Puede ser domesticado usando un Collar, convirtiéndose en un guardián veloz capaz de luchar junto a su dueño. Al morir, existe una pequeña probabilidad de que su espíritu corrupto permanezca en este mundo bajo una nueva forma."
   }
 },
   "Blocks": {
-    "BandageSmallBlock:0": {
-    "DisplayName": "Vendaje pequeño",
+    "CannonBlock:0": {
+  "DisplayName": "Cañón",
+  "Description": "Un cañón pesado utilizado para disparar balas de cañón. ¡Simplemente carga una bala de cañón y estará listo para disparar. No requiere pólvora ni taco!",
+  "CRDescription:0": "Fabricar un cañón con bloques de hierro, varillas y lingotes de hierro"
+},
+"CannonballBlock:0": {
+  "Description": "Pesadas bolas de hierro utilizadas como munición para el cañón.",
+  "CRDescription:0": "Fabricar balas de cañón con lingotes de hierro"
+},
+    "BandageBlock:0": {
     "Description": "Un vendaje pequeño que restaura parcialmente la salud al usarlo sobre ti mismo o sobre criaturas.",
     "CRDescription:0": "Crea vendajes pequeños con lona"
   },
-  "LargeBandageBlock:0": {
-    "DisplayName": "Vendaje grande",
+  "BandageBlock:1": {
     "Description": "Un vendaje grande que restaura completamente la salud al usarlo sobre ti mismo o sobre criaturas.",
-    "CRDescription:0": "Crea un vendaje grande con lona"
+    "CRDescription:1": "Crea un vendaje grande con lona"
   },
     "FrozenSnowballBlock:0": {
 "DisplayName": "Bola de nieve congelada",
@@ -389,6 +403,15 @@
   "1": "Bestiario de infectados"
     }
   },
+  "SubsystemCannonBlockBehavior": {
+    "0": "El cañón está vacío"
+},
+"CannonWidget": {
+    "0": "Cargar una bala de cañón",
+    "1": "Listo para disparar",
+    "2": "Cañón",
+    "3": "Inventario"
+},
   "FirearmsShopWidget": {
     "title": "Tienda de Armas de Fuego",
     "restoresIn": "Restaura en:",
@@ -480,7 +503,8 @@
     "7": "Activa una cámara libre en modos que no son creativos",
     "8": "Reproducir música de persecución de jefe cuando un Bruto te persiga",
     "9": "Habilitar la aparición de criaturas al desvanecerse un cadáver",
-    "10": "Reproducir música aterradora cuando un Fantasma te persigue"
+    "10": "Reproducir música aterradora cuando un Fantasma te persigue",
+    "11": "Reproducir música de muerte cuando el jugador muere"
   },
   "GreenNightActivationDialog": {
     "1": "Administración Noche Verde",
