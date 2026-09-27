@@ -152,6 +152,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedNormal1" Guid="da55c23d-254e-4fa2-a21a-e0dbe5e8433f" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="27c79fc9-f84f-4e30-8491-cf56ebeeb11d" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="EatPickableBehavior" Guid="53f8c549-7905-4b23-8dea-7e769091e679">
               <ParameterSet Name="FoodFactors" Guid="7af6a2ca-7a6d-45d8-9196-f8fc6588a870">
                 <Parameter Name="Meat" Guid="6085687d-d2a3-4201-8f71-72f37996e99e" Value="1" Type="float" />
@@ -394,6 +395,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedNormal2" Guid="284edc54-7c36-4691-82bc-57847af33ff9" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="f878cb7e-8766-4737-80c9-b5f0fa945d7d" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="EatPickableBehavior" Guid="51d62ee8-f7fa-457f-9b5e-052cde35fd05">
               <ParameterSet Name="FoodFactors" Guid="d11f4a1d-b66e-4828-ab48-79e87e144b0e">
                 <Parameter Name="Meat" Guid="721b8141-d5c4-4374-9afb-4414c3368622" Value="1" Type="float" />
@@ -624,6 +626,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="GhostNormal" Guid="7b5a9a53-6288-4e09-afa6-607f5d395682" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="ad3a17d6-b007-4923-bbd4-82eddc991ebe" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="EatPickableBehavior" Guid="1f277b93-bced-41b5-b9e1-7391d9ed4361">
               <ParameterSet Name="FoodFactors" Guid="bcaa273c-d171-4475-a370-2787d3ea613b">
                 <Parameter Name="Meat" Guid="faf1b907-8baa-4f9c-a719-968029b33bd8" Value="1" Type="float" />
@@ -734,6 +737,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedFast1" Guid="9e2b9e12-04ac-4f31-8488-cfa08905185b" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="4b5744a9-4dd8-496e-bddb-547b0cb26925" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="ZombieAI" Guid="8461c59d-ea04-4db1-b474-8be081a57d1e" InheritanceParent="86e4d4b9-95b6-4513-b87d-c2180cb16289">
   <Parameter Name="CanDestroyBlocks" Guid="958298f4-b189-4da8-8cb9-e107a14ad501" Value="true" Type="bool" />
 </MemberComponentTemplate>
@@ -927,6 +931,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedFast2" Guid="b1c3fac8-2332-4213-8e93-a578e3239bc4" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="a20cc2b8-39a4-48f1-9b27-56b394dab40e" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="ZombieAI" Guid="a6994e66-4ca9-44a6-9b04-d77958415408" InheritanceParent="86e4d4b9-95b6-4513-b87d-c2180cb16289">
   <Parameter Name="CanDestroyBlocks" Guid="bb6cc393-c0f8-4210-8207-6ac9a5fc2e86" Value="true" Type="bool" />
 </MemberComponentTemplate>
@@ -1120,6 +1125,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedMuscle1" Guid="f0fe7e53-b4d4-47f2-a537-3bfed0eec59a" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="d45b3869-9f65-4646-8865-4cf8641a30a3" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="EatPickableBehavior" Guid="de28e0c1-f722-4732-951d-9d150a6bcddb">
               <ParameterSet Name="FoodFactors" Guid="2b149588-3da6-4036-9142-27f46133ca68">
                 <Parameter Name="Meat" Guid="d81ffaa7-866b-4066-94b0-5f24cd193508" Value="1" Type="float" />
@@ -1338,6 +1344,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedMuscle2" Guid="5d6d5732-322d-499f-ab8c-68e44669fcc7" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="b74e3ff8-304d-46df-ad11-116b209cd18a" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="EatPickableBehavior" Guid="af300052-d646-4851-8c56-67c8fc817727">
               <ParameterSet Name="FoodFactors" Guid="72fbac1f-f8e0-4ab2-9d15-b4eecbf9b1d3">
                 <Parameter Name="Meat" Guid="d452e0da-d13e-42f5-81a8-119da5288085" Value="1" Type="float" />
@@ -1550,6 +1557,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="FlyingInfected1" Guid="7204ed57-5e73-4c6d-a117-31d49101533b" InheritanceParent="0cb14482-b936-410e-9317-66d385d7d2fd">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="09f339c6-4a51-4c24-a53c-73855c408223" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="EatPickableBehavior" Guid="de2eeb6d-1d51-4e51-b85c-aa3719439076">
               <ParameterSet Name="FoodFactors" Guid="03b6842f-27bb-4d6a-b421-091c1924c0d8">
                 <Parameter Name="Meat" Guid="f3654824-4ab0-457e-b521-55ebe3ce466a" Value="1" Type="float" />
@@ -1713,6 +1721,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="FlyingInfected2" Guid="506c78ea-1994-43f7-b966-f5b9ea3eeb73" InheritanceParent="0cb14482-b936-410e-9317-66d385d7d2fd">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="82066cc5-5867-41a8-9af1-848d92872dfa" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="MonsterSkills" Guid="c5c210c3-8c42-40ba-b34e-6926bdc9a1b6" InheritanceParent="8cc9ec70-bb38-4249-9187-e60627756166">
           <Parameter Name="CanVomitFire" Guid="fba0146e-0927-4f5b-8ec3-3e2a8cca26db" Value="true" Type="bool" />
   <Parameter Name="TimeToVomitAgain" Guid="70f7d43a-fa24-456e-a9fe-a0c09df02594" Value="30" Type="float" />
@@ -1874,6 +1883,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="FlyingInfected3" Guid="bdbd6bfe-d23f-446e-8716-e55a5db9b7c6" InheritanceParent="0cb14482-b936-410e-9317-66d385d7d2fd">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="01c5835c-3ead-4e29-868e-40b9dcb44d31" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="MonsterSkills" Guid="00faa0c9-6027-4415-b2e4-a1a9777a1b1d" InheritanceParent="8cc9ec70-bb38-4249-9187-e60627756166">
           <Parameter Name="CanVomitShit" Guid="777efa47-6393-403f-9879-496a2a5f3cea" Value="true" Type="bool" />
   <Parameter Name="TimeToVomitAgain" Guid="14503ae9-9f16-4201-ac5a-34d42b426d48" Value="30" Type="float" />
@@ -2035,6 +2045,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="FlyingInfectedBoss" Guid="7cbb00ea-042c-4051-a6f0-8bdce80d48e1" InheritanceParent="0cb14482-b936-410e-9317-66d385d7d2fd">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="37fed669-5146-4339-b14b-84c407471ce4" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="EatPickableBehavior" Guid="5a9ca708-45c1-4ae7-b66e-b8bf742026df">
               <ParameterSet Name="FoodFactors" Guid="f289f8ae-55df-4158-bec6-23f3c1a71a91">
                 <Parameter Name="Meat" Guid="03f56a90-6293-414c-9a44-0eb0878d9418" Value="1" Type="float" />
@@ -2620,6 +2631,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="FatInfected" Guid="1e71964c-f5ff-48ca-9415-516e004ec460" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="befbfa63-d1cc-420d-9d52-c8f0b81f211a" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="RunAwayBehavior" Guid="ce1fe66a-95fa-4b72-abfe-f81e9f7d2925" InheritanceParent="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" />
 <MemberComponentTemplate Name="ZombieRunAwayBehavior" Guid="d382ec21-23d8-472b-b1d1-b544ece9436c" InheritanceParent="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" />
             <MemberComponentTemplate Name="Creature" Guid="392cbe63-b8ab-404c-9d42-7d739593ed50">
@@ -2818,6 +2830,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="FatInfectedArsonist" Guid="33ea7c64-c610-4121-8207-4d9dfef8c88f" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="6ec2a6c9-9ee1-4d0d-86f3-b542fabe13cd" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="RunAwayBehavior" Guid="875fb662-9ddc-4ffc-a398-87ac4ad561f6" InheritanceParent="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" />
 <MemberComponentTemplate Name="ZombieRunAwayBehavior" Guid="00ade43c-8694-4b57-a95d-66f12bbae6a9" InheritanceParent="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" />
             <MemberComponentTemplate Name="Creature" Guid="193bdfc6-a5c7-4d24-84f1-4e4d60a5417f">
@@ -3026,6 +3039,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="FatInfectedPoisonous" Guid="ab35d841-f124-41eb-a7a8-deb704cac60e" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="705527a7-0e0b-4ba5-a423-2168f3f76ee3" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="RunAwayBehavior" Guid="cdac849f-0e5a-433e-875e-ad009d2910c6" InheritanceParent="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" />
 <MemberComponentTemplate Name="ZombieRunAwayBehavior" Guid="191b8fca-5f9b-4e89-a8b3-94f8742efe6c" InheritanceParent="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" />
             <MemberComponentTemplate Name="Creature" Guid="c126acd7-060a-4897-9b66-05bfa64e1f2a">
@@ -3234,6 +3248,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="FatInfectedFrozen" Guid="b6778fc1-6091-462c-82bd-4666c848c2bc" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="2b3e3e05-fd97-4126-b77f-af277d07cc57" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="RunAwayBehavior" Guid="21381df2-cc19-4bb4-a505-cebefc047a36" InheritanceParent="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" />
 <MemberComponentTemplate Name="ZombieRunAwayBehavior" Guid="c3a605d7-0314-4b85-a512-c27b8a911f86" InheritanceParent="dcc9dd45-60e1-4e14-a79d-d0004560c5fc" />
             <MemberComponentTemplate Name="Creature" Guid="a8db4591-e392-4875-b46b-65db415ebfd4">
@@ -3442,6 +3457,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedPusher1" Guid="35014583-7588-4e6a-90ec-ca3403022e6f" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="3b75d91f-d065-4c05-a64c-f15abfd95cf7" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
             <MemberComponentTemplate Name="Creature" Guid="dfa36588-8e3c-4f71-a4b8-c3109444db74">
               <Parameter Name="Description" Guid="7c8c5c07-2f42-4d30-907f-c7fcb764f2ab" Value="[Description:InfectedPusher1]" Type="string" />
               <Parameter Name="Category" Guid="e86b26b3-e76b-4a8a-87c6-9e8ddf4f0f3d" Value="LandPredator" Type="Game.CreatureCategory" />
@@ -3589,6 +3605,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedPusher2" Guid="ee72a048-1f6d-492e-b839-9143c2893857" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="b5f99afe-a3ca-42f8-89b4-83821b7dc41d" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
             <MemberComponentTemplate Name="Creature" Guid="2f2b4f3f-5994-4822-829c-f52c45b7e15f">
               <Parameter Name="Description" Guid="e3c8dba3-b3af-4562-ad36-4c9e6ed6e0cf" Value="[Description:InfectedPusher1]" Type="string" />
               <Parameter Name="Category" Guid="82af71c3-8235-4032-aed4-be018911c4b5" Value="LandPredator" Type="Game.CreatureCategory" />
@@ -3736,6 +3753,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedBrute" Guid="496a8dc7-e499-49d5-a775-45e2d3a3271c" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="9df5f5f0-2c49-4a49-9fa7-f0e2c83ac24a" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="ZombieAI" Guid="54bf1bbb-3974-4caa-b34a-d0c7dcf03244" InheritanceParent="86e4d4b9-95b6-4513-b87d-c2180cb16289">
   <Parameter Name="CanDestroyBlocks" Guid="5d4a459e-b8dd-4eba-95c3-cc65642b99c0" Value="true" Type="bool" />
 </MemberComponentTemplate>
@@ -3808,6 +3826,8 @@
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="Health" Guid="b489512c-5886-4e9d-a167-5bfcc7cbacb7">
               <Parameter Name="AttackResilience" Guid="13d8124d-d58a-4b2d-aabd-6cc15405e8e8" Value="2000" Type="float" />
+              <Parameter Name="FallResilience" Guid="bc27b06f-3ee5-4f69-9f25-ab18644d7342" Value="1000" Type="float" />
+              <Parameter Name="ExplosionResilience" Guid="70c002a9-5c8c-4a8d-92c9-66fd8a8bc3c9" Value="1000" Type="float" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="HumanModel" Guid="35ef9c88-7ada-44ee-ab0d-e340b3ea83a4" InheritanceParent="0566662e-bb24-45f9-84d8-f3c1e5d083df">
               <Parameter Name="WalkLegsAngle" Guid="52545ba9-8bac-4967-9ac3-60d6c7addcd6" Value="0.95" Type="float" />
@@ -3899,6 +3919,8 @@
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="Health" Guid="34624420-59f9-465e-b7de-667cb3a65627">
               <Parameter Name="AttackResilience" Guid="f75d631d-e786-438f-953e-4fac4c1c9b55" Value="2000" Type="float" />
+              <Parameter Name="FallResilience" Guid="8946ce7e-9c88-4e80-81f6-afcc33f01b87" Value="1000" Type="float" />
+              <Parameter Name="ExplosionResilience" Guid="703479ac-69b6-4012-89d8-de3ba006a553" Value="1000" Type="float" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="HumanModel" Guid="6a9ba498-b167-476a-92e4-0df34175c78b" InheritanceParent="0566662e-bb24-45f9-84d8-f3c1e5d083df">
               <Parameter Name="WalkLegsAngle" Guid="3ccc263c-13f5-442c-b9f2-b38f53fcf192" Value="0.95" Type="float" />
@@ -3924,6 +3946,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedBruteArsonist" Guid="1b74beea-a91b-411a-8417-686a442e964d" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="f9f8fa98-036d-4eb2-b065-db93b0ef6b5c" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="ZombieAI" Guid="1c5f9124-8041-4ac9-a3e3-511f1252f42f" InheritanceParent="86e4d4b9-95b6-4513-b87d-c2180cb16289">
   <Parameter Name="CanDestroyBlocks" Guid="c383311c-cb5c-49ff-925e-afa92a4b4ef5" Value="true" Type="bool" />
 </MemberComponentTemplate>
@@ -3997,6 +4020,8 @@
             <MemberComponentTemplate Name="Health" Guid="b345bd12-883a-49d8-a06d-73bc4da7bd3f">
               <Parameter Name="AttackResilience" Guid="e27d9539-87ad-4036-ac3e-bdd606d75a7f" Value="3000" Type="float" />
               <Parameter Name="FireResilience" Guid="d0982f77-3871-40d5-8638-55ec378a7d6a" Value="500" Type="float" />
+              <Parameter Name="FallResilience" Guid="44bfe3d6-3a1f-4aa8-809b-b18b5063dcb1" Value="1000" Type="float" />
+              <Parameter Name="ExplosionResilience" Guid="e9c32b81-133d-48c7-93ab-96e112c6a4d7" Value="1000" Type="float" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="HumanModel" Guid="1527b513-4d3d-4abf-8658-06ae77b7fb51" InheritanceParent="0566662e-bb24-45f9-84d8-f3c1e5d083df">
               <Parameter Name="ModelScale" Guid="a656eea9-fc03-408d-919c-7a869c251933" Value="1.5" Type="float" />
@@ -4090,6 +4115,8 @@
             <MemberComponentTemplate Name="Health" Guid="2fa6869e-8105-4ce5-8348-5134225aa33a">
               <Parameter Name="AttackResilience" Guid="46206400-fa74-4b04-bce8-786943117787" Value="3000" Type="float" />
               <Parameter Name="FireResilience" Guid="eda059e2-3dbb-4548-896e-a3b43a8163e2" Value="500" Type="float" />
+              <Parameter Name="FallResilience" Guid="0ed708cf-46b6-4cbb-96fb-e8df0d358562" Value="1000" Type="float" />
+              <Parameter Name="ExplosionResilience" Guid="e522784e-1e41-4982-b850-9b1d4881bf27" Value="1000" Type="float" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="HumanModel" Guid="5c535c6f-04fd-4166-8b31-381783032f29" InheritanceParent="0566662e-bb24-45f9-84d8-f3c1e5d083df">
               <Parameter Name="ModelScale" Guid="e491dba9-0995-4d44-aa4e-945e9b80fb92" Value="1.5" Type="float" />
@@ -4116,6 +4143,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedBrutePoisonous" Guid="50644338-3dd9-4cff-89c3-d43f22639d8e" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="48c438c0-8594-4b79-b840-907e5ec4b404" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="ZombieAI" Guid="a69c8e4a-b823-4bd1-b969-e95c1d2d4cc5" InheritanceParent="86e4d4b9-95b6-4513-b87d-c2180cb16289">
   <Parameter Name="CanDestroyBlocks" Guid="056ff015-aaba-4ac6-8524-fbe79b4ec9fe" Value="true" Type="bool" />
 </MemberComponentTemplate>
@@ -4189,6 +4217,8 @@
             <MemberComponentTemplate Name="Health" Guid="66fb8b26-1655-4489-ad88-06e07538a6d3">
               <Parameter Name="AttackResilience" Guid="4d8e1e85-21f5-4bf7-a053-deef1d736483" Value="2800" Type="float" />
               <Parameter Name="FireResilience" Guid="24b7c605-28f9-4e6f-a836-8dad1fcdb406" Value="350" Type="float" />
+              <Parameter Name="FallResilience" Guid="b0256420-a100-45b6-97f9-790cc5dc74d1" Value="1000" Type="float" />
+              <Parameter Name="ExplosionResilience" Guid="8c7a9b53-ae5d-4887-b713-4de2f3151103" Value="1000" Type="float" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="HumanModel" Guid="ad18687d-c721-4b9c-a79d-db766225ca5b" InheritanceParent="0566662e-bb24-45f9-84d8-f3c1e5d083df">
               <Parameter Name="ModelScale" Guid="9499686d-eb18-4f2d-8ce7-5d3c1aa97fe7" Value="1.5" Type="float" />
@@ -4282,6 +4312,8 @@
             <MemberComponentTemplate Name="Health" Guid="5b8e5811-9fad-472b-822e-b918b39729dc">
               <Parameter Name="AttackResilience" Guid="005fcb7b-3082-4ed3-a5b4-8bd9aacdd820" Value="2800" Type="float" />
               <Parameter Name="FireResilience" Guid="ef5a0efc-4ee6-4b4a-9c06-fdd8839bd832" Value="350" Type="float" />
+              <Parameter Name="FallResilience" Guid="73ba322b-c97e-4261-a239-eb99cfc0a74e" Value="1000" Type="float" />
+              <Parameter Name="ExplosionResilience" Guid="a72f1efc-944f-43a5-9215-3dd4cd363363" Value="1000" Type="float" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="HumanModel" Guid="64221238-7253-4abd-bb15-c5308ac887c6" InheritanceParent="0566662e-bb24-45f9-84d8-f3c1e5d083df">
               <Parameter Name="ModelScale" Guid="3feef69c-bc66-41de-a668-4aaa80790cc5" Value="1.5" Type="float" />
@@ -4308,6 +4340,7 @@
           </EntityTemplate>
 
           <EntityTemplate Name="InfectedBruteFrozen" Guid="1718280f-f5e1-4399-b2cd-5937bb0d52be" InheritanceParent="e4275171-a39f-413f-8888-4c472868364d">
+          <MemberComponentTemplate Name="NoiseAttractionBehavior" Guid="e081c534-ca7a-48c1-9d6a-5e875099efb1" InheritanceParent="1172189a-da5c-471c-b285-65af0aca9a33"/>
           <MemberComponentTemplate Name="ZombieAI" Guid="2f38fe47-36e2-4177-ac7d-20c1e0d2887c" InheritanceParent="86e4d4b9-95b6-4513-b87d-c2180cb16289">
   <Parameter Name="CanDestroyBlocks" Guid="c8047b11-e243-4055-9219-7ebaf6629ce3" Value="true" Type="bool" />
 </MemberComponentTemplate>
@@ -4381,6 +4414,8 @@
             <MemberComponentTemplate Name="Health" Guid="a72895f1-e30b-4267-85f4-cbf18ef668fc">
               <Parameter Name="AttackResilience" Guid="4c41390e-cc3a-4e40-a975-4f2facdd29b8" Value="3500" Type="float" />
               <Parameter Name="FireResilience" Guid="66c14571-946b-41e2-8dfb-9afad81a6220" Value="300" Type="float" />
+              <Parameter Name="FallResilience" Guid="e45ac43f-a1d7-44f2-8c85-454d9570fec9" Value="1000" Type="float" />
+              <Parameter Name="ExplosionResilience" Guid="9fc4854e-d27e-41cf-bd46-b1d27b23ed33" Value="1000" Type="float" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="HumanModel" Guid="93568f88-7481-42e7-a542-5b365216822d" InheritanceParent="0566662e-bb24-45f9-84d8-f3c1e5d083df">
               <Parameter Name="ModelScale" Guid="50c48eef-8670-4fbb-93a6-3bb6a7d76727" Value="1.5" Type="float" />
@@ -4480,6 +4515,8 @@
             <MemberComponentTemplate Name="Health" Guid="455efe39-cff9-4417-95c4-7753a1f3582f">
               <Parameter Name="AttackResilience" Guid="f9279ebf-4914-48ec-922f-104c47118346" Value="3500" Type="float" />
               <Parameter Name="FireResilience" Guid="f3fbc660-0131-4162-ab1a-d20cce6d1014" Value="300" Type="float" />
+              <Parameter Name="FallResilience" Guid="c0a88d39-8f63-4d91-9aed-72f437732dfa" Value="1000" Type="float" />
+              <Parameter Name="ExplosionResilience" Guid="bdeb61b3-82b7-4cc6-8843-b1b56b060c22" Value="1000" Type="float" />
             </MemberComponentTemplate>
             <MemberComponentTemplate Name="HumanModel" Guid="baaa10b4-51dd-4cbf-a937-f941629d692e" InheritanceParent="0566662e-bb24-45f9-84d8-f3c1e5d083df">
               <Parameter Name="ModelScale" Guid="2209e5c6-926e-42c8-b7a1-04005c8526a4" Value="1.5" Type="float" />
