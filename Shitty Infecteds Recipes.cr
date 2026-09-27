@@ -1,4 +1,13 @@
 <Recipes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="CraftingRecipes.xsd">
+  <Recipe Result="CannonBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironblock" b="rod" c="ironingot" Description="[0]">
+    "ba "
+    "acb"
+    "a  "
+  </Recipe>
+  <Recipe Result="CannonballBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" Description="[0]">
+    "aa"
+    "aa"
+  </Recipe>
 <Recipe Result="M249Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironblock" b="ironingot" c="rod" d="planks" Description="[0]">
   "aba"
   "cdc"
