@@ -86,6 +86,8 @@ namespace Game
 		public float BowAimTime = 1.5f;
 		public float ThrowableAimTime = 1.5f;
 		public float ThrowableCooldown = 0.01f;
+		public float CannonCooldown = 0.01f;
+		public float CannonAimTime = 1.5f;
 
 		private const float FirearmReloadPauseTime = 1.5f;
 
@@ -1396,26 +1398,29 @@ namespace Game
 				return;
 			}
 
-			int improvedMusketSlot = FindImprovedMusketSlot();
-			int musketSlot = improvedMusketSlot >= 0 ? -1 : FindMusketSlot();
-			int flameThrowerSlot = (improvedMusketSlot >= 0 || musketSlot >= 0) ? -1 : FindFlameThrowerSlot();
-			int repeatCrossbowSlot = (improvedMusketSlot >= 0 || musketSlot >= 0 || flameThrowerSlot >= 0) ? -1 : FindRepeatCrossbowSlot();
-			int crossbowSlot = (improvedMusketSlot >= 0 || musketSlot >= 0 || flameThrowerSlot >= 0 || repeatCrossbowSlot >= 0) ? -1 : FindCrossbowSlot();
-			int bowSlot = (improvedMusketSlot >= 0 || musketSlot >= 0 || flameThrowerSlot >= 0 || repeatCrossbowSlot >= 0 || crossbowSlot >= 0) ? -1 : FindBowSlot();
+			int cannonSlot = FindCannonSlot();
+			int improvedMusketSlot = cannonSlot >= 0 ? -1 : FindImprovedMusketSlot();
+			int musketSlot = (cannonSlot >= 0 || improvedMusketSlot >= 0) ? -1 : FindMusketSlot();
+			int flameThrowerSlot = (cannonSlot >= 0 || improvedMusketSlot >= 0 || musketSlot >= 0) ? -1 : FindFlameThrowerSlot();
+			int repeatCrossbowSlot = (cannonSlot >= 0 || improvedMusketSlot >= 0 || musketSlot >= 0 || flameThrowerSlot >= 0) ? -1 : FindRepeatCrossbowSlot();
+			int crossbowSlot = (cannonSlot >= 0 || improvedMusketSlot >= 0 || musketSlot >= 0 || flameThrowerSlot >= 0 || repeatCrossbowSlot >= 0) ? -1 : FindCrossbowSlot();
+			int bowSlot = (cannonSlot >= 0 || improvedMusketSlot >= 0 || musketSlot >= 0 || flameThrowerSlot >= 0 || repeatCrossbowSlot >= 0 || crossbowSlot >= 0) ? -1 : FindBowSlot();
 
-			int activeSlot = improvedMusketSlot >= 0 ? improvedMusketSlot : (musketSlot >= 0 ? musketSlot : (flameThrowerSlot >= 0 ? flameThrowerSlot : (repeatCrossbowSlot >= 0 ? repeatCrossbowSlot : (crossbowSlot >= 0 ? crossbowSlot : bowSlot))));
+			int activeSlot = cannonSlot >= 0 ? cannonSlot : (improvedMusketSlot >= 0 ? improvedMusketSlot : (musketSlot >= 0 ? musketSlot : (flameThrowerSlot >= 0 ? flameThrowerSlot : (repeatCrossbowSlot >= 0 ? repeatCrossbowSlot : (crossbowSlot >= 0 ? crossbowSlot : bowSlot)))));
 
 			if (activeSlot < 0) return;
 
 			m_componentMiner.Inventory.ActiveSlotIndex = activeSlot;
 
+			bool isCannon = cannonSlot >= 0;
 			bool isImprovedMusket = improvedMusketSlot >= 0;
 			bool isFlameThrower = flameThrowerSlot >= 0;
 			bool isRepeatCrossbow = repeatCrossbowSlot >= 0;
 			bool isCrossbow = crossbowSlot >= 0;
 			bool isBow = bowSlot >= 0;
 
-			if (isImprovedMusket) EnsureImprovedMusketLoaded(improvedMusketSlot);
+			if (isCannon) EnsureCannonLoaded(cannonSlot);
+			else if (isImprovedMusket) EnsureImprovedMusketLoaded(improvedMusketSlot);
 			else if (isFlameThrower) EnsureFlameThrowerLoaded(flameThrowerSlot);
 			else if (isRepeatCrossbow) EnsureRepeatCrossbowLoaded(repeatCrossbowSlot, distance);
 			else if (isCrossbow) EnsureCrossbowLoaded(crossbowSlot, distance);
@@ -1433,17 +1438,18 @@ namespace Game
 				m_aimTimer = 0f;
 				m_componentMiner.Aim(rangedRay, AimState.InProgress);
 
-				ApplyAimVisualSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket, isFlameThrower);
+				ApplyAimVisualSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket, isFlameThrower, isCannon);
 			}
 			else
 			{
 				m_aimTimer += m_subsystemTime.GameTimeDelta;
 				m_componentMiner.Aim(rangedRay, AimState.InProgress);
 
-				ApplyAimVisualSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket, isFlameThrower);
+				ApplyAimVisualSettings(isBow, isCrossbow || isRepeatCrossbow || isImprovedMusket, isFlameThrower, isCannon);
 
 				float requiredAimTime;
-				if (isImprovedMusket) requiredAimTime = ImprovedMusketAimTime;
+				if (isCannon) requiredAimTime = CannonAimTime;
+				else if (isImprovedMusket) requiredAimTime = ImprovedMusketAimTime;
 				else if (isFlameThrower) requiredAimTime = FlameThrowerAimTime;
 				else if (isBow) requiredAimTime = BowAimTime;
 				else if (isCrossbow) requiredAimTime = CrossbowAimTime;
@@ -1452,7 +1458,8 @@ namespace Game
 
 				if (m_aimTimer >= requiredAimTime)
 				{
-					if (isImprovedMusket) FireImprovedMusket(rangedRay);
+					if (isCannon) FireCannon(rangedRay);
+					else if (isImprovedMusket) FireImprovedMusket(rangedRay);
 					else if (isFlameThrower) FireFlameThrower(rangedRay);
 					else if (isRepeatCrossbow) FireRepeatCrossbow(rangedRay);
 					else if (isCrossbow) FireCrossbow(rangedRay);
@@ -1469,9 +1476,9 @@ namespace Game
 						{
 							BulletBlock.BulletType[] bulletTypes = new BulletBlock.BulletType[]
 							{
-								BulletBlock.BulletType.MusketBall,
-								BulletBlock.BulletType.Buckshot,
-								BulletBlock.BulletType.BuckshotBall
+						BulletBlock.BulletType.MusketBall,
+						BulletBlock.BulletType.Buckshot,
+						BulletBlock.BulletType.BuckshotBall
 							};
 							FireBullet(bulletTypes[m_random.Int(0, bulletTypes.Length - 1)], rangedRay);
 						}
@@ -1479,7 +1486,8 @@ namespace Game
 
 					m_isAiming = false;
 
-					if (isImprovedMusket) m_cooldownTimer = ImprovedMusketCooldown;
+					if (isCannon) m_cooldownTimer = CannonCooldown;
+					else if (isImprovedMusket) m_cooldownTimer = ImprovedMusketCooldown;
 					else if (isFlameThrower) m_cooldownTimer = FlameThrowerCooldown;
 					else if (isBow) m_cooldownTimer = BowCooldown;
 					else if (isCrossbow) m_cooldownTimer = CrossbowCooldown;
@@ -1625,8 +1633,9 @@ namespace Game
 					int blockId = Terrain.ExtractContents(value);
 
 					if (blockId == MusketBlock.Index || blockId == ImprovedMusketBlock.Index ||
-						blockId == BowBlock.Index || blockId == CrossbowBlock.Index ||
-						blockId == RepeatCrossbowBlock.Index || blockId == FlameThrowerBlock.Index)
+	blockId == BowBlock.Index || blockId == CrossbowBlock.Index ||
+	blockId == RepeatCrossbowBlock.Index || blockId == FlameThrowerBlock.Index ||
+	blockId == CannonBlock.Index)
 						continue;
 
 					bool isFirearm = false;
@@ -2137,6 +2146,45 @@ namespace Game
 
 			// Usar CallRangeHelp para una respuesta agresiva y persistente
 			chaseBehavior.CallRangeHelp(attacker);
+		}
+
+		private int FindCannonSlot()
+		{
+			for (int i = 0; i < m_componentMiner.Inventory.SlotsCount; i++)
+			{
+				if (m_componentMiner.Inventory.GetSlotCount(i) > 0 &&
+					Terrain.ExtractContents(m_componentMiner.Inventory.GetSlotValue(i)) == CannonBlock.Index)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+
+		private void EnsureCannonLoaded(int slotIndex)
+		{
+			int value = m_componentMiner.Inventory.GetSlotValue(slotIndex);
+			int data = Terrain.ExtractData(value);
+			if (CannonBlock.GetLoadState(data) != CannonBlock.LoadState.Loaded)
+			{
+				data = CannonBlock.SetLoadState(data, CannonBlock.LoadState.Loaded);
+				m_componentMiner.Inventory.RemoveSlotItems(slotIndex, 1);
+				m_componentMiner.Inventory.AddSlotItems(slotIndex, Terrain.MakeBlockValue(CannonBlock.Index, 0, data), 1);
+			}
+		}
+
+		private void FireCannon(Ray3 ray)
+		{
+			m_componentMiner.Aim(ray, AimState.Completed);
+			ReadOnlyList<Projectile> projectiles = m_subsystemProjectiles.Projectiles;
+			for (int i = projectiles.Count - 1; i >= 0; i--)
+			{
+				if (projectiles[i].Owner == m_componentCreature)
+				{
+					projectiles[i].ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+					break;
+				}
+			}
 		}
 	}
 }
