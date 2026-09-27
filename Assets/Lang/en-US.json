@@ -1,4 +1,11 @@
 {
+  "CannonballBlock": [
+    "Cannonball"
+],
+  "BandageBlock": [
+  "Large Bandage",
+  "Small Bandage"
+],
   "FlameBulletBlock": [
     "Fire Bullet",
     "Poison Bullet"
@@ -71,15 +78,22 @@
     }
   },
   "Blocks": {
-    "BandageSmallBlock:0": {
-    "DisplayName": "Small Bandage",
+    "CannonBlock:0": {
+      "DisplayName": "Cannon",
+      "Description": "A heavy cannon used to fire cannonballs. Simply load a cannonball and it's ready to fire. No gunpowder or wadding required!",
+      "CRDescription:0": "Make a cannon from iron blocks, rods, and iron ingots"
+    },
+    "CannonballBlock:0": {
+      "Description": "Heavy iron balls used as ammunition for the cannon.",
+      "CRDescription:0": "Make cannonballs from iron ingots"
+    },
+    "BandageBlock:0": {
     "Description": "A small bandage that partially restores health when used on yourself or creatures.",
     "CRDescription:0": "Craft small bandages from canvas"
 },
-"LargeBandageBlock:0": {
-    "DisplayName": "Large Bandage",
+"BandageBlock:1": {
     "Description": "A large bandage that completely restores health when used on yourself or creatures.",
-    "CRDescription:0": "Craft a large bandage from canvas"
+    "CRDescription:1": "Craft a large bandage from canvas"
 },
     "FrozenSnowballBlock:0": {
   "DisplayName": "Frozen Snowball",
@@ -389,6 +403,15 @@
     "1": "Infected Bestiary"
   }
 },
+"SubsystemCannonBlockBehavior": {
+    "0": "The cannon is empty"
+},
+"CannonWidget": {
+    "0": "Load a cannonball",
+    "1": "Ready to fire",
+    "2": "Cannon",
+    "3": "Inventory"
+},
 "FirearmsShopWidget": {
   "title": "Firearms Shop",
   "restoresIn": "Restores in:",
@@ -480,7 +503,8 @@
     "7": "Enables a free camera in non-creative modes",
     "8": "Play boss chase music when a Brute is pursuing you",
     "9": "Enable creatures to appear when a corpse fades away",
-    "10": "Play scary music when a Ghost is chasing you"
+    "10": "Play scary music when a Ghost is chasing you",
+    "11": "Play a death music track when the player dies"
   },
   "GreenNightActivationDialog": {
     "1": "Green Night Management",
