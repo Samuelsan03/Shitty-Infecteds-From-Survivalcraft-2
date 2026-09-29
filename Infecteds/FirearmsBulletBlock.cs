@@ -112,7 +112,11 @@ namespace Game
 			UziBullet,
 			BK93Bullet,
 			Master308Bullet,
-			MP5SSDBullet  // ✅ NUEVA BALA MP5SSD
+			MP5SSDBullet,
+			M249Bullet,
+			SCARHBullet,
+			FAMASBullet,
+			AA12Bullet  // <-- AÑADIR
 		}
 
 		public static FirearmsBulletType GetFirearmsBulletType(int data)
@@ -151,8 +155,16 @@ namespace Game
 					return new Color(190, 145, 55);
 				case FirearmsBulletType.Master308Bullet:
 					return new Color(200, 170, 120);
-				case FirearmsBulletType.MP5SSDBullet:  // ✅ COLOR BALA MP5SSD
+				case FirearmsBulletType.MP5SSDBullet:
 					return new Color(200, 200, 210);
+				case FirearmsBulletType.M249Bullet:
+					return new Color(255, 170, 30);
+				case FirearmsBulletType.SCARHBullet:
+					return new Color(210, 60, 30);
+				case FirearmsBulletType.FAMASBullet:
+					return new Color(240, 190, 80);
+				case FirearmsBulletType.AA12Bullet:
+					return new Color(220, 160, 60);
 				default:
 					return Color.White;
 			}
@@ -184,8 +196,16 @@ namespace Game
 					return 15f;
 				case FirearmsBulletType.Master308Bullet:
 					return 120f;
-				case FirearmsBulletType.MP5SSDBullet:  // ✅ DAÑO MP5SSD (9mm subsonic)
+				case FirearmsBulletType.MP5SSDBullet:
 					return 20f;
+				case FirearmsBulletType.M249Bullet:
+					return 30f;
+				case FirearmsBulletType.SCARHBullet:
+					return 45f;
+				case FirearmsBulletType.FAMASBullet:
+					return 25f;
+				case FirearmsBulletType.AA12Bullet:
+					return 14f;  // Menor daño por posta, pero dispara 8 a la vez
 				default:
 					return 10f;
 			}
@@ -219,6 +239,14 @@ namespace Game
 					return 1;
 				case FirearmsBulletType.MP5SSDBullet:
 					return 1;
+				case FirearmsBulletType.M249Bullet:
+					return 1;
+				case FirearmsBulletType.SCARHBullet:
+					return 1;
+				case FirearmsBulletType.FAMASBullet:
+					return 1;
+				case FirearmsBulletType.AA12Bullet:
+					return 1;
 				default:
 					return 1;
 			}
@@ -250,8 +278,16 @@ namespace Game
 					return 0.88f;
 				case FirearmsBulletType.Master308Bullet:
 					return 0.98f;
-				case FirearmsBulletType.MP5SSDBullet:  // ✅ DAMPING MP5SSD (subsonic)
+				case FirearmsBulletType.MP5SSDBullet:
 					return 0.94f;
+				case FirearmsBulletType.M249Bullet:
+					return 0.96f;
+				case FirearmsBulletType.SCARHBullet:
+					return 0.97f;
+				case FirearmsBulletType.FAMASBullet:
+					return 0.97f;
+				case FirearmsBulletType.AA12Bullet:
+					return 0.90f;  // Alcance corto-medio, típico de escopeta
 				default:
 					return 0.8f;
 			}
