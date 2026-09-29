@@ -36,6 +36,8 @@ namespace Game
 		private void BuildInfectedList()
 		{
 			HashSet<string> infectedTemplates = new HashSet<string>();
+			HashSet<string> banditTemplates = new HashSet<string>(SubsystemBanditEggBlockBehavior.m_creatureTemplates);
+
 			var eggBlock = (InfectedEggBlock)BlocksManager.Blocks[InfectedEggBlock.Index];
 			foreach (InfectedEggBlock.InfectedType type in Enum.GetValues(typeof(InfectedEggBlock.InfectedType)))
 			{
@@ -44,12 +46,16 @@ namespace Game
 					infectedTemplates.Add(t);
 			}
 
-			int orderIndex = 0; // Índice para mantener orden consistente
+			int orderIndex = 0;
 
 			foreach (ValuesDictionary entityDict in DatabaseManager.EntitiesValuesDictionaries)
 			{
 				string templateName = entityDict.DatabaseObject.Name;
-				if (!infectedTemplates.Contains(templateName))
+
+				// Si no es bandido ni infectado, lo ignoramos
+				bool isBandit = banditTemplates.Contains(templateName);
+				bool isInfected = infectedTemplates.Contains(templateName);
+				if (!isBandit && !isInfected)
 					continue;
 
 				ValuesDictionary creatureDict = DatabaseManager.FindValuesDictionaryForComponent(entityDict, typeof(ComponentCreature));
@@ -84,7 +90,7 @@ namespace Game
 				BestiaryCreatureInfo info = new BestiaryCreatureInfo
 				{
 					EntityValuesDictionary = entityDict,
-					Order = orderIndex++, // Asignar orden secuencial basado en posición en la base de datos
+					Order = orderIndex++,
 					DisplayName = displayName,
 					Description = description,
 					ModelName = modelDict?.GetValue<string>("ModelName") ?? "",
@@ -103,8 +109,6 @@ namespace Game
 				m_infectedList.Add(info);
 			}
 
-			// SOLUCIÓN: Ordenar por Order (número fijo) en lugar de DisplayName (texto localizado)
-			// Igual que hace el BestiaryScreen original
 			foreach (BestiaryCreatureInfo item in m_infectedList.OrderBy(i => i.Order))
 			{
 				m_creaturesList.AddItem(item);
