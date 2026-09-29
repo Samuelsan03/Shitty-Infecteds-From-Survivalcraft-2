@@ -325,6 +325,58 @@ namespace Game
 				SetLoadState = (data, state) => MP5SSDBlock.SetLoadState(data, state == 1 ? MP5SSDBlock.LoadState.Loaded : MP5SSDBlock.LoadState.Empty)
 			});
 
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "AA12Block",
+				MaxAmmo = 20,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 1.7f,
+				GetAmmoCount = (data) => AA12Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => AA12Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => AA12Block.GetLoadState(data) == AA12Block.LoadState.Loaded,
+				SetLoadState = (data, state) => AA12Block.SetLoadState(data, state == 1 ? AA12Block.LoadState.Loaded : AA12Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "M249Block",
+				MaxAmmo = 100,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.25f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => M249Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => M249Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => M249Block.GetLoadState(data) == M249Block.LoadState.Loaded,
+				SetLoadState = (data, state) => M249Block.SetLoadState(data, state == 1 ? M249Block.LoadState.Loaded : M249Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "SCARHBlock",
+				MaxAmmo = 20,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 1.6f,
+				GetAmmoCount = (data) => SCARHBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => SCARHBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => SCARHBlock.GetLoadState(data) == SCARHBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => SCARHBlock.SetLoadState(data, state == 1 ? SCARHBlock.LoadState.Loaded : SCARHBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "FAMASBlock",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 1.4f,
+				GetAmmoCount = (data) => FAMASBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => FAMASBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => FAMASBlock.GetLoadState(data) == FAMASBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => FAMASBlock.SetLoadState(data, state == 1 ? FAMASBlock.LoadState.Loaded : FAMASBlock.LoadState.Empty)
+			});
+
 			m_firearmsInitialized = true;
 		}
 
