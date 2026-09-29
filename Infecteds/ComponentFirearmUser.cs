@@ -376,6 +376,11 @@ namespace Game
 			m_aimProgress += dt;
 			m_componentCreatureModel.LookAtOrder = new Vector3?(targetCenter);
 
+			// ── Mantener brazos alzados mientras apunta y dispara ──
+			m_componentCreatureModel.AimHandAngleOrder = 1.4f;
+			m_componentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
+			m_componentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
+
 			if (m_aimProgress >= info.AimTime && m_subsystemTime.GameTime >= m_nextFireTime)
 			{
 				Vector3 dir = Vector3.Normalize(targetCenter - eye);
