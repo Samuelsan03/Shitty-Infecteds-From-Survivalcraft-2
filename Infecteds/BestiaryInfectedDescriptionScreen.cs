@@ -112,7 +112,13 @@ namespace Game
 			BestiaryCreatureInfo info = m_infoList[m_index];
 
 			m_modelWidget.AutoRotationVector = new Vector3(0f, 1f, 0f);
-			BestiaryScreen.SetupBestiaryModelWidget(info, m_modelWidget, new Vector3(-1f, 0f, -1f), true, true);
+			BestiaryScreen.SetupBestiaryModelWidget(
+				info,
+				m_modelWidget,
+				new Vector3(-1f, 0f, -1f),
+				true,
+				true
+			);
 
 			m_nameWidget.Text = info.DisplayName;
 			m_descriptionWidget.Text = info.Description;
@@ -124,9 +130,15 @@ namespace Game
 				BestiaryFactionType faction = GetCreatureFaction(info);
 
 				if (faction == BestiaryFactionType.Bandit)
-					topBarLabel.Text = LanguageControl.Get("BestiaryInfectedDescriptionScreen", 3); // "Bandit Details"
+					topBarLabel.Text = LanguageControl.Get(
+						"BestiaryInfectedDescriptionScreen",
+						3
+					); // "Bandit Details"
 				else
-					topBarLabel.Text = LanguageControl.Get("BestiaryInfectedDescriptionScreen", 1); // "Infected Details"
+					topBarLabel.Text = LanguageControl.Get(
+						"BestiaryInfectedDescriptionScreen",
+						1
+					); // "Infected Details"
 			}
 
 			// --- Columna 1 (etiquetas) ---
@@ -137,9 +149,17 @@ namespace Game
 				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "mount") + ":";
 
 			// --- Columna 1 (valores) ---
-			string attackStr = info.AttackPower > 0f ? info.AttackPower.ToString("0.0") : LanguageControl.None;
-			string herdingStr = info.IsHerding ? LanguageControl.Yes : LanguageControl.No;
-			string mountStr = info.CanBeRidden ? LanguageControl.Yes : LanguageControl.No;
+			string attackStr = info.AttackPower > 0f
+				? info.AttackPower.ToString("0.0")
+				: LanguageControl.None;
+
+			string herdingStr = info.IsHerding
+				? LanguageControl.Yes
+				: LanguageControl.No;
+
+			string mountStr = info.CanBeRidden
+				? LanguageControl.Yes
+				: LanguageControl.No;
 
 			m_propertyValues1Widget.Text =
 				$"{info.AttackResilience:F1}\n" +
@@ -155,10 +175,24 @@ namespace Game
 				LanguageControl.Get("BestiaryInfectedDescriptionScreen", "egg") + ":";
 
 			// --- Columna 2 (valores) ---
-			string speedUnit = LanguageControl.Get("BestiaryInfectedDescriptionScreen", "speed_unit");
-			string jumpUnit = LanguageControl.Get("BestiaryInfectedDescriptionScreen", "length_unit");
-			string weightUnit = LanguageControl.Get("BestiaryInfectedDescriptionScreen", "weight_unit");
-			string eggStr = info.HasSpawnerEgg ? LanguageControl.Exists : LanguageControl.None;
+			string speedUnit = LanguageControl.Get(
+				"BestiaryInfectedDescriptionScreen",
+				"speed_unit"
+			);
+
+			string jumpUnit = LanguageControl.Get(
+				"BestiaryInfectedDescriptionScreen",
+				"length_unit"
+			);
+
+			string weightUnit = LanguageControl.Get(
+				"BestiaryInfectedDescriptionScreen",
+				"weight_unit"
+			);
+
+			string eggStr = info.HasSpawnerEgg
+				? LanguageControl.Exists
+				: LanguageControl.None;
 
 			m_propertyValues2Widget.Text =
 				$"{(info.MovementSpeed * 3.6):F0} {speedUnit}\n" +
@@ -166,47 +200,77 @@ namespace Game
 				$"{info.Mass:F1} {weightUnit}\n" +
 				$"{eggStr}";
 
-			// --- Botín (valores) ---
+			// --- Botín ---
+			// Clave "2" del archivo de idioma: "Drops:"
+			m_dropsLabel.Text = LanguageControl.Get(
+				"BestiaryInfectedDescriptionScreen",
+				2
+			);
+
 			m_dropsPanel.Children.Clear();
+
 			if (info.Loot != null && info.Loot.Count > 0)
 			{
 				foreach (var loot in info.Loot)
 				{
-					if (loot.MaxCount == 0 || loot.Probability == 0f) continue;
+					if (loot.MaxCount == 0 || loot.Probability == 0f)
+						continue;
+
 					string countText;
+
 					if (loot.MinCount == loot.MaxCount)
 					{
 						countText = $"{loot.MinCount}";
 					}
 					else
 					{
-						countText = string.Format(LanguageControl.Get("BestiaryInfectedDescriptionScreen", "range"), loot.MinCount, loot.MaxCount);
+						countText = string.Format(
+							LanguageControl.Get(
+								"BestiaryInfectedDescriptionScreen",
+								"range"
+							),
+							loot.MinCount,
+							loot.MaxCount
+						);
 					}
+
 					if (loot.Probability < 1f)
 					{
-						string probFormat = LanguageControl.Get("BestiaryInfectedDescriptionScreen", "probability");
-						countText += string.Format(probFormat, (loot.Probability * 100f).ToString("0"));
+						string probFormat = LanguageControl.Get(
+							"BestiaryInfectedDescriptionScreen",
+							"probability"
+						);
+
+						countText += string.Format(
+							probFormat,
+							(loot.Probability * 100f).ToString("0")
+						);
 					}
 
 					m_dropsPanel.Children.Add(new StackPanelWidget
 					{
 						Margin = new Vector2(20f, 0f),
 						Children =
-						{
-							new BlockIconWidget
-							{
-								Size = new Vector2(32f),
-								Scale = 1.2f,
-								VerticalAlignment = WidgetAlignment.Center,
-								Value = loot.Value
-							},
-							new CanvasWidget { Size = new Vector2(10f, 0f) },
-							new LabelWidget
-							{
-								VerticalAlignment = WidgetAlignment.Center,
-								Text = countText
-							}
-						}
+				{
+					new BlockIconWidget
+					{
+						Size = new Vector2(32f),
+						Scale = 1.2f,
+						VerticalAlignment = WidgetAlignment.Center,
+						Value = loot.Value
+					},
+
+					new CanvasWidget
+					{
+						Size = new Vector2(10f, 0f)
+					},
+
+					new LabelWidget
+					{
+						VerticalAlignment = WidgetAlignment.Center,
+						Text = countText
+					}
+				}
 					});
 				}
 			}
