@@ -38,9 +38,7 @@ namespace Game
 			m_propertyValues2Widget = Children.Find<LabelWidget>("PropertyValues2", true);
 			m_dropsPanel = Children.Find<ContainerWidget>("Drops", true);
 
-			// Obtener el label por su nombre en lugar de por su texto
 			m_dropsLabel = Children.Find<LabelWidget>("DropsLabel", true);
-
 			m_rainbowBar = Children.Find<BevelledRectangleWidget>("RainbowBar", true);
 
 			ButtonWidget backButton = Children.Find<ButtonWidget>("TopBar.Back", true);
@@ -74,7 +72,6 @@ namespace Game
 			if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back", true).IsClicked)
 				ScreensManager.GoBack(Array.Empty<object>());
 
-			// Efecto arcoíris
 			s_hue += 0.005f;
 			if (s_hue >= 1f) s_hue -= 1f;
 			Vector3 hsv = new Vector3(s_hue * 360f, 1f, 1f);
@@ -97,6 +94,19 @@ namespace Game
 			}
 		}
 
+		// --- USO DEL ENUM AQUÍ ---
+		private BestiaryFactionType GetCreatureFaction(BestiaryCreatureInfo info)
+		{
+			string entityName = info.EntityValuesDictionary.DatabaseObject.Name;
+
+			// Si el nombre de la plantilla está en la lista de bandidos, es bandido
+			if (SubsystemBanditEggBlockBehavior.m_creatureTemplates.Contains(entityName))
+				return BestiaryFactionType.Bandit;
+
+			// En caso contrario, es un infectado
+			return BestiaryFactionType.Infected;
+		}
+
 		private void UpdateCreatureProperties()
 		{
 			BestiaryCreatureInfo info = m_infoList[m_index];
@@ -107,17 +117,16 @@ namespace Game
 			m_nameWidget.Text = info.DisplayName;
 			m_descriptionWidget.Text = info.Description;
 
-			// Título (clave "1")
 			LabelWidget topBarLabel = Children.Find<LabelWidget>("TopBar.Label", true);
 			if (topBarLabel != null)
 			{
-				topBarLabel.Text = LanguageControl.Get("BestiaryInfectedDescriptionScreen", 1);
-			}
+				// Usamos el enum en lugar de un booleano suelto
+				BestiaryFactionType faction = GetCreatureFaction(info);
 
-			// Botín (clave "2") - AHORA CON EL LABEL ENCONTRADO POR NOMBRE
-			if (m_dropsLabel != null)
-			{
-				m_dropsLabel.Text = LanguageControl.Get("BestiaryInfectedDescriptionScreen", 2);
+				if (faction == BestiaryFactionType.Bandit)
+					topBarLabel.Text = LanguageControl.Get("BestiaryInfectedDescriptionScreen", 3); // "Bandit Details"
+				else
+					topBarLabel.Text = LanguageControl.Get("BestiaryInfectedDescriptionScreen", 1); // "Infected Details"
 			}
 
 			// --- Columna 1 (etiquetas) ---
