@@ -1326,6 +1326,7 @@ namespace Game
 			if (m_isWaitingForFirearmReload)
 			{
 				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
+				ApplyAimVisualSettings(false, false, false, true);  // ← NUEVO
 
 				if (m_firearmReloadPauseTimer <= 0f)
 				{
@@ -1333,7 +1334,6 @@ namespace Game
 					m_firearmReloadPauseTimer = 0f;
 					m_justFinishedReloading = true;
 					CurrentFirearmReloadState = FirearmReloadState.Loaded;
-
 					PlayReloadEffects();
 				}
 				return;
@@ -1342,6 +1342,7 @@ namespace Game
 			if (m_cooldownTimer > 0f)
 			{
 				m_cooldownTimer -= m_subsystemTime.GameTimeDelta;
+				ApplyAimVisualSettings(false, false, false, true);  // ← NUEVO
 				return;
 			}
 
