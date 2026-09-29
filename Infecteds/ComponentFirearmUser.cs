@@ -36,12 +36,32 @@ namespace Game
 			}
 
 			public static readonly Info[] Firearms = new Info[]
-			{
-				new Info { BlockName = "AK47Block", Type = FirearmType.Automatic, MaxBullets = 30, AimTime = 1.0f, FireCooldown = 0.1f },
-				new Info { BlockName = "DesertEagleBlock", Type = FirearmType.SemiAutomatic, MaxBullets = 7, AimTime = 0.5f, FireCooldown = 0.02f },
-				new Info { BlockName = "SPAS12Block", Type = FirearmType.SemiAutomatic, MaxBullets = 8, AimTime = 1.2f, FireCooldown = 0.3f },
-				new Info { BlockName = "SniperBlock", Type = FirearmType.BoltAction, MaxBullets = 1, AimTime = 2.0f, FireCooldown = 1.5f }
-			};
+	{
+        // Originales
+        new Info { BlockName = "AK47Block",          Type = FirearmType.Automatic,      MaxBullets = 30,  AimTime = 1.0f, FireCooldown = 0.1f   },
+		new Info { BlockName = "DesertEagleBlock",  Type = FirearmType.SemiAutomatic, MaxBullets = 7,   AimTime = 0.5f, FireCooldown = 0.02f  },
+		new Info { BlockName = "SPAS12Block",       Type = FirearmType.SemiAutomatic, MaxBullets = 8,   AimTime = 1.2f, FireCooldown = 0.3f   },
+		new Info { BlockName = "SniperBlock",       Type = FirearmType.BoltAction,     MaxBullets = 1,   AimTime = 2.0f, FireCooldown = 1.5f   },
+
+        // Nuevos - escopetas de doble cañón
+        new Info { BlockName = "BK93Block",          Type = FirearmType.SemiAutomatic, MaxBullets = 2,   AimTime = 1.0f, FireCooldown = 0.5f   },
+		new Info { BlockName = "IZH43Block",         Type = FirearmType.SemiAutomatic, MaxBullets = 2,   AimTime = 1.0f, FireCooldown = 0.5f   },
+
+        // Nuevos - revólver/pistola semi-automática
+        new Info { BlockName = "RevolverBlock",      Type = FirearmType.SemiAutomatic, MaxBullets = 6,   AimTime = 0.5f, FireCooldown = 0.45f  },
+
+        // Nuevos - subfusiles automáticos
+        new Info { BlockName = "MP5SSDBlock",        Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.075f },
+		new Info { BlockName = "M4Block",            Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.08f  },
+		new Info { BlockName = "Mac10Block",         Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.5f, FireCooldown = 0.075f },
+		new Info { BlockName = "UziBlock",           Type = FirearmType.Automatic,     MaxBullets = 32,  AimTime = 0.6f, FireCooldown = 0.075f },
+
+        // Nuevos - ametralladora ligera
+        new Info { BlockName = "M249Block",          Type = FirearmType.Automatic,     MaxBullets = 100, AimTime = 1.5f, FireCooldown = 0.075f },
+
+        // Nuevos - rifle bolt-action
+        new Info { BlockName = "Master308Block",     Type = FirearmType.BoltAction,    MaxBullets = 5,   AimTime = 2.0f, FireCooldown = 1.8f   }
+	};
 
 			public static Info? Find(string blockName)
 			{
