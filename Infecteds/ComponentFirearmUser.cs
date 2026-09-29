@@ -77,6 +77,7 @@ namespace Game
 		// Campos
 		// ================================================================
 		private Vector2 m_shootDistance = new Vector2(5f, 100f);
+		private bool m_ammoInitialized = false;
 		private SubsystemTime m_subsystemTime;
 		private SubsystemBlockBehaviors m_subsystemBlockBehaviors;
 		private SubsystemAudio m_subsystemAudio;
@@ -247,9 +248,51 @@ namespace Game
 				if (FirearmData.Find(name).HasValue)
 				{
 					m_firearmSlot = i;
+
+					// ── Al aparecer por primera vez, variar si tiene munición o no ──
+					if (!m_ammoInitialized)
+					{
+						m_ammoInitialized = true;
+						// 50% de probabilidad de aparecer SIN munición
+						if (m_random.Bool(0.5f))
+						{
+							SetAmmoToZero(i);
+						}
+					}
+
 					return;
 				}
 			}
+		}
+
+		private void SetAmmoToZero(int slot)
+		{
+			IInventory inv = m_componentMiner.Inventory;
+			int val = inv.GetSlotValue(slot);
+			int data = Terrain.ExtractData(val);
+			int contents = Terrain.ExtractContents(val);
+			Type blockType = BlocksManager.Blocks[contents].GetType();
+
+			MethodInfo setAmmo = blockType.GetMethod("SetAmmoCount", BindingFlags.Public | BindingFlags.Static);
+			if (setAmmo != null)
+			{
+				data = (int)setAmmo.Invoke(null, new object[] { data, 0 });
+			}
+
+			MethodInfo setLoadState = blockType.GetMethod("SetLoadState", BindingFlags.Public | BindingFlags.Static);
+			if (setLoadState != null)
+			{
+				Type loadStateEnum = blockType.GetNestedType("LoadState");
+				if (loadStateEnum != null)
+				{
+					object emptyState = Enum.Parse(loadStateEnum, "Empty");
+					data = (int)setLoadState.Invoke(null, new object[] { data, emptyState });
+				}
+			}
+
+			int newVal = Terrain.MakeBlockValue(contents, 0, data);
+			inv.RemoveSlotItems(slot, 1);
+			inv.AddSlotItems(slot, newVal, 1);
 		}
 
 		private bool HasAmmo(int slot)
