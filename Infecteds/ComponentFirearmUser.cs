@@ -60,7 +60,16 @@ namespace Game
         new Info { BlockName = "M249Block",          Type = FirearmType.Automatic,     MaxBullets = 100, AimTime = 1.5f, FireCooldown = 0.075f },
 
         // Nuevos - rifle bolt-action
-        new Info { BlockName = "Master308Block",     Type = FirearmType.BoltAction,    MaxBullets = 5,   AimTime = 2.0f, FireCooldown = 1.8f   }
+        new Info { BlockName = "Master308Block",     Type = FirearmType.BoltAction,    MaxBullets = 5,   AimTime = 2.0f, FireCooldown = 1.8f   },
+
+		// AA12 - Escopeta automática (8 postas por disparo, FireRate 0.15f)
+        new Info { BlockName = "AA12Block",          Type = FirearmType.Automatic,     MaxBullets = 20,  AimTime = 1.0f, FireCooldown = 0.15f  },
+
+        // SCAR-H - Rifle de combate automático (cadencia baja, FireRate 0.12f)
+        new Info { BlockName = "SCARHBlock",         Type = FirearmType.Automatic,     MaxBullets = 20,  AimTime = 0.8f, FireCooldown = 0.12f  },
+
+        // FAMAS - Bullpup automático de alta cadencia (FireRate 0.07f)
+        new Info { BlockName = "FAMASBlock",         Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.07f  }
 	};
 
 			public static Info? Find(string blockName)
@@ -411,7 +420,7 @@ namespace Game
 			// 3. Si tiene balas, proceder a apuntar y disparar
 			if (m_firearmSlot != m_lastAimedSlot || m_target != m_lastAimedTarget)
 			{
-				m_aimProgress = 0f;
+				m_aimProgress = info.AimTime; // ← Ya está "apuntado", dispara inmediatamente
 				m_lastAimedSlot = m_firearmSlot;
 				m_lastAimedTarget = m_target;
 			}
