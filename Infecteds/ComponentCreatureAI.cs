@@ -1056,6 +1056,7 @@ namespace Game
 			if (m_isWaitingForFirearmReload)
 			{
 				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
+				ApplyFirearmAimSettings();  // ← NUEVO
 
 				if (m_firearmReloadPauseTimer <= 0f)
 				{
@@ -1070,6 +1071,7 @@ namespace Game
 			if (m_cooldownTimer > 0f)
 			{
 				m_cooldownTimer -= m_subsystemTime.GameTimeDelta;
+				ApplyFirearmAimSettings();  // ← NUEVO
 				return;
 			}
 
