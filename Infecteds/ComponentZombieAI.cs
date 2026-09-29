@@ -194,11 +194,20 @@ namespace Game
 		/// </summary>
 		private void ApplyAimVisualSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
 		{
-			if (!UsesNormalAimAnimation())
+			if (UsesNormalAimAnimation() && isFirearm)
 			{
+				// Criaturas DE la lista con armas de fuego: brazos alzados
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.4f;
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
+			}
+			else if (!UsesNormalAimAnimation() && isFirearm)
+			{
+				// Criaturas NO de la lista con armas de fuego: forzar brazos quietos
+				// para deshacer lo que OnAim del SubsystemBlockBehavior estableció (1.4f)
 				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
 			}
-			// Si usa animación normal, no se modifica nada
+			// Para armas que no son de fuego (bow, crossbow, etc): no se modifica nada
 		}
 
 		/// <summary>
@@ -1655,21 +1664,8 @@ namespace Game
 			{
 				m_componentMiner.Aim(aim, AimState.InProgress);
 
-				if (isCannon)
-				{
-					// Para criaturas SIN animación normal: forzar brazos quietos y rotar el arma
-					if (!UsesNormalAimAnimation())
-					{
-						m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-						m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
-						m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
-					}
-					// Para criaturas CON animación normal, SubsystemCannonBlockBehavior gestiona los visuales
-				}
-				else
-				{
-					ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
-				}
+				// Solo ApplyAimVisualSettings, sin bloques adicionales que fuerzan brazos
+				ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
 
 				AimTimeTimer -= m_subsystemTime.GameTimeDelta;
 			}
@@ -1683,20 +1679,8 @@ namespace Game
 				{
 					m_componentMiner.Aim(aim, AimState.Completed);
 
-					if (isCannon)
-					{
-						// Para criaturas SIN animación normal: forzar brazos quietos y rotar el arma
-						if (!UsesNormalAimAnimation())
-						{
-							m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
-							m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.08f, 0.07f);
-							m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.7f, 0f, 0f);
-						}
-					}
-					else
-					{
-						ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
-					}
+					// Solo ApplyAimVisualSettings, sin bloques de cannon que fuerzan brazos
+					ApplyAimVisualSettings(isBow, isCrossbow, isFlameThrower, false);
 				}
 
 				if (isCannon)
@@ -1754,7 +1738,12 @@ namespace Game
 			CooldownTimer = 0f;
 			Ray3 emptyAim = new Ray3(Vector3.Zero, Vector3.UnitZ);
 			m_componentMiner.Aim(emptyAim, AimState.Cancelled);
-			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+
+			// Solo resetear brazos para criaturas de la lista
+			if (UsesNormalAimAnimation())
+			{
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+			}
 
 			m_isFirearmAiming = false;
 			m_firearmAimTimer = 0f;
@@ -1859,6 +1848,7 @@ namespace Game
 			if (m_isWaitingForFirearmReload)
 			{
 				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
+				ApplyAimVisualSettings(false, false, false, true);  // ← NUEVO
 
 				if (m_firearmReloadPauseTimer <= 0f)
 				{
@@ -1866,7 +1856,6 @@ namespace Game
 					m_firearmReloadPauseTimer = 0f;
 					m_justFinishedReloading = true;
 					CurrentFirearmReloadState = FirearmReloadState.Loaded;
-
 					PlayReloadEffects();
 				}
 				return;
@@ -1875,6 +1864,7 @@ namespace Game
 			if (CooldownTimer > 0f)
 			{
 				CooldownTimer -= m_subsystemTime.GameTimeDelta;
+				ApplyAimVisualSettings(false, false, false, true);  // ← NUEVO
 				return;
 			}
 
