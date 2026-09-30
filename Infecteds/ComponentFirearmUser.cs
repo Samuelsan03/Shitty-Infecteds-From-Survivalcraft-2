@@ -69,7 +69,27 @@ namespace Game
         new Info { BlockName = "SCARHBlock",         Type = FirearmType.Automatic,     MaxBullets = 20,  AimTime = 0.8f, FireCooldown = 0.12f  },
 
         // FAMAS - Bullpup automático de alta cadencia (FireRate 0.07f)
-        new Info { BlockName = "FAMASBlock",         Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.07f  }
+        new Info { BlockName = "FAMASBlock",         Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.07f  },
+		        // Minigun - Cadencia extrema (FireRate 0.025f), 200 balas
+        new Info { BlockName = "MinigunBlock",        Type = FirearmType.Automatic,     MaxBullets = 200, AimTime = 1.5f, FireCooldown = 0.025f },
+
+        // AK48 - AK mejorado, cargador de 40, cadencia 0.08f
+        new Info { BlockName = "AK48Block",           Type = FirearmType.Automatic,     MaxBullets = 40,  AimTime = 0.8f, FireCooldown = 0.08f  },
+
+        // KA - Rifle de alta gama, cargador de 40, cadencia 0.07f
+        new Info { BlockName = "KABlock",             Type = FirearmType.Automatic,     MaxBullets = 40,  AimTime = 0.8f, FireCooldown = 0.07f  },
+
+        // FN P90 - Subfusil bullpup, cargador de 50, cadencia 0.07f
+        new Info { BlockName = "FNP90Block",          Type = FirearmType.Automatic,     MaxBullets = 50,  AimTime = 0.6f, FireCooldown = 0.07f  },
+
+        // AUG - Bullpup automático, cargador de 30, cadencia 0.1f
+        new Info { BlockName = "AUGBlock",           Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.1f   },
+
+        // G3 - Fusil de combate 7.62, cargador de 20, cadencia lenta 0.15f
+        new Info { BlockName = "G3Block",             Type = FirearmType.Automatic,     MaxBullets = 20,  AimTime = 1.0f, FireCooldown = 0.15f  },
+
+        // FX05 - Fusil automático, cargador de 30, cadencia 0.08f
+        new Info { BlockName = "FX05Block",           Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.08f  }
 	};
 
 			public static Info? Find(string blockName)
