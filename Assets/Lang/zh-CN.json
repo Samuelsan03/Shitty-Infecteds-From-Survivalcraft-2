@@ -231,16 +231,116 @@
   "CRDescription:0": "使用铜和火药制造 9mm 子弹"
 },
 "M249Block:0": {
-"DisplayName": "M249",
-"Description": "一挺射速极高、配备100发弹匣的重机枪。精准度较低，但持续射击时具有毁灭性的火力。",
-"CRDescription:0": "使用铁块和铁棒制作重机枪"
+  "DisplayName": "M249",
+  "Description": "一挺射速极高、配备100发弹匣的重机枪。精准度较低，但持续射击时具有毁灭性的火力。",
+  "CRDescription:0": "使用铁块和铁棒制作重机枪"
 },
 "M249AmmunitionBlock:0": {
-"DisplayName": "M249弹药箱",
-"Description": "一个装有100发M249机枪弹药的弹药箱。",
-"CRDescription:0": "使用铁、火药和铜制作M249弹药"
+  "DisplayName": "M249弹药箱",
+  "Description": "一个装有100发M249机枪弹药的弹药箱。",
+  "CRDescription:0": "使用铁、火药和铜制作M249弹药"
 },
-    "ImprovedMusketBlock:0": {
+"SCARHBlock:0": {
+  "DisplayName": "FN SCAR-H",
+  "Description": "FN SCAR-H是一款发射7.62毫米弹药的战斗步枪。它配备20发弹匣，单发伤害较高，对重装甲目标非常有效。",
+  "CRDescription:0": "使用铁块、金属棒和半导体制造SCAR-H"
+},
+"SCARHAmmunitionBlock:0": {
+  "DisplayName": "7.62毫米弹药",
+  "Description": "用于FN SCAR-H战斗步枪的7.62毫米弹药。单发伤害较高。",
+  "CRDescription:0": "使用铁、火药和铜制造7.62毫米弹药"
+},
+"FAMASBlock:0": {
+  "DisplayName": "FAMAS",
+  "Description": "一款法国无托式突击步枪，具有较高的射速。使用5.56毫米弹药。",
+  "CRDescription:0": "使用铁、金属棒和半导体制造FAMAS"
+},
+"FAMASAmmunitionBlock:0": {
+  "DisplayName": "FAMAS弹匣",
+  "Description": "用于FAMAS突击步枪的弹药弹匣。",
+  "CRDescription:0": "使用铁和火药制造FAMAS弹药"
+},
+"AA12Block:0": {
+  "DisplayName": "AA-12",
+  "Description": "AA-12是一种自动霰弹枪。它可以快速连续发射20发霰弹，在近距离造成巨大伤害。",
+  "CRDescription:0": "使用铁块、铁锭、铁棒和半导体制造AA-12"
+},
+"AA12AmmunitionBlock:0": {
+  "DisplayName": "AA-12霰弹",
+  "Description": "12号口径霰弹。用于AA-12自动霰弹枪的弹药。",
+  "CRDescription:0": "使用铁锭、火药和羽毛制造AA-12霰弹"
+},
+"FNP90Block:0": {
+  "DisplayName": "FN P90",
+  "Description": "一款紧凑型无托式冲锋枪，具有较高的射速和50发容量的弹匣。",
+  "CRDescription:0": "使用铁、金属棒和半导体制造一把FN P90"
+},
+"FNP90AmmunitionBlock:0": {
+  "DisplayName": "P90弹药",
+  "Description": "FN P90冲锋枪使用的5.7x28毫米弹药。",
+  "CRDescription:0": "使用铁、火药和铜制造FN P90的弹药"
+},
+"AUGBlock:0": {
+  "DisplayName": "AUG",
+  "Description": "AUG是一款威力强大的无托式突击步枪。使用AUG专用弹药。",
+  "CRDescription:0": "使用铁、金属棒和半导体制造AUG"
+},
+"AUGAmmunitionBlock:0": {
+  "DisplayName": "AUG弹药",
+  "Description": "专为AUG突击步枪设计的弹药。",
+  "CRDescription:0": "使用铁和火药制造AUG弹药"
+},
+"FX05Block:0": {
+  "DisplayName": "FX05",
+  "Description": "一款高科技突击步枪。它拥有极高的射速、出色的精准度，并能造成可观的伤害。",
+  "CRDescription:0": "使用铁、金属棒、半导体和铜制造一把 FX05"
+},
+"FX05AmmunitionBlock:0": {
+  "DisplayName": "FX05 弹匣",
+  "Description": "一个装有先进弹药的弹匣，专为 FX05 步枪设计。",
+  "CRDescription:0": "使用铁、火药和铜制造 FX05 弹匣"
+},
+"G3Block:0": {
+  "DisplayName": "G3",
+  "Description": "一种发射7.62x51毫米北约弹药的战斗步枪。它伤害高、射程远，但后坐力较大。",
+  "CRDescription:0": "使用铁块、金属棒和半导体制造一把G3"
+},
+"G3AmmunitionBlock:0": {
+  "DisplayName": "G3弹匣",
+  "Description": "一个装有20发7.62x51毫米G3弹药的弹匣。",
+  "CRDescription:0": "使用铁、火药和铜制造G3弹药"
+},
+"AK48Block:0": {
+  "DisplayName": "AK-48",
+  "Description": "AK-47 的升级版，威力更强、精度更高。可装填 40 发子弹。",
+  "CRDescription:0": "使用铁块、金属杆、半导体和铜制造 AK-48"
+},
+"AK48AmmunitionBlock:0": {
+  "DisplayName": "AK-48 弹药",
+  "Description": "AK-48 步枪使用的大口径子弹。",
+  "CRDescription:0": "使用铁、火药和铜制造 AK-48 弹药"
+},
+"KABlock:0": {
+  "DisplayName": "KA",
+  "Description": "一款精英级、高度升级的突击步枪。发射专用高速弹药，具有毁灭性的伤害和大容量弹匣。",
+  "CRDescription:0": "使用高级材料制造 KA"
+},
+"KAAmmunitionBlock:0": {
+  "DisplayName": "KA 弹药",
+  "Description": "专为 KA 突击步枪设计的高速穿甲弹。",
+  "CRDescription:0": "使用铁和钻石制造 KA 弹药"
+},
+"MinigunBlock:0": {
+  "DisplayName": "加特林机枪",
+  "Description": "一种具有毁灭性火力的重型多管枪械，射速极高。开火前需要短暂的旋转预热时间。最多可装填 200 发弹药。",
+  "CRDescription:0": "使用铁块、金属杆和半导体制造加特林机枪"
+},
+"MinigunAmmunitionBlock:0": {
+  "DisplayName": "加特林机枪弹药",
+  "Description": "一大卷 7.62 毫米弹药带，专门用于加特林机枪。可装满一个容量为 200 发的弹匣。",
+  "CRDescription:0": "使用铁、火药和铜制造加特林机枪弹药"
+},
+"ImprovedMusketBlock:0": {
   "DisplayName": "改良火枪",
   "Description": "一种重新设计的火枪，省去了分别装填火药和填塞物的繁琐步骤。它允许你直接向枪膛装入最多2颗弹丸。与原版火枪不同，即使浸入水中也不会哑火，其坚固的机械结构还能防止每次射击时损失耐久度。",
   "CRDescription:0": "使用铁块和铁杆强化一把标准火枪。"
@@ -400,11 +500,19 @@
   "5": "毒液"
 },
 "BestiaryInfectedScreen": {
-  "1": "感染体图鉴"
-    }
+    "1": "感染者与强盗图鉴"
+}
   },
+  "SubsystemMinigunBlockBehavior": {
+  "0": "正在预热枪管..."
+},
   "SubsystemCannonBlockBehavior": {
     "0": "大炮是空的"
+},
+"ComponentFirearmUser": {
+    "1": "已治疗",
+    "2": "正在重新装填",
+    "3": "已重新装填"
 },
 "CannonWidget": {
     "0": "装填炮弹",
@@ -457,21 +565,22 @@
     "0": "无法生成感染生物"
 },
   "BestiaryInfectedDescriptionScreen": {
-  "1": "感染体详情",
-  "2": "掉落物：",
-  "resilience": "韧性",
-  "attack": "攻击",
-  "herding": "群居性",
-  "mount": "坐骑",
-  "speed": "速度",
-  "jump": "跳跃",
-  "weight": "重量",
-  "egg": "蛋",
-  "speed_unit": "公里/小时",
-  "length_unit": "米",
-  "weight_unit": "千克",
-  "range": "{0}-{1}",
-  "probability": "（{0}%）"
+    "1": "感染者详情",
+    "2": "掉落物：",
+    "3": "强盗详情",
+    "resilience": "韧性",
+    "attack": "攻击",
+    "herding": "驱赶",
+    "mount": "坐骑",
+    "speed": "速度",
+    "jump": "跳跃",
+    "weight": "重量",
+    "egg": "蛋",
+    "speed_unit": "公里/小时",
+    "length_unit": "米",
+    "weight_unit": "千克",
+    "range": "{0}-{1}",
+    "probability": " ({0}%)"
 },
   "CameraManage": {
   "Game.FreeCamera": "自由视角"
