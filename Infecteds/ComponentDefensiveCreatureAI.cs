@@ -377,6 +377,97 @@ namespace Game
 				SetLoadState = (data, state) => FAMASBlock.SetLoadState(data, state == 1 ? FAMASBlock.LoadState.Loaded : FAMASBlock.LoadState.Empty)
 			});
 
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "MinigunBlock",
+				MaxAmmo = 200,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.3f,
+				CooldownAfterShot = 1.2f,
+				GetAmmoCount = (data) => MinigunBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => MinigunBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => MinigunBlock.GetLoadState(data) == MinigunBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => MinigunBlock.SetLoadState(data, state == 1 ? MinigunBlock.LoadState.Loaded : MinigunBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "AK48Block",
+				MaxAmmo = 40,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => AK48Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => AK48Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => AK48Block.GetLoadState(data) == AK48Block.LoadState.Loaded,
+				SetLoadState = (data, state) => AK48Block.SetLoadState(data, state == 1 ? AK48Block.LoadState.Loaded : AK48Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "KABlock",
+				MaxAmmo = 40,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 1.3f,
+				GetAmmoCount = (data) => KABlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => KABlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => KABlock.GetLoadState(data) == KABlock.LoadState.Loaded,
+				SetLoadState = (data, state) => KABlock.SetLoadState(data, state == 1 ? KABlock.LoadState.Loaded : KABlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "FNP90Block",
+				MaxAmmo = 50,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.15f,
+				CooldownAfterShot = 1.4f,
+				GetAmmoCount = (data) => FNP90Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => FNP90Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => FNP90Block.GetLoadState(data) == FNP90Block.LoadState.Loaded,
+				SetLoadState = (data, state) => FNP90Block.SetLoadState(data, state == 1 ? FNP90Block.LoadState.Loaded : FNP90Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "AUGBlock",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.25f,
+				CooldownAfterShot = 1.6f,
+				GetAmmoCount = (data) => AUGBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => AUGBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => AUGBlock.GetLoadState(data) == AUGBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => AUGBlock.SetLoadState(data, state == 1 ? AUGBlock.LoadState.Loaded : AUGBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "G3Block",
+				MaxAmmo = 20,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.25f,
+				CooldownAfterShot = 1.7f,
+				GetAmmoCount = (data) => G3Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => G3Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => G3Block.GetLoadState(data) == G3Block.LoadState.Loaded,
+				SetLoadState = (data, state) => G3Block.SetLoadState(data, state == 1 ? G3Block.LoadState.Loaded : G3Block.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "FX05Block",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => FX05Block.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => FX05Block.SetAmmoCount(data, count),
+				GetLoadState = (data) => FX05Block.GetLoadState(data) == FX05Block.LoadState.Loaded,
+				SetLoadState = (data, state) => FX05Block.SetLoadState(data, state == 1 ? FX05Block.LoadState.Loaded : FX05Block.LoadState.Empty)
+			});
+
 			m_firearmsInitialized = true;
 		}
 
@@ -421,6 +512,26 @@ namespace Game
 				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.08f, -0.1f, 0.07f);
 				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(-1.55f, 0f, 0f);
 			}
+		}
+
+		private void ApplyFirearmReloadVisualSettings()
+		{
+			if (m_componentCreature?.ComponentCreatureModel == null) return;
+
+			// Si es criatura sin movimiento de brazos, dejarla en posición normal
+			if (ShouldSkipArmMovementForRanged())
+			{
+				m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+				// Volver a la posición "como estaba antes" (sin forzar nada)
+				m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(0f, 0f, 0f);
+				m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(0f, 0f, 0f);
+				return;
+			}
+
+			// Criaturas normales: rotar arma hacia abajo (recargando)
+			m_componentCreature.ComponentCreatureModel.AimHandAngleOrder = 0f;
+			m_componentCreature.ComponentCreatureModel.InHandItemOffsetOrder = new Vector3(-0.1f, -0.35f, 0.05f);
+			m_componentCreature.ComponentCreatureModel.InHandItemRotationOrder = new Vector3(0.7f, 0f, 0f);
 		}
 
 		private void ApplyNoArmMovementAimSettings(bool isBow, bool isCrossbow, bool isFlameThrower, bool isFirearm = false)
@@ -1378,7 +1489,7 @@ namespace Game
 			if (m_isWaitingForFirearmReload)
 			{
 				m_firearmReloadPauseTimer -= m_subsystemTime.GameTimeDelta;
-				ApplyAimVisualSettings(false, false, false, true);  // ← NUEVO
+				ApplyFirearmReloadVisualSettings();  // ← ARMA ROTADA / POSICIÓN NORMAL
 
 				if (m_firearmReloadPauseTimer <= 0f)
 				{
@@ -1394,7 +1505,7 @@ namespace Game
 			if (m_cooldownTimer > 0f)
 			{
 				m_cooldownTimer -= m_subsystemTime.GameTimeDelta;
-				ApplyAimVisualSettings(false, false, false, true);  // ← NUEVO
+				ApplyAimVisualSettings(false, false, false, true);
 				return;
 			}
 
@@ -1409,11 +1520,11 @@ namespace Game
 					m_aimTimer = 0f;
 				}
 
+				ApplyFirearmReloadVisualSettings();  // ← ROTAR ARMA HACIA ABAJO O POSICIÓN NORMAL
 				ReloadFirearm(firearmSlot, firearm);
 				SetFirearmReloadState(FirearmReloadState.Reloading);
 				m_isWaitingForFirearmReload = true;
 				m_firearmReloadPauseTimer = FirearmReloadPauseTime;
-
 				return;
 			}
 
