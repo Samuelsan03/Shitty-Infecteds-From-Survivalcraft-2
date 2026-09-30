@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Engine;
 using Engine.Graphics;
 
@@ -48,14 +48,14 @@ namespace Game
 
 		public override int GetDamage(int value)
 		{
-			return Terrain.ExtractData(value) >> 4 & 4095;
+			return (Terrain.ExtractData(value) >> 8) & 0xFF;  // daño en bits 8..15
 		}
 
 		public override int SetDamage(int value, int damage)
 		{
 			int num = Terrain.ExtractData(value);
-			num &= 15;
-			num |= Math.Clamp(damage, 0, 4095) << 4;
+			num &= 0xFF;                                       // conservar tipo (bits 0..7)
+			num |= Math.Clamp(damage, 0, 255) << 8;            // daño en bits 8..15
 			return Terrain.ReplaceData(value, num);
 		}
 
@@ -127,12 +127,12 @@ namespace Game
 
 		public static FirearmsBulletType GetFirearmsBulletType(int data)
 		{
-			return (FirearmsBulletType)(data & 0xF);
+			return (FirearmsBulletType)(data & 0xFF);          // 8 bits (0..255) para el tipo
 		}
 
 		public static int SetFirearmsBulletType(int data, FirearmsBulletType type)
 		{
-			return (data & ~0xF) | (int)type;
+			return (data & ~0xFF) | (int)type;                // conservar el resto, poner tipo
 		}
 
 		public static Color GetBulletColor(FirearmsBulletType type)
