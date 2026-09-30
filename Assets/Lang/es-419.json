@@ -240,6 +240,106 @@
 "Description": "Una caja con 100 cartuchos para la ametralladora M249.",
 "CRDescription:0": "Crea munición para la M249 a partir de hierro, pólvora y cobre"
 },
+"SCARHBlock:0": {
+  "DisplayName": "FN SCAR-H",
+  "Description": "El FN SCAR-H es un fusil de batalla que dispara munición de 7,62 mm. Tiene un cargador de 20 cartuchos y un alto daño por disparo, lo que lo hace eficaz contra objetivos con blindaje pesado.",
+  "CRDescription:0": "Fabricar un SCAR-H a partir de bloques de hierro, varillas y semiconductores"
+},
+"SCARHAmmunitionBlock:0": {
+  "DisplayName": "Munición de 7,62 mm",
+  "Description": "Munición de 7,62 mm para el fusil de batalla FN SCAR-H. Inflige un alto daño por disparo.",
+  "CRDescription:0": "Fabricar cartuchos de 7,62 mm a partir de hierro, pólvora y cobre"
+},
+"FAMASBlock:0": {
+  "DisplayName": "FAMAS",
+  "Description": "Un fusil de asalto francés de tipo bullpup con una alta cadencia de fuego. Utiliza munición de 5,56 mm.",
+  "CRDescription:0": "Fabricar un FAMAS con hierro, varillas y semiconductores"
+},
+"FAMASAmmunitionBlock:0": {
+  "DisplayName": "Cargador de FAMAS",
+  "Description": "Cargador de munición para el fusil de asalto FAMAS.",
+  "CRDescription:0": "Fabricar munición para FAMAS con hierro y pólvora"
+},
+"AA12Block:0": {
+  "DisplayName": "AA-12",
+  "Description": "Una AA-12 es una escopeta automática. Dispara 20 cartuchos en rápida sucesión, causando un daño enorme a corta distancia.",
+  "CRDescription:0": "Fabricar una AA-12 con bloques de hierro, lingotes, varillas y semiconductores"
+},
+"AA12AmmunitionBlock:0": {
+  "DisplayName": "Cartucho de AA-12",
+  "Description": "Cartuchos de escopeta del calibre 12. Se utilizan como munición para la escopeta automática AA-12.",
+  "CRDescription:0": "Fabricar cartuchos de AA-12 con lingotes de hierro, pólvora y plumas"
+},
+"FNP90Block:0": {
+  "DisplayName": "FN P90",
+  "Description": "Un subfusil compacto de diseño bullpup con una alta cadencia de tiro y un cargador de 50 balas.",
+  "CRDescription:0": "Fabricar un FN P90 con hierro, varillas y semiconductores"
+},
+"FNP90AmmunitionBlock:0": {
+  "DisplayName": "Munición P90",
+  "Description": "Cartuchos 5.7x28mm utilizados por el subfusil FN P90.",
+  "CRDescription:0": "Fabricar munición para el FN P90 con hierro, pólvora y cobre"
+},
+"AUGBlock:0": {
+  "DisplayName": "AUG",
+  "Description": "El AUG es un potente fusil de asalto bullpup. Utiliza munición para AUG.",
+  "CRDescription:0": "Fabricar un AUG con hierro, varillas y semiconductores"
+},
+"AUGAmmunitionBlock:0": {
+  "DisplayName": "Munición para AUG",
+  "Description": "Munición diseñada específicamente para el fusil de asalto AUG.",
+  "CRDescription:0": "Fabricar munición para AUG con hierro y pólvora"
+},
+"FX05Block:0": {
+  "DisplayName": "FX05",
+  "Description": "Un rifle de asalto de alta tecnología. Cuenta con una alta cadencia de fuego, gran precisión y causa un daño considerable.",
+  "CRDescription:0": "Fabrica un FX05 con hierro, varillas, semiconductores y cobre"
+},
+"FX05AmmunitionBlock:0": {
+  "DisplayName": "Cargador de FX05",
+  "Description": "Un cargador cargado con munición avanzada, diseñado específicamente para el rifle FX05.",
+  "CRDescription:0": "Fabrica cargadores de FX05 con hierro, pólvora y cobre"
+},
+"G3Block:0": {
+  "DisplayName": "G3",
+  "Description": "Un fusil de batalla que dispara cartuchos OTAN de 7,62x51 mm. Tiene un daño elevado y un alcance excelente, pero un retroceso considerable.",
+  "CRDescription:0": "Construye un G3 con bloques de hierro, varillas y un semiconductor"
+},
+"G3AmmunitionBlock:0": {
+  "DisplayName": "Cargador de G3",
+  "Description": "Un cargador de 20 cartuchos cargado con munición de 7,62x51 mm para el G3.",
+  "CRDescription:0": "Fabrica munición para G3 con hierro, pólvora y cobre"
+},
+"AK48Block:0": {
+  "DisplayName": "AK-48",
+  "Description": "Una versión mejorada, más potente y precisa del AK-47. Tiene capacidad para 40 cartuchos.",
+  "CRDescription:0": "Fabricar un AK-48 con bloques de hierro, varillas, semiconductores y cobre"
+},
+"AK48AmmunitionBlock:0": {
+  "DisplayName": "Munición de AK-48",
+  "Description": "Cartuchos de gran calibre utilizados por el rifle AK-48.",
+  "CRDescription:0": "Fabricar munición de AK-48 con hierro, pólvora y cobre"
+},
+"KABlock:0": {
+  "DisplayName": "KA",
+  "Description": "Un rifle de asalto de élite, altamente mejorado. Dispara proyectiles especializados de alta velocidad con un daño devastador y un cargador de gran capacidad.",
+  "CRDescription:0": "Fabricar un KA con materiales avanzados"
+},
+"KAAmmunitionBlock:0": {
+  "DisplayName": "Munición de KA",
+  "Description": "Proyectiles perforantes de alta velocidad diseñados específicamente para el rifle de asalto KA.",
+  "CRDescription:0": "Fabricar munición de KA con hierro y diamantes"
+},
+"MinigunBlock:0": {
+  "DisplayName": "Minigun",
+  "Description": "Un arma pesada de múltiples cañones devastadora, con una cadencia de fuego extremadamente alta. Requiere un breve tiempo de giro antes de disparar. Puede contener hasta 200 proyectiles.",
+  "CRDescription:0": "Fabricar una minigun con bloques de hierro, varillas y semiconductores"
+},
+"MinigunAmmunitionBlock:0": {
+  "DisplayName": "Munición de Minigun",
+  "Description": "Una gran cinta de proyectiles de 7,62 mm utilizada exclusivamente para la Minigun. Recarga un cargador completo de 200 balas.",
+  "CRDescription:0": "Fabricar munición de minigun con hierro, pólvora y cobre"
+},
 "ImprovedMusketBlock:0": {
   "DisplayName": "Mosquete Mejorado",
   "Description": "Un mosquete rediseñado que elimina el engorroso proceso de cargar pólvora y tacos por separado. Te permite insertar directamente hasta 2 perdigones en la recámara. A diferencia del mosquete original, no fallará al disparar si te sumerges en el agua, y su resistente mecanismo evita que pierda durabilidad con cada disparo.",
@@ -250,7 +350,7 @@
   "Description": "Munición especial para el Mosquete Mejorado. Atraviesa el agua sin perder velocidad y se hace añicos al impactar sin producir rebotes. Es un perdigón sorpresa que nos ayudará más adelante...",
   "CRDescription:0": "Fabrica misteriosos perdigones usando bloques de hierro, plumas y azufre."
 },
-    "RepeatCrossbowBlock:0": {
+  "RepeatCrossbowBlock:0": {
     "DisplayName": "Ballesta de Repetición",
     "Description": "Una ballesta de repetición con un cargador que puede contener hasta 8 virotes. Tensa la cuerda, carga los virotes y dispara en rápida sucesión.",
     "CRDescription:0": "Se fabrica con varillas, lingotes de hierro, cuerda y una ballesta estándar"
@@ -400,9 +500,17 @@
   "5": "Veneno"
 },
 "BestiaryInfectedScreen": {
-  "1": "Bestiario de infectados"
-    }
+    "1": "Bestiario de infectados y bandidos"
+}
   },
+  "SubsystemMinigunBlockBehavior": {
+  "0": "Calentando cañones..."
+},
+  "ComponentFirearmUser": {
+    "1": "Curado",
+    "2": "Recargando",
+    "3": "Recargado"
+},
   "SubsystemCannonBlockBehavior": {
     "0": "El cañón está vacío"
 },
@@ -457,21 +565,22 @@
     "0": "No se pudo generar la criatura infectada"
 },
   "BestiaryInfectedDescriptionScreen": {
-  "1": "Detalles del infectado",
-  "2": "Objetos obtenidos:",
-  "resilience": "Resistencia",
-  "attack": "Ataque",
-  "herding": "Instinto de manada",
-  "mount": "Montura",
-  "speed": "Velocidad",
-  "jump": "Salto",
-  "weight": "Peso",
-  "egg": "Huevo",
-  "speed_unit": "km/h",
-  "length_unit": "m",
-  "weight_unit": "kg",
-  "range": "{0}-{1}",
-  "probability": " ({0}%)"
+    "1": "Detalles del infectado",
+    "2": "Botín:",
+    "3": "Detalles del bandido",
+    "resilience": "Resistencia",
+    "attack": "Ataque",
+    "herding": "Pastoreo",
+    "mount": "Montura",
+    "speed": "Velocidad",
+    "jump": "Salto",
+    "weight": "Peso",
+    "egg": "Huevo",
+    "speed_unit": "km/h",
+    "length_unit": "m",
+    "weight_unit": "kg",
+    "range": "{0}-{1}",
+    "probability": " ({0}%)"
 },
   "CameraManage": {
   "Game.FreeCamera": "Cámara libre"
