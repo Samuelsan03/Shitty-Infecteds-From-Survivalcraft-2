@@ -25,6 +25,9 @@
   "Database": {
     "DisplayName": {
       "Aimep3": "Aimep3",
+      "Bandit1": "Bandit I",
+      "Bandit2": "Bandit II",
+      "Bandit3": "Bandit III",
       "InfectedNormal1": "Infected Normal I",
       "InfectedNormal2": "Infected Normal II",
       "InfectedNormalTamed1": "Infected Normal Tamed I",
@@ -240,7 +243,107 @@
     "Description": "A box of 100 rounds for the M249 machine gun.",
     "CRDescription:0": "Craft M249 ammunition from iron, gunpowder and copper"
   },
-    "ImprovedMusketBlock:0": {
+  "SCARHBlock:0": {
+  "DisplayName": "FN SCAR-H",
+  "Description": "A FN SCAR-H is a battle rifle that fires 7.62mm rounds. It has a 20-round magazine and high damage per shot, making it effective against heavily armored targets.",
+  "CRDescription:0": "Make a SCAR-H from iron blocks, rods and semiconductors"
+},
+"SCARHAmmunitionBlock:0": {
+  "DisplayName": "7.62mm Ammo",
+  "Description": "7.62mm ammunition for the FN SCAR-H battle rifle. Deals high damage per shot.",
+  "CRDescription:0": "Make 7.62mm rounds from iron, gunpowder and copper"
+},
+"FAMASBlock:0": {
+  "DisplayName": "FAMAS",
+  "Description": "A French bullpup assault rifle with high fire rate. Uses 5.56mm ammunition.",
+  "CRDescription:0": "Craft a FAMAS from iron, rods and semiconductors"
+},
+"FAMASAmmunitionBlock:0": {
+  "DisplayName": "FAMAS Magazine",
+  "Description": "Ammunition magazine for the FAMAS assault rifle.",
+  "CRDescription:0": "Craft FAMAS ammunition from iron and gunpowder"
+},
+"AA12Block:0": {
+  "DisplayName": "AA-12",
+  "Description": "An AA-12 is an automatic shotgun. It can rapidly fire 20 shells. Load it with AA-12 ammunition.",
+  "CRDescription:0": "Make an AA-12 automatic shotgun"
+},
+"AA12AmmunitionBlock:0": {
+  "DisplayName": "AA-12 Shell",
+  "Description": "AA-12 shells are fired from the AA-12 automatic shotgun.",
+  "CRDescription:0": "Make AA-12 shells from iron and gunpowder"
+},
+"FNP90Block:0": {
+  "DisplayName": "FN P90",
+  "Description": "A compact bullpup submachine gun with a high rate of fire and a 50-round magazine.",
+  "CRDescription:0": "Craft an FN P90 with iron, rods, and semiconductors"
+},
+"FNP90AmmunitionBlock:0": {
+  "DisplayName": "P90 Ammunition",
+  "Description": "5.7x28mm cartridges used by the FN P90 submachine gun.",
+  "CRDescription:0": "Craft ammunition for the FN P90 with iron, gunpowder, and copper"
+},
+"AUGBlock:0": {
+  "DisplayName": "AUG",
+  "Description": "The AUG is a powerful bullpup assault rifle. It uses AUG ammunition.",
+  "CRDescription:0": "Make an AUG from iron, rods and semiconductors"
+},
+"AUGAmmunitionBlock:0": {
+  "DisplayName": "AUG Ammunition",
+  "Description": "Ammunition specifically designed for the AUG assault rifle.",
+  "CRDescription:0": "Make AUG ammunition from iron and gunpowder"
+},
+"FX05Block:0": {
+  "DisplayName": "FX05",
+  "Description": "A high-tech assault rifle. It features a fast fire rate, high accuracy, and deals significant damage.",
+  "CRDescription:0": "Craft an FX05 from iron, rods, semiconductors and copper"
+},
+"FX05AmmunitionBlock:0": {
+  "DisplayName": "FX05 Magazine",
+  "Description": "A magazine loaded with advanced rounds, specifically designed for the FX05 rifle.",
+  "CRDescription:0": "Craft FX05 magazines from iron, gunpowder and copper"
+},
+"G3Block:0": {
+  "DisplayName": "G3",
+  "Description": "A battle rifle that fires 7.62x51mm NATO rounds. It has high damage, excellent range, but significant recoil.",
+  "CRDescription:0": "Assemble a G3 from iron blocks, rods, and a semiconductor"
+},
+"G3AmmunitionBlock:0": {
+  "DisplayName": "G3 Magazine",
+  "Description": "A 20-round magazine loaded with 7.62x51mm ammunition for the G3.",
+  "CRDescription:0": "Craft G3 ammunition from iron, gunpowder, and copper"
+},
+"AK48Block:0": {
+  "DisplayName": "AK-48",
+  "Description": "An upgraded, more powerful and precise version of the AK-47. Holds 40 rounds.",
+  "CRDescription:0": "Make an AK-48 from iron blocks, rods, semiconductors and copper"
+},
+"AK48AmmunitionBlock:0": {
+  "DisplayName": "AK-48 Ammo",
+  "Description": "High caliber rounds used by the AK-48 rifle.",
+  "CRDescription:0": "Make AK-48 ammo from iron, gunpowder and copper"
+},
+"KABlock:0": {
+  "DisplayName": "KA",
+  "Description": "An elite, highly upgraded assault rifle. Fires specialized high-velocity rounds with devastating damage and a large magazine.",
+  "CRDescription:0": "Craft a KA from advanced materials"
+},
+"KAAmmunitionBlock:0": {
+  "DisplayName": "KA Ammo",
+  "Description": "High-velocity armor-piercing rounds designed specifically for the KA assault rifle.",
+  "CRDescription:0": "Craft KA ammunition from iron and diamonds"
+},
+"MinigunBlock:0": {
+  "DisplayName": "Minigun",
+  "Description": "A devastating heavy multi-barrel firearm with an extremely high rate of fire. Requires a brief spin-up time before firing. Can hold up to 200 rounds.",
+  "CRDescription:0": "Make a minigun from iron blocks, rods, and semiconductors"
+},
+"MinigunAmmunitionBlock:0": {
+  "DisplayName": "Minigun Ammo",
+  "Description": "A large belt of 7.62mm rounds used exclusively for the Minigun. Reloads a full magazine of 200 bullets.",
+  "CRDescription:0": "Make minigun ammo from iron, gunpowder, and copper"
+},
+  "ImprovedMusketBlock:0": {
     "DisplayName": "Improved Musket",
     "Description": "A redesigned musket that eliminates the cumbersome process of loading gunpowder and wads separately. It allows you to insert up to 2 pellets directly into the chamber. Unlike the original musket, it will not misfire if you submerge in water, and its sturdy mechanism prevents it from losing durability with each shot.",
     "CRDescription:0": "Upgrade a standard musket by reinforcing it with iron blocks and rods."
@@ -371,7 +474,7 @@
   "DisplayName": "Antidote Pill",
   "Description": "A medicinal pill that cures flu and poison. Can also cure nearby creatures within range.",
   "CRDescription:0": "Craft antidote pills from canvas and medicinal flowers"
-}
+  }
 },
   "ContentWidgets": {
   "CreatureInventoryWidget": {
@@ -400,8 +503,16 @@
   "5": "Poison"
 },
 "BestiaryInfectedScreen": {
-    "1": "Infected Bestiary"
+    "1": "Infected and Bandits Bestiary"
   }
+},
+"SubsystemMinigunBlockBehavior": {
+  "0": "Spinning up barrels..."
+},
+"ComponentFirearmUser": {
+    "1": "Healed",
+    "2": "Reloading",
+    "3": "Reloaded"
 },
 "SubsystemCannonBlockBehavior": {
     "0": "The cannon is empty"
@@ -459,6 +570,7 @@
   "BestiaryInfectedDescriptionScreen": {
     "1": "Infected Details",
     "2": "Drops:",
+    "3": "Bandit Details",
     "resilience": "Resilience",
     "attack": "Attack",
     "herding": "Herding",
