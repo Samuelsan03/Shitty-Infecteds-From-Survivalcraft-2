@@ -8,6 +8,97 @@
     "aa"
     "aa"
   </Recipe>
+    <Recipe Result="MinigunBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironblock" b="rod" c="semiconductorblock" Description="[0]">
+    "ba "
+    "acb"
+    "ba "
+  </Recipe>
+  <Recipe Result="MinigunAmmunitionBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="gunpowder" c="copperingot" Description="[0]">
+    "aba"
+    "c c"
+    "aba"
+  </Recipe>
+    <Recipe Result="KABlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironblock" b="rod" c="semiconductorblock" d="diamond" Description="[0]">
+    "ba "
+    "dcb"
+    " a "
+  </Recipe>
+  <Recipe Result="KAAmmunitionBlock" ResultCount="8" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="gunpowder" c="diamond" Description="[0]">
+    "ab"
+    "ca"
+  </Recipe>
+    <Recipe Result="AK48Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironblock" b="rod" c="semiconductorblock" d="copperingot" Description="[0]">
+    "ba "
+    "dcb"
+    " a "
+  </Recipe>
+  <Recipe Result="AK48AmmunitionBlock" ResultCount="10" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="gunpowder" c="copperingot" Description="[0]">
+    "ab"
+    "ca"
+  </Recipe>
+    <Recipe Result="G3Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironblock" b="ironingot" c="rod" d="semiconductorblock" Description="[0]">
+    "ba "
+    "dcb"
+    " a "
+  </Recipe>
+  <Recipe Result="G3AmmunitionBlock" ResultCount="6" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="gunpowder" c="copperingot" Description="[0]">
+    "ab"
+    "ca"
+  </Recipe>
+    <Recipe Result="FX05Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="rod" c="semiconductorblock" d="copperingot" Description="[0]">
+    "ba "
+    "dca"
+    "a  "
+  </Recipe>
+  <Recipe Result="FX05AmmunitionBlock" ResultCount="16" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" c="copperingot" Description="[0]">
+    "ca"
+    "ba"
+  </Recipe>
+    <Recipe Result="AUGBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="rod" c="semiconductorblock" Description="[0]">
+    "ba "
+    "acb"
+    "a  "
+  </Recipe>
+  <Recipe Result="AUGAmmunitionBlock" ResultCount="8" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" Description="[0]">
+    "aba"
+  </Recipe>
+    <Recipe Result="FNP90Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="rod" c="semiconductorblock" d="copperingot" Description="[0]">
+    "ab "
+    "dcb"
+    " a "
+  </Recipe>
+  <Recipe Result="FNP90AmmunitionBlock" ResultCount="16" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" c="copperingot" Description="[0]">
+    "ab "
+    "cbc"
+    " a "
+  </Recipe>
+    <Recipe Result="AA12Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironblock" b="ironingot" c="rod" d="semiconductorblock" Description="[0]">
+    "ab "
+    "dcb"
+    " a "
+  </Recipe>
+  <Recipe Result="AA12AmmunitionBlock" ResultCount="6" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="gunpowder" c="feather" Description="[0]">
+    "ab"
+    "ca"
+  </Recipe>
+  <Recipe Result="FAMASBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="rod" c="semiconductorblock" Description="[0]">
+  "ab"
+  "cb"
+  "a "
+</Recipe>
+<Recipe Result="FAMASAmmunitionBlock" ResultCount="10" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot" b="gunpowder" Description="[0]">
+  "ab"
+  "ba"
+</Recipe>
+  <Recipe Result="SCARHBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironblock" b="rod" c="semiconductorblock" d="ironingot" Description="[0]">
+  " ab"
+  "dcd"
+  " a "
+</Recipe>
+<Recipe Result="SCARHAmmunitionBlock" ResultCount="6" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironingot" b="gunpowder" c="copperingot" Description="[0]">
+  "ab"
+  "bc"
+</Recipe>
 <Recipe Result="M249Block" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="5" a="ironblock" b="ironingot" c="rod" d="planks" Description="[0]">
   "aba"
   "cdc"
