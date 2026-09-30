@@ -98,7 +98,6 @@ namespace Game
 			return 0f;
 		}
 
-		// ENUM Y MÉTODOS ESTÁTICOS
 		public enum FirearmsBulletType
 		{
 			AK47Bullet,
@@ -116,7 +115,14 @@ namespace Game
 			M249Bullet,
 			SCARHBullet,
 			FAMASBullet,
-			AA12Bullet  // <-- AÑADIR
+			AA12Bullet,
+			FNP90Bullet,
+			AUGBullet,
+			FX05Bullet,
+			G3Bullet,
+			AK48Bullet,
+			KABullet,
+			MinigunBullet
 		}
 
 		public static FirearmsBulletType GetFirearmsBulletType(int data)
@@ -165,6 +171,20 @@ namespace Game
 					return new Color(240, 190, 80);
 				case FirearmsBulletType.AA12Bullet:
 					return new Color(220, 160, 60);
+				case FirearmsBulletType.FNP90Bullet:
+					return new Color(245, 222, 80);
+				case FirearmsBulletType.AUGBullet:
+					return new Color(255, 200, 50);
+				case FirearmsBulletType.FX05Bullet:
+					return new Color(80, 220, 240);
+				case FirearmsBulletType.G3Bullet:
+					return new Color(180, 140, 60);
+				case FirearmsBulletType.AK48Bullet: // <-- AÑADIDO
+					return new Color(255, 50, 50); // Color rojo brillante para diferenciarlo
+				case FirearmsBulletType.KABullet:
+					return new Color(180, 0, 0); // Rojo oscuro sangriento, ¡muy letal!
+				case FirearmsBulletType.MinigunBullet:
+					return new Color(255, 100, 0); // Color naranja fuego
 				default:
 					return Color.White;
 			}
@@ -205,7 +225,21 @@ namespace Game
 				case FirearmsBulletType.FAMASBullet:
 					return 25f;
 				case FirearmsBulletType.AA12Bullet:
-					return 14f;  // Menor daño por posta, pero dispara 8 a la vez
+					return 14f;
+				case FirearmsBulletType.FNP90Bullet:
+					return 20f;
+				case FirearmsBulletType.AUGBullet:
+					return 28f;
+				case FirearmsBulletType.FX05Bullet:
+					return 32f;
+				case FirearmsBulletType.G3Bullet:
+					return 35f;
+				case FirearmsBulletType.AK48Bullet: // <-- AÑADIDO
+					return 40f; // ¡Bala mucho más potente que el AK47!
+				case FirearmsBulletType.KABullet:
+					return 55f; // ¡Daño masivo! Superior al AK47 (25) y AK48 (40)
+				case FirearmsBulletType.MinigunBullet:
+					return 30f; // Daño moderado-alto por bala (Pero dispara muchísimas)
 				default:
 					return 10f;
 			}
@@ -247,6 +281,20 @@ namespace Game
 					return 1;
 				case FirearmsBulletType.AA12Bullet:
 					return 1;
+				case FirearmsBulletType.FNP90Bullet:
+					return 1;
+				case FirearmsBulletType.AUGBullet:
+					return 1;
+				case FirearmsBulletType.FX05Bullet:
+					return 1;
+				case FirearmsBulletType.G3Bullet:
+					return 1;
+				case FirearmsBulletType.AK48Bullet: // <-- AÑADIDO
+					return 1;
+				case FirearmsBulletType.KABullet:
+					return 1;
+				case FirearmsBulletType.MinigunBullet:
+					return 1;
 				default:
 					return 1;
 			}
@@ -287,7 +335,21 @@ namespace Game
 				case FirearmsBulletType.FAMASBullet:
 					return 0.97f;
 				case FirearmsBulletType.AA12Bullet:
-					return 0.90f;  // Alcance corto-medio, típico de escopeta
+					return 0.90f;
+				case FirearmsBulletType.FNP90Bullet:
+					return 0.96f;
+				case FirearmsBulletType.AUGBullet:
+					return 0.97f;
+				case FirearmsBulletType.FX05Bullet:
+					return 0.98f;
+				case FirearmsBulletType.G3Bullet:
+					return 0.98f;
+				case FirearmsBulletType.AK48Bullet: // <-- AÑADIDO
+					return 0.99f; // ¡Mayor alcance y precisión que el AK47!
+				case FirearmsBulletType.KABullet:
+					return 0.995f; // Casi sin caída, altísima velocidad y precisión
+				case FirearmsBulletType.MinigunBullet:
+					return 0.98f; // Muy poca caída, alcance letal
 				default:
 					return 0.8f;
 			}
