@@ -2,6 +2,16 @@
 
     <Folder Name="Gameplay" Guid="e4b7dfcf-a325-4a33-a1e9-e6e188c8274c">
 
+    <ComponentTemplate Name="BanditRunAwayBehavior" Guid="92172d88-653b-4aed-8b5e-75d67a27f1c6" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+          <Parameter Name="Class" Guid="8e86a3dd-4f6f-490b-8459-e8ce2673b302" Value="Game.ComponentBanditRunAwayBehavior" Type="string" />
+          <Parameter Name="LowHealthToEscape" Guid="4787758e-9d49-4853-b277-9451fd6e6d6f" Value="0.33" Type="float" />
+        </ComponentTemplate>
+
+    <ComponentTemplate Name="FirearmUser" Guid="6681d542-73c5-4245-b61f-651bda4abc3d" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
+          <Parameter Name="Class" Guid="655d413f-af71-400f-aae0-f9c775c7aa26" Value="Game.ComponentFirearmUser" Type="string" />
+          <Parameter Name="HealProbability" Guid="c943c9df-0134-4f6a-87de-34dbe615741a" Value="0" Type="float" />
+        </ComponentTemplate>
+
     <ComponentTemplate Name="NoiseAttractionBehavior" Guid="1172189a-da5c-471c-b285-65af0aca9a33" InheritanceParent="6cc7245f-56f2-4a77-a3db-5f628b6369b3">
           <Parameter Name="Class" Guid="fd9c7caa-ad16-4744-aa69-442e420b84b5" Value="Game.ComponentNoiseAttractionBehavior" Type="string" />
         </ComponentTemplate>
@@ -264,6 +274,39 @@
     </Folder>
 
      <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+     <MemberSubsystemTemplate Name="SubsystemMinigunBlockBehavior" Guid="6154b985-1446-4ff0-9087-a73c29801e8e" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="5b08cff1-e8af-48aa-8da2-11f2356ae401" Value="Game.SubsystemMinigunBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemKABlockBehavior" Guid="95eef56a-3b24-4c62-9045-069b925607a3" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="5a01e222-5587-4462-aa95-62d84e4265e4" Value="Game.SubsystemKABlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemAK48BlockBehavior" Guid="5b6b6e78-a219-49df-9076-df05ec0fa835" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="08615f02-3ac9-4187-98d4-692c46437b89" Value="Game.SubsystemAK48BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemG3BlockBehavior" Guid="aa060a99-ad3c-473a-915d-4d6a17864e50" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="2a659ccb-c36b-4f59-b026-8a333a645027" Value="Game.SubsystemG3BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemFX05BlockBehavior" Guid="c6ede629-f06f-4b1b-ae00-09578b54a3ad" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="462f6e54-7c51-4ea4-bf20-5c8f8acca2b7" Value="Game.SubsystemFX05BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemAUGBlockBehavior" Guid="ebe8d751-b5e8-4029-a457-6f6ec31d12df" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="745f47bf-3cc6-4e6d-b11a-79efe48ec1fb" Value="Game.SubsystemAUGBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemFNP90BlockBehavior" Guid="012b27cd-cc8d-4930-a0a4-1abf17d32908" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="0e7d44cc-e686-4b4e-b6ca-519f18b7e554" Value="Game.SubsystemFNP90BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemAA12BlockBehavior" Guid="4f8788d4-f965-4672-ba83-366d450c0ea5" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="475088fd-3828-405a-a2fd-de9855ec3bbf" Value="Game.SubsystemAA12BlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemFAMASBlockBehavior" Guid="5bb291be-6c9f-45da-9269-23c23ac35348" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="69c7b119-8814-4a4b-a733-6ade5aaa824f" Value="Game.SubsystemFAMASBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemSCARHBlockBehavior" Guid="6bd55c9f-c170-4018-8c8f-6a1e3e2d4f29" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="464c5e34-f7de-40ba-b2cc-568280589e31" Value="Game.SubsystemSCARHBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
+     <MemberSubsystemTemplate Name="SubsystemBanditEggBlockBehavior" Guid="c58cb656-299e-476f-939a-c50f2c5fa48d" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+          <Parameter Name="Class" Guid="25f8700c-8af6-4670-ae40-c51cf78396f9" Value="Game.SubsystemBanditEggBlockBehavior" Type="string" />
+        </MemberSubsystemTemplate>
      <MemberSubsystemTemplate Name="SubsystemCannonBlockBehavior" Guid="33fa93a6-98ac-426a-8581-90e54c382659" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
           <Parameter Name="Class" Guid="da0daa98-db1d-48c3-bcd0-fe580cf21c77" Value="Game.SubsystemCannonBlockBehavior" Type="string" />
         </MemberSubsystemTemplate>
