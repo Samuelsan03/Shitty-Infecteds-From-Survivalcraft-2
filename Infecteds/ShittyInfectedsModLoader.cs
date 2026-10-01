@@ -5,807 +5,766 @@ using System.Xml.Linq;
 using Engine;
 using Game;
 
-namespace Game;
-
-public class ShittyInfectedsModLoader : ModLoader
+namespace Game
 {
-	private static readonly List<string> ListaMusica = new List<string>
+	public class ShittyInfectedsModLoader : ModLoader
 	{
-		"Music/Menu Music",
-		"Music/Menu Music 2",
-		"Music/Friday the 13th - Killer Puzzle - Theme Song"
-	};
-
-	private Game.Random random = new Game.Random();
-
-	public override void __ModInitialize()
-	{
-		ModsManager.RegisterHook("MenuPlayMusic", this);
-		ModsManager.RegisterHook("OnMainMenuScreenCreated", this);
-		ModsManager.RegisterHook("OnMinerHit", this);
-		ModsManager.RegisterHook("CalculateCreatureInjuryAmount", this);
-		ModsManager.RegisterHook("OnWidgetConstruct", this);
-		ModsManager.RegisterHook("OnPlayerSpawned", this);
-		ModsManager.RegisterHook("ChangeSkyColor", this);
-		ModsManager.RegisterHook("OnPlayerInputInteract", this);
-		ModsManager.RegisterHook("OnProjectileRaycastBody", this);
-		ModsManager.RegisterHook("AfterWidgetUpdate", this);
-		ModsManager.RegisterHook("GuiUpdate", this);
-		ModsManager.RegisterHook("ManageCameras", this);
-		ModsManager.RegisterHook("OnVitalStatsUpdateSleep", this);
-		ModsManager.RegisterHook("OnProjectileHitBody", this);
-		ModsManager.RegisterHook("ProcessAttackment", this);
-		ModsManager.RegisterHook("OnPlayerDead", this);
-		ModsManager.RegisterHook("ScoreMount", this);
-		ModsManager.RegisterHook("UpdatePlayerInputAim", this);
-	}
-
-	public override void ScoreMount(ComponentRider rider, ComponentMount mount, out float? score)
-	{
-		score = null;
-
-		// Si no es la criatura FlyingInfected1, no intervenimos.
-		if (mount?.Entity?.ValuesDictionary?.DatabaseObject?.Name != "FlyingInfected1")
-			return;
-
-		// Si el que intenta montar es un jugador → prohibido.
-		// Si es una criatura IA → permitido (dejamos score = null, el vanilla decide).
-		if (rider.ComponentCreature.Entity.FindComponent<ComponentPlayer>() != null)
+		private static readonly List<string> ListaMusica = new List<string>
 		{
-			score = -1f; // negativo = modDisallows, jamás la encontrará como montura
+			"Music/Menu Music",
+			"Music/Menu Music 2",
+			"Music/Friday the 13th - Killer Puzzle - Theme Song"
+		};
+
+		private Game.Random random = new Game.Random();
+
+		public override void __ModInitialize()
+		{
+			ModsManager.RegisterHook("MenuPlayMusic", this);
+			ModsManager.RegisterHook("OnMainMenuScreenCreated", this);
+			ModsManager.RegisterHook("OnMinerHit", this);
+			ModsManager.RegisterHook("CalculateCreatureInjuryAmount", this);
+			ModsManager.RegisterHook("OnWidgetConstruct", this);
+			ModsManager.RegisterHook("OnPlayerSpawned", this);
+			ModsManager.RegisterHook("ChangeSkyColor", this);
+			ModsManager.RegisterHook("OnPlayerInputInteract", this);
+			ModsManager.RegisterHook("OnProjectileRaycastBody", this);
+			ModsManager.RegisterHook("AfterWidgetUpdate", this);
+			ModsManager.RegisterHook("GuiUpdate", this);
+			ModsManager.RegisterHook("ManageCameras", this);
+			ModsManager.RegisterHook("OnVitalStatsUpdateSleep", this);
+			ModsManager.RegisterHook("OnProjectileHitBody", this);
+			ModsManager.RegisterHook("ProcessAttackment", this);
+			ModsManager.RegisterHook("OnPlayerDead", this);
+			ModsManager.RegisterHook("ScoreMount", this);
+			ModsManager.RegisterHook("UpdatePlayerInputAim", this);
 		}
-	}
 
-	public override void OnPlayerDead(PlayerData playerData)
-	{
-		// Respetar el toggle de música de muerte
-		if (!ShittyInfectedsSettings.EnableDeathMusic) return;
-
-		// Aseguramos que el manager esté inicializado (idempotente)
-		InfectedsMusicManager.Initialize();
-
-		// Encendemos el canal Death con la ruta indicada.
-		// Al ser loop=true en GetMusicSettings, se queda sonando hasta que lo detengamos.
-		InfectedsMusicManager.Update(
-			isChasing: true,
-			dt: 0f,
-			path: "Music/Left 4 Dead 2 Left for Death",
-			type: InfectedsMusicManager.MusicType.Death);
-	}
-
-	/// Aplica protección de armadura de ComponentCreatureClothing a criaturas
-	/// que no son jugadores (el ComponentClothing del jugador ya se maneja en vanilla)
-	public override void ProcessAttackment(Attackment attackment)
-	{
-		// Verificaciones de seguridad
-		if (attackment?.Target == null) return;
-		if (attackment.AttackPower <= 0f) return;
-		if (!attackment.EnableArmorProtection) return;
-
-		// Si el objetivo ya tiene ComponentClothing (jugador), no intervenir
-		// porque el sistema vanilla ya lo maneja
-		if (attackment.Target.FindComponent<ComponentClothing>() != null) return;
-
-		// Buscar ComponentCreatureClothing en la criatura objetivo
-		ComponentCreatureClothing creatureClothing = attackment.Target.FindComponent<ComponentCreatureClothing>();
-
-		if (creatureClothing != null)
+		public override void ScoreMount(ComponentRider rider, ComponentMount mount, out float? score)
 		{
-			// Guardar el daño original ANTES de la protección
-			float originalPower = attackment.AttackPower;
+			score = null;
 
-			// Aplicar la protección de armadura de la ropa de la criatura
-			// Esto reduce attackment.AttackPower y daña la ropa según su protección
-			float remainingDamage = creatureClothing.ApplyArmorProtection(attackment);
+			if (mount?.Entity?.ValuesDictionary?.DatabaseObject?.Name != "FlyingInfected1")
+				return;
 
-			// Actualizar el poder de ataque con el daño restante después de la protección
-			attackment.AttackPower = remainingDamage;
-
-			// ============================================================
-			// CORRECCIÓN PRINCIPAL: Si la armadura absorbió TODO el daño,
-			// el flujo normal NO disparará el evento Injured (porque 
-			// CalculateInjuryAmount retorna 0 cuando AttackPower <= 0).
-			// Necesitamos dispararlo MANUALMENTE para que los ChaseBehaviors
-			// (ComponentChaseBehavior, ComponentNewChaseBehavior, etc.)
-			// reaccionen y persigan al atacante.
-			// ============================================================
-			if (remainingDamage <= 0f && originalPower > 0f)
+			if (rider.ComponentCreature.Entity.FindComponent<ComponentPlayer>() != null)
 			{
-				ComponentHealth health = attackment.Target.FindComponent<ComponentHealth>();
-				ComponentCreature attacker = attackment.Attacker?.FindComponent<ComponentCreature>();
-
-				// Solo disparar si hay un atacante válido y el evento tiene suscriptores
-				if (health?.Injured != null && attacker != null)
-				{
-					// AttackInjury con daño 0: no afecta la salud pero activa los ChaseBehaviors
-					// porque ellos solo verifican injury.Attacker, no injury.Amount
-					health.Injured.Invoke(new AttackInjury(0f, attackment));
-				}
+				score = -1f;
 			}
 		}
-	}
 
-	public override void OnProjectileHitBody(Projectile projectile, BodyRaycastResult bodyRaycastResult, ref Attackment attackment, ref Vector3 velocityAfterAttack, ref Vector3 angularVelocityAfterAttack, ref bool ignoreBody)
-	{
-		// Verificamos si el proyectil es de tipo FirearmsBulletBlock directamente (sin importar su índice numérico)
-		if (projectile != null && BlocksManager.Blocks[Terrain.ExtractContents(projectile.Value)] is FirearmsBulletBlock)
+		public override void OnPlayerDead(PlayerData playerData)
 		{
-			// Elimina el empuje físico
-			attackment.ImpulseFactor = 0f;
+			if (!ShittyInfectedsSettings.EnableDeathMusic) return;
 
-			// Elimina el aturdimiento por impacto (por si acaso mueve al mob)
-			attackment.StunTimeAdd = 0f;
-			attackment.StunTimeSet = 0f;
+			InfectedsMusicManager.Initialize();
 
-			// La bala se queda quieta
-			velocityAfterAttack = Vector3.Zero;
-			angularVelocityAfterAttack = Vector3.Zero;
+			InfectedsMusicManager.Update(
+				isChasing: true,
+				dt: 0f,
+				path: "Music/Left 4 Dead 2 Left for Death",
+				type: InfectedsMusicManager.MusicType.Death);
 		}
-	}
 
-	public void OnVitalStatsUpdateSleep(ComponentVitalStats vitalStats, ref float sleep, ref float gameTimeDelta, out bool skipVanilla)
-	{
-		skipVanilla = false;
-
-		if (SubsystemGreenNightSky.Instance != null && SubsystemGreenNightSky.Instance.IsGreenNightActive)
+		public override void ProcessAttackment(Attackment attackment)
 		{
-			// Al poner skipVanilla en true, el juego hace un "return" inmediato.
-			// Esto evita que la barra baje, pero conserva el valor actual que tenga el jugador.
-			skipVanilla = true;
-		}
-	}
+			if (attackment?.Target == null) return;
+			if (attackment.AttackPower <= 0f) return;
+			if (!attackment.EnableArmorProtection) return;
 
-	public override IEnumerable<KeyValuePair<string, int>> GetCameraList()
-	{
-		yield return new KeyValuePair<string, int>("Game.FreeCamera", 4);
-	}
+			if (attackment.Target.FindComponent<ComponentClothing>() != null) return;
 
-	public override void ManageCameras(GameWidget gameWidget)
-	{
-		gameWidget.AddCamera(new FreeCamera(gameWidget), (gw) =>
-		{
-			// 1. Verificamos si está activado en la configuración (ON/OFF)
-			if (!ShittyInfectedsSettings.EnableFreeCamera) return false;
+			ComponentCreatureClothing creatureClothing = attackment.Target.FindComponent<ComponentCreatureClothing>();
 
-			// 2. Verificamos si NO es modo creativo
-			ComponentPlayer player = gw.PlayerData?.ComponentPlayer;
-			if (player != null)
+			if (creatureClothing != null)
 			{
-				SubsystemGameInfo gameInfo = player.Project.FindSubsystem<SubsystemGameInfo>();
-				if (gameInfo != null)
+				float originalPower = attackment.AttackPower;
+				float remainingDamage = creatureClothing.ApplyArmorProtection(attackment);
+				attackment.AttackPower = remainingDamage;
+
+				if (remainingDamage <= 0f && originalPower > 0f)
 				{
-					return gameInfo.WorldSettings.GameMode != GameMode.Creative;
-				}
-			}
-			return false;
-		});
-	}
+					ComponentHealth health = attackment.Target.FindComponent<ComponentHealth>();
+					ComponentCreature attacker = attackment.Attacker?.FindComponent<ComponentCreature>();
 
-	public override void GuiUpdate(ComponentGui componentGui)
-	{
-		if (componentGui?.m_componentPlayer?.ComponentBody == null)
-			return;
-
-		ContainerWidget guiWidget = componentGui.m_componentPlayer.GuiWidget;
-		if (guiWidget == null)
-			return;
-
-		LabelWidget coordLabel = guiWidget.Children.Find<LabelWidget>("ShittyCoordsLabel", false);
-		if (coordLabel == null)
-		{
-			coordLabel = new LabelWidget
-			{
-				Name = "ShittyCoordsLabel",
-				Text = "",
-				Color = new Color(255, 255, 255, 200),
-				HorizontalAlignment = WidgetAlignment.Near,
-				VerticalAlignment = WidgetAlignment.Near,
-				FontScale = 0.6f,
-				DropShadow = true,
-				Margin = new Vector2(80f, 20f)
-			};
-			guiWidget.Children.Add(coordLabel);
-		}
-
-		if (!ShittyInfectedsSettings.ShowCoordinates)
-		{
-			coordLabel.IsVisible = false;
-			return;
-		}
-
-		bool isAlive = componentGui.m_componentPlayer.ComponentHealth.Health > 0f;
-		bool isReady = componentGui.m_componentPlayer.PlayerData.IsReadyForPlaying;
-
-		coordLabel.IsVisible = isAlive && isReady;
-
-		if (coordLabel.IsVisible)
-		{
-			Vector3 pos = componentGui.m_componentPlayer.ComponentBody.Position;
-			coordLabel.Text = string.Format(LanguageControl.Get("ShittyInfectedsMod", "1"), pos.X, pos.Y, pos.Z);
-		}
-	}
-
-	public override void OnProjectileRaycastBody(ComponentBody body, Projectile projectile, float distance, out bool ignore)
-	{
-		ignore = false;
-		if (projectile?.OwnerEntity == null || body?.Entity == null) return;
-
-		ComponentCreature owner = projectile.OwnerEntity.FindComponent<ComponentCreature>();
-		ComponentCreature hit = body.Entity.FindComponent<ComponentCreature>();
-		if (owner == null || hit == null || owner.Entity == hit.Entity) return;
-
-		ComponentNewHerdBehavior ownerNewHerd = owner.Entity.FindComponent<ComponentNewHerdBehavior>();
-		ComponentNewHerdBehavior hitNewHerd = hit.Entity.FindComponent<ComponentNewHerdBehavior>();
-		ComponentZombieHerdBehavior ownerZombieHerd = owner.Entity.FindComponent<ComponentZombieHerdBehavior>();
-		ComponentZombieHerdBehavior hitZombieHerd = hit.Entity.FindComponent<ComponentZombieHerdBehavior>();
-
-		bool sameNewHerd = ownerNewHerd != null && hitNewHerd != null && ownerNewHerd.HerdName == hitNewHerd.HerdName && !string.IsNullOrEmpty(ownerNewHerd.HerdName);
-		bool sameZombieHerd = ownerZombieHerd != null && hitZombieHerd != null && ownerZombieHerd.HerdName == hitZombieHerd.HerdName && !string.IsNullOrEmpty(ownerZombieHerd.HerdName);
-
-		// CORRECCIÓN: Verificar si el dueño es jugador O tiene manada "player"
-		bool isOwnerPlayer = owner.Entity.FindComponent<ComponentPlayer>() != null;
-		bool isOwnerPlayerHerd = ownerNewHerd != null && ownerNewHerd.HerdName == "player";
-		bool isPlayerHerd = isOwnerPlayer || isOwnerPlayerHerd;
-
-		// CORRECCIÓN: Verificar si el objetivo es jugador O tiene manada "player"
-		bool isHitPlayer = hit.Entity.FindComponent<ComponentPlayer>() != null;
-		bool isHitPlayerHerd = hitNewHerd != null && hitNewHerd.HerdName == "player";
-		bool isHitInPlayerGroup = isHitPlayer || isHitPlayerHerd;
-
-		if (sameNewHerd || sameZombieHerd || (isPlayerHerd && isHitInPlayerGroup))
-		{
-			bool isTarget = false;
-			ComponentNewChaseBehavior newChase = owner.Entity.FindComponent<ComponentNewChaseBehavior>();
-			if (newChase?.Target != null && newChase.Target.Entity == hit.Entity) isTarget = true;
-
-			if (!isTarget)
-			{
-				ComponentZombieChaseBehavior zombieChase = owner.Entity.FindComponent<ComponentZombieChaseBehavior>();
-				if (zombieChase?.Target != null && zombieChase.Target.Entity == hit.Entity) isTarget = true;
-			}
-
-			if (!isTarget) ignore = true;
-		}
-	}
-
-	public override void OnPlayerInputInteract(ComponentPlayer player, ref bool handled, ref double timeInterval, ref int priorityUse, ref int priorityInteract, ref int priorityPlace)
-	{
-		if (handled) return;
-
-		if (player.ComponentMiner != null && player.ComponentCreatureModel != null)
-		{
-			Vector3 eyePosition = player.ComponentCreatureModel.EyePosition;
-			Vector3 forwardVector = player.ComponentCreatureModel.EyeRotation.GetForwardVector();
-			Ray3 ray = new Ray3(eyePosition, forwardVector);
-
-			object raycastResult = player.ComponentMiner.Raycast(ray, RaycastMode.Interaction, false, true, false);
-
-			if (raycastResult is BodyRaycastResult bodyResult)
-			{
-				if (bodyResult.ComponentBody != null)
-				{
-					// Verificar si es el vendedor de armas por nombre en la base de datos
-					string entityName = bodyResult.ComponentBody.Entity.ValuesDictionary.DatabaseObject.Name;
-					if (entityName == "FirearmsSeller")
+					if (health?.Injured != null && attacker != null)
 					{
-						ComponentFirearmsShop shopComponent = bodyResult.ComponentBody.Entity.FindComponent<ComponentFirearmsShop>();
-						if (shopComponent != null && shopComponent.IsEntityAlive)  // <-- Agregar esta verificación
+						health.Injured.Invoke(new AttackInjury(0f, attackment));
+					}
+				}
+			}
+		}
+
+		public override void OnProjectileHitBody(Projectile projectile, BodyRaycastResult bodyRaycastResult, ref Attackment attackment, ref Vector3 velocityAfterAttack, ref Vector3 angularVelocityAfterAttack, ref bool ignoreBody)
+		{
+			if (projectile != null && BlocksManager.Blocks[Terrain.ExtractContents(projectile.Value)] is FirearmsBulletBlock)
+			{
+				attackment.ImpulseFactor = 0f;
+				attackment.StunTimeAdd = 0f;
+				attackment.StunTimeSet = 0f;
+				velocityAfterAttack = Vector3.Zero;
+				angularVelocityAfterAttack = Vector3.Zero;
+			}
+		}
+
+		public void OnVitalStatsUpdateSleep(ComponentVitalStats vitalStats, ref float sleep, ref float gameTimeDelta, out bool skipVanilla)
+		{
+			skipVanilla = false;
+
+			if (SubsystemGreenNightSky.Instance != null && SubsystemGreenNightSky.Instance.IsGreenNightActive)
+			{
+				skipVanilla = true;
+			}
+		}
+
+		public override IEnumerable<KeyValuePair<string, int>> GetCameraList()
+		{
+			yield return new KeyValuePair<string, int>("Game.FreeCamera", 4);
+		}
+
+		public override void ManageCameras(GameWidget gameWidget)
+		{
+			gameWidget.AddCamera(new FreeCamera(gameWidget), (gw) =>
+			{
+				if (!ShittyInfectedsSettings.EnableFreeCamera) return false;
+
+				ComponentPlayer player = gw.PlayerData?.ComponentPlayer;
+				if (player != null)
+				{
+					SubsystemGameInfo gameInfo = player.Project.FindSubsystem<SubsystemGameInfo>();
+					if (gameInfo != null)
+					{
+						return gameInfo.WorldSettings.GameMode != GameMode.Creative;
+					}
+				}
+				return false;
+			});
+		}
+
+		public override void GuiUpdate(ComponentGui componentGui)
+		{
+			if (componentGui?.m_componentPlayer?.ComponentBody == null)
+				return;
+
+			ContainerWidget guiWidget = componentGui.m_componentPlayer.GuiWidget;
+			if (guiWidget == null)
+				return;
+
+			LabelWidget coordLabel = guiWidget.Children.Find<LabelWidget>("ShittyCoordsLabel", false);
+			if (coordLabel == null)
+			{
+				coordLabel = new LabelWidget
+				{
+					Name = "ShittyCoordsLabel",
+					Text = "",
+					Color = new Color(255, 255, 255, 200),
+					HorizontalAlignment = WidgetAlignment.Near,
+					VerticalAlignment = WidgetAlignment.Near,
+					FontScale = 0.6f,
+					DropShadow = true,
+					Margin = new Vector2(80f, 20f)
+				};
+				guiWidget.Children.Add(coordLabel);
+			}
+
+			if (!ShittyInfectedsSettings.ShowCoordinates)
+			{
+				coordLabel.IsVisible = false;
+				return;
+			}
+
+			bool isAlive = componentGui.m_componentPlayer.ComponentHealth.Health > 0f;
+			bool isReady = componentGui.m_componentPlayer.PlayerData.IsReadyForPlaying;
+
+			coordLabel.IsVisible = isAlive && isReady;
+
+			if (coordLabel.IsVisible)
+			{
+				Vector3 pos = componentGui.m_componentPlayer.ComponentBody.Position;
+				coordLabel.Text = string.Format(LanguageControl.Get("ShittyInfectedsMod", "1"), pos.X, pos.Y, pos.Z);
+			}
+		}
+
+		public override void OnProjectileRaycastBody(ComponentBody body, Projectile projectile, float distance, out bool ignore)
+		{
+			ignore = false;
+			if (projectile?.OwnerEntity == null || body?.Entity == null) return;
+
+			ComponentCreature owner = projectile.OwnerEntity.FindComponent<ComponentCreature>();
+			ComponentCreature hit = body.Entity.FindComponent<ComponentCreature>();
+			if (owner == null || hit == null || owner.Entity == hit.Entity) return;
+
+			ComponentNewHerdBehavior ownerNewHerd = owner.Entity.FindComponent<ComponentNewHerdBehavior>();
+			ComponentNewHerdBehavior hitNewHerd = hit.Entity.FindComponent<ComponentNewHerdBehavior>();
+			ComponentZombieHerdBehavior ownerZombieHerd = owner.Entity.FindComponent<ComponentZombieHerdBehavior>();
+			ComponentZombieHerdBehavior hitZombieHerd = hit.Entity.FindComponent<ComponentZombieHerdBehavior>();
+			ComponentBanditHerdBehavior ownerBanditHerd = owner.Entity.FindComponent<ComponentBanditHerdBehavior>();
+			ComponentBanditHerdBehavior hitBanditHerd = hit.Entity.FindComponent<ComponentBanditHerdBehavior>();
+
+			bool sameNewHerd = ownerNewHerd != null && hitNewHerd != null && ownerNewHerd.HerdName == hitNewHerd.HerdName && !string.IsNullOrEmpty(ownerNewHerd.HerdName);
+			bool sameZombieHerd = ownerZombieHerd != null && hitZombieHerd != null && ownerZombieHerd.HerdName == hitZombieHerd.HerdName && !string.IsNullOrEmpty(ownerZombieHerd.HerdName);
+			bool sameBanditHerd = ownerBanditHerd != null && hitBanditHerd != null && ownerBanditHerd.HerdName == hitBanditHerd.HerdName && !string.IsNullOrEmpty(ownerBanditHerd.HerdName);
+
+			bool isOwnerPlayer = owner.Entity.FindComponent<ComponentPlayer>() != null;
+			bool isOwnerPlayerHerd = ownerNewHerd != null && ownerNewHerd.HerdName == "player";
+			bool isPlayerHerd = isOwnerPlayer || isOwnerPlayerHerd;
+
+			bool isHitPlayer = hit.Entity.FindComponent<ComponentPlayer>() != null;
+			bool isHitPlayerHerd = hitNewHerd != null && hitNewHerd.HerdName == "player";
+			bool isHitInPlayerGroup = isHitPlayer || isHitPlayerHerd;
+
+			if (sameNewHerd || sameZombieHerd || sameBanditHerd || (isPlayerHerd && isHitInPlayerGroup))
+			{
+				bool isTarget = false;
+
+				ComponentNewChaseBehavior newChase = owner.Entity.FindComponent<ComponentNewChaseBehavior>();
+				if (newChase?.Target != null && newChase.Target.Entity == hit.Entity) isTarget = true;
+
+				if (!isTarget)
+				{
+					ComponentZombieChaseBehavior zombieChase = owner.Entity.FindComponent<ComponentZombieChaseBehavior>();
+					if (zombieChase?.Target != null && zombieChase.Target.Entity == hit.Entity) isTarget = true;
+				}
+
+				if (!isTarget)
+				{
+					ComponentBanditChaseBehavior banditChase = owner.Entity.FindComponent<ComponentBanditChaseBehavior>();
+					if (banditChase?.Target != null && banditChase.Target.Entity == hit.Entity) isTarget = true;
+				}
+
+				if (!isTarget) ignore = true;
+			}
+		}
+
+		public override void OnPlayerInputInteract(ComponentPlayer player, ref bool handled, ref double timeInterval, ref int priorityUse, ref int priorityInteract, ref int priorityPlace)
+		{
+			if (handled) return;
+
+			if (player.ComponentMiner != null && player.ComponentCreatureModel != null)
+			{
+				Vector3 eyePosition = player.ComponentCreatureModel.EyePosition;
+				Vector3 forwardVector = player.ComponentCreatureModel.EyeRotation.GetForwardVector();
+				Ray3 ray = new Ray3(eyePosition, forwardVector);
+
+				object raycastResult = player.ComponentMiner.Raycast(ray, RaycastMode.Interaction, false, true, false);
+
+				if (raycastResult is BodyRaycastResult bodyResult)
+				{
+					if (bodyResult.ComponentBody != null)
+					{
+						string entityName = bodyResult.ComponentBody.Entity.ValuesDictionary.DatabaseObject.Name;
+						if (entityName == "FirearmsSeller")
 						{
-							player.ComponentGui.ModalPanelWidget = new FirearmsShopWidget(player, shopComponent);
+							ComponentFirearmsShop shopComponent = bodyResult.ComponentBody.Entity.FindComponent<ComponentFirearmsShop>();
+							if (shopComponent != null && shopComponent.IsEntityAlive)
+							{
+								player.ComponentGui.ModalPanelWidget = new FirearmsShopWidget(player, shopComponent);
+								AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+								handled = true;
+								return;
+							}
+						}
+
+						ComponentCreatureInventory creatureInv = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureInventory>();
+
+						if (creatureInv != null)
+						{
+							int activeBlockIndex = Terrain.ExtractContents(player.ComponentMiner.ActiveBlockValue);
+							bool hasBandage = activeBlockIndex == BlocksManager.GetBlockIndex<BandageBlock>();
+
+							if (hasBandage)
+							{
+								ComponentCreature hitCreature = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreature>();
+								if (hitCreature != null && hitCreature.ComponentHealth != null && hitCreature.ComponentHealth.Health > 0f && hitCreature.ComponentHealth.Health < 1f)
+								{
+									return;
+								}
+							}
+
+							bool hasAntidote = activeBlockIndex == BlocksManager.GetBlockIndex<AntidotePillBlock>();
+
+							if (hasAntidote)
+							{
+								ComponentCreature hitCreature = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreature>();
+								if (hitCreature != null && hitCreature.ComponentHealth != null && hitCreature.ComponentHealth.Health > 0f)
+								{
+									ComponentCreatureFlu creatureFlu = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureFlu>();
+									ComponentInfectedWithPoison creaturePoison = bodyResult.ComponentBody.Entity.FindComponent<ComponentInfectedWithPoison>();
+
+									if ((creatureFlu != null && creatureFlu.HasFlu) || (creaturePoison != null && creaturePoison.IsInfected))
+									{
+										SubsystemAntidotePillBehavior subsystem = player.Project.FindSubsystem<SubsystemAntidotePillBehavior>();
+										subsystem?.CureCreatureWithMessage(player, hitCreature);
+										player.ComponentMiner.RemoveActiveTool(1);
+										handled = true;
+										return;
+									}
+								}
+							}
+
+							player.ComponentMiner.Poke(false);
+							player.ComponentGui.ModalPanelWidget = new CreatureInventoryWidget(player.ComponentMiner.Inventory, creatureInv);
 							AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
 							handled = true;
 							return;
 						}
 					}
+				}
+			}
 
-					ComponentCreatureInventory creatureInv = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureInventory>();
+			int activeBlockValue = player.ComponentMiner.ActiveBlockValue;
+			int activeBlockIndex2 = Terrain.ExtractContents(activeBlockValue);
 
-					if (creatureInv != null)
+			if (activeBlockIndex2 == BlocksManager.GetBlockIndex<GreenNightRemoteControlBlock>())
+			{
+				SubsystemGreenNightSky subsystemGreenNight = player.Project.FindSubsystem<SubsystemGreenNightSky>(true);
+
+				if (subsystemGreenNight != null)
+				{
+					GreenNightActivationDialog dialog = new GreenNightActivationDialog(subsystemGreenNight);
+					DialogsManager.ShowDialog(player.GuiWidget, dialog);
+				}
+
+				handled = true;
+			}
+		}
+
+		public override bool OnPlayerSpawned(PlayerData.SpawnMode spawnMode, ComponentPlayer player, Vector3 position)
+		{
+			InfectedsMusicManager.FadeOut(InfectedsMusicManager.MusicType.Death, 0.5f);
+
+			if (spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro)
+			{
+				GiveStarterItems(player);
+
+				if (player?.GuiWidget != null)
+				{
+					DialogsManager.ShowDialog(player.GuiWidget, new GreenNightConfigDialog(player));
+				}
+			}
+			return false;
+		}
+
+		public override void OnWidgetConstruct(ref Widget widget)
+		{
+			if (widget is PanoramaWidget)
+			{
+				widget = new ShittyInfectedsPanoramaWidget();
+			}
+		}
+
+		public override void CalculateCreatureInjuryAmount(Injury injury)
+		{
+			if (injury == null || injury.ComponentHealth == null)
+				return;
+
+			ComponentCreature attacker = injury.Attacker;
+			if (attacker == null)
+				return;
+
+			ComponentCreature victim = injury.ComponentHealth.m_componentCreature;
+			if (victim == null || victim == attacker)
+				return;
+
+			ComponentCreature enemy = null;
+
+			if (attacker is ComponentPlayer)
+			{
+				if (!ShittyInfectedsSettings.EnableCreatureAttacks) return;
+				enemy = victim;
+			}
+			else if (victim is ComponentPlayer)
+			{
+				if (!ShittyInfectedsSettings.AttackOnHitCreative) return;
+				enemy = attacker;
+			}
+			else
+			{
+				return;
+			}
+
+			if (enemy == null)
+				return;
+
+			SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
+
+			foreach (ComponentCreature creature in creatureSpawn.Creatures)
+			{
+				if (creature.ComponentHealth.Health <= 0f)
+					continue;
+
+				ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
+				if (herd != null && herd.HerdName == "player")
+				{
+					if (creature.Entity == enemy.Entity)
+						continue;
+
+					ComponentNewChaseBehavior chaseBehavior = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
+					if (chaseBehavior != null)
 					{
-						// NUEVA LÓGICA: Verificar si tiene vendaje y la criatura necesita curación
-						int activeBlockIndex = Terrain.ExtractContents(player.ComponentMiner.ActiveBlockValue);
-						bool hasBandage = activeBlockIndex == BlocksManager.GetBlockIndex<BandageBlock>();
-
-						if (hasBandage)
-						{
-							ComponentCreature hitCreature = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreature>();
-							if (hitCreature != null && hitCreature.ComponentHealth != null && hitCreature.ComponentHealth.Health > 0f && hitCreature.ComponentHealth.Health < 1f)
-							{
-								return;
-							}
-						}
-
-						bool hasAntidote = activeBlockIndex == BlocksManager.GetBlockIndex<AntidotePillBlock>();
-
-						if (hasAntidote)
-						{
-							ComponentCreature hitCreature = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreature>();
-							if (hitCreature != null && hitCreature.ComponentHealth != null && hitCreature.ComponentHealth.Health > 0f)
-							{
-								ComponentCreatureFlu creatureFlu = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureFlu>();
-								ComponentInfectedWithPoison creaturePoison = bodyResult.ComponentBody.Entity.FindComponent<ComponentInfectedWithPoison>();
-
-								if ((creatureFlu != null && creatureFlu.HasFlu) || (creaturePoison != null && creaturePoison.IsInfected))
-								{
-									SubsystemAntidotePillBehavior subsystem = player.Project.FindSubsystem<SubsystemAntidotePillBehavior>();
-									subsystem?.CureCreatureWithMessage(player, hitCreature);
-									player.ComponentMiner.RemoveActiveTool(1);
-									handled = true;
-									return;
-								}
-							}
-						}
-
-						player.ComponentMiner.Poke(false);
-						player.ComponentGui.ModalPanelWidget = new CreatureInventoryWidget(player.ComponentMiner.Inventory, creatureInv);
-						AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-						handled = true;
-						return;
+						chaseBehavior.CallRangeHelp(enemy);
 					}
 				}
 			}
 		}
 
-		int activeBlockValue = player.ComponentMiner.ActiveBlockValue;
-		int activeBlockIndex2 = Terrain.ExtractContents(activeBlockValue);
-
-		if (activeBlockIndex2 == BlocksManager.GetBlockIndex<GreenNightRemoteControlBlock>())
+		public override void OnMinerHit(ComponentMiner miner, ComponentBody targetBody, Vector3 hitPoint, Vector3 hitDirection, ref float damage, ref float hitProbability, ref float systemHitProbability, out bool skip)
 		{
-			SubsystemGreenNightSky subsystemGreenNight = player.Project.FindSubsystem<SubsystemGreenNightSky>(true);
+			skip = false;
 
-			if (subsystemGreenNight != null)
-			{
-				GreenNightActivationDialog dialog = new GreenNightActivationDialog(subsystemGreenNight);
-				DialogsManager.ShowDialog(player.GuiWidget, dialog);
-			}
-
-			handled = true;
-		}
-	}
-
-	public override bool OnPlayerSpawned(PlayerData.SpawnMode spawnMode, ComponentPlayer player, Vector3 position)
-	{
-		// Fade out de la música de muerte al reaparecer (2 segundos)
-		InfectedsMusicManager.FadeOut(InfectedsMusicManager.MusicType.Death, 0.5f);
-
-		if (spawnMode == PlayerData.SpawnMode.InitialIntro || spawnMode == PlayerData.SpawnMode.InitialNoIntro)
-		{
-			GiveStarterItems(player);
-
-			if (player?.GuiWidget != null)
-			{
-				DialogsManager.ShowDialog(player.GuiWidget, new GreenNightConfigDialog(player));
-			}
-		}
-		return false;
-	}
-
-	public override void OnWidgetConstruct(ref Widget widget)
-	{
-		if (widget is PanoramaWidget)
-		{
-			widget = new ShittyInfectedsPanoramaWidget();
-		}
-	}
-
-	public override void CalculateCreatureInjuryAmount(Injury injury)
-	{
-		if (injury == null || injury.ComponentHealth == null)
-			return;
-
-		ComponentCreature attacker = injury.Attacker;
-		if (attacker == null)
-			return;
-
-		ComponentCreature victim = injury.ComponentHealth.m_componentCreature;
-		if (victim == null || victim == attacker)
-			return;
-
-		ComponentCreature enemy = null;
-
-		if (attacker is ComponentPlayer)
-		{
 			if (!ShittyInfectedsSettings.EnableCreatureAttacks) return;
-			enemy = victim;
-		}
-		else if (victim is ComponentPlayer)
-		{
-			if (!ShittyInfectedsSettings.AttackOnHitCreative) return;
-			enemy = attacker;
-		}
-		else
-		{
-			return;
-		}
 
-		if (enemy == null)
-			return;
+			ComponentPlayer player = miner.ComponentPlayer;
+			if (player == null)
+				return;
 
-		SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
+			if (hitProbability <= 0f)
+				return;
 
-		foreach (ComponentCreature creature in creatureSpawn.Creatures)
-		{
-			if (creature.ComponentHealth.Health <= 0f)
-				continue;
+			ComponentCreature targetCreature = targetBody.Entity.FindComponent<ComponentCreature>();
+			if (targetCreature == null)
+				return;
 
-			ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
-			if (herd != null && herd.HerdName == "player")
+			SubsystemCreatureSpawn creatureSpawn = miner.Project.FindSubsystem<SubsystemCreatureSpawn>();
+			bool hasAllies = false;
+
+			foreach (ComponentCreature creature in creatureSpawn.Creatures)
 			{
-				if (creature.Entity == enemy.Entity)
+				if (creature.ComponentHealth.Health <= 0f)
 					continue;
 
-				ComponentNewChaseBehavior chaseBehavior = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
-				if (chaseBehavior != null)
+				ComponentNewHerdBehavior herdBehavior = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
+				if (herdBehavior != null && herdBehavior.HerdName == "player")
 				{
-					chaseBehavior.CallRangeHelp(enemy);
+					hasAllies = true;
+					break;
 				}
 			}
-		}
-	}
 
-	public override void OnMinerHit(ComponentMiner miner, ComponentBody targetBody, Vector3 hitPoint, Vector3 hitDirection, ref float damage, ref float hitProbability, ref float systemHitProbability, out bool skip)
-	{
-		skip = false;
-
-		if (!ShittyInfectedsSettings.EnableCreatureAttacks) return;
-
-		ComponentPlayer player = miner.ComponentPlayer;
-		if (player == null)
-			return;
-
-		if (hitProbability <= 0f)
-			return;
-
-		ComponentCreature targetCreature = targetBody.Entity.FindComponent<ComponentCreature>();
-		if (targetCreature == null)
-			return;
-
-		SubsystemCreatureSpawn creatureSpawn = miner.Project.FindSubsystem<SubsystemCreatureSpawn>();
-		bool hasAllies = false;
-
-		foreach (ComponentCreature creature in creatureSpawn.Creatures)
-		{
-			if (creature.ComponentHealth.Health <= 0f)
-				continue;
-
-			ComponentNewHerdBehavior herdBehavior = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
-			if (herdBehavior != null && herdBehavior.HerdName == "player")
+			if (hasAllies)
 			{
-				hasAllies = true;
-				break;
+				hitProbability = 1f;
+				systemHitProbability = 1f;
 			}
 		}
 
-		if (hasAllies)
+		public override void MenuPlayMusic(out string contentMusicPath)
 		{
-			hitProbability = 1f;
-			systemHitProbability = 1f;
+			int index = random.Int(ListaMusica.Count);
+			contentMusicPath = ListaMusica[index];
 		}
-	}
 
-	public override void MenuPlayMusic(out string contentMusicPath)
-	{
-		int index = random.Int(ListaMusica.Count);
-		contentMusicPath = ListaMusica[index];
-	}
-
-	public override Color ChangeSkyColor(Color color, Vector3 direction, float timeOfDay, int temperature)
-	{
-		if (SubsystemGreenNightSky.Instance != null && SubsystemGreenNightSky.Instance.IsGreenNightActive)
+		public override Color ChangeSkyColor(Color color, Vector3 direction, float timeOfDay, int temperature)
 		{
-			return new Color(16, 81, 0);
+			if (SubsystemGreenNightSky.Instance != null && SubsystemGreenNightSky.Instance.IsGreenNightActive)
+			{
+				return new Color(16, 81, 0);
+			}
+			return color;
 		}
-		return color;
-	}
 
-	public override void AfterWidgetUpdate(Widget widget)
-	{
-		// Tick del fade-out (internamente se asegura de ejecutarse 1 vez por frame)
-		InfectedsMusicManager.UpdateFades();
-
-		if (widget is BevelledButtonWidget button)
+		public override void AfterWidgetUpdate(Widget widget)
 		{
-			if (button.Name == "ZombiConfigButton" && button.IsClicked)
-			{
-				ScreensManager.SwitchScreen("ShittyInfectedsSettingsScreen");
-			}
+			InfectedsMusicManager.UpdateFades();
 
-			if (button.Name == "ShittyExitButton" && button.IsClicked)
+			if (widget is BevelledButtonWidget button)
 			{
-				Window.Close();
-			}
-
-			// BOTÓN DEL BESTIARIO - AHORA CON FUNCIONALIDAD
-			if (button.Name == "ShittyBestiaryButton" && button.IsClicked)
-			{
-				// Verificar si la pantalla ya está registrada, si no, registrarla
-				if (ScreensManager.FindScreen<Screen>("BestiaryInfected") == null)
+				if (button.Name == "ZombiConfigButton" && button.IsClicked)
 				{
-					ScreensManager.AddScreen("BestiaryInfected", new BestiaryInfectedScreen());
+					ScreensManager.SwitchScreen("ShittyInfectedsSettingsScreen");
 				}
 
-				// Cambiar a la pantalla del bestiario de infectados
-				ScreensManager.SwitchScreen("BestiaryInfected", Array.Empty<object>());
-			}
-		}
-	}
-
-	public override void OnMainMenuScreenCreated(MainMenuScreen mainMenuScreen, StackPanelWidget leftBottomBar, StackPanelWidget rightBottomBar)
-	{
-		// Registrar la pantalla de configuración (ya existente)
-		if (ScreensManager.FindScreen<Screen>("ShittyInfectedsSettingsScreen") == null)
-		{
-			ScreensManager.AddScreen("ShittyInfectedsSettingsScreen", new ShittyInfectedsSettingsScreen());
-		}
-
-		// REGISTRAR LAS PANTALLAS DEL BESTIARIO DE INFECTADOS
-		if (ScreensManager.FindScreen<Screen>("BestiaryInfected") == null)
-		{
-			ScreensManager.AddScreen("BestiaryInfected", new BestiaryInfectedScreen());
-		}
-
-		if (ScreensManager.FindScreen<Screen>("BestiaryInfectedDescription") == null)
-		{
-			ScreensManager.AddScreen("BestiaryInfectedDescription", new BestiaryInfectedDescriptionScreen());
-		}
-
-		if (ScreensManager.FindScreen<Screen>("ShittyInfectedsSettingsScreen") == null)
-		{
-			ScreensManager.AddScreen("ShittyInfectedsSettingsScreen", new ShittyInfectedsSettingsScreen());
-		}
-
-		RectangleWidget logo = mainMenuScreen.Children.Find<RectangleWidget>("Logo", true);
-		if (logo != null)
-		{
-			logo.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/Logo");
-			logo.Size = new Vector2(320f, 136f);
-		}
-
-		StackPanelWidget topArea = mainMenuScreen.Children.Find<StackPanelWidget>("TopArea", true);
-		if (topArea != null)
-		{
-			LabelWidget titleLabel = new LabelWidget
-			{
-				Text = "Shitty Infecteds v1.0",
-				Color = new Color(0, 255, 94),
-				HorizontalAlignment = WidgetAlignment.Center,
-				FontScale = 0.5f,
-				DropShadow = true,
-				Margin = new Vector2(0f, 0f)
-			};
-			topArea.Children.Add(titleLabel);
-		}
-
-		StackPanelWidget centerButtons = mainMenuScreen.Children.Find<StackPanelWidget>("CenterButtons", true);
-		if (centerButtons != null)
-		{
-			if (centerButtons.Children.Count >= 3)
-			{
-				StackPanelWidget lastRow = centerButtons.Children[centerButtons.Children.Count - 1] as StackPanelWidget;
-				if (lastRow != null)
+				if (button.Name == "ShittyExitButton" && button.IsClicked)
 				{
-					BevelledButtonWidget exitButton = new BevelledButtonWidget
+					Window.Close();
+				}
+
+				if (button.Name == "ShittyBestiaryButton" && button.IsClicked)
+				{
+					if (ScreensManager.FindScreen<Screen>("BestiaryInfected") == null)
 					{
-						Name = "ShittyExitButton",
-						Size = new Vector2(310f, 60f),
-						HorizontalAlignment = WidgetAlignment.Center,
-						VerticalAlignment = WidgetAlignment.Center,
-						Text = LanguageControl.Get("ShittyInfectedsMod", "exitGame"),
-						Color = Color.White
-					};
-					lastRow.Children.Add(exitButton);
+						ScreensManager.AddScreen("BestiaryInfected", new BestiaryInfectedScreen());
+					}
+
+					ScreensManager.SwitchScreen("BestiaryInfected", Array.Empty<object>());
 				}
 			}
 		}
 
-		if (rightBottomBar != null)
+		public override void OnMainMenuScreenCreated(MainMenuScreen mainMenuScreen, StackPanelWidget leftBottomBar, StackPanelWidget rightBottomBar)
 		{
-			BevelledButtonWidget configButton = new BevelledButtonWidget
+			if (ScreensManager.FindScreen<Screen>("ShittyInfectedsSettingsScreen") == null)
 			{
-				Size = new Vector2(60f, 60f),
-				Name = "ZombiConfigButton"
-			};
+				ScreensManager.AddScreen("ShittyInfectedsSettingsScreen", new ShittyInfectedsSettingsScreen());
+			}
 
-			RectangleWidget icon = new RectangleWidget
+			if (ScreensManager.FindScreen<Screen>("BestiaryInfected") == null)
 			{
-				Size = new Vector2(28f, 28f),
-				HorizontalAlignment = WidgetAlignment.Center,
-				VerticalAlignment = WidgetAlignment.Center,
-				Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/zombi configurador"),
-				FillColor = Color.White,
-				OutlineColor = new Color(0, 0, 0, 0)
-			};
+				ScreensManager.AddScreen("BestiaryInfected", new BestiaryInfectedScreen());
+			}
 
-			configButton.Children.Add(icon);
-			rightBottomBar.Children.Insert(0, configButton);
+			if (ScreensManager.FindScreen<Screen>("BestiaryInfectedDescription") == null)
+			{
+				ScreensManager.AddScreen("BestiaryInfectedDescription", new BestiaryInfectedDescriptionScreen());
+			}
+
+			if (ScreensManager.FindScreen<Screen>("ShittyInfectedsSettingsScreen") == null)
+			{
+				ScreensManager.AddScreen("ShittyInfectedsSettingsScreen", new ShittyInfectedsSettingsScreen());
+			}
+
+			RectangleWidget logo = mainMenuScreen.Children.Find<RectangleWidget>("Logo", true);
+			if (logo != null)
+			{
+				logo.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/Logo");
+				logo.Size = new Vector2(320f, 136f);
+			}
+
+			StackPanelWidget topArea = mainMenuScreen.Children.Find<StackPanelWidget>("TopArea", true);
+			if (topArea != null)
+			{
+				LabelWidget titleLabel = new LabelWidget
+				{
+					Text = "Shitty Infecteds v1.0",
+					Color = new Color(0, 255, 94),
+					HorizontalAlignment = WidgetAlignment.Center,
+					FontScale = 0.5f,
+					DropShadow = true,
+					Margin = new Vector2(0f, 0f)
+				};
+				topArea.Children.Add(titleLabel);
+			}
+
+			StackPanelWidget centerButtons = mainMenuScreen.Children.Find<StackPanelWidget>("CenterButtons", true);
+			if (centerButtons != null)
+			{
+				if (centerButtons.Children.Count >= 3)
+				{
+					StackPanelWidget lastRow = centerButtons.Children[centerButtons.Children.Count - 1] as StackPanelWidget;
+					if (lastRow != null)
+					{
+						BevelledButtonWidget exitButton = new BevelledButtonWidget
+						{
+							Name = "ShittyExitButton",
+							Size = new Vector2(310f, 60f),
+							HorizontalAlignment = WidgetAlignment.Center,
+							VerticalAlignment = WidgetAlignment.Center,
+							Text = LanguageControl.Get("ShittyInfectedsMod", "exitGame"),
+							Color = Color.White
+						};
+						lastRow.Children.Add(exitButton);
+					}
+				}
+			}
+
+			if (rightBottomBar != null)
+			{
+				BevelledButtonWidget configButton = new BevelledButtonWidget
+				{
+					Size = new Vector2(60f, 60f),
+					Name = "ZombiConfigButton"
+				};
+
+				RectangleWidget icon = new RectangleWidget
+				{
+					Size = new Vector2(28f, 28f),
+					HorizontalAlignment = WidgetAlignment.Center,
+					VerticalAlignment = WidgetAlignment.Center,
+					Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/zombi configurador"),
+					FillColor = Color.White,
+					OutlineColor = new Color(0, 0, 0, 0)
+				};
+
+				configButton.Children.Add(icon);
+				rightBottomBar.Children.Insert(0, configButton);
+			}
+
+			if (leftBottomBar != null)
+			{
+				BevelledButtonWidget bestiaryButton = new BevelledButtonWidget
+				{
+					Name = "ShittyBestiaryButton",
+					Size = new Vector2(60f, 60f),
+					Text = "",
+					CenterColor = new Color(100, 255, 100),
+					BevelColor = new Color(50, 200, 50)
+				};
+
+				RectangleWidget bestiaryIcon = new RectangleWidget
+				{
+					Size = new Vector2(40f, 40f),
+					HorizontalAlignment = WidgetAlignment.Center,
+					VerticalAlignment = WidgetAlignment.Center,
+					Subtexture = ContentManager.Get<Subtexture>("Textures/zombi bestiario"),
+					FillColor = Color.White,
+					OutlineColor = new Color(0, 0, 0, 0)
+				};
+
+				bestiaryButton.Children.Add(bestiaryIcon);
+				leftBottomBar.Children.Add(bestiaryButton);
+			}
+
+			StackPanelWidget bottomInfos = mainMenuScreen.Children.Find<StackPanelWidget>("BottomInfos", true);
+			if (bottomInfos != null)
+			{
+				StackPanelWidget tiktokRow = new StackPanelWidget
+				{
+					Direction = LayoutDirection.Horizontal,
+					HorizontalAlignment = WidgetAlignment.Center,
+					Margin = new Vector2(0f, 4f)
+				};
+
+				LinkWidget tiktokLink = new LinkWidget
+				{
+					Text = "Tiktok: @athormi",
+					Url = "https://www.tiktok.com/@athormi",
+					Color = Color.White,
+					FontScale = 0.7f,
+					DropShadow = true
+				};
+
+				tiktokRow.Children.Add(tiktokLink);
+				bottomInfos.Children.Insert(0, tiktokRow);
+			}
 		}
 
-		// NUEVO BOTÓN VERDE EN EL LADO IZQUIERDO
-		if (leftBottomBar != null)
+		public static bool ShouldVomitIgnoreBody(ComponentBody ownerBody, ComponentBody hitBody)
 		{
-			BevelledButtonWidget bestiaryButton = new BevelledButtonWidget
+			if (ownerBody?.Entity == null || hitBody?.Entity == null) return false;
+
+			ComponentCreature owner = ownerBody.Entity.FindComponent<ComponentCreature>();
+			ComponentCreature hit = hitBody.Entity.FindComponent<ComponentCreature>();
+			if (owner == null || hit == null || owner.Entity == hit.Entity) return false;
+
+			ComponentNewHerdBehavior ownerNewHerd = owner.Entity.FindComponent<ComponentNewHerdBehavior>();
+			ComponentNewHerdBehavior hitNewHerd = hit.Entity.FindComponent<ComponentNewHerdBehavior>();
+			ComponentZombieHerdBehavior ownerZombieHerd = owner.Entity.FindComponent<ComponentZombieHerdBehavior>();
+			ComponentZombieHerdBehavior hitZombieHerd = hit.Entity.FindComponent<ComponentZombieHerdBehavior>();
+			ComponentBanditHerdBehavior ownerBanditHerd = owner.Entity.FindComponent<ComponentBanditHerdBehavior>();
+			ComponentBanditHerdBehavior hitBanditHerd = hit.Entity.FindComponent<ComponentBanditHerdBehavior>();
+
+			bool sameNewHerd = ownerNewHerd != null && hitNewHerd != null &&
+				ownerNewHerd.HerdName == hitNewHerd.HerdName &&
+				!string.IsNullOrEmpty(ownerNewHerd.HerdName);
+
+			bool sameZombieHerd = ownerZombieHerd != null && hitZombieHerd != null &&
+				ownerZombieHerd.HerdName == hitZombieHerd.HerdName &&
+				!string.IsNullOrEmpty(ownerZombieHerd.HerdName);
+
+			bool sameBanditHerd = ownerBanditHerd != null && hitBanditHerd != null &&
+				ownerBanditHerd.HerdName == hitBanditHerd.HerdName &&
+				!string.IsNullOrEmpty(ownerBanditHerd.HerdName);
+
+			bool isOwnerPlayer = owner.Entity.FindComponent<ComponentPlayer>() != null;
+			bool isOwnerPlayerHerd = ownerNewHerd != null && ownerNewHerd.HerdName == "player";
+			bool isPlayerHerd = isOwnerPlayer || isOwnerPlayerHerd;
+
+			bool isHitPlayer = hit.Entity.FindComponent<ComponentPlayer>() != null;
+			bool isHitPlayerHerd = hitNewHerd != null && hitNewHerd.HerdName == "player";
+			bool isHitInPlayerGroup = isHitPlayer || isHitPlayerHerd;
+
+			if (sameNewHerd || sameZombieHerd || sameBanditHerd || (isPlayerHerd && isHitInPlayerGroup))
 			{
-				Name = "ShittyBestiaryButton",
-				Size = new Vector2(60f, 60f),
-				Text = "",
-				CenterColor = new Color(100, 255, 100), // Fondo verde
-				BevelColor = new Color(50, 200, 50)     // Bisel más oscuro (opcional)
-			};
+				bool isTarget = false;
 
-			// Creamos el icono como un hijo del botón
-			RectangleWidget bestiaryIcon = new RectangleWidget
-			{
-				Size = new Vector2(40f, 40f), // Tamaño del icono (un poco más pequeño que el botón)
-				HorizontalAlignment = WidgetAlignment.Center,
-				VerticalAlignment = WidgetAlignment.Center,
-				Subtexture = ContentManager.Get<Subtexture>("Textures/zombi bestiario"),
-				FillColor = Color.White, // Blanco para que no se mezcle con el verde del botón
-				OutlineColor = new Color(0, 0, 0, 0) // Sin bordes negros
-			};
-
-			// Agregamos el icono DENTRO del botón
-			bestiaryButton.Children.Add(bestiaryIcon);
-
-			// Lo insertamos al final del panel izquierdo
-			leftBottomBar.Children.Add(bestiaryButton);
-		}
-
-		StackPanelWidget bottomInfos = mainMenuScreen.Children.Find<StackPanelWidget>("BottomInfos", true);
-		if (bottomInfos != null)
-		{
-			StackPanelWidget tiktokRow = new StackPanelWidget
-			{
-				Direction = LayoutDirection.Horizontal,
-				HorizontalAlignment = WidgetAlignment.Center,
-				Margin = new Vector2(0f, 4f)
-			};
-
-			LinkWidget tiktokLink = new LinkWidget
-			{
-				Text = "Tiktok: @athormi",
-				Url = "https://www.tiktok.com/@athormi",
-				Color = Color.White,
-				FontScale = 0.7f,
-				DropShadow = true
-			};
-
-			tiktokRow.Children.Add(tiktokLink);
-			bottomInfos.Children.Insert(0, tiktokRow);
-		}
-	}
-
-	public static bool ShouldVomitIgnoreBody(ComponentBody ownerBody, ComponentBody hitBody)
-	{
-		if (ownerBody?.Entity == null || hitBody?.Entity == null) return false;
-
-		ComponentCreature owner = ownerBody.Entity.FindComponent<ComponentCreature>();
-		ComponentCreature hit = hitBody.Entity.FindComponent<ComponentCreature>();
-		if (owner == null || hit == null || owner.Entity == hit.Entity) return false;
-
-		ComponentNewHerdBehavior ownerNewHerd = owner.Entity.FindComponent<ComponentNewHerdBehavior>();
-		ComponentNewHerdBehavior hitNewHerd = hit.Entity.FindComponent<ComponentNewHerdBehavior>();
-		ComponentZombieHerdBehavior ownerZombieHerd = owner.Entity.FindComponent<ComponentZombieHerdBehavior>();
-		ComponentZombieHerdBehavior hitZombieHerd = hit.Entity.FindComponent<ComponentZombieHerdBehavior>();
-
-		bool sameNewHerd = ownerNewHerd != null && hitNewHerd != null &&
-			ownerNewHerd.HerdName == hitNewHerd.HerdName &&
-			!string.IsNullOrEmpty(ownerNewHerd.HerdName);
-
-		bool sameZombieHerd = ownerZombieHerd != null && hitZombieHerd != null &&
-			ownerZombieHerd.HerdName == hitZombieHerd.HerdName &&
-			!string.IsNullOrEmpty(ownerZombieHerd.HerdName);
-
-		// CORRECCIÓN: Incluir verificación directa de ComponentPlayer
-		bool isOwnerPlayer = owner.Entity.FindComponent<ComponentPlayer>() != null;
-		bool isOwnerPlayerHerd = ownerNewHerd != null && ownerNewHerd.HerdName == "player";
-		bool isPlayerHerd = isOwnerPlayer || isOwnerPlayerHerd;
-
-		bool isHitPlayer = hit.Entity.FindComponent<ComponentPlayer>() != null;
-		bool isHitPlayerHerd = hitNewHerd != null && hitNewHerd.HerdName == "player";
-		bool isHitInPlayerGroup = isHitPlayer || isHitPlayerHerd;
-
-		if (sameNewHerd || sameZombieHerd || (isPlayerHerd && isHitInPlayerGroup))
-		{
-			bool isTarget = false;
-
-			ComponentNewChaseBehavior newChase = owner.Entity.FindComponent<ComponentNewChaseBehavior>();
-			if (newChase?.Target != null && newChase.Target.Entity == hit.Entity)
-				isTarget = true;
-
-			if (!isTarget)
-			{
-				ComponentZombieChaseBehavior zombieChase = owner.Entity.FindComponent<ComponentZombieChaseBehavior>();
-				if (zombieChase?.Target != null && zombieChase.Target.Entity == hit.Entity)
+				ComponentNewChaseBehavior newChase = owner.Entity.FindComponent<ComponentNewChaseBehavior>();
+				if (newChase?.Target != null && newChase.Target.Entity == hit.Entity)
 					isTarget = true;
+
+				if (!isTarget)
+				{
+					ComponentZombieChaseBehavior zombieChase = owner.Entity.FindComponent<ComponentZombieChaseBehavior>();
+					if (zombieChase?.Target != null && zombieChase.Target.Entity == hit.Entity)
+						isTarget = true;
+				}
+
+				if (!isTarget)
+				{
+					ComponentBanditChaseBehavior banditChase = owner.Entity.FindComponent<ComponentBanditChaseBehavior>();
+					if (banditChase?.Target != null && banditChase.Target.Entity == hit.Entity)
+						isTarget = true;
+				}
+
+				if (!isTarget) return true;
 			}
 
-			if (!isTarget) return true;
+			return false;
 		}
 
-		return false;
-	}
-
-	private void AddItemsToInventory(ComponentPlayer player, string blockName, int count)
-	{
-		if (player?.ComponentMiner?.Inventory == null) return;
-
-		int blockIndex = BlocksManager.GetBlockIndex(blockName);
-		if (blockIndex < 0 || blockIndex >= 1024) return;
-
-		int blockValue = Terrain.MakeBlockValue(blockIndex, 0, 0);
-		IInventory inventory = player.ComponentMiner.Inventory;
-
-		int remaining = count;
-
-		// Primero, intentar agregar a slots existentes con el mismo item
-		for (int i = 0; i < inventory.SlotsCount && remaining > 0; i++)
+		private void AddItemsToInventory(ComponentPlayer player, string blockName, int count)
 		{
-			if (inventory.GetSlotValue(i) == blockValue)
+			if (player?.ComponentMiner?.Inventory == null) return;
+
+			int blockIndex = BlocksManager.GetBlockIndex(blockName);
+			if (blockIndex < 0 || blockIndex >= 1024) return;
+
+			int blockValue = Terrain.MakeBlockValue(blockIndex, 0, 0);
+			IInventory inventory = player.ComponentMiner.Inventory;
+
+			int remaining = count;
+
+			for (int i = 0; i < inventory.SlotsCount && remaining > 0; i++)
 			{
-				int capacity = inventory.GetSlotCapacity(i, blockValue);
-				int currentCount = inventory.GetSlotCount(i);
-				int canAdd = capacity - currentCount;
-				if (canAdd > 0)
+				if (inventory.GetSlotValue(i) == blockValue)
 				{
-					int toAdd = Math.Min(canAdd, remaining);
-					inventory.AddSlotItems(i, blockValue, toAdd);
-					remaining -= toAdd;
+					int capacity = inventory.GetSlotCapacity(i, blockValue);
+					int currentCount = inventory.GetSlotCount(i);
+					int canAdd = capacity - currentCount;
+					if (canAdd > 0)
+					{
+						int toAdd = Math.Min(canAdd, remaining);
+						inventory.AddSlotItems(i, blockValue, toAdd);
+						remaining -= toAdd;
+					}
+				}
+			}
+
+			for (int i = 0; i < inventory.SlotsCount && remaining > 0; i++)
+			{
+				if (inventory.GetSlotCount(i) == 0 || inventory.GetSlotValue(i) == 0)
+				{
+					int capacity = inventory.GetSlotCapacity(i, blockValue);
+					if (capacity > 0)
+					{
+						int toAdd = Math.Min(capacity, remaining);
+						inventory.AddSlotItems(i, blockValue, toAdd);
+						remaining -= toAdd;
+					}
 				}
 			}
 		}
 
-		// Luego, intentar agregar a slots vacíos
-		for (int i = 0; i < inventory.SlotsCount && remaining > 0; i++)
+		private void GiveStarterItems(ComponentPlayer player)
 		{
-			if (inventory.GetSlotCount(i) == 0 || inventory.GetSlotValue(i) == 0)
-			{
-				int capacity = inventory.GetSlotCapacity(i, blockValue);
-				if (capacity > 0)
-				{
-					int toAdd = Math.Min(capacity, remaining);
-					inventory.AddSlotItems(i, blockValue, toAdd);
-					remaining -= toAdd;
-				}
-			}
+			AddItemsToInventory(player, "CookedFishBlock", 3);
+			AddItemsToInventory(player, "IronMacheteBlock", 1);
+			AddItemsToInventory(player, "DesertEagleBlock", 1);
+			AddItemsToInventory(player, "DesertEagleAmmunitionBlock", 5);
+			AddItemsToInventory(player, "BandageSmallBlock", 5);
+			AddItemsToInventory(player, "AntidotePillBlock", 5);
+			AddItemsToInventory(player, "CoinBlock", 100);
 		}
-	}
 
-	/// Da los items iniciales al jugador en su primer spawn
-	private void GiveStarterItems(ComponentPlayer player)
-	{
-		AddItemsToInventory(player, "CookedFishBlock", 3);
-		AddItemsToInventory(player, "IronMacheteBlock", 1);
-		AddItemsToInventory(player, "DesertEagleBlock", 1);
-		AddItemsToInventory(player, "DesertEagleAmmunitionBlock", 5);
-		AddItemsToInventory(player, "BandageSmallBlock", 5);
-		AddItemsToInventory(player, "AntidotePillBlock", 5);
-		AddItemsToInventory(player, "CoinBlock", 100);
-	}
+		public override void UpdatePlayerInputAim(
+			ComponentPlayer player,
+			bool isAiming,
+			ref bool flag,
+			ref float timeIntervalAim,
+			bool skipVanilla,
+			out bool skip)
+		{
+			skip = false;
+			timeIntervalAim = 0.1f;
+		}
 
-	public override void UpdatePlayerInputAim(
-	ComponentPlayer player,
-	bool isAiming,
-	ref bool flag,
-	ref float timeIntervalAim,
-	bool skipVanilla,
-	out bool skip)
-	{
-		skip = false;
+		public override void SaveSettings(XElement xElement)
+		{
+			ShittyInfectedsSettingsManager.Save();
+		}
 
-		// Sin cooldown entre apuntados.
-		// Vanilla usa 0.1f en Creative; aquí lo aplicamos
-		// también en los demás modos de juego.
-		timeIntervalAim = 0.1f;
-	}
-
-
-	public override void SaveSettings(XElement xElement)
-	{
-		ShittyInfectedsSettingsManager.Save();
-	}
-
-	public override void LoadSettings(XElement xElement)
-	{
-		ShittyInfectedsSettingsManager.Load();
+		public override void LoadSettings(XElement xElement)
+		{
+			ShittyInfectedsSettingsManager.Load();
+		}
 	}
 }
