@@ -49,6 +49,7 @@ namespace Game
 			m_targetInRangeTime = TargetInRangeTimeToChase + 1f;
 			m_targetUnsuitableTime = 0f;
 			m_wasForcedByGreenNight = false;
+			m_wasForcedByNarcos = false;
 			IsActive = true;
 
 			if (m_componentNewHerdBehavior != null)
@@ -81,6 +82,7 @@ namespace Game
 			m_targetInRangeTime = 0f;
 			m_targetUnsuitableTime = 0f;
 			m_wasForcedByGreenNight = false;
+			m_wasForcedByNarcos = false;
 		}
 
 		public void CallRangeHelp(ComponentCreature attacker)
@@ -107,6 +109,7 @@ namespace Game
 			m_targetInRangeTime = 0f;
 			m_targetUnsuitableTime = 0f;
 			m_wasForcedByGreenNight = false;
+			m_wasForcedByNarcos = false;
 			IsActive = true;
 
 			if (m_componentNewHerdBehavior != null)
@@ -124,6 +127,16 @@ namespace Game
 				return false;
 			ComponentZombieHerdBehavior herd = m_target.Entity.FindComponent<ComponentZombieHerdBehavior>();
 			return herd != null && herd.HerdName == "Zombie";
+		}
+
+		private bool IsTargetLiveBandit()
+		{
+			if (m_target == null || m_target.ComponentHealth == null || m_target.ComponentHealth.Health <= 0f)
+				return false;
+			if (m_target.Entity == null)
+				return false;
+			ComponentBanditHerdBehavior herd = m_target.Entity.FindComponent<ComponentBanditHerdBehavior>();
+			return herd != null && herd.HerdName == "bandit";
 		}
 
 		private void UpdateExtremeProtection(float dt)
@@ -232,11 +245,121 @@ namespace Game
 			}
 		}
 
+		private void UpdateAntiNarcosProtection(float dt)
+		{
+			if (m_subsystemNarcosInvasion == null) return;
+			bool isNarcosWarActive = m_subsystemNarcosInvasion.HasAcceptedWar && m_subsystemNarcosInvasion.IsInvasionActive;
+
+			if (m_isAntiNarcosProtectionActive && !isNarcosWarActive)
+			{
+				m_isAntiNarcosProtectionActive = false;
+
+				if (m_wasForcedByNarcos && m_target != null && m_target.ComponentHealth != null && m_target.ComponentHealth.Health > 0f)
+				{
+					bool isDay = m_subsystemSky.SkyLightIntensity >= 0.1f;
+					m_chaseTime = isDay ? (m_dayChaseTime * m_random.Float(0.75f, 1f)) : (m_nightChaseTime * m_random.Float(0.75f, 1f));
+					m_isPersistent = !isDay;
+					m_importanceLevel = m_isPersistent ? ImportanceLevelPersistent : ImportanceLevelNonPersistent;
+					m_range = isDay ? (m_dayChaseRange + 6f) : (m_nightChaseRange + 6f);
+					m_wasForcedByNarcos = false;
+				}
+				else
+				{
+					ComponentBanditHerdBehavior targetBanditHerd = m_target?.Entity?.FindComponent<ComponentBanditHerdBehavior>();
+					if (targetBanditHerd != null && targetBanditHerd.HerdName == "bandit" && !m_wasChasingBeforeNarcosProtection)
+						StopAttack();
+				}
+				m_wasChasingBeforeNarcosProtection = false;
+				return;
+			}
+
+			if (!isNarcosWarActive) return;
+
+			m_isAntiNarcosProtectionActive = true;
+
+			if (m_componentCreature == null || m_componentCreature.ComponentHealth == null || m_componentCreature.ComponentHealth.Health <= 0f)
+				return;
+
+			float protectionRange = 40f;
+
+			if (IsTargetLiveBandit())
+			{
+				m_wasForcedByNarcos = true;
+				m_chaseTime = MathUtils.Max(m_chaseTime, 10f);
+				m_isPersistent = true;
+				if (m_importanceLevel < 600f) m_importanceLevel = 600f;
+				m_autoChaseSuppressionTime = 0f;
+				m_targetUnsuitableTime = 0f;
+				m_range = MathUtils.Max(m_range, protectionRange);
+				IsActive = true;
+				return;
+			}
+
+			Vector3 position = m_componentCreature.ComponentBody.Position;
+			m_componentBodies.Clear();
+			m_subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), protectionRange, m_componentBodies);
+
+			ComponentCreature closestBandit = null;
+			float closestDistance = float.MaxValue;
+
+			for (int i = 0; i < m_componentBodies.Count; i++)
+			{
+				ComponentCreature creature = m_componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
+				if (creature == null || creature == m_componentCreature || !creature.Entity.IsAddedToProject) continue;
+				if (creature.ComponentHealth == null || creature.ComponentHealth.Health <= 0f) continue;
+
+				ComponentBanditHerdBehavior banditHerd = creature.Entity.FindComponent<ComponentBanditHerdBehavior>();
+				if (banditHerd != null && banditHerd.HerdName == "bandit")
+				{
+					float distance = Vector3.Distance(position, creature.ComponentBody.Position);
+					if (distance < closestDistance)
+					{
+						closestDistance = distance;
+						closestBandit = creature;
+					}
+				}
+			}
+
+			if (closestBandit != null)
+			{
+				m_wasChasingBeforeNarcosProtection = (m_target != null && m_target != closestBandit);
+				m_target = closestBandit;
+				m_range = protectionRange;
+				m_chaseTime = 999f;
+				m_isPersistent = true;
+				m_importanceLevel = 600f;
+				m_autoChaseSuppressionTime = 0f;
+				m_targetUnsuitableTime = 0f;
+				m_targetInRangeTime = 0f;
+				m_wasForcedByNarcos = true;
+				IsActive = true;
+
+				if (m_componentNewHerdBehavior != null)
+					m_componentNewHerdBehavior.m_importanceLevel = 0f;
+
+				if (m_stateMachine.CurrentState != "Chasing")
+					m_stateMachine.TransitionTo("Chasing");
+			}
+			else
+			{
+				if (m_wasForcedByNarcos && m_target != null)
+				{
+					m_target = null;
+					IsActive = false;
+					m_wasForcedByNarcos = false;
+					m_importanceLevel = 0f;
+				}
+			}
+		}
+
 		public virtual void Update(float dt)
 		{
 			UpdateExtremeProtection(dt);
+			UpdateAntiNarcosProtection(dt);
 
-			if (Suppressed && !m_isExtremeProtectionActive)
+			bool isAnyProtectionActive = m_isExtremeProtectionActive || m_isAntiNarcosProtectionActive;
+
+			if (Suppressed && !isAnyProtectionActive)
 				StopAttack();
 
 			m_autoChaseSuppressionTime -= dt;
@@ -256,6 +379,9 @@ namespace Game
 				m_chaseTime -= dt;
 
 				if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsTargetLiveZombie() && m_chaseTime < 5f)
+					m_chaseTime = 10f;
+
+				if (m_isAntiNarcosProtectionActive && m_wasForcedByNarcos && IsTargetLiveBandit() && m_chaseTime < 5f)
 					m_chaseTime = 10f;
 
 				if (m_target.ComponentCreatureModel != null)
@@ -285,11 +411,13 @@ namespace Game
 						if (m_isExtremeProtectionActive && m_wasForcedByGreenNight && IsTargetLiveZombie())
 							x = MathUtils.Max(x, 10f);
 
+						if (m_isAntiNarcosProtectionActive && m_wasForcedByNarcos && IsTargetLiveBandit())
+							x = MathUtils.Max(x, 10f);
+
 						m_chaseTime = MathUtils.Max(m_chaseTime, x);
 						m_componentMiner.Hit(hitBody, hitPoint, m_componentCreature.ComponentBody.Matrix.Forward);
 						m_componentCreature.ComponentCreatureSounds.PlayAttackSound();
 
-						// EMPUJAR AL GOLPEAR
 						if (m_pushVictimOnHit && m_random.Float(0f, 1f) < 0.1f)
 						{
 							Vector3 dir = m_target.ComponentBody.Position - m_componentCreature.ComponentBody.Position;
@@ -310,7 +438,6 @@ namespace Game
 				}
 			}
 
-			// DESTRUIR BLOQUES AL ESTAR ATASCADO
 			if (m_destroyBlocksWhenStuck && m_componentPathfinding.IsStuck && !m_hasDestroyedBlocksWhileStuck)
 			{
 				DestroyBlocksInLookDirection();
@@ -436,6 +563,7 @@ namespace Game
 			m_subsystemExplosions = Project.FindSubsystem<SubsystemExplosions>(true);
 			m_subsystemSoundMaterials = Project.FindSubsystem<SubsystemSoundMaterials>(true);
 			m_subsystemGreenNight = Project.FindSubsystem<SubsystemGreenNightSky>(false);
+			m_subsystemNarcosInvasion = Project.FindSubsystem<SubsystemNarcosInvasion>(false);
 			m_componentCreature = Entity.FindComponent<ComponentCreature>(true);
 			m_componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true);
 			m_componentMiner = Entity.FindComponent<ComponentMiner>(true);
@@ -486,6 +614,13 @@ namespace Game
 						return;
 				}
 
+				if (m_isAntiNarcosProtectionActive && m_wasForcedByNarcos && IsTargetLiveBandit() && attacker != null)
+				{
+					ComponentBanditHerdBehavior attackerHerd = attacker.Entity?.FindComponent<ComponentBanditHerdBehavior>();
+					if (attackerHerd != null && attackerHerd.HerdName == "bandit" && attacker == m_target)
+						return;
+				}
+
 				if (m_random.Float(0f, 1f) < m_chaseWhenAttackedProbability)
 				{
 					bool persistent = false;
@@ -515,6 +650,9 @@ namespace Game
 			}, delegate
 			{
 				if (m_isExtremeProtectionActive && m_target == null)
+					return;
+
+				if (m_isAntiNarcosProtectionActive && m_target == null)
 					return;
 
 				if (IsActive)
@@ -765,6 +903,7 @@ namespace Game
 		public SubsystemNoise m_subsystemNoise;
 		public SubsystemTerrain m_subsystemTerrain;
 		public SubsystemGreenNightSky m_subsystemGreenNight;
+		public SubsystemNarcosInvasion m_subsystemNarcosInvasion;
 		public ComponentCreature m_componentCreature;
 		public ComponentPathfinding m_componentPathfinding;
 		public ComponentMiner m_componentMiner;
@@ -818,5 +957,9 @@ namespace Game
 		private bool m_isExtremeProtectionActive = false;
 		private bool m_wasChasingBeforeProtection = false;
 		private bool m_wasForcedByGreenNight = false;
+
+		private bool m_isAntiNarcosProtectionActive = false;
+		private bool m_wasChasingBeforeNarcosProtection = false;
+		private bool m_wasForcedByNarcos = false;
 	}
 }
