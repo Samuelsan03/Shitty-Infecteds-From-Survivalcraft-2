@@ -169,7 +169,7 @@
   "cbc"
   " a "
 </Recipe>
-<Recipe Result="Izh43AmmunitionBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="ironingot" b="gunpowder" Description="[0]">
+<Recipe Result="IZH43AmmunitionBlock" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="ironingot" b="gunpowder" Description="[0]">
   "ab"
 </Recipe>
 <Recipe Result="AntidotePillBlock" ResultCount="3" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="canvas" b="redflower" c="whiteflower" Description="[0]">
