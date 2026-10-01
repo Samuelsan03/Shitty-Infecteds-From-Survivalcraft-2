@@ -44,7 +44,7 @@ namespace Game
 			m_subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true);
 			m_bulletBlockIndex = BlocksManager.GetBlockIndex<FirearmsBulletBlock>(false, false);
 			m_izh43BlockIndex = BlocksManager.GetBlockIndex<IZH43Block>(false, false);
-			m_izh43AmmunitionBlockIndex = BlocksManager.GetBlockIndex<Izh43AmmunitionBlock>(false, false);
+			m_izh43AmmunitionBlockIndex = BlocksManager.GetBlockIndex<IZH43AmmunitionBlock>(false, false);
 			base.Load(valuesDictionary);
 		}
 
