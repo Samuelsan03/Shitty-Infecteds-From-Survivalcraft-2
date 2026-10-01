@@ -79,6 +79,16 @@ namespace Game
 
 		public virtual void Update(float dt)
 		{
+			// Actualizar estado narcotraficante segun evento activo Y el parametro del XML
+			bool wasNarcos = this.m_narcosHunterMode;
+			this.m_narcosHunterMode = this.m_narcosHunterEnabled && IsNarcosInvasionActive();
+
+			// Si termino la invasion o se desactivo, detener ataque persistente
+			if (wasNarcos && !this.m_narcosHunterMode && this.m_isPersistent)
+			{
+				this.StopAttack();
+			}
+
 			if (this.Suppressed)
 			{
 				this.StopAttack();
@@ -145,6 +155,10 @@ namespace Game
 			this.m_chaseWhenAttackedProbability = valuesDictionary.GetValue<float>("ChaseWhenAttackedProbability");
 			this.m_chaseOnTouchProbability = valuesDictionary.GetValue<float>("ChaseOnTouchProbability");
 
+			// Cargar del XML si el bandido tiene habilitada la modalidad narcotraficante
+			this.m_narcosHunterEnabled = valuesDictionary.GetValue<bool>("NarcosHunterMode", false);
+			this.m_subsystemNarcosInvasion = base.Project.FindSubsystem<SubsystemNarcosInvasion>(false);
+
 			ComponentBody componentBody = this.m_componentCreature.ComponentBody;
 			componentBody.CollidedWithBody = (Action<ComponentBody>)Delegate.Combine(componentBody.CollidedWithBody, new Action<ComponentBody>(delegate (ComponentBody body)
 			{
@@ -161,9 +175,22 @@ namespace Game
 
 						bool flag = this.m_subsystemPlayers.IsPlayer(body.Entity);
 						bool flag2 = (componentCreature.Category & this.m_autoChaseMask) > (CreatureCategory)0;
-						if ((this.AttacksPlayer && flag && this.m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless) || (this.AttacksNonPlayerCreature && !flag && flag2))
+						if ((this.AttacksPlayer && flag && this.m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless)
+	|| (this.AttacksPlayer && flag && this.m_narcosHunterMode)  // <-- NARCOS bypass
+	|| (this.AttacksNonPlayerCreature && !flag && flag2))
 						{
-							this.Attack(componentCreature, this.ChaseRangeOnTouch, this.ChaseTimeOnTouch, false);
+							// *** NARCOS: caza persistente y con más tiempo ***
+							if (this.m_narcosHunterMode && flag)
+							{
+								this.Attack(componentCreature,
+											this.ChaseRangeOnTouch * 2f,    // rango doble
+											this.ChaseTimeOnTouch * 4f,    // tiempo cuadruple
+											true);                          // persistente
+							}
+							else
+							{
+								this.Attack(componentCreature, this.ChaseRangeOnTouch, this.ChaseTimeOnTouch, false);
+							}
 						}
 					}
 				}
@@ -174,38 +201,38 @@ namespace Game
 			}));
 
 			ComponentHealth componentHealth = this.m_componentCreature.ComponentHealth;
-			componentHealth.Injured = (Action<Injury>)Delegate.Combine(componentHealth.Injured, new Action<Injury>(delegate (Injury injury)
+			componentHealth.Injured = (Action<Injury>)Delegate.Combine(componentHealth.Injured,
+	new Action<Injury>(delegate (Injury injury)
+	{
+		ComponentCreature attacker = injury.Attacker;
+		if (IsBanditAlly(attacker)) return;
+
+		// *** NARCOS: siempre persigue si esta herido por el jugador ***
+		bool shouldChase = this.m_random.Float(0f, 1f) < this.m_chaseWhenAttackedProbability
+						 || this.m_narcosHunterMode;  // <-- NARCOS
+
+		if (shouldChase)
+		{
+			bool flag = false;
+			float num;
+			float num2;
+			if (this.m_chaseWhenAttackedProbability >= 1f || this.m_narcosHunterMode)
 			{
-				ComponentCreature attacker = injury.Attacker;
-
-				// No perseguir si el atacante es aliado bandido (golpe accidental)
-				if (IsBanditAlly(attacker))
-				{
-					return;
-				}
-
-				if (this.m_random.Float(0f, 1f) < this.m_chaseWhenAttackedProbability)
-				{
-					bool flag = false;
-					float num;
-					float num2;
-					if (this.m_chaseWhenAttackedProbability >= 1f)
-					{
-						num = 30f;
-						num2 = 60f;
-						flag = true;
-					}
-					else
-					{
-						num = 7f;
-						num2 = 7f;
-					}
-					num = this.ChaseRangeOnAttacked.GetValueOrDefault(num);
-					num2 = this.ChaseTimeOnAttacked.GetValueOrDefault(num2);
-					flag = this.ChasePersistentOnAttacked.GetValueOrDefault(flag);
-					this.Attack(attacker, num, num2, flag);
-				}
-			}));
+				num = 30f;
+				num2 = 60f;
+				flag = true;
+			}
+			else
+			{
+				num = 7f;
+				num2 = 7f;
+			}
+			num = this.ChaseRangeOnAttacked.GetValueOrDefault(num);
+			num2 = this.ChaseTimeOnAttacked.GetValueOrDefault(num2);
+			flag = this.ChasePersistentOnAttacked.GetValueOrDefault(flag);
+			this.Attack(attacker, num, num2, flag);
+		}
+	}));
 
 			this.m_stateMachine.AddState("LookingForTarget", delegate
 			{
@@ -218,10 +245,18 @@ namespace Game
 					this.m_stateMachine.TransitionTo("Chasing");
 					return;
 				}
-				if (!this.Suppressed && this.m_autoChaseSuppressionTime <= 0f && (this.m_target == null || this.ScoreTarget(this.m_target) <= 0f) && this.m_componentCreature.ComponentHealth.Health > this.MinHealthToAttackActively)
+				if (!this.Suppressed && this.m_autoChaseSuppressionTime <= 0f
+					&& (this.m_target == null || this.ScoreTarget(this.m_target) <= 0f)
+					&& this.m_componentCreature.ComponentHealth.Health > this.MinHealthToAttackActively)
 				{
-					this.m_range = ((this.m_subsystemSky.SkyLightIntensity < 0.2f) ? this.m_nightChaseRange : this.m_dayChaseRange);
+					this.m_range = ((this.m_subsystemSky.SkyLightIntensity < 0.2f)
+									? this.m_nightChaseRange : this.m_dayChaseRange);
 					this.m_range *= this.m_componentFactors.GetOtherFactorResult("ChaseRange", false, false);
+
+					// *** NARCOS: rango triplicado ***
+					if (this.m_narcosHunterMode)
+						this.m_range *= 3f;
+
 					ComponentCreature componentCreature = this.FindTarget();
 					if (componentCreature != null)
 					{
@@ -231,12 +266,25 @@ namespace Game
 					{
 						this.m_targetInRangeTime = 0f;
 					}
-					if (this.m_targetInRangeTime > this.TargetInRangeTimeToChase)
+
+					// *** NARCOS: sin espera de TargetInRangeTimeToChase ***
+					float requiredTime = this.m_narcosHunterMode ? 0.1f : this.TargetInRangeTimeToChase;
+					if (this.m_targetInRangeTime > requiredTime)
 					{
 						bool flag = this.m_subsystemSky.SkyLightIntensity >= 0.1f;
 						float maxRange = flag ? (this.m_dayChaseRange + 6f) : (this.m_nightChaseRange + 6f);
-						float maxChaseTime = flag ? (this.m_dayChaseTime * this.m_random.Float(0.75f, 1f)) : (this.m_nightChaseTime * this.m_random.Float(0.75f, 1f));
-						this.Attack(componentCreature, maxRange, maxChaseTime, !flag);
+						float maxChaseTime = flag
+							? (this.m_dayChaseTime * this.m_random.Float(0.75f, 1f))
+							: (this.m_nightChaseTime * this.m_random.Float(0.75f, 1f));
+
+						// *** NARCOS: persistente y más tiempo ***
+						if (this.m_narcosHunterMode)
+						{
+							maxRange *= 2f;
+							maxChaseTime = 120f;  // 2 minutos de caza
+						}
+
+						this.Attack(componentCreature, maxRange, maxChaseTime, this.m_narcosHunterMode || !flag);
 					}
 				}
 			}, null);
@@ -371,15 +419,34 @@ namespace Game
 			float score = 0f;
 			bool flag = componentCreature.Entity.FindComponent<ComponentPlayer>() != null;
 			bool flag2 = this.m_componentCreature.Category != CreatureCategory.WaterPredator && this.m_componentCreature.Category != CreatureCategory.WaterOther;
-			bool flag3 = componentCreature == this.Target || this.m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
+
+			// *** NARCOS: bypass del GameMode check ***
+			bool flag3 = componentCreature == this.Target
+					  || this.m_subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless
+					  || this.m_narcosHunterMode;
+
 			bool flag4 = (componentCreature.Category & this.m_autoChaseMask) > (CreatureCategory)0;
-			bool flag5 = componentCreature == this.Target || (flag4 && MathUtils.Remainder(0.004999999888241291 * this.m_subsystemTime.GameTime + (double)((float)(this.GetHashCode() % 1000) / 1000f) + (double)((float)(componentCreature.GetHashCode() % 1000) / 1000f), 1.0) < (double)this.m_chaseNonPlayerProbability);
+
+			// *** NARCOS: si el jugador es objetivo y narcos activo, siempre es válido ***
+			bool flag5 = componentCreature == this.Target
+					  || (flag4 && MathUtils.Remainder(0.004999999888241291 * this.m_subsystemTime.GameTime + (double)((float)(this.GetHashCode() % 1000) / 1000f) + (double)((float)(componentCreature.GetHashCode() % 1000) / 1000f), 1.0) < (double)this.m_chaseNonPlayerProbability)
+					  || (flag && this.m_narcosHunterMode);
+
 			if (componentCreature != this.m_componentCreature && ((!flag && flag5) || (flag && flag3)) && componentCreature.Entity.IsAddedToProject && componentCreature.ComponentHealth.Health > 0f && (flag2 || this.IsTargetInWater(componentCreature.ComponentBody)))
 			{
 				float num = Vector3.Distance(this.m_componentCreature.ComponentBody.Position, componentCreature.ComponentBody.Position);
-				if (num < this.m_range)
+
+				// *** NARCOS: rango extendido ***
+				float effectiveRange = this.m_narcosHunterMode ? this.m_range * 2.5f : this.m_range;
+				if (num < effectiveRange)
 				{
-					score = this.m_range - num;
+					score = effectiveRange - num;
+
+					// *** NARCOS: boost de prioridad al jugador ***
+					if (this.m_narcosHunterMode && flag)
+					{
+						score *= 3f;
+					}
 				}
 			}
 
@@ -464,6 +531,14 @@ namespace Game
 			return null;
 		}
 
+		public bool IsNarcosInvasionActive()
+		{
+			if (this.m_subsystemNarcosInvasion == null) return false;
+			return this.m_subsystemNarcosInvasion.HasAcceptedWar
+				&& this.m_subsystemNarcosInvasion.IsInvasionActive;
+		}
+
+		public SubsystemNarcosInvasion m_subsystemNarcosInvasion;
 		public SubsystemGameInfo m_subsystemGameInfo;
 		public SubsystemPlayers m_subsystemPlayers;
 		public SubsystemSky m_subsystemSky;
@@ -479,6 +554,8 @@ namespace Game
 		public Random m_random = new Random();
 		public StateMachine m_stateMachine = new StateMachine();
 		public ComponentFactors m_componentFactors;
+		public bool m_narcosHunterEnabled; // Valor cargado del XML
+		public bool m_narcosHunterMode;   // Estado dinámico en tiempo real
 		public float m_dayChaseRange;
 		public float m_nightChaseRange;
 		public float m_dayChaseTime;
