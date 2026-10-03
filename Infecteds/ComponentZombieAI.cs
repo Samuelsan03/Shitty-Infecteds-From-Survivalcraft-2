@@ -567,6 +567,32 @@ namespace Game
 				SetLoadState = (data, state) => FX05Block.SetLoadState(data, state == 1 ? FX05Block.LoadState.Loaded : FX05Block.LoadState.Empty)
 			});
 
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "MendozaBlock",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => MendozaBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => MendozaBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => MendozaBlock.GetLoadState(data) == MendozaBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => MendozaBlock.SetLoadState(data, state == 1 ? MendozaBlock.LoadState.Loaded : MendozaBlock.LoadState.Empty)
+			});
+
+			m_firearmsList.Add(new FirearmData
+			{
+				BlockName = "GrozaBlock",
+				MaxAmmo = 30,
+				FireMode = FirearmFireMode.Automatic,
+				AimTimeBeforeShot = 0.2f,
+				CooldownAfterShot = 1.5f,
+				GetAmmoCount = (data) => GrozaBlock.GetAmmoCount(data),
+				SetAmmoCount = (data, count) => GrozaBlock.SetAmmoCount(data, count),
+				GetLoadState = (data) => GrozaBlock.GetLoadState(data) == GrozaBlock.LoadState.Loaded,
+				SetLoadState = (data, state) => GrozaBlock.SetLoadState(data, state == 1 ? GrozaBlock.LoadState.Loaded : GrozaBlock.LoadState.Empty)
+			});
+
 			m_firearmsInitialized = true;
 		}
 
