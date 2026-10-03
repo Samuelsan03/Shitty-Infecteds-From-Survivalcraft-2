@@ -36,7 +36,7 @@ namespace Game
 			}
 
 			public static readonly Info[] Firearms = new Info[]
-	{
+			{
         // Originales
         new Info { BlockName = "AK47Block",          Type = FirearmType.Automatic,      MaxBullets = 30,  AimTime = 1.0f, FireCooldown = 0.1f   },
 		new Info { BlockName = "DesertEagleBlock",  Type = FirearmType.SemiAutomatic, MaxBullets = 7,   AimTime = 0.5f, FireCooldown = 0.02f  },
@@ -62,7 +62,7 @@ namespace Game
         // Nuevos - rifle bolt-action
         new Info { BlockName = "Master308Block",     Type = FirearmType.BoltAction,    MaxBullets = 5,   AimTime = 2.0f, FireCooldown = 1.8f   },
 
-		// AA12 - Escopeta automática (8 postas por disparo, FireRate 0.15f)
+        // AA12 - Escopeta automática (8 postas por disparo, FireRate 0.15f)
         new Info { BlockName = "AA12Block",          Type = FirearmType.Automatic,     MaxBullets = 20,  AimTime = 1.0f, FireCooldown = 0.15f  },
 
         // SCAR-H - Rifle de combate automático (cadencia baja, FireRate 0.12f)
@@ -70,7 +70,7 @@ namespace Game
 
         // FAMAS - Bullpup automático de alta cadencia (FireRate 0.07f)
         new Info { BlockName = "FAMASBlock",         Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.07f  },
-		        // Minigun - Cadencia extrema (FireRate 0.025f), 200 balas
+        // Minigun - Cadencia extrema (FireRate 0.025f), 200 balas
         new Info { BlockName = "MinigunBlock",        Type = FirearmType.Automatic,     MaxBullets = 200, AimTime = 1.5f, FireCooldown = 0.025f },
 
         // AK48 - AK mejorado, cargador de 40, cadencia 0.08f
@@ -89,8 +89,14 @@ namespace Game
         new Info { BlockName = "G3Block",             Type = FirearmType.Automatic,     MaxBullets = 20,  AimTime = 1.0f, FireCooldown = 0.15f  },
 
         // FX05 - Fusil automático, cargador de 30, cadencia 0.08f
-        new Info { BlockName = "FX05Block",           Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.08f  }
-	};
+        new Info { BlockName = "FX05Block",           Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.08f  },
+
+        // Mendoza - Rifle automático, cargador de 30, cadencia 0.12f
+        new Info { BlockName = "MendozaBlock",        Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.12f  },
+
+        // Groza - Bullpup automático, cargador de 30, cadencia 0.085f
+        new Info { BlockName = "GrozaBlock",          Type = FirearmType.Automatic,     MaxBullets = 30,  AimTime = 0.8f, FireCooldown = 0.085f }
+			};
 
 			public static Info? Find(string blockName)
 			{
