@@ -274,18 +274,25 @@ namespace Game
 				if (contents <= 0) continue;
 
 				string name = BlocksManager.Blocks[contents].GetType().Name;
-				if (FirearmData.Find(name).HasValue)
+				FirearmData.Info? infoOpt = FirearmData.Find(name);
+				if (infoOpt.HasValue)
 				{
 					m_firearmSlot = i;
 
-					// ── Al aparecer por primera vez, variar si tiene munición o no ──
+					// ── Al aparecer por primera vez, probabilidad equitativa 50/50 ──
 					if (!m_ammoInitialized)
 					{
 						m_ammoInitialized = true;
-						// 50% de probabilidad de aparecer SIN munición
+						FirearmData.Info info = infoOpt.Value;
+
+						// 50% sin balas (recarga) | 50% munición llena al 100%
 						if (m_random.Bool(0.5f))
 						{
 							SetAmmoToZero(i);
+						}
+						else
+						{
+							SetAmmoToMax(i, info);
 						}
 					}
 
