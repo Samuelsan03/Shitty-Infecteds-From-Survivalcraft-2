@@ -30,7 +30,7 @@ namespace Game
 			// Si es bandido, verificar que el atacante no sea de la misma manada
 			if (target != null && this.HerdName == "bandit")
 			{
-				ComponentHerdBehavior targetHerdBehavior = target.Entity.FindComponent<ComponentHerdBehavior>();
+				ComponentBanditHerdBehavior targetHerdBehavior = target.Entity.FindComponent<ComponentBanditHerdBehavior>();
 				if (targetHerdBehavior != null && targetHerdBehavior.HerdName == "bandit")
 				{
 					// No llamar a la ayuda si el atacante es otro bandido de la manada
@@ -48,10 +48,11 @@ namespace Game
 			{
 				if (Vector3.DistanceSquared(position, componentCreature.ComponentBody.Position) < 256f)
 				{
-					ComponentHerdBehavior componentHerdBehavior = componentCreature.Entity.FindComponent<ComponentHerdBehavior>();
+					// CORREGIDO: Buscamos los componentes de bandidos, no los genéricos originales
+					ComponentBanditHerdBehavior componentHerdBehavior = componentCreature.Entity.FindComponent<ComponentBanditHerdBehavior>();
 					if (componentHerdBehavior != null && !string.IsNullOrEmpty(componentHerdBehavior.HerdName) && componentHerdBehavior.HerdName == this.HerdName && componentHerdBehavior.m_autoNearbyCreaturesHelp)
 					{
-						ComponentChaseBehavior componentChaseBehavior = componentCreature.Entity.FindComponent<ComponentChaseBehavior>();
+						ComponentBanditChaseBehavior componentChaseBehavior = componentCreature.Entity.FindComponent<ComponentBanditChaseBehavior>();
 						if (componentChaseBehavior != null && componentChaseBehavior.Target == null)
 						{
 							componentChaseBehavior.Attack(target, maxRange, maxChaseTime, isPersistent);
@@ -76,7 +77,8 @@ namespace Game
 			{
 				if (componentCreature.ComponentHealth.Health > 0f)
 				{
-					ComponentHerdBehavior componentHerdBehavior = componentCreature.Entity.FindComponent<ComponentHerdBehavior>();
+					// CORREGIDO: Ídem anterior, para que el centro de la manada agrupe correctamente a los bandidos
+					ComponentBanditHerdBehavior componentHerdBehavior = componentCreature.Entity.FindComponent<ComponentBanditHerdBehavior>();
 					if (componentHerdBehavior != null && componentHerdBehavior.HerdName == this.HerdName)
 					{
 						Vector3 position2 = componentCreature.ComponentBody.Position;
