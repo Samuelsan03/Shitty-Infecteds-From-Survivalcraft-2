@@ -122,7 +122,9 @@ namespace Game
 			G3Bullet,
 			AK48Bullet,
 			KABullet,
-			MinigunBullet
+			MinigunBullet,
+			MendozaBullet,
+			GrozaBullet
 		}
 
 		public static FirearmsBulletType GetFirearmsBulletType(int data)
@@ -185,6 +187,10 @@ namespace Game
 					return new Color(180, 0, 0); // Rojo oscuro sangriento, ¡muy letal!
 				case FirearmsBulletType.MinigunBullet:
 					return new Color(255, 100, 0); // Color naranja fuego
+				case FirearmsBulletType.MendozaBullet:
+					return new Color(255, 140, 0); // Naranja fuerte
+				case FirearmsBulletType.GrozaBullet:
+					return new Color(180, 200, 220); // Color gris azulado, munición subsónica 9x39mm
 				default:
 					return Color.White;
 			}
@@ -240,6 +246,10 @@ namespace Game
 					return 55f; // ¡Daño masivo! Superior al AK47 (25) y AK48 (40)
 				case FirearmsBulletType.MinigunBullet:
 					return 30f; // Daño moderado-alto por bala (Pero dispara muchísimas)
+				case FirearmsBulletType.MendozaBullet:
+					return 30f; // Daño similar a un fusil de asalto estándar
+				case FirearmsBulletType.GrozaBullet:
+					return 28f; // Más daño que AK47 (25) por munición perforante 9x39mm
 				default:
 					return 10f;
 			}
@@ -294,6 +304,10 @@ namespace Game
 				case FirearmsBulletType.KABullet:
 					return 1;
 				case FirearmsBulletType.MinigunBullet:
+					return 1;
+				case FirearmsBulletType.MendozaBullet:
+					return 1;
+				case FirearmsBulletType.GrozaBullet:
 					return 1;
 				default:
 					return 1;
@@ -350,6 +364,10 @@ namespace Game
 					return 0.995f; // Casi sin caída, altísima velocidad y precisión
 				case FirearmsBulletType.MinigunBullet:
 					return 0.98f; // Muy poca caída, alcance letal
+				case FirearmsBulletType.MendozaBullet:
+					return 0.96f; // Buen alcance
+				case FirearmsBulletType.GrozaBullet:
+					return 0.97f; // Buena precisión, la munición subsónica mantiene trayectoria estable
 				default:
 					return 0.8f;
 			}
