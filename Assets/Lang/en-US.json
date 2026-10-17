@@ -81,6 +81,11 @@
     }
   },
   "Blocks": {
+"CommandRodBlock:0": {
+  "DisplayName": "Command Rod",
+  "Description": "A special rod used to point at creatures and command your herd to attack them.",
+  "CRDescription:0": "Combine a rod and a diamond to create a Command Rod"
+},
     "CannonBlock:0": {
       "DisplayName": "Cannon",
       "Description": "A heavy cannon used to fire cannonballs. Simply load a cannonball and it's ready to fire. No gunpowder or wadding required!",
@@ -168,7 +173,7 @@
     "Description": "A simple double-barrel shotgun. Reliable but with limited capacity. Fires buckshot that spreads on impact.",
     "CRDescription:0": "Craft a double-barrel shotgun from iron and wood"
 },
-"Izh43AmmunitionBlock:0": {
+"IZH43AmmunitionBlock:0": {
     "DisplayName": "IZH-43 Shells",
     "Description": "Shotgun shells loaded with buckshot for the IZH-43.",
     "CRDescription:0": "Craft shotgun shells from iron and gunpowder"
@@ -343,6 +348,26 @@
   "Description": "A large belt of 7.62mm rounds used exclusively for the Minigun. Reloads a full magazine of 200 bullets.",
   "CRDescription:0": "Make minigun ammo from iron, gunpowder, and copper"
 },
+"MendozaBlock:0": {
+  "DisplayName": "Mendoza",
+  "Description": "The Mendoza is a fully automatic firearm that uses Mendoza ammunition. It has a 30-round magazine and can fire rapidly.",
+  "CRDescription:0": "Make a Mendoza from iron, rods, and a semiconductor block"
+},
+"MendozaAmmunitionBlock:0": {
+  "DisplayName": "Mendoza Ammunition",
+  "Description": "Mendoza ammunition is used to fire the Mendoza. Each ammunition pack contains 8 rounds.",
+  "CRDescription:0": "Make Mendoza ammunition from iron and gunpowder"
+},
+"GrozaBlock:0": {
+  "DisplayName": "Groza",
+  "Description": "The OC-14 Groza is a Russian bullpup assault rifle. It fires 9x39mm subsonic armor-piercing rounds, offering high damage and excellent stability.",
+  "CRDescription:0": "Make a Groza from iron blocks, iron ingots, rods and semiconductors"
+},
+"GrozaAmmunitionBlock:0": {
+  "DisplayName": "Groza Bullet",
+  "Description": "Groza bullets are armor-piercing subsonic rounds used by the Groza assault rifle.",
+  "CRDescription:0": "Make Groza bullets from iron, gunpowder and copper"
+},
   "ImprovedMusketBlock:0": {
     "DisplayName": "Improved Musket",
     "Description": "A redesigned musket that eliminates the cumbersome process of loading gunpowder and wads separately. It allows you to insert up to 2 pellets directly into the chamber. Unlike the original musket, it will not misfire if you submerge in water, and its sturdy mechanism prevents it from losing durability with each shot.",
@@ -506,6 +531,18 @@
     "1": "Infected and Bandits Bestiary"
   }
 },
+"MysteriousLetterDialog": {
+  "1": "Mysterious Letter",
+  "2": "Accept",
+  "3": "Reject",
+  "4": "The war against the infected is over.\nThe green night has passed.\n\nBut a new challenge is approaching...\nDrug traffickers have taken control of the territory.\nIf you accept this challenge, they will come for you at night.\n\nDo you accept the war against the drug traffickers?",
+  "5": "You have accepted the war against the drug traffickers! They will come for you tonight. Get ready!",
+  "6": "You have rejected the challenge. Perhaps it was a wise decision..."
+},
+"SubsystemNarcosInvasion": {
+  "1": "The drug traffickers' invasion has begun! They are coming for you tonight!",
+  "2": "The drug traffickers retreat at dawn... But they will return."
+},
 "SubsystemMinigunBlockBehavior": {
   "0": "Spinning up barrels..."
 },
@@ -606,18 +643,58 @@
     "exitGame": "Exit"
   },
   "ShittyInfectedsSettingsScreen": {
-    "1": "Shitty Infecteds Settings",
-    "2": "When hitting a creature, your herd allies will attack it",
-    "3": "When a creature hits you in creative, your allies will attack it",
-    "4": "Show player coordinates on screen",
-    "5": "Show creature health bars",
-    "6": "Enable creature bleeding",
-    "7": "Enables a free camera in non-creative modes",
-    "8": "Play boss chase music when a Brute is pursuing you",
-    "9": "Enable creatures to appear when a corpse fades away",
-    "10": "Play scary music when a Ghost is chasing you",
-    "11": "Play a death music track when the player dies"
+  "1": "Shitty Infecteds Settings",
+  "EnableCreatureAttacks": {
+    "Description": "When you strike a creature, nearby herd allies will retaliate against it.",
+    "On": "Active",
+    "Off": "Inactive"
   },
+  "AttackOnHitCreative": {
+    "Description": "In creative mode, if a creature hits you, your allies will retaliate.",
+    "On": "Active",
+    "Off": "Inactive"
+  },
+  "ShowCoordinates": {
+    "Description": "Displays your current coordinates on the screen.",
+    "On": "Active",
+    "Off": "Inactive"
+  },
+  "ShowCreatureHealthBars": {
+    "Description": "Displays health bars above creatures.",
+    "On": "Active",
+    "Off": "Inactive"
+  },
+  "EnableCreatureBleeding": {
+    "Description": "Creatures leave blood effects when wounded.",
+    "On": "Active",
+    "Off": "Inactive"
+  },
+  "EnableFreeCamera": {
+    "Description": "Allows free camera movement outside creative mode.",
+    "On": "Active",
+    "Off": "Inactive"
+  },
+  "EnableBossChaseMusic": {
+    "Description": "Plays boss chase music while a Brute is pursuing you.",
+    "On": "Active",
+    "Off": "Inactive"
+  },
+  "EnableDeathSpawn": {
+    "Description": "Creatures may appear after a corpse fades away.",
+    "On": "Active",
+    "Off": "Inactive"
+  },
+  "EnableGhostChaseMusic": {
+    "Description": "Plays eerie music while a ghost is chasing you.",
+    "On": "Active",
+    "Off": "Inactive"
+  },
+  "EnableDeathMusic": {
+    "Description": "Plays a death track when the player dies.",
+    "On": "Active",
+    "Off": "Inactive"
+  }
+},
   "GreenNightActivationDialog": {
     "1": "Green Night Management",
     "2": "Enable Green Night",
