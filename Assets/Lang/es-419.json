@@ -78,6 +78,11 @@
   }
 },
   "Blocks": {
+    "CommandRodBlock:0": {
+    "DisplayName": "Vara de mando",
+    "Description": "Una vara especial que se utiliza para señalar criaturas y ordenar a tu manada que las ataque.",
+    "CRDescription:0": "Combina una vara y un diamante para crear una vara de mando"
+  },
     "CannonBlock:0": {
   "DisplayName": "Cañón",
   "Description": "Un cañón pesado utilizado para disparar balas de cañón. ¡Simplemente carga una bala de cañón y estará listo para disparar. No requiere pólvora ni taco!",
@@ -165,7 +170,7 @@
     "Description": "Una escopeta de doble cañón sencilla. Fiable, pero con capacidad limitada. Dispara perdigones que se dispersan al impactar.",
     "CRDescription:0": "Fabricar una escopeta de doble cañón con hierro y madera"
 },
-"Izh43AmmunitionBlock:0": {
+"IZH43AmmunitionBlock:0": {
     "DisplayName": "Cartuchos para IZH-43",
     "Description": "Cartuchos de escopeta cargados con perdigones para la IZH-43.",
     "CRDescription:0": "Fabricar cartuchos de escopeta con hierro y pólvora"
@@ -340,6 +345,26 @@
   "Description": "Una gran cinta de proyectiles de 7,62 mm utilizada exclusivamente para la Minigun. Recarga un cargador completo de 200 balas.",
   "CRDescription:0": "Fabricar munición de minigun con hierro, pólvora y cobre"
 },
+"MendozaBlock:0": {
+  "DisplayName": "Mendoza",
+  "Description": "La Mendoza es un arma de fuego completamente automática que utiliza munición Mendoza. Tiene un cargador de 30 proyectiles y puede disparar rápidamente.",
+  "CRDescription:0": "Fabricar una Mendoza con hierro, varillas y un bloque semiconductor"
+},
+"MendozaAmmunitionBlock:0": {
+  "DisplayName": "Munición Mendoza",
+  "Description": "La munición Mendoza se utiliza para disparar la Mendoza. Cada paquete de munición contiene 8 proyectiles.",
+  "CRDescription:0": "Fabricar munición Mendoza con hierro y pólvora"
+},
+"GrozaBlock:0": {
+  "DisplayName": "Groza",
+  "Description": "El OC-14 Groza es un fusil de asalto ruso con configuración bullpup. Dispara munición subsónica perforante de blindaje de 9x39 mm, ofreciendo un alto daño y una excelente estabilidad.",
+  "CRDescription:0": "Fabrica un Groza con bloques de hierro, lingotes de hierro, varillas y semiconductores"
+},
+"GrozaAmmunitionBlock:0": {
+  "DisplayName": "Bala de Groza",
+  "Description": "Las balas de Groza son municiones subsónicas perforantes de blindaje utilizadas por el fusil de asalto Groza.",
+  "CRDescription:0": "Fabrica balas de Groza con hierro, pólvora y cobre"
+},
 "ImprovedMusketBlock:0": {
   "DisplayName": "Mosquete Mejorado",
   "Description": "Un mosquete rediseñado que elimina el engorroso proceso de cargar pólvora y tacos por separado. Te permite insertar directamente hasta 2 perdigones en la recámara. A diferencia del mosquete original, no fallará al disparar si te sumerges en el agua, y su resistente mecanismo evita que pierda durabilidad con cada disparo.",
@@ -501,8 +526,20 @@
 },
 "BestiaryInfectedScreen": {
     "1": "Bestiario de infectados y bandidos"
-}
-  },
+  }
+},
+"MysteriousLetterDialog": {
+  "1": "Carta Misteriosa",
+  "2": "Aceptar",
+  "3": "Rechazar",
+  "4": "La guerra contra los infectados ha terminado.\nLa noche verde ha pasado.\n\nPero un nuevo reto se avecina...\nLos narcotraficantes han tomado el control del territorio.\nSi aceptas este desafio, vendran por ti en la noche.\n\nAceptas la guerra contra los narcotraficantes?",
+  "5": "Has aceptado la guerra contra los narcotraficantes! Vendran por ti esta noche. Preparate!",
+  "6": "Has rechazado el desafio. Quizas fue una sabia decision..."
+},
+"SubsystemNarcosInvasion": {
+  "1": "La invasion de narcotraficantes ha comenzado! Vienen por ti esta noche!",
+  "2": "Los narcotraficantes se retiran al amanecer... Pero volveran."
+},
   "SubsystemMinigunBlockBehavior": {
   "0": "Calentando cañones..."
 },
@@ -604,16 +641,56 @@
 },
   "ShittyInfectedsSettingsScreen": {
     "1": "Configuración de Shitty Infecteds",
-    "2": "Al golpear a una criatura, tus aliados de la manada la atacarán",
-    "3": "Cuando una criatura te ataque en modo creativo, tus aliados la atacarán",
-    "4": "Mostrar las coordenadas del jugador en pantalla",
-    "5": "Mostrar barras de salud de las criaturas",
-    "6": "Habilitar sangrado de criaturas",
-    "7": "Activa una cámara libre en modos que no son creativos",
-    "8": "Reproducir música de persecución de jefe cuando un Bruto te persiga",
-    "9": "Habilitar la aparición de criaturas al desvanecerse un cadáver",
-    "10": "Reproducir música aterradora cuando un Fantasma te persigue",
-    "11": "Reproducir música de muerte cuando el jugador muere"
+    "EnableCreatureAttacks": {
+      "Description": "Cuando golpeas a una criatura, los aliados de su manada cercanos contraatacarán.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    },
+    "AttackOnHitCreative": {
+      "Description": "En el modo creativo, si una criatura te golpea, tus aliados contraatacarán.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    },
+    "ShowCoordinates": {
+      "Description": "Muestra tus coordenadas actuales en la pantalla.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    },
+    "ShowCreatureHealthBars": {
+      "Description": "Muestra las barras de salud sobre las criaturas.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    },
+    "EnableCreatureBleeding": {
+      "Description": "Las criaturas dejan efectos de sangre cuando resultan heridas.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    },
+    "EnableFreeCamera": {
+      "Description": "Permite mover libremente la cámara fuera del modo creativo.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    },
+    "EnableBossChaseMusic": {
+      "Description": "Reproduce música de persecución de jefe mientras un Brute te persigue.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    },
+    "EnableDeathSpawn": {
+      "Description": "Pueden aparecer criaturas después de que un cadáver desaparezca.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    },
+    "EnableGhostChaseMusic": {
+      "Description": "Reproduce música espeluznante mientras un fantasma te persigue.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    },
+    "EnableDeathMusic": {
+      "Description": "Reproduce una pista musical de muerte cuando el jugador muere.",
+      "On": "Activado",
+      "Off": "Desactivado"
+    }
   },
   "GreenNightActivationDialog": {
     "1": "Administración Noche Verde",
