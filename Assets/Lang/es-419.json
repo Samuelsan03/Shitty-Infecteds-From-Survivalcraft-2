@@ -640,57 +640,39 @@
     "exitGame": "Salir"
 },
   "ShittyInfectedsSettingsScreen": {
-    "1": "Configuración de Shitty Infecteds",
+    "0": "Configuración de Shitty Infecteds",
     "EnableCreatureAttacks": {
-      "Description": "Cuando golpeas a una criatura, los aliados de su manada cercanos contraatacarán.",
-      "On": "Activado",
-      "Off": "Desactivado"
+        "Description": "Tus aliados atacan a las criaturas que golpeas"
     },
     "AttackOnHitCreative": {
-      "Description": "En el modo creativo, si una criatura te golpea, tus aliados contraatacarán.",
-      "On": "Activado",
-      "Off": "Desactivado"
+        "Description": "Tus aliados atacan a las criaturas que te golpean mientras estás en modo creativo"
     },
     "ShowCoordinates": {
-      "Description": "Muestra tus coordenadas actuales en la pantalla.",
-      "On": "Activado",
-      "Off": "Desactivado"
+        "Description": "Las coordenadas del jugador se muestran en pantalla"
     },
     "ShowCreatureHealthBars": {
-      "Description": "Muestra las barras de salud sobre las criaturas.",
-      "On": "Activado",
-      "Off": "Desactivado"
+        "Description": "Las barras de salud de las criaturas se muestran sobre sus cabezas"
     },
     "EnableCreatureBleeding": {
-      "Description": "Las criaturas dejan efectos de sangre cuando resultan heridas.",
-      "On": "Activado",
-      "Off": "Desactivado"
+        "Description": "Las criaturas sangran cuando reciben daño"
     },
     "EnableFreeCamera": {
-      "Description": "Permite mover libremente la cámara fuera del modo creativo.",
-      "On": "Activado",
-      "Off": "Desactivado"
+        "Description": "La cámara libre está disponible fuera del modo creativo"
     },
     "EnableBossChaseMusic": {
-      "Description": "Reproduce música de persecución de jefe mientras un Brute te persigue.",
-      "On": "Activado",
-      "Off": "Desactivado"
+        "Description": "Suena música de persecución mientras un bruto te persigue"
     },
     "EnableDeathSpawn": {
-      "Description": "Pueden aparecer criaturas después de que un cadáver desaparezca.",
-      "On": "Activado",
-      "Off": "Desactivado"
+        "Description": "Las criaturas aparecen cuando un cadáver desaparece"
     },
     "EnableGhostChaseMusic": {
-      "Description": "Reproduce música espeluznante mientras un fantasma te persigue.",
-      "On": "Activado",
-      "Off": "Desactivado"
+        "Description": "Suena música aterradora mientras un fantasma te persigue"
     },
     "EnableDeathMusic": {
-      "Description": "Reproduce una pista musical de muerte cuando el jugador muere.",
-      "On": "Activado",
-      "Off": "Desactivado"
-    }
+        "Description": "Suena música de muerte cuando el jugador muere"
+    },
+    "On": "Activado",
+    "Off": "Desactivado"
   },
   "GreenNightActivationDialog": {
     "1": "Administración Noche Verde",
