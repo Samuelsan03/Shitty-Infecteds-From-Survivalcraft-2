@@ -24,39 +24,39 @@ namespace Game
 			XElement node = ContentManager.Get<XElement>("Screens/ShittyInfectedsSettingsScreen");
 			LoadContents(this, node);
 
-			Children.Find<LabelWidget>("TopBar.Label", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 1);
+			Children.Find<LabelWidget>("TopBar.Label", true).Text = L("1");
 
-			Children.Find<LabelWidget>("EnableCreatureAttacksLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 2);
+			Children.Find<LabelWidget>("EnableCreatureAttacksLabel", true).Text = L("EnableCreatureAttacks", "Description");
 			m_enableCreatureAttacksButton = Children.Find<ButtonWidget>("EnableCreatureAttacks", true);
 
-			Children.Find<LabelWidget>("AttackOnHitCreativeLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 3);
+			Children.Find<LabelWidget>("AttackOnHitCreativeLabel", true).Text = L("AttackOnHitCreative", "Description");
 			m_attackOnHitCreativeButton = Children.Find<ButtonWidget>("AttackOnHitCreative", true);
 
-			Children.Find<LabelWidget>("ShowCoordinatesLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 4);
+			Children.Find<LabelWidget>("ShowCoordinatesLabel", true).Text = L("ShowCoordinates", "Description");
 			m_showCoordinatesButton = Children.Find<ButtonWidget>("ShowCoordinates", true);
 
-			Children.Find<LabelWidget>("ShowCreatureHealthBarsLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 5);
+			Children.Find<LabelWidget>("ShowCreatureHealthBarsLabel", true).Text = L("ShowCreatureHealthBars", "Description");
 			m_showCreatureHealthBarsButton = Children.Find<ButtonWidget>("ShowCreatureHealthBars", true);
 
-			Children.Find<LabelWidget>("EnableCreatureBleedingLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 6);
+			Children.Find<LabelWidget>("EnableCreatureBleedingLabel", true).Text = L("EnableCreatureBleeding", "Description");
 			m_enableCreatureBleedingButton = Children.Find<ButtonWidget>("EnableCreatureBleeding", true);
 
-			Children.Find<LabelWidget>("EnableFreeCameraLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 7);
+			Children.Find<LabelWidget>("EnableFreeCameraLabel", true).Text = L("EnableFreeCamera", "Description");
 			m_enableFreeCameraButton = Children.Find<ButtonWidget>("EnableFreeCamera", true);
 
-			Children.Find<LabelWidget>("EnableBossChaseMusicLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 8);
+			Children.Find<LabelWidget>("EnableBossChaseMusicLabel", true).Text = L("EnableBossChaseMusic", "Description");
 			m_enableBossChaseMusicButton = Children.Find<ButtonWidget>("EnableBossChaseMusic", true);
 			m_enableBossChaseMusicButton.ColorTransform = new Color(255, 140, 0);
 
-			Children.Find<LabelWidget>("EnableDeathSpawnLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 9);
+			Children.Find<LabelWidget>("EnableDeathSpawnLabel", true).Text = L("EnableDeathSpawn", "Description");
 			m_enableDeathSpawnButton = Children.Find<ButtonWidget>("EnableDeathSpawn", true);
 			m_enableDeathSpawnButton.ColorTransform = new Color(180, 40, 60);
 
-			Children.Find<LabelWidget>("EnableGhostChaseMusicLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 10);
+			Children.Find<LabelWidget>("EnableGhostChaseMusicLabel", true).Text = L("EnableGhostChaseMusic", "Description");
 			m_enableGhostChaseMusicButton = Children.Find<ButtonWidget>("EnableGhostChaseMusic", true);
 			m_enableGhostChaseMusicButton.ColorTransform = new Color(100, 220, 220);
 
-			Children.Find<LabelWidget>("EnableDeathMusicLabel", true).Text = LanguageControl.Get("ShittyInfectedsSettingsScreen", 11);
+			Children.Find<LabelWidget>("EnableDeathMusicLabel", true).Text = L("EnableDeathMusic", "Description");
 			m_enableDeathMusicButton = Children.Find<ButtonWidget>("EnableDeathMusic", true);
 			m_enableDeathMusicButton.ColorTransform = new Color(200, 30, 30);
 		}
@@ -69,8 +69,8 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_enableCreatureAttacksButton.Text = ShittyInfectedsSettings.EnableCreatureAttacks
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("EnableCreatureAttacks", "On")
+				: L("EnableCreatureAttacks", "Off");
 
 			if (m_attackOnHitCreativeButton.IsClicked)
 			{
@@ -78,8 +78,8 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_attackOnHitCreativeButton.Text = ShittyInfectedsSettings.AttackOnHitCreative
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("AttackOnHitCreative", "On")
+				: L("AttackOnHitCreative", "Off");
 
 			if (m_showCoordinatesButton.IsClicked)
 			{
@@ -87,8 +87,8 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_showCoordinatesButton.Text = ShittyInfectedsSettings.ShowCoordinates
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("ShowCoordinates", "On")
+				: L("ShowCoordinates", "Off");
 
 			if (m_showCreatureHealthBarsButton.IsClicked)
 			{
@@ -96,8 +96,8 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_showCreatureHealthBarsButton.Text = ShittyInfectedsSettings.ShowCreatureHealthBars
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("ShowCreatureHealthBars", "On")
+				: L("ShowCreatureHealthBars", "Off");
 
 			if (m_enableCreatureBleedingButton.IsClicked)
 			{
@@ -105,8 +105,8 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_enableCreatureBleedingButton.Text = ShittyInfectedsSettings.EnableCreatureBleeding
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("EnableCreatureBleeding", "On")
+				: L("EnableCreatureBleeding", "Off");
 
 			if (m_enableFreeCameraButton.IsClicked)
 			{
@@ -114,8 +114,8 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_enableFreeCameraButton.Text = ShittyInfectedsSettings.EnableFreeCamera
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("EnableFreeCamera", "On")
+				: L("EnableFreeCamera", "Off");
 
 			if (m_enableBossChaseMusicButton.IsClicked)
 			{
@@ -128,8 +128,8 @@ namespace Game
 				}
 			}
 			m_enableBossChaseMusicButton.Text = ShittyInfectedsSettings.EnableBossChaseMusic
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("EnableBossChaseMusic", "On")
+				: L("EnableBossChaseMusic", "Off");
 
 			if (m_enableDeathSpawnButton.IsClicked)
 			{
@@ -137,8 +137,8 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_enableDeathSpawnButton.Text = ShittyInfectedsSettings.EnableDeathSpawn
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("EnableDeathSpawn", "On")
+				: L("EnableDeathSpawn", "Off");
 
 			if (m_enableGhostChaseMusicButton.IsClicked)
 			{
@@ -151,8 +151,8 @@ namespace Game
 				}
 			}
 			m_enableGhostChaseMusicButton.Text = ShittyInfectedsSettings.EnableGhostChaseMusic
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("EnableGhostChaseMusic", "On")
+				: L("EnableGhostChaseMusic", "Off");
 
 			if (m_enableDeathMusicButton.IsClicked)
 			{
@@ -165,13 +165,21 @@ namespace Game
 				}
 			}
 			m_enableDeathMusicButton.Text = ShittyInfectedsSettings.EnableDeathMusic
-				? LanguageControl.On
-				: LanguageControl.Off;
+				? L("EnableDeathMusic", "On")
+				: L("EnableDeathMusic", "Off");
 
 			if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back", true).IsClicked)
 			{
 				ScreensManager.GoBack();
 			}
+		}
+
+		private static string L(params string[] keys)
+		{
+			string[] full = new string[keys.Length + 1];
+			full[0] = fName;
+			Array.Copy(keys, 0, full, 1, keys.Length);
+			return LanguageControl.Get(full);
 		}
 
 		public const string fName = "ShittyInfectedsSettingsScreen";
