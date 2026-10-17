@@ -489,27 +489,19 @@ namespace Game
 			if (victim == null || victim == attacker)
 				return;
 
-			ComponentCreature enemy = null;
-
-			if (attacker is ComponentPlayer)
-			{
-				if (!ShittyInfectedsSettings.EnableCreatureAttacks) return;
-				enemy = victim;
-			}
-			else if (victim is ComponentPlayer)
-			{
-				if (!ShittyInfectedsSettings.AttackOnHitCreative) return;
-				enemy = attacker;
-			}
-			else
-			{
+			if (!(victim is ComponentPlayer))
 				return;
-			}
 
-			if (enemy == null)
+			if (!ShittyInfectedsSettings.AttackOnHitCreative)
+				return;
+
+			SubsystemGameInfo gameInfo = injury.ComponentHealth.Project.FindSubsystem<SubsystemGameInfo>();
+			if (gameInfo == null || gameInfo.WorldSettings.GameMode != GameMode.Creative)
 				return;
 
 			SubsystemCreatureSpawn creatureSpawn = injury.ComponentHealth.Project.FindSubsystem<SubsystemCreatureSpawn>();
+			if (creatureSpawn == null)
+				return;
 
 			foreach (ComponentCreature creature in creatureSpawn.Creatures)
 			{
@@ -519,14 +511,12 @@ namespace Game
 				ComponentNewHerdBehavior herd = creature.Entity.FindComponent<ComponentNewHerdBehavior>();
 				if (herd != null && herd.HerdName == "player")
 				{
-					if (creature.Entity == enemy.Entity)
+					if (creature.Entity == attacker.Entity)
 						continue;
 
 					ComponentNewChaseBehavior chaseBehavior = creature.Entity.FindComponent<ComponentNewChaseBehavior>();
 					if (chaseBehavior != null)
-					{
-						chaseBehavior.CallRangeHelp(enemy);
-					}
+						chaseBehavior.CallRangeHelp(attacker);
 				}
 			}
 		}
