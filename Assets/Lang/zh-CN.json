@@ -640,57 +640,39 @@
     "exitGame": "退出"
 },
   "ShittyInfectedsSettingsScreen": {
-    "1": "Shitty Infecteds 设置",
+    "0": "Shitty Infecteds 设置",
     "EnableCreatureAttacks": {
-      "Description": "当你攻击一只生物时，附近兽群中的盟友会对其进行反击。",
-      "On": "已启用",
-      "Off": "已禁用"
+        "Description": "你的盟友会攻击你所攻击的生物"
     },
     "AttackOnHitCreative": {
-      "Description": "在创造模式下，如果有生物攻击你，你的盟友会进行反击。",
-      "On": "已启用",
-      "Off": "已禁用"
+        "Description": "在创造模式下，攻击你的生物会受到盟友的攻击"
     },
     "ShowCoordinates": {
-      "Description": "在屏幕上显示你当前的坐标。",
-      "On": "已启用",
-      "Off": "已禁用"
+        "Description": "在屏幕上显示玩家的坐标"
     },
     "ShowCreatureHealthBars": {
-      "Description": "在生物上方显示生命值条。",
-      "On": "已启用",
-      "Off": "已禁用"
+        "Description": "在生物头顶显示生命值条"
     },
     "EnableCreatureBleeding": {
-      "Description": "生物受伤时会出现流血效果。",
-      "On": "已启用",
-      "Off": "已禁用"
+        "Description": "生物受到伤害时会流血"
     },
     "EnableFreeCamera": {
-      "Description": "允许在创造模式之外自由移动摄像机。",
-      "On": "已启用",
-      "Off": "已禁用"
+        "Description": "在创造模式之外也可以使用自由视角"
     },
     "EnableBossChaseMusic": {
-      "Description": "当 Brute 追逐你时，播放首领追逐音乐。",
-      "On": "已启用",
-      "Off": "已禁用"
+        "Description": "当蛮兽追逐你时，会播放追逐音乐"
     },
     "EnableDeathSpawn": {
-      "Description": "尸体消失后，可能会出现生物。",
-      "On": "已启用",
-      "Off": "已禁用"
+        "Description": "尸体消失时会生成生物"
     },
     "EnableGhostChaseMusic": {
-      "Description": "当幽灵追逐你时，播放诡异的音乐。",
-      "On": "已启用",
-      "Off": "已禁用"
+        "Description": "当幽灵追逐你时，会播放恐怖音乐"
     },
     "EnableDeathMusic": {
-      "Description": "玩家死亡时，播放死亡音乐。",
-      "On": "已启用",
-      "Off": "已禁用"
-    }
+        "Description": "玩家死亡时会播放死亡音乐"
+    },
+    "On": "开启",
+    "Off": "关闭"
   },
   "GreenNightActivationDialog": {
     "1": "绿色之夜管理",
