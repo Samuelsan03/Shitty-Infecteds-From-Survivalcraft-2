@@ -643,57 +643,39 @@
     "exitGame": "Exit"
   },
   "ShittyInfectedsSettingsScreen": {
-  "1": "Shitty Infecteds Settings",
-  "EnableCreatureAttacks": {
-    "Description": "When you strike a creature, nearby herd allies will retaliate against it.",
-    "On": "Active",
-    "Off": "Inactive"
-  },
-  "AttackOnHitCreative": {
-    "Description": "In creative mode, if a creature hits you, your allies will retaliate.",
-    "On": "Active",
-    "Off": "Inactive"
-  },
-  "ShowCoordinates": {
-    "Description": "Displays your current coordinates on the screen.",
-    "On": "Active",
-    "Off": "Inactive"
-  },
-  "ShowCreatureHealthBars": {
-    "Description": "Displays health bars above creatures.",
-    "On": "Active",
-    "Off": "Inactive"
-  },
-  "EnableCreatureBleeding": {
-    "Description": "Creatures leave blood effects when wounded.",
-    "On": "Active",
-    "Off": "Inactive"
-  },
-  "EnableFreeCamera": {
-    "Description": "Allows free camera movement outside creative mode.",
-    "On": "Active",
-    "Off": "Inactive"
-  },
-  "EnableBossChaseMusic": {
-    "Description": "Plays boss chase music while a Brute is pursuing you.",
-    "On": "Active",
-    "Off": "Inactive"
-  },
-  "EnableDeathSpawn": {
-    "Description": "Creatures may appear after a corpse fades away.",
-    "On": "Active",
-    "Off": "Inactive"
-  },
-  "EnableGhostChaseMusic": {
-    "Description": "Plays eerie music while a ghost is chasing you.",
-    "On": "Active",
-    "Off": "Inactive"
-  },
-  "EnableDeathMusic": {
-    "Description": "Plays a death track when the player dies.",
-    "On": "Active",
-    "Off": "Inactive"
-  }
+    "0": "Shitty Infecteds Settings",
+    "EnableCreatureAttacks": {
+        "Description": "Your allies attack creatures you hit"
+    },
+    "AttackOnHitCreative": {
+    "Description": "Your allies attack creatures that hit you while in creative mode"
+    },
+    "ShowCoordinates": {
+        "Description": "Player coordinates are displayed on the screen"
+    },
+    "ShowCreatureHealthBars": {
+        "Description": "Creature health bars are displayed above their heads"
+    },
+    "EnableCreatureBleeding": {
+        "Description": "Creatures bleed when they take damage"
+    },
+    "EnableFreeCamera": {
+        "Description": "Free camera is available outside of creative mode"
+    },
+    "EnableBossChaseMusic": {
+        "Description": "Chase music plays while a brute is pursuing you"
+    },
+    "EnableDeathSpawn": {
+        "Description": "Creatures spawn when a corpse fades away"
+    },
+    "EnableGhostChaseMusic": {
+        "Description": "Scary music plays while a ghost is chasing you"
+    },
+    "EnableDeathMusic": {
+        "Description": "Death music plays when the player dies"
+    },
+    "On": "On",
+    "Off": "Off"
 },
   "GreenNightActivationDialog": {
     "1": "Green Night Management",
