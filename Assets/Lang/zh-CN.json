@@ -78,6 +78,11 @@
   } 
 },
   "Blocks": {
+    "CommandRodBlock:0": {
+    "DisplayName": "指挥棒",
+    "Description": "一根特殊的棒子，可用于指向生物并命令你的兽群攻击它们。",
+    "CRDescription:0": "将一根棒子和一颗钻石合成，制作一根指挥棒"
+  },
     "CannonBlock:0": {
   "DisplayName": "大炮",
   "Description": "一种用于发射炮弹的重型大炮。只需装填一发炮弹即可准备开火。无需火药或填塞物！",
@@ -165,7 +170,7 @@
     "Description": "一把简单的双管猎枪。可靠，但容量有限。发射会在命中时散开的霰弹。",
     "CRDescription:0": "使用铁和木材制作一把双管猎枪"
 },
-"Izh43AmmunitionBlock:0": {
+"IZH43AmmunitionBlock:0": {
     "DisplayName": "IZH-43 霰弹",
     "Description": "装填了用于 IZH-43 的霰弹的猎枪弹药。",
     "CRDescription:0": "使用铁和火药制作猎枪弹药"
@@ -340,6 +345,26 @@
   "Description": "一大卷 7.62 毫米弹药带，专门用于加特林机枪。可装满一个容量为 200 发的弹匣。",
   "CRDescription:0": "使用铁、火药和铜制造加特林机枪弹药"
 },
+"MendozaBlock:0": {
+  "DisplayName": "Mendoza",
+  "Description": "Mendoza是一种使用Mendoza弹药的全自动枪械。它配备30发弹匣，可以快速连续射击。",
+  "CRDescription:0": "使用铁、铁棒和半导体方块制作Mendoza"
+},
+"MendozaAmmunitionBlock:0": {
+  "DisplayName": "Mendoza弹药",
+  "Description": "Mendoza弹药用于发射Mendoza。每个弹药包包含8发子弹。",
+  "CRDescription:0": "使用铁和火药制作Mendoza弹药"
+},
+"GrozaBlock:0": {
+  "DisplayName": "Groza",
+  "Description": "OC-14 Groza 是一款俄罗斯无托式突击步枪。它发射 9x39 毫米亚音速穿甲弹，具有高伤害和出色的稳定性。",
+  "CRDescription:0": "使用铁块、铁锭、杆件和半导体制造 Groza"
+},
+"GrozaAmmunitionBlock:0": {
+  "DisplayName": "Groza 子弹",
+  "Description": "Groza 子弹是由 Groza 突击步枪使用的亚音速穿甲弹。",
+  "CRDescription:0": "使用铁、火药和铜制造 Groza 子弹"
+},
 "ImprovedMusketBlock:0": {
   "DisplayName": "改良火枪",
   "Description": "一种重新设计的火枪，省去了分别装填火药和填塞物的繁琐步骤。它允许你直接向枪膛装入最多2颗弹丸。与原版火枪不同，即使浸入水中也不会哑火，其坚固的机械结构还能防止每次射击时损失耐久度。",
@@ -501,8 +526,20 @@
 },
 "BestiaryInfectedScreen": {
     "1": "感染者与强盗图鉴"
-}
-  },
+  }
+},
+"MysteriousLetterDialog": {
+  "1": "神秘信件",
+  "2": "接受",
+  "3": "拒绝",
+  "4": "与感染者的战争已经结束。\n绿色之夜已经过去。\n\n但新的挑战即将来临……\n毒贩已经控制了这片领地。\n如果你接受这个挑战，他们将在夜晚来找你。\n\n你接受与毒贩之间的战争吗？",
+  "5": "你已经接受了与毒贩的战争！他们今晚就会来找你。做好准备！",
+  "6": "你拒绝了这个挑战。也许这是一个明智的决定……"
+},
+"SubsystemNarcosInvasion": {
+  "1": "毒贩的入侵已经开始！他们今晚就会来找你！",
+  "2": "毒贩在黎明时撤退了……但他们还会回来。"
+},
   "SubsystemMinigunBlockBehavior": {
   "0": "正在预热枪管..."
 },
@@ -604,16 +641,56 @@
 },
   "ShittyInfectedsSettingsScreen": {
     "1": "Shitty Infecteds 设置",
-    "2": "当你攻击一个生物时，你的群体盟友会攻击它",
-    "3": "当一个生物在创造模式下攻击你时，你的盟友会攻击它",
-    "4": "在屏幕上显示玩家坐标",
-    "5": "显示生物生命值条",
-    "6": "启用生物流血",
-    "7": "在非创造模式下启用自由视角",
-    "8": "当蛮族正在追捕你时播放 Boss 追逐音乐",
-    "9": "启用尸体消失时出现生物",
-    "10": "当幽灵追赶你时播放恐怖音乐",
-    "11": "玩家死亡时播放死亡音乐"
+    "EnableCreatureAttacks": {
+      "Description": "当你攻击一只生物时，附近兽群中的盟友会对其进行反击。",
+      "On": "已启用",
+      "Off": "已禁用"
+    },
+    "AttackOnHitCreative": {
+      "Description": "在创造模式下，如果有生物攻击你，你的盟友会进行反击。",
+      "On": "已启用",
+      "Off": "已禁用"
+    },
+    "ShowCoordinates": {
+      "Description": "在屏幕上显示你当前的坐标。",
+      "On": "已启用",
+      "Off": "已禁用"
+    },
+    "ShowCreatureHealthBars": {
+      "Description": "在生物上方显示生命值条。",
+      "On": "已启用",
+      "Off": "已禁用"
+    },
+    "EnableCreatureBleeding": {
+      "Description": "生物受伤时会出现流血效果。",
+      "On": "已启用",
+      "Off": "已禁用"
+    },
+    "EnableFreeCamera": {
+      "Description": "允许在创造模式之外自由移动摄像机。",
+      "On": "已启用",
+      "Off": "已禁用"
+    },
+    "EnableBossChaseMusic": {
+      "Description": "当 Brute 追逐你时，播放首领追逐音乐。",
+      "On": "已启用",
+      "Off": "已禁用"
+    },
+    "EnableDeathSpawn": {
+      "Description": "尸体消失后，可能会出现生物。",
+      "On": "已启用",
+      "Off": "已禁用"
+    },
+    "EnableGhostChaseMusic": {
+      "Description": "当幽灵追逐你时，播放诡异的音乐。",
+      "On": "已启用",
+      "Off": "已禁用"
+    },
+    "EnableDeathMusic": {
+      "Description": "玩家死亡时，播放死亡音乐。",
+      "On": "已启用",
+      "Off": "已禁用"
+    }
   },
   "GreenNightActivationDialog": {
     "1": "绿色之夜管理",
