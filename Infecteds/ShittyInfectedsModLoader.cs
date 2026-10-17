@@ -9,13 +9,6 @@ namespace Game
 {
 	public class ShittyInfectedsModLoader : ModLoader
 	{
-		private static readonly List<string> ListaMusica = new List<string>
-		{
-			"Music/Menu Music",
-			"Music/Menu Music 2",
-			"Music/Friday the 13th - Killer Puzzle - Theme Song"
-		};
-
 		private Game.Random random = new Game.Random();
 
 		public override void __ModInitialize()
@@ -38,6 +31,11 @@ namespace Game
 			ModsManager.RegisterHook("OnPlayerDead", this);
 			ModsManager.RegisterHook("ScoreMount", this);
 			ModsManager.RegisterHook("UpdatePlayerInputAim", this);
+		}
+
+		public override void MenuPlayMusic(out string musicPath)
+		{
+			musicPath = "Music/Menu Music 2";
 		}
 
 		public override void ScoreMount(ComponentRider rider, ComponentMount mount, out float? score)
@@ -240,6 +238,23 @@ namespace Game
 		{
 			if (handled) return;
 
+			int mysteriousIdx = BlocksManager.GetBlockIndex<MysteriousLetterBlock>();
+
+			Log.Information("[MysteriousLetter] === OnPlayerInputInteract === idx={0}", mysteriousIdx);
+
+			// ====== INTENTO A: Verificar si tiene el bloque en la mano ======
+			int activeBlockIdx = Terrain.ExtractContents(player.ComponentMiner.ActiveBlockValue);
+			Log.Information("[MysteriousLetter] Bloque en mano idx = {0}", activeBlockIdx);
+
+			if (activeBlockIdx == mysteriousIdx)
+			{
+				Log.Information("[MysteriousLetter] MATCH A - Tiene el bloque en mano! Abriendo dialogo...");
+				DialogsManager.ShowDialog(player.GuiWidget, new MysteriousLetterDialog(player));
+				AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+				handled = true;
+				return;
+			}
+
 			if (player.ComponentMiner != null && player.ComponentCreatureModel != null)
 			{
 				Vector3 eyePosition = player.ComponentCreatureModel.EyePosition;
@@ -250,6 +265,7 @@ namespace Game
 
 				if (raycastResult is BodyRaycastResult bodyResult)
 				{
+					Log.Information("[MysteriousLetter] Body hit");
 					if (bodyResult.ComponentBody != null)
 					{
 						string entityName = bodyResult.ComponentBody.Entity.ValuesDictionary.DatabaseObject.Name;
@@ -266,23 +282,18 @@ namespace Game
 						}
 
 						ComponentCreatureInventory creatureInv = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureInventory>();
-
 						if (creatureInv != null)
 						{
 							int activeBlockIndex = Terrain.ExtractContents(player.ComponentMiner.ActiveBlockValue);
 							bool hasBandage = activeBlockIndex == BlocksManager.GetBlockIndex<BandageBlock>();
-
 							if (hasBandage)
 							{
 								ComponentCreature hitCreature = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreature>();
 								if (hitCreature != null && hitCreature.ComponentHealth != null && hitCreature.ComponentHealth.Health > 0f && hitCreature.ComponentHealth.Health < 1f)
-								{
 									return;
-								}
 							}
 
 							bool hasAntidote = activeBlockIndex == BlocksManager.GetBlockIndex<AntidotePillBlock>();
-
 							if (hasAntidote)
 							{
 								ComponentCreature hitCreature = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreature>();
@@ -290,7 +301,6 @@ namespace Game
 								{
 									ComponentCreatureFlu creatureFlu = bodyResult.ComponentBody.Entity.FindComponent<ComponentCreatureFlu>();
 									ComponentInfectedWithPoison creaturePoison = bodyResult.ComponentBody.Entity.FindComponent<ComponentInfectedWithPoison>();
-
 									if ((creatureFlu != null && creatureFlu.HasFlu) || (creaturePoison != null && creaturePoison.IsInfected))
 									{
 										SubsystemAntidotePillBehavior subsystem = player.Project.FindSubsystem<SubsystemAntidotePillBehavior>();
@@ -310,6 +320,121 @@ namespace Game
 						}
 					}
 				}
+
+				// ====== INTENTO B: Usar el ray del input del jugador (igual que vanilla) ======
+				if (!handled)
+				{
+					PlayerInput playerInput = player.ComponentInput.PlayerInput;
+
+					if (playerInput.Interact != null)
+					{
+						Ray3 inputRay = playerInput.Interact.Value;
+
+						Log.Information("[MysteriousLetter] Eye=({0:F1},{1:F1},{2:F1}) Fwd=({3:F2},{4:F2},{5:F2})",
+							eyePosition.X, eyePosition.Y, eyePosition.Z,
+							forwardVector.X, forwardVector.Y, forwardVector.Z);
+
+						// B1: Raycast con Digging (flat blocks se detectan con Digging, no Interaction)
+						TerrainRaycastResult? trDig = player.ComponentMiner.Raycast<TerrainRaycastResult>(
+							inputRay, RaycastMode.Digging, true, true, true, null);
+
+						Log.Information("[MysteriousLetter] B1 Digging raycast: {0}", trDig.HasValue ? "HIT" : "null");
+
+						if (trDig.HasValue)
+						{
+							int idxDig = Terrain.ExtractContents(trDig.Value.Value);
+							Log.Information("[MysteriousLetter] B1 Block idx = {0}", idxDig);
+
+							if (idxDig == mysteriousIdx)
+							{
+								Log.Information("[MysteriousLetter] MATCH B1! Abriendo dialogo...");
+								DialogsManager.ShowDialog(player.GuiWidget, new MysteriousLetterDialog(player));
+								AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+								handled = true;
+								return;
+							}
+						}
+
+						// B2: Raycast con Interaction (por si acaso)
+						TerrainRaycastResult? trInt = player.ComponentMiner.Raycast<TerrainRaycastResult>(
+							inputRay, RaycastMode.Interaction, true, true, true, null);
+
+						Log.Information("[MysteriousLetter] B2 Interaction raycast: {0}", trInt.HasValue ? "HIT" : "null");
+
+						if (trInt.HasValue)
+						{
+							int idxInt = Terrain.ExtractContents(trInt.Value.Value);
+							Log.Information("[MysteriousLetter] B2 Block idx = {0}", idxInt);
+
+							if (idxInt == mysteriousIdx)
+							{
+								Log.Information("[MysteriousLetter] MATCH B2! Abriendo dialogo...");
+								DialogsManager.ShowDialog(player.GuiWidget, new MysteriousLetterDialog(player));
+								AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+								handled = true;
+								return;
+							}
+						}
+					}
+				}
+
+				// ====== INTENTO C: Cell scan extendido con logging completo ======
+				if (!handled)
+				{
+					Log.Information("[MysteriousLetter] C - Cell scan extendido...");
+					SubsystemTerrain subsystemTerrain = player.Project.FindSubsystem<SubsystemTerrain>(true);
+
+					for (int dist = 1; dist <= 8; dist++)
+					{
+						Vector3 checkPos = eyePosition + forwardVector * dist;
+						Point3 cell = Terrain.ToCell(checkPos);
+						int cellValue = subsystemTerrain.Terrain.GetCellValue(cell.X, cell.Y, cell.Z);
+						int cellIdx = Terrain.ExtractContents(cellValue);
+
+						// Log de TODAS las celdas para ver que hay enfrente
+						Log.Information("[MysteriousLetter] C dist={0} cell=({1},{2},{3}) idx={4}",
+							dist, cell.X, cell.Y, cell.Z, cellIdx);
+
+						if (cellIdx == mysteriousIdx)
+						{
+							Log.Information("[MysteriousLetter] MATCH C! Abriendo dialogo...");
+							DialogsManager.ShowDialog(player.GuiWidget, new MysteriousLetterDialog(player));
+							AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+							handled = true;
+							return;
+						}
+
+						// Tambien chequear celdas adyacentes (el bloque flat puede estar desplazado)
+						for (int dx = -1; dx <= 1; dx++)
+						{
+							for (int dy = -1; dy <= 1; dy++)
+							{
+								for (int dz = -1; dz <= 1; dz++)
+								{
+									if (dx == 0 && dy == 0 && dz == 0) continue;
+
+									int nx = cell.X + dx;
+									int ny = cell.Y + dy;
+									int nz = cell.Z + dz;
+									int adjValue = subsystemTerrain.Terrain.GetCellValue(nx, ny, nz);
+									int adjIdx = Terrain.ExtractContents(adjValue);
+
+									if (adjIdx == mysteriousIdx)
+									{
+										Log.Information("[MysteriousLetter] MATCH C-adj! cell=({0},{1},{2}) Abriendo dialogo...",
+											nx, ny, nz);
+										DialogsManager.ShowDialog(player.GuiWidget, new MysteriousLetterDialog(player));
+										AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+										handled = true;
+										return;
+									}
+								}
+							}
+						}
+					}
+
+					Log.Information("[MysteriousLetter] === No se detecto el bloque en ningun intento ===");
+				}
 			}
 
 			int activeBlockValue = player.ComponentMiner.ActiveBlockValue;
@@ -318,13 +443,11 @@ namespace Game
 			if (activeBlockIndex2 == BlocksManager.GetBlockIndex<GreenNightRemoteControlBlock>())
 			{
 				SubsystemGreenNightSky subsystemGreenNight = player.Project.FindSubsystem<SubsystemGreenNightSky>(true);
-
 				if (subsystemGreenNight != null)
 				{
 					GreenNightActivationDialog dialog = new GreenNightActivationDialog(subsystemGreenNight);
 					DialogsManager.ShowDialog(player.GuiWidget, dialog);
 				}
-
 				handled = true;
 			}
 		}
@@ -446,12 +569,6 @@ namespace Game
 				hitProbability = 1f;
 				systemHitProbability = 1f;
 			}
-		}
-
-		public override void MenuPlayMusic(out string contentMusicPath)
-		{
-			int index = random.Int(ListaMusica.Count);
-			contentMusicPath = ListaMusica[index];
 		}
 
 		public override Color ChangeSkyColor(Color color, Vector3 direction, float timeOfDay, int temperature)
