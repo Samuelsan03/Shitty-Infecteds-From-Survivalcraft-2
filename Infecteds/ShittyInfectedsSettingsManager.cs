@@ -32,11 +32,6 @@ namespace Game
 					new XAttribute("value", ShittyInfectedsSettings.ShowCoordinates.ToString().ToLower())
 				));
 
-				root.Add(new XElement("ShowCreatureHealthBars",
-					new XAttribute("type", "bool"),
-					new XAttribute("value", ShittyInfectedsSettings.ShowCreatureHealthBars.ToString().ToLower())
-				));
-
 				root.Add(new XElement("EnableCreatureBleeding",
 					new XAttribute("type", "bool"),
 					new XAttribute("value", ShittyInfectedsSettings.EnableCreatureBleeding.ToString().ToLower())
@@ -107,13 +102,6 @@ namespace Game
 					{
 						if (bool.TryParse(elem3.Attribute("value")?.Value, out bool val3))
 							ShittyInfectedsSettings.ShowCoordinates = val3;
-					}
-
-					XElement elem4 = root.Element("ShowCreatureHealthBars");
-					if (elem4 != null)
-					{
-						if (bool.TryParse(elem4.Attribute("value")?.Value, out bool val4))
-							ShittyInfectedsSettings.ShowCreatureHealthBars = val4;
 					}
 
 					XElement elem5 = root.Element("EnableCreatureBleeding");
