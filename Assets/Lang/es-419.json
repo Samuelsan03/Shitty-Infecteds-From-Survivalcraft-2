@@ -632,9 +632,6 @@
     "0": "¡No está completamente tensada!",
     "1": "¡No hay virotes cargados!"
   },
-  "SubsystemCreatureHealthBars": {
-    "1": "{0} PV: {1}"
-  },
   "ShittyInfectedsMod": {
     "1": "Coordenadas: X:{0:F0} Y:{1:F0} Z:{2:F0}",
     "exitGame": "Salir"
@@ -649,9 +646,6 @@
     },
     "ShowCoordinates": {
         "Description": "Las coordenadas del jugador se muestran en pantalla"
-    },
-    "ShowCreatureHealthBars": {
-        "Description": "Las barras de salud de las criaturas se muestran sobre sus cabezas"
     },
     "EnableCreatureBleeding": {
         "Description": "Las criaturas sangran cuando reciben daño"
