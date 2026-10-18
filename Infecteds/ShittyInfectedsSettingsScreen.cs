@@ -9,7 +9,6 @@ namespace Game
 		private ButtonWidget m_enableCreatureAttacksButton;
 		private ButtonWidget m_attackOnHitCreativeButton;
 		private ButtonWidget m_showCoordinatesButton;
-		private ButtonWidget m_showCreatureHealthBarsButton;
 		private ButtonWidget m_enableCreatureBleedingButton;
 		private ButtonWidget m_enableFreeCameraButton;
 		private ButtonWidget m_enableBossChaseMusicButton;
@@ -44,10 +43,6 @@ namespace Game
 			Children.Find<LabelWidget>("ShowCoordinatesLabel", true).Text =
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", "ShowCoordinates", "Description");
 			m_showCoordinatesButton = Children.Find<ButtonWidget>("ShowCoordinates", true);
-
-			Children.Find<LabelWidget>("ShowCreatureHealthBarsLabel", true).Text =
-				LanguageControl.Get("ShittyInfectedsSettingsScreen", "ShowCreatureHealthBars", "Description");
-			m_showCreatureHealthBarsButton = Children.Find<ButtonWidget>("ShowCreatureHealthBars", true);
 
 			Children.Find<LabelWidget>("EnableCreatureBleedingLabel", true).Text =
 				LanguageControl.Get("ShittyInfectedsSettingsScreen", "EnableCreatureBleeding", "Description");
@@ -100,13 +95,6 @@ namespace Game
 				ShittyInfectedsSettingsManager.Save();
 			}
 			m_showCoordinatesButton.Text = ShittyInfectedsSettings.ShowCoordinates ? m_onText : m_offText;
-
-			if (m_showCreatureHealthBarsButton.IsClicked)
-			{
-				ShittyInfectedsSettings.ShowCreatureHealthBars = !ShittyInfectedsSettings.ShowCreatureHealthBars;
-				ShittyInfectedsSettingsManager.Save();
-			}
-			m_showCreatureHealthBarsButton.Text = ShittyInfectedsSettings.ShowCreatureHealthBars ? m_onText : m_offText;
 
 			if (m_enableCreatureBleedingButton.IsClicked)
 			{
