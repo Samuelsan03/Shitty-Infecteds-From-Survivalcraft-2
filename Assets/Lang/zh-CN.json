@@ -1,685 +1,682 @@
 {
   "CannonballBlock": [
-    "Cannonball"
+    "炮弹"
 ],
   "BandageBlock": [
-  "Large Bandage",
-  "Small Bandage"
+  "大号绷带",
+  "小号绷带"
 ],
   "FlameBulletBlock": [
-    "Fire Bullet",
-    "Poison Bullet"
-  ],
-  "RepeatBoltBlock": [
-    "Repeat Copper Bolt",
-    "Repeat Iron Bolt",
-    "Repeat Diamond Bolt",
-    "Repeat Explosive Bolt",
-    "Repeat Fire Bolt",
-    "Repeat Poison Bolt",
-    "Repeat Severely Poisonous Bolt"
-  ],
+  "火焰子弹",
+  "毒子弹"
+],
+"RepeatBoltBlock": [
+  "连发铜弩箭",
+  "连发铁弩箭",
+  "连发钻石弩箭",
+  "连发爆炸弩箭",
+  "连发火焰弩箭",
+  "连发毒弩箭",
+  "连发剧毒弩箭"
+],
   "BlocksManager": {
-    "Firearms": "Firearms"
+    "Firearms": "枪械"
   },
   "Database": {
     "DisplayName": {
       "Aimep3": "Aimep3",
-      "Bandit1": "Bandit I",
-      "Bandit2": "Bandit II",
-      "Bandit3": "Bandit III",
-      "InfectedNormal1": "Infected Normal I",
-      "InfectedNormal2": "Infected Normal II",
-      "InfectedNormalTamed1": "Infected Normal Tamed I",
-      "InfectedNormalTamed2": "Infected Normal Tamed II",
-      "InfectedFast1": "Infected Fast I",
-      "InfectedFastTamed1": "Infected Fast Tamed I",
-      "InfectedFast2": "Infected Fast II",
-      "InfectedFastTamed2": "Infected Fast Tamed II",
-      "InfectedMuscle1": "Infected Muscle I",
-      "InfectedMuscleTamed1": "Infected Muscle Tamed I",
-      "InfectedMuscle2": "Infected Muscle II",
-      "InfectedMuscleTamed2": "Infected Muscle Tamed II",
-      "FlyingInfected1": "Flying Infected I",
-      "FlyingInfectedTamed1": "Flying Infected Tamed I",
-      "FlyingInfected2": "Flying Infected II",
-      "FlyingInfectedTamed2": "Flying Infected Tamed II",
-      "FlyingInfected3": "Flying Infected III",
-      "FlyingInfectedTamed3": "Flying Infected Tamed III",
-      "FlyingInfectedBoss": "Flying Infected Boss",
-      "FlyingInfectedBossTamed": "Flying Infected Boss Tamed",
-      "InfectedPoisonous1": "Infected Poisonous I",
-      "InfectedPoisonousTamed1": "Infected Poisonous Tamed I",
-      "InfectedPoisonous2": "Infected Poisonous II",
-      "InfectedPoisonousTamed2": "Infected Poisonous Tamed II",
-      "FatInfected": "Fat Infected",
-      "FatInfectedTamed": "Fat Infected Tamed",
-      "FatInfectedArsonist": "Fat Infected Arsonist",
-      "FatInfectedArsonistTamed": "Fat Infected Arsonist Tamed",
-      "FatInfectedPoisonous": "Fat Infected Poisonous",
-      "FatInfectedPoisonousTamed": "Fat Infected Poisonous Tamed",
-      "FatInfectedFrozen": "Fat Infected Frozen",
-      "FatInfectedFrozenTamed": "Fat Infected Frozen Tamed",
-      "InfectedPusher1": "Infected Pusher I",
-      "InfectedPusherTamed1": "Infected Pusher Tamed I",
-      "InfectedPusher2": "Infected Pusher II",
-      "InfectedPusherTamed2": "Infected Pusher Tamed II",
-      "InfectedBrute": "Infected Brute",
-      "InfectedBruteTamed": "Infected Brute Tamed",
-      "InfectedBruteArsonist": "Infected Brute Arsonist",
-      "InfectedBruteArsonistTamed": "Infected Brute Arsonist Tamed",
-      "InfectedBrutePoisonous": "Infected Brute Poisonous",
-      "InfectedBrutePoisonousTamed": "Infected Brute Poisonous Tamed",
-      "InfectedBruteFrozen": "Infected Brute Frozen",
-      "InfectedBruteFrozenTamed": "Infected Brute Frozen Tamed",
-      "GhostNormal": "Ghost Normal",
-      "GhostNormalTamed": "Ghost Normal Tamed"
+      "InfectedNormal1": "普通感染者 I",
+      "InfectedNormal2": "普通感染者 II",
+      "InfectedNormalTamed1": "已驯服的普通感染者 I",
+      "InfectedNormalTamed2": "已驯服的普通感染者 II",
+      "InfectedFast1": "快速感染者 I",
+      "InfectedFastTamed1": "驯服快速感染者 I",
+      "InfectedFast2": "快速感染者 II",
+      "InfectedFastTamed2": "驯服快速感染者 II",
+      "InfectedMuscle1": "感染肌肉 I",
+      "InfectedMuscleTamed1": "已驯服的感染肌肉 I",
+      "InfectedMuscle2": "感染肌肉 II",
+      "InfectedMuscleTamed2": "已驯服的感染肌肉 II",
+      "FlyingInfected1": "飞行感染者 I",
+      "FlyingInfectedTamed1": "已驯服飞行感染者 I",
+      "FlyingInfected2": "飞行感染者 II",
+      "FlyingInfectedTamed2": "已驯服飞行感染者 II",
+      "FlyingInfected3": "飞行感染者 III",
+      "FlyingInfectedTamed3": "已驯服飞行感染者 III",
+      "FlyingInfectedBoss": "飞行感染者首领",
+      "FlyingInfectedBossTamed": "已驯服的飞行感染者首领",
+      "InfectedPoisonous1": "感染毒性 I",
+      "InfectedPoisonousTamed1": "驯服感染毒性 I",
+      "InfectedPoisonous2": "感染毒性 II",
+      "InfectedPoisonousTamed2": "驯服感染毒性 II",
+      "FatInfected": "肥胖感染者",
+      "FatInfectedTamed": "驯服的肥胖感染者",
+      "FatInfectedArsonist": "肥胖纵火感染者",
+      "FatInfectedArsonistTamed": "驯服的肥胖纵火感染者",
+      "FatInfectedPoisonous": "肥胖毒性感染者",
+      "FatInfectedPoisonousTamed": "驯服的肥胖毒性感染者",
+      "FatInfectedFrozen": "冰冻肥胖感染者",
+      "FatInfectedFrozenTamed": "驯服的冰冻肥胖感染者",
+      "InfectedPusher1": "感染推手 I",
+      "InfectedPusherTamed1": "驯服的感染推手 I",
+      "InfectedPusher2": "感染推手 II",
+      "InfectedPusherTamed2": "驯服的感染推手 II",
+      "InfectedBrute": "感染的蛮兽",
+      "InfectedBruteTamed": "驯服的感染蛮兽",
+      "InfectedBruteArsonist": "纵火感染蛮兽",
+      "InfectedBruteArsonistTamed": "驯服的纵火感染蛮兽",
+      "InfectedBrutePoisonous": "剧毒感染蛮兽",
+      "InfectedBrutePoisonousTamed": "驯服的剧毒感染蛮兽",
+      "InfectedBruteFrozen": "冰冻感染蛮兽",
+      "InfectedBruteFrozenTamed": "驯服的冰冻感染蛮兽",
+      "GhostNormal": "普通幽灵",
+      "GhostNormalTamed": "驯服的普通幽灵"
   },
   "Description": {
-    "InfectedNormal1": "Appears from Wave 1. This infected is one of the most common threats of the plague, but it should never be underestimated. It constantly roams in search of prey and is capable of detecting, chasing, and attacking both survivors and other creatures. It can travel great distances to reach its target, cooperate with nearby infected, and respond to their calls for help when one of them enters combat. It can pick up weapons, tools, and clothing found along its path, using them to improve its chances of survival. If an obstacle blocks its way, it will attempt to destroy it and continue forward. Its distinctive glowing green eyes remain visible even in complete darkness. During the Green Night, its behavior becomes far more aggressive: it abandons any intention of retreating, focuses entirely on survivors, and pursues them with relentless determination. Even after being attacked, it can remember its aggressor and continue the chase for a long time. It can be tamed using a Collar, becoming a loyal guardian that will fight by your side. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form.",
-    "InfectedFast1": "Appears from Wave 2. This fast variant stands out for its extraordinary mobility and aggression. It can cover great distances in a very short time, leap over obstacles with ease, and rapidly change direction while pursuing its prey. Like other plague-infected creatures, it can detect, chase, and attack both survivors and other creatures, while also coordinating with nearby infected and responding to their calls for assistance. If barriers stand in its way, it will attempt to destroy them to continue the pursuit. Its glowing green eyes are often the last thing seen by those who try to escape. During the Green Night, it becomes an especially dangerous threat, abandoning all caution to focus entirely on hunting survivors. Its superior speed allows it to close distances quickly and maintain pursuits for extended periods. Although it possesses remarkable physical resilience, it is more vulnerable to poison than most infected. It can be tamed using a Collar, becoming a swift guardian capable of fighting alongside its owner. Upon death, there is a small chance that its corrupted spirit will remain in this world in a new form."
-    }
-  },
+    "InfectedNormal1": "自第1波开始出现。这种感染者是瘟疫中最常见的威胁之一，但绝不能低估它。它会不断游荡寻找猎物，能够侦测、追逐并攻击幸存者以及其他生物。它可以长途跋涉追击目标，与附近的感染者协同行动，并在同伴进入战斗时响应求援。它还能拾取沿途发现的武器、工具和衣物，并利用它们提高自己的生存能力。如果障碍物挡住去路，它会尝试将其摧毁并继续前进。它那双发着绿色光芒的眼睛即使在完全黑暗中也清晰可见。在绿色之夜期间，它会变得更加凶残：彻底放弃撤退的念头，将全部注意力集中在幸存者身上，并以毫不松懈的决心持续追杀目标。即使遭到攻击，它也会记住攻击者，并在很长一段时间内持续追击。可以使用项圈将其驯服，使其成为忠诚的守护者，与主人并肩作战。死亡后，它的堕落灵魂有极小概率会以新的形态继续留存在这个世界。",
+    "InfectedFast1": "自第2波开始出现。这种高速变种以惊人的机动性和攻击性著称。它能够在极短时间内跨越很远的距离，轻松跳过障碍物，并在追逐猎物时迅速改变方向。与其他瘟疫感染生物一样，它能够侦测、追逐并攻击幸存者及其他生物，同时还能与附近的感染者协同作战，并响应它们的求援。如果障碍物挡住去路，它会尝试将其摧毁，以继续追击。它那双散发着绿色光芒的眼睛，往往是试图逃跑者最后看到的景象。在绿色之夜期间，它会成为极其危险的威胁，彻底放弃一切谨慎，将全部精力投入猎杀幸存者。凭借更快的速度，它能够迅速拉近距离，并长时间持续追击目标。虽然它拥有极强的身体韧性，但比大多数感染者更容易受到毒素的影响。可以使用项圈将其驯服，使其成为行动迅捷的守护者，与主人并肩作战。死亡后，它的堕落灵魂有极小概率会以新的形态继续留存在这个世界。"
+  } 
+},
   "Blocks": {
-"CommandRodBlock:0": {
-  "DisplayName": "Command Rod",
-  "Description": "A special rod used to point at creatures and command your herd to attack them.",
-  "CRDescription:0": "Combine a rod and a diamond to create a Command Rod"
-},
+    "CommandRodBlock:0": {
+    "DisplayName": "指挥棒",
+    "Description": "一根特殊的棒子，可用于指向生物并命令你的兽群攻击它们。",
+    "CRDescription:0": "将一根棒子和一颗钻石合成，制作一根指挥棒"
+  },
     "CannonBlock:0": {
-      "DisplayName": "Cannon",
-      "Description": "A heavy cannon used to fire cannonballs. Simply load a cannonball and it's ready to fire. No gunpowder or wadding required!",
-      "CRDescription:0": "Make a cannon from iron blocks, rods, and iron ingots"
-    },
-    "CannonballBlock:0": {
-      "Description": "Heavy iron balls used as ammunition for the cannon.",
-      "CRDescription:0": "Make cannonballs from iron ingots"
-    },
+  "DisplayName": "大炮",
+  "Description": "一种用于发射炮弹的重型大炮。只需装填一发炮弹即可准备开火。无需火药或填塞物！",
+  "CRDescription:0": "使用铁块、铁杆和铁锭制作大炮"
+},
+"CannonballBlock:0": {
+  "Description": "用于大炮的重型铁制弹药。",
+  "CRDescription:0": "使用铁锭制作炮弹"
+},
     "BandageBlock:0": {
-    "Description": "A small bandage that partially restores health when used on yourself or creatures.",
-    "CRDescription:0": "Craft small bandages from canvas"
-},
-"BandageBlock:1": {
-    "Description": "A large bandage that completely restores health when used on yourself or creatures.",
-    "CRDescription:1": "Craft a large bandage from canvas"
-},
+    "Description": "一种小型绷带，使用在自己或生物身上时可以部分恢复生命值。",
+    "CRDescription:0": "使用帆布制作小型绷带"
+  },
+  "BandageBlock:1": {
+    "Description": "一种大型绷带，使用在自己或生物身上时可以完全恢复生命值。",
+    "CRDescription:1": "使用帆布制作大型绷带"
+  },
     "FrozenSnowballBlock:0": {
-  "DisplayName": "Frozen Snowball",
-  "Description": "A snowball infused with magical ice properties. On impact, it drastically lowers body temperature and can cause the flu. Be careful when throwing it at dangerous animals, they will usually take a dim view of that.",
-  "CRDescription:0": "Craft frozen snowballs from snowballs and ice"
+"DisplayName": "冰冻雪球",
+"Description": "一颗被赋予魔法冰霜属性的雪球。命中目标后，会大幅降低体温，并可能导致流感。向危险的动物投掷时要小心，它们通常不会对此感到高兴。",
+"CRDescription:0": "使用雪球和冰制作冰冻雪球"
 },
     "PoisonBombBlock:0": {
-      "DisplayName": "Poison Bomb",
-      "Description": "An iron sphere filled with a volatile toxin and gunpowder. It will detonate a few seconds after being thrown, releasing a thick cloud of poisonous gas that causes severe nausea.",
-      "CRDescription:0": "Create a deadly gas bomb by packing toxin and gunpowder into an iron casing"
-    },
-      "FrozenBombBlock:0": {
-  "DisplayName": "Frozen Bomb",
-  "Description": "An iron sphere filled with a freezing viral agent and fitted with a slow-burning fuse. It will explode a few seconds after it is thrown, spreading a freezing blast that infects nearby creatures and players with the flu instead of destroying blocks.",
-  "CRDescription:0": "Make a throwable frozen bomb by encasing ice and gunpowder in an iron sphere"
+"DisplayName": "毒气炸弹",
+"Description": "一颗装满挥发性毒素和火药的铁球。投掷后几秒钟将会爆炸，释放出浓厚的有毒气体，使附近的生物和玩家产生严重的恶心症状。",
+"CRDescription:0": "将毒素和火药装入铁制外壳，制造一枚致命的毒气炸弹"
+},
+"FrozenBombBlock:0": {
+"DisplayName": "冰冻炸弹",
+"Description": "一颗装满冰冻病毒制剂并配有慢燃引线的铁球。投掷后几秒钟将会爆炸，释放出冰冻冲击波，使附近的生物和玩家感染流感，而不会摧毁方块。",
+"CRDescription:0": "将冰块和火药封装在铁球中，制造一枚可投掷的冰冻炸弹"
 },
     "AK47Block:0": {
   "DisplayName": "AK-47",
-  "Description": "A fully automatic assault rifle with a 30-round magazine. Hold to fire continuously. Crouching reduces spread. Requires AK-47 Ammunition to reload.",
-  "CRDescription:0": "Assemble an AK-47 from iron, rods and a semiconductor"
+  "Description": "一把配备30发弹匣的全自动突击步枪。按住即可持续射击。蹲下可降低散布。装填时需要AK-47弹药。",
+  "CRDescription:0": "使用铁、铁杆和半导体组装一把AK-47"
 },
 "AK47AmmunitionBlock:0": {
-  "DisplayName": "AK-47 Ammunition",
-  "Description": "A box of 7.62mm rounds for the AK-47. Use on an empty or partially loaded AK-47 to reload it to full capacity.",
-  "CRDescription:0": "Pack iron and gunpowder into AK-47 rounds"
+  "DisplayName": "AK-47弹药",
+  "Description": "一盒适用于AK-47的7.62毫米子弹。对空仓或未装满的AK-47使用，可将其装填至满容量。",
+  "CRDescription:0": "使用铁和火药制作AK-47子弹"
 },
 "DesertEagleBlock:0": {
-  "DisplayName": "Desert Eagle",
-  "Description": "A powerful semi-automatic pistol chambered in .50 AE with a 7-round magazine. High damage per shot with moderate accuracy. Requires Desert Eagle Ammunition to reload.",
-  "CRDescription:0": "Forge a Desert Eagle from iron ingots and an iron block"
+  "DisplayName": "沙漠之鹰",
+  "Description": "一把发射.50 AE弹药的半自动手枪，配备7发弹匣。单发伤害极高，精度中等。装填时需要沙漠之鹰弹药。",
+  "CRDescription:0": "使用铁锭和铁块锻造一把沙漠之鹰"
 },
 "DesertEagleAmmunitionBlock:0": {
-  "DisplayName": "Desert Eagle Ammunition",
-  "Description": "A box of .50 AE cartridges for the Desert Eagle. Use on an empty or partially loaded Desert Eagle to reload it to full capacity.",
-  "CRDescription:0": "Craft heavy .50 AE rounds from an iron block and gunpowder"
+  "DisplayName": "沙漠之鹰弹药",
+  "Description": "一盒适用于沙漠之鹰的.50 AE子弹。对空仓或未装满的沙漠之鹰使用，可将其装填至满容量。",
+  "CRDescription:0": "使用铁块和火药制作重型.50 AE子弹"
 },
 "SPAS12Block:0": {
   "DisplayName": "SPAS-12",
-  "Description": "A semi-automatic combat shotgun with an 8-round tube magazine. Fires 8 pellets per shot with wide spread, devastating at close range. Requires 12-Gauge Shells to reload.",
-  "CRDescription:0": "Build a SPAS-12 from iron, rods, planks and string"
+  "Description": "一把半自动战斗霰弹枪，配备8发管式弹仓。每次射击发射8枚弹丸，散布范围较大，在近距离威力惊人。装填时需要12号霰弹。",
+  "CRDescription:0": "使用铁、铁杆、木板和线制作一把SPAS-12"
 },
 "SPAS12AmmunitionBlock:0": {
-  "DisplayName": "12-Gauge Shells",
-  "Description": "Buckshot shells for the SPAS-12. Each shell contains 8 pellets that spread on firing. Use on an empty or partially loaded SPAS-12 to reload it to full capacity.",
-  "CRDescription:0": "Load iron, gunpowder and feathers into 12-gauge shells"
+  "DisplayName": "12号霰弹",
+  "Description": "适用于SPAS-12的鹿弹。每发霰弹包含8枚弹丸，射击时会散开。对空仓或未装满的SPAS-12使用，可将其装填至满容量。",
+  "CRDescription:0": "使用铁、火药和羽毛装填12号霰弹"
 },
 "SniperBlock:0": {
-  "DisplayName": "Barrett Sniper",
-  "Description": "A bolt-action anti-materiel rifle that holds a single round. Aims down a scope for extreme precision. Fires a high-velocity diamond-tipped round with tremendous damage and range. Extremely loud. Requires Sniper Rounds to reload.",
-  "CRDescription:0": "Craft a Barrett sniper from iron, rods, diamond and glass"
+  "DisplayName": "巴雷特狙击步枪",
+  "Description": "一把栓动式反器材步枪，每次只能装填1发子弹。使用瞄准镜进行极高精度瞄准。发射高速钻石尖弹，拥有惊人的伤害和射程。枪声极其响亮。装填时需要狙击弹。",
+  "CRDescription:0": "使用铁、铁杆、钻石和玻璃制作一把巴雷特狙击步枪"
 },
 "SniperAmmunitionBlock:0": {
-  "DisplayName": "Sniper Round",
-  "Description": "A single high-caliber diamond-tipped round for the Barrett Sniper. Travels at extreme velocity with minimal bullet drop. Use on an empty Barrett Sniper to load it.",
-  "CRDescription:0": "Machine a sniper round from iron, gunpowder and diamond"
+  "DisplayName": "狙击弹",
+  "Description": "适用于巴雷特狙击步枪的高口径钻石尖弹。飞行速度极快，弹道下坠极小。对空仓的巴雷特狙击步枪使用即可装填。",
+  "CRDescription:0": "使用铁、火药和钻石加工一发狙击弹"
 },
 "RevolverBlock:0": {
-    "DisplayName": "Revolver",
-    "Description": "A classic revolver that holds 6 rounds. Reliable and powerful at close to medium range.",
-    "CRDescription:0": "Make a revolver from iron and planks"
+    "DisplayName": "左轮手枪",
+    "Description": "一把经典的左轮手枪，可装填6发子弹。在近距离和中距离下可靠且威力强大。",
+    "CRDescription:0": "使用铁和木板制作左轮手枪"
 },
 "RevolverAmmunitionBlock:0": {
-    "DisplayName": "Revolver Ammunition",
-    "Description": "Ammunition for the revolver. Each reload fills all 6 chambers.",
-    "CRDescription:0": "Make revolver ammunition from iron blocks and gunpowder"
+    "DisplayName": "左轮手枪弹药",
+    "Description": "左轮手枪使用的弹药。每次重新装填都会填满全部6个弹膛。",
+    "CRDescription:0": "使用铁块和火药制作左轮手枪弹药"
 },
 "IZH43Block:0": {
     "DisplayName": "IZH-43",
-    "Description": "A simple double-barrel shotgun. Reliable but with limited capacity. Fires buckshot that spreads on impact.",
-    "CRDescription:0": "Craft a double-barrel shotgun from iron and wood"
+    "Description": "一把简单的双管猎枪。可靠，但容量有限。发射会在命中时散开的霰弹。",
+    "CRDescription:0": "使用铁和木材制作一把双管猎枪"
 },
 "IZH43AmmunitionBlock:0": {
-    "DisplayName": "IZH-43 Shells",
-    "Description": "Shotgun shells loaded with buckshot for the IZH-43.",
-    "CRDescription:0": "Craft shotgun shells from iron and gunpowder"
+    "DisplayName": "IZH-43 霰弹",
+    "Description": "装填了用于 IZH-43 的霰弹的猎枪弹药。",
+    "CRDescription:0": "使用铁和火药制作猎枪弹药"
 },
 "Mac10Block:0": {
   "DisplayName": "MAC-10",
-  "Description": "A compact fully automatic submachine gun chambered in .45 ACP. High fire rate but lower accuracy and damage. Hold aim to fire continuously.",
-  "CRDescription:0": "Make a MAC-10 from iron, iron blocks and planks"
+  "Description": "一款使用 .45 ACP 弹药的紧凑型全自动冲锋枪。射速高，但精准度和伤害较低。按住瞄准键即可持续射击。",
+  "CRDescription:0": "使用铁、铁块和木板制作 MAC-10"
 },
 "Mac10AmmunitionBlock:0": {
-  "DisplayName": ".45 ACP Ammunition",
-  "Description": "Ammunition for the MAC-10. Each magazine holds 30 rounds.",
-  "CRDescription:0": "Make .45 ACP ammunition from iron ingots and gunpowder"
+  "DisplayName": ".45 ACP 弹药",
+  "Description": "MAC-10 使用的弹药。每个弹匣可装 30 发子弹。",
+  "CRDescription:0": "使用铁锭和火药制作 .45 ACP 弹药"
 },
 "M4Block:0": {
   "DisplayName": "M4",
-  "Description": "A modern assault rifle with high accuracy and fast fire rate. Less damage than the AK47 but more precise and with better range.",
-  "CRDescription:0": "Craft an M4 from iron, rods, and semiconductors"
+  "Description": "一款现代化突击步枪，具有高精度和快速射速。伤害低于AK47，但精度更高，射程更远。",
+  "CRDescription:0": "使用铁、金属杆和半导体制造一把M4"
 },
 "M4AmmunitionBlock:0": {
-  "DisplayName": "M4 Ammunition",
-  "Description": "5.56mm cartridges for the M4 rifle.",
-  "CRDescription:0": "Craft M4 ammunition from iron ingots and gunpowder"
+  "DisplayName": "M4弹药",
+  "Description": "适用于M4步枪的5.56毫米子弹。",
+  "CRDescription:0": "使用铁锭和火药制造M4弹药"
 },
 "UziBlock:0": {
-  "DisplayName": "Uzi",
-  "Description": "An Uzi is an automatic submachine gun that fires 9mm rounds. It has a 32-round magazine and a moderate rate of fire. Hold to fire continuously - accuracy decreases the longer you shoot.",
-  "CRDescription:0": "Make an Uzi from iron ingots, iron blocks and rods"
+  "DisplayName": "乌兹冲锋枪",
+  "Description": "乌兹冲锋枪是一种发射9毫米子弹的全自动冲锋枪。它配备32发弹匣，射速适中。按住按钮可持续射击——射击时间越长，精准度越低。",
+  "CRDescription:0": "使用铁锭、铁块和铁棒制作乌兹冲锋枪"
 },
 "UziAmmunitionBlock:0": {
-  "DisplayName": "Uzi Magazine",
-  "Description": "A 32-round 9mm magazine for the Uzi. Crafted with copper casings for reliable feeding. Use it to reload the weapon.",
-  "CRDescription:0": "Make Uzi magazines from iron ingots, gunpowder and copper ingots"
+  "DisplayName": "乌兹弹匣",
+  "Description": "一个适用于乌兹冲锋枪的32发9毫米弹匣。使用铜制弹壳制作，以确保可靠供弹。使用它为武器重新装填弹药。",
+  "CRDescription:0": "使用铁锭、火药和铜锭制作乌兹弹匣"
 },
 "BK93Block:0": {
   "DisplayName": "BK-93",
-  "Description": "A double-barrel shotgun. Powerful at close range but slow to reload.",
-  "CRDescription:0": "Craft a BK-93 from iron, rods, planks and copper"
+  "Description": "一把双管霰弹枪。近距离威力强大，但装填速度较慢。",
+  "CRDescription:0": "使用铁、铁棒、木板和铜制作一把BK-93"
 },
 "BK93AmmunitionBlock:0": {
-  "DisplayName": "BK-93 Shells",
-  "Description": "Shotgun shells for the BK-93.",
-  "CRDescription:0": "Craft BK-93 shells from iron, gunpowder and feathers"
+  "DisplayName": "BK-93霰弹",
+  "Description": "适用于BK-93的霰弹。",
+  "CRDescription:0": "使用铁、火药和羽毛制作BK-93霰弹"
 },
 "Master308Block:0": {
   "DisplayName": "Master 308",
-  "Description": "A bolt-action sniper rifle chambered in .308. High damage and excellent accuracy, but slow fire rate. Holds up to 5 rounds in its internal magazine.",
-  "CRDescription:0": "Craft a precision rifle from iron, copper, rods and glass"
+  "Description": "一把使用 .308 弹药的栓动式狙击步枪。伤害高、精准度出色，但射速较慢。内置弹匣最多可容纳 5 发子弹。",
+  "CRDescription:0": "使用铁、铜、金属棒和玻璃制造一把精密步枪"
 },
 "Master308AmmunitionBlock:0": {
-  "DisplayName": ".308 Round",
-  "Description": "High-powered rifle ammunition for the Master 308. Designed for long-range engagements.",
-  "CRDescription:0": "Craft .308 rounds from iron, copper and gunpowder"
+  "DisplayName": ".308 子弹",
+  "Description": "Master 308 使用的高威力步枪弹药。专为远距离交战而设计。",
+  "CRDescription:0": "使用铁、铜和火药制造 .308 子弹"
 },
 "MP5SSDBlock:0": {
   "DisplayName": "MP5SD",
-  "Description": "A suppressed submachine gun with reduced noise. Fires 9mm subsonic rounds, ideal for stealth operations. Lower damage but fast fire rate.",
-  "CRDescription:0": "Craft an MP5SD from iron, rods, and copper for the suppressor"
+  "Description": "一把带有消音器、能够降低噪音的冲锋枪。发射 9mm 亚音速弹药，非常适合隐秘行动。伤害较低，但射速很快。",
+  "CRDescription:0": "使用铁、金属棒和铜制造一把 MP5SD，并用铜制作消音器"
 },
 "MP5AmmunitionBlock:0": {
-  "DisplayName": "9mm Ammunition",
-  "Description": "Subsonic 9mm rounds designed for the MP5SD. Lower velocity than standard rounds but quieter operation.",
-  "CRDescription:0": "Make 9mm rounds from copper and gunpowder"
+  "DisplayName": "9mm 弹药",
+  "Description": "为 MP5SD 设计的 9mm 亚音速弹药。速度低于标准弹药，但射击时更加安静。",
+  "CRDescription:0": "使用铜和火药制造 9mm 子弹"
 },
 "M249Block:0": {
-    "DisplayName": "M249",
-    "Description": "A heavy machine gun with high fire rate and 100 round magazine. Less accurate but devastating sustained fire.",
-    "CRDescription:0": "Craft a heavy machine gun from iron blocks and rods"
-  },
-  "M249AmmunitionBlock:0": {
-    "DisplayName": "M249 Ammunition Box",
-    "Description": "A box of 100 rounds for the M249 machine gun.",
-    "CRDescription:0": "Craft M249 ammunition from iron, gunpowder and copper"
-  },
-  "SCARHBlock:0": {
+  "DisplayName": "M249",
+  "Description": "一挺射速极高、配备100发弹匣的重机枪。精准度较低，但持续射击时具有毁灭性的火力。",
+  "CRDescription:0": "使用铁块和铁棒制作重机枪"
+},
+"M249AmmunitionBlock:0": {
+  "DisplayName": "M249弹药箱",
+  "Description": "一个装有100发M249机枪弹药的弹药箱。",
+  "CRDescription:0": "使用铁、火药和铜制作M249弹药"
+},
+"SCARHBlock:0": {
   "DisplayName": "FN SCAR-H",
-  "Description": "A FN SCAR-H is a battle rifle that fires 7.62mm rounds. It has a 20-round magazine and high damage per shot, making it effective against heavily armored targets.",
-  "CRDescription:0": "Make a SCAR-H from iron blocks, rods and semiconductors"
+  "Description": "FN SCAR-H是一款发射7.62毫米弹药的战斗步枪。它配备20发弹匣，单发伤害较高，对重装甲目标非常有效。",
+  "CRDescription:0": "使用铁块、金属棒和半导体制造SCAR-H"
 },
 "SCARHAmmunitionBlock:0": {
-  "DisplayName": "7.62mm Ammo",
-  "Description": "7.62mm ammunition for the FN SCAR-H battle rifle. Deals high damage per shot.",
-  "CRDescription:0": "Make 7.62mm rounds from iron, gunpowder and copper"
+  "DisplayName": "7.62毫米弹药",
+  "Description": "用于FN SCAR-H战斗步枪的7.62毫米弹药。单发伤害较高。",
+  "CRDescription:0": "使用铁、火药和铜制造7.62毫米弹药"
 },
 "FAMASBlock:0": {
   "DisplayName": "FAMAS",
-  "Description": "A French bullpup assault rifle with high fire rate. Uses 5.56mm ammunition.",
-  "CRDescription:0": "Craft a FAMAS from iron, rods and semiconductors"
+  "Description": "一款法国无托式突击步枪，具有较高的射速。使用5.56毫米弹药。",
+  "CRDescription:0": "使用铁、金属棒和半导体制造FAMAS"
 },
 "FAMASAmmunitionBlock:0": {
-  "DisplayName": "FAMAS Magazine",
-  "Description": "Ammunition magazine for the FAMAS assault rifle.",
-  "CRDescription:0": "Craft FAMAS ammunition from iron and gunpowder"
+  "DisplayName": "FAMAS弹匣",
+  "Description": "用于FAMAS突击步枪的弹药弹匣。",
+  "CRDescription:0": "使用铁和火药制造FAMAS弹药"
 },
 "AA12Block:0": {
   "DisplayName": "AA-12",
-  "Description": "An AA-12 is an automatic shotgun. It can rapidly fire 20 shells. Load it with AA-12 ammunition.",
-  "CRDescription:0": "Make an AA-12 automatic shotgun"
+  "Description": "AA-12是一种自动霰弹枪。它可以快速连续发射20发霰弹，在近距离造成巨大伤害。",
+  "CRDescription:0": "使用铁块、铁锭、铁棒和半导体制造AA-12"
 },
 "AA12AmmunitionBlock:0": {
-  "DisplayName": "AA-12 Shell",
-  "Description": "AA-12 shells are fired from the AA-12 automatic shotgun.",
-  "CRDescription:0": "Make AA-12 shells from iron and gunpowder"
+  "DisplayName": "AA-12霰弹",
+  "Description": "12号口径霰弹。用于AA-12自动霰弹枪的弹药。",
+  "CRDescription:0": "使用铁锭、火药和羽毛制造AA-12霰弹"
 },
 "FNP90Block:0": {
   "DisplayName": "FN P90",
-  "Description": "A compact bullpup submachine gun with a high rate of fire and a 50-round magazine.",
-  "CRDescription:0": "Craft an FN P90 with iron, rods, and semiconductors"
+  "Description": "一款紧凑型无托式冲锋枪，具有较高的射速和50发容量的弹匣。",
+  "CRDescription:0": "使用铁、金属棒和半导体制造一把FN P90"
 },
 "FNP90AmmunitionBlock:0": {
-  "DisplayName": "P90 Ammunition",
-  "Description": "5.7x28mm cartridges used by the FN P90 submachine gun.",
-  "CRDescription:0": "Craft ammunition for the FN P90 with iron, gunpowder, and copper"
+  "DisplayName": "P90弹药",
+  "Description": "FN P90冲锋枪使用的5.7x28毫米弹药。",
+  "CRDescription:0": "使用铁、火药和铜制造FN P90的弹药"
 },
 "AUGBlock:0": {
   "DisplayName": "AUG",
-  "Description": "The AUG is a powerful bullpup assault rifle. It uses AUG ammunition.",
-  "CRDescription:0": "Make an AUG from iron, rods and semiconductors"
+  "Description": "AUG是一款威力强大的无托式突击步枪。使用AUG专用弹药。",
+  "CRDescription:0": "使用铁、金属棒和半导体制造AUG"
 },
 "AUGAmmunitionBlock:0": {
-  "DisplayName": "AUG Ammunition",
-  "Description": "Ammunition specifically designed for the AUG assault rifle.",
-  "CRDescription:0": "Make AUG ammunition from iron and gunpowder"
+  "DisplayName": "AUG弹药",
+  "Description": "专为AUG突击步枪设计的弹药。",
+  "CRDescription:0": "使用铁和火药制造AUG弹药"
 },
 "FX05Block:0": {
   "DisplayName": "FX05",
-  "Description": "A high-tech assault rifle. It features a fast fire rate, high accuracy, and deals significant damage.",
-  "CRDescription:0": "Craft an FX05 from iron, rods, semiconductors and copper"
+  "Description": "一款高科技突击步枪。它拥有极高的射速、出色的精准度，并能造成可观的伤害。",
+  "CRDescription:0": "使用铁、金属棒、半导体和铜制造一把 FX05"
 },
 "FX05AmmunitionBlock:0": {
-  "DisplayName": "FX05 Magazine",
-  "Description": "A magazine loaded with advanced rounds, specifically designed for the FX05 rifle.",
-  "CRDescription:0": "Craft FX05 magazines from iron, gunpowder and copper"
+  "DisplayName": "FX05 弹匣",
+  "Description": "一个装有先进弹药的弹匣，专为 FX05 步枪设计。",
+  "CRDescription:0": "使用铁、火药和铜制造 FX05 弹匣"
 },
 "G3Block:0": {
   "DisplayName": "G3",
-  "Description": "A battle rifle that fires 7.62x51mm NATO rounds. It has high damage, excellent range, but significant recoil.",
-  "CRDescription:0": "Assemble a G3 from iron blocks, rods, and a semiconductor"
+  "Description": "一种发射7.62x51毫米北约弹药的战斗步枪。它伤害高、射程远，但后坐力较大。",
+  "CRDescription:0": "使用铁块、金属棒和半导体制造一把G3"
 },
 "G3AmmunitionBlock:0": {
-  "DisplayName": "G3 Magazine",
-  "Description": "A 20-round magazine loaded with 7.62x51mm ammunition for the G3.",
-  "CRDescription:0": "Craft G3 ammunition from iron, gunpowder, and copper"
+  "DisplayName": "G3弹匣",
+  "Description": "一个装有20发7.62x51毫米G3弹药的弹匣。",
+  "CRDescription:0": "使用铁、火药和铜制造G3弹药"
 },
 "AK48Block:0": {
   "DisplayName": "AK-48",
-  "Description": "An upgraded, more powerful and precise version of the AK-47. Holds 40 rounds.",
-  "CRDescription:0": "Make an AK-48 from iron blocks, rods, semiconductors and copper"
+  "Description": "AK-47 的升级版，威力更强、精度更高。可装填 40 发子弹。",
+  "CRDescription:0": "使用铁块、金属杆、半导体和铜制造 AK-48"
 },
 "AK48AmmunitionBlock:0": {
-  "DisplayName": "AK-48 Ammo",
-  "Description": "High caliber rounds used by the AK-48 rifle.",
-  "CRDescription:0": "Make AK-48 ammo from iron, gunpowder and copper"
+  "DisplayName": "AK-48 弹药",
+  "Description": "AK-48 步枪使用的大口径子弹。",
+  "CRDescription:0": "使用铁、火药和铜制造 AK-48 弹药"
 },
 "KABlock:0": {
   "DisplayName": "KA",
-  "Description": "An elite, highly upgraded assault rifle. Fires specialized high-velocity rounds with devastating damage and a large magazine.",
-  "CRDescription:0": "Craft a KA from advanced materials"
+  "Description": "一款精英级、高度升级的突击步枪。发射专用高速弹药，具有毁灭性的伤害和大容量弹匣。",
+  "CRDescription:0": "使用高级材料制造 KA"
 },
 "KAAmmunitionBlock:0": {
-  "DisplayName": "KA Ammo",
-  "Description": "High-velocity armor-piercing rounds designed specifically for the KA assault rifle.",
-  "CRDescription:0": "Craft KA ammunition from iron and diamonds"
+  "DisplayName": "KA 弹药",
+  "Description": "专为 KA 突击步枪设计的高速穿甲弹。",
+  "CRDescription:0": "使用铁和钻石制造 KA 弹药"
 },
 "MinigunBlock:0": {
-  "DisplayName": "Minigun",
-  "Description": "A devastating heavy multi-barrel firearm with an extremely high rate of fire. Requires a brief spin-up time before firing. Can hold up to 200 rounds.",
-  "CRDescription:0": "Make a minigun from iron blocks, rods, and semiconductors"
+  "DisplayName": "加特林机枪",
+  "Description": "一种具有毁灭性火力的重型多管枪械，射速极高。开火前需要短暂的旋转预热时间。最多可装填 200 发弹药。",
+  "CRDescription:0": "使用铁块、金属杆和半导体制造加特林机枪"
 },
 "MinigunAmmunitionBlock:0": {
-  "DisplayName": "Minigun Ammo",
-  "Description": "A large belt of 7.62mm rounds used exclusively for the Minigun. Reloads a full magazine of 200 bullets.",
-  "CRDescription:0": "Make minigun ammo from iron, gunpowder, and copper"
+  "DisplayName": "加特林机枪弹药",
+  "Description": "一大卷 7.62 毫米弹药带，专门用于加特林机枪。可装满一个容量为 200 发的弹匣。",
+  "CRDescription:0": "使用铁、火药和铜制造加特林机枪弹药"
 },
 "MendozaBlock:0": {
   "DisplayName": "Mendoza",
-  "Description": "The Mendoza is a fully automatic firearm that uses Mendoza ammunition. It has a 30-round magazine and can fire rapidly.",
-  "CRDescription:0": "Make a Mendoza from iron, rods, and a semiconductor block"
+  "Description": "Mendoza是一种使用Mendoza弹药的全自动枪械。它配备30发弹匣，可以快速连续射击。",
+  "CRDescription:0": "使用铁、铁棒和半导体方块制作Mendoza"
 },
 "MendozaAmmunitionBlock:0": {
-  "DisplayName": "Mendoza Ammunition",
-  "Description": "Mendoza ammunition is used to fire the Mendoza. Each ammunition pack contains 8 rounds.",
-  "CRDescription:0": "Make Mendoza ammunition from iron and gunpowder"
+  "DisplayName": "Mendoza弹药",
+  "Description": "Mendoza弹药用于发射Mendoza。每个弹药包包含8发子弹。",
+  "CRDescription:0": "使用铁和火药制作Mendoza弹药"
 },
 "GrozaBlock:0": {
   "DisplayName": "Groza",
-  "Description": "The OC-14 Groza is a Russian bullpup assault rifle. It fires 9x39mm subsonic armor-piercing rounds, offering high damage and excellent stability.",
-  "CRDescription:0": "Make a Groza from iron blocks, iron ingots, rods and semiconductors"
+  "Description": "OC-14 Groza 是一款俄罗斯无托式突击步枪。它发射 9x39 毫米亚音速穿甲弹，具有高伤害和出色的稳定性。",
+  "CRDescription:0": "使用铁块、铁锭、杆件和半导体制造 Groza"
 },
 "GrozaAmmunitionBlock:0": {
-  "DisplayName": "Groza Bullet",
-  "Description": "Groza bullets are armor-piercing subsonic rounds used by the Groza assault rifle.",
-  "CRDescription:0": "Make Groza bullets from iron, gunpowder and copper"
+  "DisplayName": "Groza 子弹",
+  "Description": "Groza 子弹是由 Groza 突击步枪使用的亚音速穿甲弹。",
+  "CRDescription:0": "使用铁、火药和铜制造 Groza 子弹"
 },
-  "ImprovedMusketBlock:0": {
-    "DisplayName": "Improved Musket",
-    "Description": "A redesigned musket that eliminates the cumbersome process of loading gunpowder and wads separately. It allows you to insert up to 2 pellets directly into the chamber. Unlike the original musket, it will not misfire if you submerge in water, and its sturdy mechanism prevents it from losing durability with each shot.",
-    "CRDescription:0": "Upgrade a standard musket by reinforcing it with iron blocks and rods."
-  },
-  "AntiTankPelletBlock:0": {
-    "DisplayName": "Anti-Tank Pellet",
-    "Description": "A special ammunition for the Improved Musket. It cuts through water without losing speed and shatters on impact without leaving a ricochet. It's a surprise pellet that will help us later...",
-    "CRDescription:0": "Craft mysterious pellets using iron blocks, feathers, and sulphur."
-  },
-  "RepeatCrossbowBlock:0": {
-    "DisplayName": "Repeat Crossbow",
-    "Description": "A repeating crossbow with a magazine that holds up to 8 bolts. Draw the string, load bolts, and fire in quick succession.",
-    "CRDescription:0": "Craft from rods, iron ingots, string, and a standard crossbow"
+"ImprovedMusketBlock:0": {
+  "DisplayName": "改良火枪",
+  "Description": "一种重新设计的火枪，省去了分别装填火药和填塞物的繁琐步骤。它允许你直接向枪膛装入最多2颗弹丸。与原版火枪不同，即使浸入水中也不会哑火，其坚固的机械结构还能防止每次射击时损失耐久度。",
+  "CRDescription:0": "使用铁块和铁杆强化一把标准火枪。"
+},
+"AntiTankPelletBlock:0": {
+  "DisplayName": "反Tank弹丸",
+  "Description": "改良火枪的专用弹药。它能够穿过水面而不损失速度，命中目标时会瞬间碎裂，不会发生跳弹。这是一种神秘的弹丸，之后会派上大用场……",
+  "CRDescription:0": "使用铁块、羽毛和硫磺制作神秘弹丸。"
+},
+    "RepeatCrossbowBlock:0": {
+    "DisplayName": "连发弩",
+    "Description": "一种配有弹匣的连发弩，可容纳最多8支弩箭。拉开弓弦、装填弩箭，并连续快速射击。",
+    "CRDescription:0": "使用木杆、铁锭、绳子和标准弩制作"
   },
   "RepeatBoltBlock:0": {
-    "Description": "A basic copper bolt for the repeating crossbow. Low power but cheap to make.",
-    "CRDescription:0": "Craft from a copper ingot, a rod, and a feather"
+    "Description": "连发弩使用的基础铜制弩箭。威力较低，但制作成本便宜。",
+    "CRDescription:0": "使用铜锭、木杆和羽毛制作"
   },
   "RepeatBoltBlock:1": {
-    "Description": "A sturdy iron bolt with good armor penetration and damage.",
-    "CRDescription:1": "Craft from an iron ingot, a rod, and a feather"
+    "Description": "坚固的铁制弩箭，具有良好的护甲穿透能力和伤害。",
+    "CRDescription:1": "使用铁锭、木杆和羽毛制作"
   },
   "RepeatBoltBlock:2": {
-    "Description": "A diamond-tipped bolt that pierces through the toughest armor with ease. Its aerodynamic design allows it to travel through water without losing speed.",
-    "CRDescription:2": "Reinforce an iron bolt with a diamond"
+    "Description": "镶有钻石箭头的弩箭，能够轻松穿透最坚固的护甲。其流线型设计使其能在水中穿行而不减速。",
+    "CRDescription:2": "使用钻石强化铁弩箭"
 },
   "RepeatBoltBlock:3": {
-    "Description": "A bolt packed with gunpowder that detonates on impact, damaging nearby creatures and terrain.",
-    "CRDescription:3": "Combine gunpowder with a copper bolt"
+    "Description": "装填火药的弩箭，命中后会爆炸，对附近的生物和地形造成伤害。",
+    "CRDescription:3": "将火药与铜弩箭组合"
   },
   "RepeatBoltBlock:4": {
-    "Description": "A bolt that ignites targets and leaves a trail of fire. Very effective against flammable enemies.",
-    "CRDescription:4": "Combine a sulphur chunk with a copper bolt"
+    "Description": "能够点燃目标并留下火焰轨迹的弩箭。对易燃敌人特别有效。",
+    "CRDescription:4": "将硫磺块与铜弩箭组合"
   },
   "RepeatBoltBlock:5": {
-    "Description": "A bolt coated with a mild toxin that poisons the target over time.",
-    "CRDescription:5": "Coat a copper bolt with toxin"
+    "Description": "涂覆了轻度毒素的弩箭，会随着时间持续使目标中毒。",
+    "CRDescription:5": "将毒素涂覆在铜弩箭上"
   },
   "RepeatBoltBlock:6": {
-    "Description": "A bolt laced with a highly concentrated toxin, capable of inflicting fatal poisoning quickly.",
-    "CRDescription:6": "Reinforce a poison bolt with an extra dose of toxin"
+    "Description": "涂覆了高浓度毒素的弩箭，能够迅速造成致命中毒。",
+    "CRDescription:6": "使用额外剂量的毒素强化毒弩箭"
   },
     "CopperSharpHammerBlock:0": {
-      "DisplayName": "Copper Sharp Hammer",
-      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. When used, the hammer will gradually lose its durability and eventually fail. Hammers made of better materials will last longer and cause significantly more damage.",
-      "CRDescription:0": "Make a copper heavy hammer"
+      "DisplayName": "铜制尖锤",
+      "Description": "尖锤是一种沉重的钝击武器，在近战中能够造成毁灭性的打击。使用时，锤子的耐久度会逐渐降低，最终损坏。由更优质材料打造的尖锤拥有更高的耐久度，并能造成更大的伤害。",
+      "CRDescription:0": "制作一把铜制重锤"
     },
     "IronSharpHammerBlock:0": {
-      "DisplayName": "Iron Sharp Hammer",
-      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. When used, the hammer will gradually lose its durability and eventually fail. Hammers made of better materials will last longer and cause significantly more damage.",
-      "CRDescription:0": "Make an iron heavy hammer"
+      "DisplayName": "铁制尖锤",
+      "Description": "尖锤是一种沉重的钝击武器，在近战中能够造成毁灭性的打击。使用时，锤子的耐久度会逐渐降低，最终损坏。由更优质材料打造的尖锤拥有更高的耐久度，并能造成更大的伤害。",
+      "CRDescription:0": "制作一把铁制重锤"
     },
     "DiamondSharpHammerBlock:0": {
-      "DisplayName": "Diamond Sharp Hammer",
-      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. When used, the hammer will gradually lose its durability and eventually fail. Hammers made of better materials will last longer and cause significantly more damage.",
-      "CRDescription:0": "Add diamonds to forge an incredibly powerful hammer"
+      "DisplayName": "钻石尖锤",
+      "Description": "尖锤是一种沉重的钝击武器，在近战中能够造成毁灭性的打击。使用时，锤子的耐久度会逐渐降低，最终损坏。由更优质材料打造的尖锤拥有更高的耐久度，并能造成更大的伤害。",
+      "CRDescription:0": "加入钻石，锻造一把威力惊人的尖锤"
     },
     "LavaSharpHammerBlock:0": {
-      "DisplayName": "Lava Sharp Hammer",
-      "Description": "A sharp hammer is a heavy crushing weapon that is extremely effective for devastating melee attacks. Forged in the intense heat of magma, this hammer boasts unmatched durability and catastrophic destructive power.",
-      "CRDescription:0": "Smelt a diamond hammer with magma to unleash its full potential"
+      "DisplayName": "熔岩尖锤",
+      "Description": "尖锤是一种沉重的钝击武器，在近战中能够造成毁灭性的打击。这把尖锤在炽热的岩浆中锻造而成，拥有无与伦比的耐久度和灾难性的破坏力。",
+      "CRDescription:0": "将钻石尖锤与岩浆熔炼，释放它的全部潜能"
+    },
+    "WoodenLongspearBlock:0": {
+  "DisplayName": "木制长矛",
+  "Description": "一种更长的长矛，能够让敌人保持在更安全的距离之外。可投掷，也可用于近战，但随着使用次数增加，最终会失去锋利度。投出的长矛会插入柔软的材料中。",
+  "CRDescription:0": "制作一把木制长柄武器"
+},
+"StoneLongspearBlock:0": {
+  "DisplayName": "石制长矛",
+  "Description": "一种更长的长矛，能够让敌人保持在更安全的距离之外。可投掷，也可用于近战，但随着使用次数增加，最终会失去锋利度。投出的长矛会插入柔软的材料中。",
+  "CRDescription:0": "用圆石制作一把石制长柄武器",
+  "CRDescription:1": "用石块制作一把石制长柄武器"
+},
+"CopperLongspearBlock:0": {
+  "DisplayName": "铜制长矛",
+  "Description": "一把配有铜制矛尖的坚固长矛，比木制长矛拥有更高的耐久性和更远的攻击距离。无论投掷还是近战都十分有效，但最终仍会变钝。",
+  "CRDescription:0": "制作一把铜制长柄武器"
+},
+"IronLongspearBlock:0": {
+  "DisplayName": "铁制长矛",
+  "Description": "一把沉重而可靠的长矛，配有铁制矛头。优质材料使其能够造成更高的伤害，并在近战或投掷时拥有更长的使用寿命。",
+  "CRDescription:0": "制作一把铁制长柄武器"
+},
+"DiamondLongspearBlock:0": {
+  "DisplayName": "钻石尖长矛",
+  "Description": "一把装有钻石矛尖的致命长矛，拥有无与伦比的耐久性和穿透力，无论近战还是远距离投掷都极具毁灭性。",
+  "CRDescription:0": "为长柄武器的刃口镶嵌钻石"
+},
+"LavaLongspearBlock:0": {
+  "DisplayName": "熔岩长矛",
+  "Description": "一把以炽热熔岩锻造而成的可怕长矛。它拥有极远的攻击距离和毁灭性的燃烧力量，无论投掷还是近战挥舞，都能轻易穿透敌人的防御。",
+  "CRDescription:0": "将岩浆的炽热之力注入长柄武器"
+},
+"FlameThrowerBlock:0": {
+  "DisplayName": "火焰喷射器",
+  "Description": "一种火焰喷射器，可根据装填的弹药发射燃烧或剧毒弹。使用特殊弹药进行装填。",
+  "CRDescription:0": "使用铁锭、铜锭、金属杆和木板制作火焰喷射器。"
+},
+"CopperThinHammerBlock:0": {
+    "DisplayName": "铜制轻型锤",
+    "Description": "一种多功能工具，将铲子、镐和斧子的功能结合在一个轻巧的工具头中。虽然效率不如专用工具，但可以节省背包空间，非常适合探索。铜制工具比木制工具更加耐用，工作速度也更快。",
+    "CRDescription:0": "锻造一个铜制多功能工具头"
   },
-      "WoodenLongspearBlock:0": {
-      "DisplayName": "Wooden Longspear",
-      "Description": "A longer variant of the spear designed to keep enemies at a safer distance. It can be thrown or used for melee, but will eventually lose its sharpness. Thrown longspears stick in soft materials.",
-      "CRDescription:0": "Make a long wooden weapon"
-    },
-    "StoneLongspearBlock:0": {
-      "DisplayName": "Stone Longspear",
-      "Description": "A longer variant of the spear designed to keep enemies at a safer distance. It can be thrown or used for melee, but will eventually lose its sharpness. Thrown longspears stick in soft materials.",
-      "CRDescription:0": "Make a long stone weapon with cobblestone",
-      "CRDescription:1": "Make a long stone weapon with chunks"
-    },
-    "CopperLongspearBlock:0": {
-      "DisplayName": "Copper Longspear",
-      "Description": "A sturdy longspear with a copper tip, offering improved durability and reach over wooden variants. It is effective both thrown and in melee combat before it eventually dulls.",
-      "CRDescription:0": "Make a long copper weapon"
-    },
-    "IronLongspearBlock:0": {
-      "DisplayName": "Iron Longspear",
-      "Description": "A heavy and reliable longspear with an iron head. Its superior material allows it to deal significant damage and withstand more use in melee or when thrown.",
-      "CRDescription:0": "Make a long iron weapon"
-    },
-    "DiamondLongspearBlock:0": {
-      "DisplayName": "Diamond Tip Longspear",
-      "Description": "An exceptionally lethal longspear featuring a diamond tip. It offers unmatched durability and piercing power, making it devastating both in melee and when thrown from afar.",
-      "CRDescription:0": "Add diamonds to the cutting edge of the long weapon"
-    },
-    "LavaLongspearBlock:0": {
-      "DisplayName": "Lava Longspear",
-      "Description": "A terrifying longspear forged with molten magma. It possesses extreme reach and devastating burning power, easily piercing through defenses when thrown or wielded in close combat.",
-      "CRDescription:0": "Imbue the long weapon with the heat of magma"
-    },
-    "CopperThinHammerBlock:0": {
-  "DisplayName": "Copper Thin Hammer",
-  "Description": "A versatile multi-tool combining shovel, pickaxe and axe functions in one lightweight head. While not as efficient as specialized tools, it saves inventory space and is ideal for exploration. Copper tools last longer and work faster than wooden ones.",
-  "CRDescription:0": "Forge a copper multi-tool head"
-},
-"IronThinHammerBlock:0": {
-  "DisplayName": "Iron Thin Hammer",
-  "Description": "A versatile multi-tool combining shovel, pickaxe and axe functions in one lightweight head. While not as efficient as specialized tools, it saves inventory space and is ideal for exploration. Iron tools are significantly more durable and effective than copper ones.",
-  "CRDescription:0": "Upgrade with iron for improved durability"
-},
-"DiamondThinHammerBlock:0": {
-  "DisplayName": "Diamond Edge Thin Hammer",
-  "Description": "A versatile multi-tool combining shovel, pickaxe and axe functions in one lightweight head. While not as efficient as specialized tools, it saves inventory space and is ideal for exploration. Diamond edge greatly enhances all cutting and digging capabilities.",
-  "CRDescription:0": "Add diamonds to the working edge of the tool"
-},
-"LavaThinHammerBlock:0": {
-  "DisplayName": "Lava Infused Thin Hammer",
-  "Description": "A versatile multi-tool combining shovel, pickaxe and axe functions in one lightweight head. Infused with molten magma, this tool surpasses all others in both durability and effectiveness. Its burning edge makes short work of any material.",
-  "CRDescription:0": "Imbue with magma for ultimate performance"
-},
-    "FlameThrowerBlock:0": {
-  "DisplayName": "Flamethrower",
-  "Description": "A flamethrower that fires incendiary or poisonous projectiles depending on the loaded ammunition. Reloads with special ammo.",
-  "CRDescription:0": "Craft a flamethrower using iron ingots, copper ingots, rods, and wooden planks."
-},
+  "IronThinHammerBlock:0": {
+    "DisplayName": "铁制轻型锤",
+    "Description": "一种多功能工具，将铲子、镐和斧子的功能结合在一个轻巧的工具头中。虽然效率不如专用工具，但可以节省背包空间，非常适合探索。铁制工具比铜制工具更加耐用且效率更高。",
+    "CRDescription:0": "使用铁进行升级以提高耐久度"
+  },
+  "DiamondThinHammerBlock:0": {
+    "DisplayName": "钻石刃轻型锤",
+    "Description": "一种多功能工具，将铲子、镐和斧子的功能结合在一个轻巧的工具头中。虽然效率不如专用工具，但可以节省背包空间，非常适合探索。钻石刃大幅提升了工具的切割和挖掘能力。",
+    "CRDescription:0": "在工具的工作刃上添加钻石"
+  },
+  "LavaThinHammerBlock:0": {
+    "DisplayName": "熔岩灌注轻型锤",
+    "Description": "一种多功能工具，将铲子、镐和斧子的功能结合在一个轻巧的工具头中。注入熔融岩浆后，这把工具在耐久度和效率方面都超越了其他工具。炽热的刃口可以轻松处理任何材料。",
+    "CRDescription:0": "注入岩浆以获得终极性能"
+  },
 "FlameBulletBlock:0": {
-  "Description": "Incendiary ammunition for the flamethrower. Sets enemies and the surrounding area on fire upon impact.",
-  "CRDescription:0": "Craft fire bullets using iron ingots and gunpowder."
+  "Description": "火焰喷射器使用的燃烧弹药。命中后会点燃敌人及周围环境。",
+  "CRDescription:0": "使用铁锭和火药制作燃烧弹。"
 },
 "FlameBulletBlock:1": {
-  "Description": "Toxic ammunition for the flamethrower. Poisons enemies on impact, dealing continuous damage.",
-  "CRDescription:1": "Craft poison bullets using toxin and fire bullets."
+  "Description": "火焰喷射器使用的剧毒弹药。命中后使敌人中毒，并持续造成伤害。",
+  "CRDescription:1": "使用毒素和燃烧弹制作毒弹。"
 },
 "AntidotePillBlock:0": {
-  "DisplayName": "Antidote Pill",
-  "Description": "A medicinal pill that cures flu and poison. Can also cure nearby creatures within range.",
-  "CRDescription:0": "Craft antidote pills from canvas and medicinal flowers"
-  }
-},
-  "ContentWidgets": {
-  "CreatureInventoryWidget": {
-    "1": "Creature Inventory",
-    "2": "Inventory"
+  "DisplayName": "解毒药丸",
+  "Description": "一种可以治疗流感和中毒的药丸，也可以治疗范围内附近的生物。",
+  "CRDescription:0": "使用帆布和药用花朵制作解毒药丸"
+}
   },
-  "RepeatCrossbowWidget": {
-    "0": "Draw the string",
-    "1": "{0}/8 Bolts",
-    "2": "Insert bolts",
-    "3": "Repeat Crossbow",
-    "4": "Inventory"
+  "ContentWidgets": {
+    "CreatureInventoryWidget": {
+      "1": "生物背包",
+      "2": "背包"
+    },
+    "RepeatCrossbowWidget": {
+    "0": "拉开弓弦",
+    "1": "{0}/8 支弩箭",
+    "2": "装填弩箭",
+    "3": "连发弩",
+    "4": "物品栏"
   },
   "ImprovedMusketWidget": {
-    "0": "Improved Musket",
-    "1": "Inventory",
-    "2": "No ammo",
-    "3": "Ammo: {0}/2"
-  },
-  "FlameThrowerWidget": {
-  "0": "Flamethrower",
-  "1": "Inventory",
-  "2": "Insert a bullet to load",
+  "0": "改良火枪",
+  "1": "物品栏",
+  "2": "没有弹药",
+  "3": "弹药：{0}/2"
+},
+"FlameThrowerWidget": {
+  "0": "火焰喷射器",
+  "1": "物品栏",
+  "2": "插入子弹以装填",
   "3": "{ammo}/15 {type}",
-  "4": "Fire",
-  "5": "Poison"
+  "4": "火焰",
+  "5": "毒液"
 },
 "BestiaryInfectedScreen": {
-    "1": "Infected and Bandits Bestiary"
+    "1": "感染者与强盗图鉴"
   }
 },
 "MysteriousLetterDialog": {
-  "1": "Mysterious Letter",
-  "2": "Accept",
-  "3": "Reject",
-  "4": "The war against the infected is over.\nThe green night has passed.\n\nBut a new challenge is approaching...\nDrug traffickers have taken control of the territory.\nIf you accept this challenge, they will come for you at night.\n\nDo you accept the war against the drug traffickers?",
-  "5": "You have accepted the war against the drug traffickers! They will come for you tonight. Get ready!",
-  "6": "You have rejected the challenge. Perhaps it was a wise decision..."
+  "1": "神秘信件",
+  "2": "接受",
+  "3": "拒绝",
+  "4": "与感染者的战争已经结束。\n绿色之夜已经过去。\n\n但新的挑战即将来临……\n毒贩已经控制了这片领地。\n如果你接受这个挑战，他们将在夜晚来找你。\n\n你接受与毒贩之间的战争吗？",
+  "5": "你已经接受了与毒贩的战争！他们今晚就会来找你。做好准备！",
+  "6": "你拒绝了这个挑战。也许这是一个明智的决定……"
 },
 "SubsystemNarcosInvasion": {
-  "1": "The drug traffickers' invasion has begun! They are coming for you tonight!",
-  "2": "The drug traffickers retreat at dawn... But they will return."
+  "1": "毒贩的入侵已经开始！他们今晚就会来找你！",
+  "2": "毒贩在黎明时撤退了……但他们还会回来。"
 },
-"SubsystemMinigunBlockBehavior": {
-  "0": "Spinning up barrels..."
+  "SubsystemMinigunBlockBehavior": {
+  "0": "正在预热枪管..."
+},
+  "SubsystemCannonBlockBehavior": {
+    "0": "大炮是空的"
 },
 "ComponentFirearmUser": {
-    "1": "Healed",
-    "2": "Reloading",
-    "3": "Reloaded"
-},
-"SubsystemCannonBlockBehavior": {
-    "0": "The cannon is empty"
+    "1": "已治疗",
+    "2": "正在重新装填",
+    "3": "已重新装填"
 },
 "CannonWidget": {
-    "0": "Load a cannonball",
-    "1": "Ready to fire",
-    "2": "Cannon",
-    "3": "Inventory"
+    "0": "装填炮弹",
+    "1": "准备开火",
+    "2": "大炮",
+    "3": "物品栏"
 },
-"FirearmsShopWidget": {
-  "title": "Firearms Shop",
-  "restoresIn": "Restores in:",
-  "restoresInFormat": "Restores in: {0}",
-  "buy": "Buy",
-  "priceFormat": "{0} coins",
-  "purchaseSuccess": "Purchase successful!",
-  "inventoryFull": "Inventory full!",
-  "unknownBlock": "Unknown block"
+  "FirearmsShopWidget": {
+  "title": "枪械商店",
+  "restoresIn": "恢复时间：",
+  "restoresInFormat": "{0}后恢复",
+  "buy": "购买",
+  "priceFormat": "{0}枚硬币",
+  "purchaseSuccess": "购买成功！",
+  "inventoryFull": "背包已满！",
+  "unknownBlock": "未知方块"
 },
-"SubsystemAntidotePillBehavior": {
-    "1": "Antidote consumed! You have been cured",
-    "2": "You have cured {0} of the disease!"
+  "SubsystemAntidotePillBehavior": {
+    "1": "解毒药已服用！你已经痊愈了",
+    "2": "你治愈了 {0} 的疾病！"
 },
-"SubsystemBandageBehavior": {
-  "1": "You partially healed {0}",
-  "2": "You have partially healed yourself",
-  "3": "You fully healed {0}",
-  "4": "You have fully healed yourself"
+  "SubsystemBandageBehavior": {
+  "1": "你为 {0} 部分治疗",
+  "2": "你已部分治愈自己",
+  "3": "你为 {0} 完全治疗",
+  "4": "你已完全治愈自己"
 },
-"PoisonInfection": {
-    "1": "died from poison",
-    "2": "poisoned by {0}"
+  "PoisonInfection": {
+    "1": "因中毒死亡",
+    "2": "被{0}毒害"
 },
-"Healing": {
-  "1": "{0} has cured your illness!",
-  "2": "{0} has restored your health!"
+  "Healing": {
+  "1": "{0}治愈了你的疾病！",
+  "2": "{0}恢复了你的健康！"
 },
-"Firearms": {
-  "1": "You need {0} to fire"
+  "Firearms": {
+  "1": "你需要{0}才能开火"
 },
-"ComponentMonsterSkills": {
-    "1": "Incinerated by fire vomit",
-    "2": "Killed by blood vomit"
+  "ComponentMonsterSkills": {
+    "1": "被火焰喷吐烧死",
+    "2": "因吐血死亡"
 },
-"SubsystemInfectedEggBlockBehavior": {
-    "0": "Failed to spawn infected creature"
+  "ComponentNewSleep": {
+  "1": "你无法在绿色之夜期间睡觉。他们会找到你……"
 },
-"ComponentNewSleep": {
-  "1": "You cannot sleep during the Green Night. They will find you..."
+  "ComponentRiderZombie": {
+    "1": "你不能骑乘这个生物。"
 },
-"ComponentRiderZombie": {
-    "1": "You cannot ride this creature."
+  "SubsystemInfectedEggBlockBehavior": {
+    "0": "无法生成感染生物"
 },
   "BestiaryInfectedDescriptionScreen": {
-    "1": "Infected Details",
-    "2": "Drops:",
-    "3": "Bandit Details",
-    "resilience": "Resilience",
-    "attack": "Attack",
-    "herding": "Herding",
-    "mount": "Mount",
-    "speed": "Speed",
-    "jump": "Jump",
-    "weight": "Weight",
-    "egg": "Egg",
-    "speed_unit": "km/h",
-    "length_unit": "m",
-    "weight_unit": "kg",
+    "1": "感染者详情",
+    "2": "掉落物：",
+    "3": "强盗详情",
+    "resilience": "韧性",
+    "attack": "攻击",
+    "herding": "驱赶",
+    "mount": "坐骑",
+    "speed": "速度",
+    "jump": "跳跃",
+    "weight": "重量",
+    "egg": "蛋",
+    "speed_unit": "公里/小时",
+    "length_unit": "米",
+    "weight_unit": "千克",
     "range": "{0}-{1}",
     "probability": " ({0}%)"
-  },
-"CameraManage": {
-  "Game.FreeCamera": "Cámara libre"
 },
-"SubsystemFlameThrowerBlockBehavior": {
-  "0": "FlameThrower is empty"
+  "CameraManage": {
+  "Game.FreeCamera": "自由视角"
 },
-"SubsystemImprovedMusketBlockBehavior": {
-    "0": "Not loaded!"
+  "SubsystemFlameThrowerBlockBehavior": {
+  "0": "火焰喷射器已空"
+},
+  "SubsystemImprovedMusketBlockBehavior": {
+  "0": "未加载！"
 },
   "SubsystemRepeatCrossbowBlockBehavior": {
-    "0": "Not fully drawn!",
-    "1": "No bolts loaded!"
+    "0": "弓弦未完全拉开！",
+    "1": "未装填弩箭！"
   },
   "ShittyInfectedsMod": {
-    "1": "X: {0}, Y: {1}, Z: {2}",
-    "exitGame": "Exit"
-  },
+    "1": "坐标：X:{0:F0} Y:{1:F0} Z:{2:F0}",
+    "exitGame": "退出"
+},
   "ShittyInfectedsSettingsScreen": {
-    "0": "Shitty Infecteds Settings",
+    "0": "Shitty Infecteds 设置",
     "EnableCreatureAttacks": {
-        "Description": "Your allies attack creatures you hit"
+        "Description": "你的盟友会攻击你所攻击的生物"
     },
     "AttackOnHitCreative": {
-    "Description": "Your allies attack creatures that hit you while in creative mode"
+        "Description": "在创造模式下，攻击你的生物会受到盟友的攻击"
     },
     "ShowCoordinates": {
-        "Description": "Player coordinates are displayed on the screen"
+        "Description": "在屏幕上显示玩家的坐标"
     },
     "EnableCreatureBleeding": {
-        "Description": "Creatures bleed when they take damage"
+        "Description": "生物受到伤害时会流血"
     },
     "EnableFreeCamera": {
-        "Description": "Free camera is available outside of creative mode"
+        "Description": "在创造模式之外也可以使用自由视角"
     },
     "EnableBossChaseMusic": {
-        "Description": "Chase music plays while a brute is pursuing you"
+        "Description": "当蛮兽追逐你时，会播放追逐音乐"
     },
     "EnableDeathSpawn": {
-        "Description": "Creatures spawn when a corpse fades away"
+        "Description": "尸体消失时会生成生物"
     },
     "EnableGhostChaseMusic": {
-        "Description": "Scary music plays while a ghost is chasing you"
+        "Description": "当幽灵追逐你时，会播放恐怖音乐"
     },
     "EnableDeathMusic": {
-        "Description": "Death music plays when the player dies"
+        "Description": "玩家死亡时会播放死亡音乐"
     },
-    "On": "On",
-    "Off": "Off"
-},
+    "On": "开启",
+    "Off": "关闭"
+  },
   "GreenNightActivationDialog": {
-    "1": "Green Night Management",
-    "2": "Enable Green Night",
-    "3": "The world maintains its usual balance\nwith limited detection ranges and\nshort pursuits.",
-    "4": "The world enters a state of\nuncontrolled aggression. Creatures\ndrastically expand their detection\nrange, unleash relentless pursuits that\ndo not stop because of obstacles or\nloss of visual contact,\nprioritizing the hunt above all else.",
-    "5": "Days & Suffering Settings",
-    "6": "Cancel",
-    "7": "Accept",
-    "8": "Green Night enabled.",
-    "9": "Green Night disabled."
+    "1": "绿色之夜管理",
+    "2": "启用绿色之夜",
+    "3": "世界保持原有的平衡，\n生物的感知范围有限，\n追击时间较短。",
+    "4": "世界进入失控的狂暴状态。\n生物会大幅扩大感知范围，\n发起永不停歇的追击，\n不会因障碍物或失去视线\n而停止，\n将狩猎置于一切之上。",
+    "5": "天数与苦难设置",
+    "6": "取消",
+    "7": "确认",
+    "8": "绿色之夜已启用。",
+    "9": "绿色之夜已禁用。"
   }
 }
