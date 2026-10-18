@@ -635,9 +635,6 @@
     "0": "Not fully drawn!",
     "1": "No bolts loaded!"
   },
-  "SubsystemCreatureHealthBars": {
-    "1": "{0} HP: {1}"
-},
   "ShittyInfectedsMod": {
     "1": "X: {0}, Y: {1}, Z: {2}",
     "exitGame": "Exit"
@@ -652,9 +649,6 @@
     },
     "ShowCoordinates": {
         "Description": "Player coordinates are displayed on the screen"
-    },
-    "ShowCreatureHealthBars": {
-        "Description": "Creature health bars are displayed above their heads"
     },
     "EnableCreatureBleeding": {
         "Description": "Creatures bleed when they take damage"
