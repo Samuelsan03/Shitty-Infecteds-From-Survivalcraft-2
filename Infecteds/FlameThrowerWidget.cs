@@ -54,7 +54,7 @@ namespace Game
 			int data = Terrain.ExtractData(value);
 			var state = FlameThrowerBlock.GetLoadState(data);
 			int ammo = FlameThrowerBlock.GetAmmoCount(data);
-			int bulletType = (data >> 8) & 3;
+			int bulletType = (data >> 3) & 1;   // ⚠️ antes era (data >> 8) & 3
 
 			if (state == FlameThrowerBlock.LoadState.Empty || ammo == 0)
 			{
@@ -63,7 +63,7 @@ namespace Game
 			else
 			{
 				string ammoType = LanguageControl.GetContentWidgets("FlameThrowerWidget", bulletType == 0 ? 4 : 5);
-				string format = LanguageControl.GetContentWidgets("FlameThrowerWidget", 3); // "{ammo}/15 {type}"
+				string format = LanguageControl.GetContentWidgets("FlameThrowerWidget", 3);
 				m_instructionsLabel.Text = format.Replace("{ammo}", ammo.ToString()).Replace("{type}", ammoType);
 			}
 		}
